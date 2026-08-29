@@ -7,6 +7,7 @@
 - GitHub: https://github.com/SketchOTP/ANIMA-Home-Automation
 - Default branch: `main`
 - Initial remote baseline: `088b267467fff93bfd225b9a94a6f4999759fb9f`
+- Governance baseline commit: `6fbabc892f53876fd94614ccc531dc7478a80288`
 
 ## Strategic documentation
 

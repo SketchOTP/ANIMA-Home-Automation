@@ -11,9 +11,9 @@
 ## Current pointers
 
 - Current stage: GOVERNANCE BASELINE
-- Active directive: ANIMA-HA-P0-GOVERNANCE-BASELINE-001
+- Active directive: NONE
 - Active task packet: NONE
-- Last accepted outcome: AUTHORITY-BOOTSTRAP-001
+- Last accepted outcome: ANIMA-HA-P0-GOVERNANCE-BASELINE-001
 - Last state sync: 2026-08-28
 
 ## Mandatory kernel

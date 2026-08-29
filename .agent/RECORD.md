@@ -44,8 +44,8 @@ Adopted the existing remote `main` history as the local parent, corrected the lo
 
 ### Evidence
 
-Remote `main` was observed at `088b267467fff93bfd225b9a94a6f4999759fb9f` with a clean two-file tree. SSH fetch and final remote verification passed. Public-safety review found and removed the machine-specific local GVFS path from the publishable profile; no secrets or runtime data were found.
+Remote `main` was observed at `088b267467fff93bfd225b9a94a6f4999759fb9f` with a clean two-file tree. Governance baseline commit `6fbabc892f53876fd94614ccc531dc7478a80288` preserves that parent. SSH fetch and public-safety review passed; the machine-specific local GVFS path was removed from the publishable profile, and no secrets or runtime data were found.
 
 ### Consequence
 
-`main` now has one coherent governance history. Product implementation remains deferred until the Architect reviews this checkpoint and issues a separate bounded directive.
+`main` now has one coherent governance history through `6fbabc892f53876fd94614ccc531dc7478a80288`. Product implementation remains deferred until the Architect reviews this checkpoint and issues a separate bounded directive.

@@ -61,7 +61,7 @@ YES — synchronize the new project and choose the first bounded implementation/
 - Verdict: COMPLETE
 - Retrieval confidence: ADEQUATE
 - Evidence level: E3_TARGET_TESTED
-- Git state / commit: Remote parent `088b267467fff93bfd225b9a94a6f4999759fb9f`; final governed checkpoint recorded after commit.
+- Git state / commit: `6fbabc892f53876fd94614ccc531dc7478a80288` (parent `088b267467fff93bfd225b9a94a6f4999759fb9f`).
 
 ### Technical state discovered
 
@@ -69,7 +69,7 @@ The local directory was not a Git repository at task start. The public remote wa
 
 ### Work performed
 
-Initialized local Git, configured `SketchOTP <sketchotp@gmail.com>`, connected `origin` to `git@github.com:SketchOTP/ANIMA-Home-Automation.git`, preserved the remote baseline as the parent history, corrected portable/public Authority records, updated the public ignore policy, reviewed all candidate files for secrets and machine-specific data, and prepared the governance-only checkpoint.
+Initialized local Git, configured `SketchOTP <sketchotp@gmail.com>`, connected `origin` to `git@github.com:SketchOTP/ANIMA-Home-Automation.git`, preserved the remote baseline as the parent history, corrected portable/public Authority records, updated the public ignore policy, reviewed all candidate files for secrets and machine-specific data, and created governance-only checkpoint `6fbabc892f53876fd94614ccc531dc7478a80288`.
 
 ### Acceptance results
 
