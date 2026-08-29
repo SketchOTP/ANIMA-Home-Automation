@@ -48,6 +48,6 @@
 
 ## Final checkpoint
 
-- Implementation checkpoint: recorded in the final Git history after the implementation commit.
+- Implementation checkpoint: `0410cdb148cfcf42021d83bf73a6d239fab37a1d`, pushed to `origin/main` and verified with `git ls-remote`.
 - Final governed checkpoint: recorded here and in Notion after the Authority/documentation update and push.
 - Phase 4 Identity/Policy and later behavior were not implemented.

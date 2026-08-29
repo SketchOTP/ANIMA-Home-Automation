@@ -49,7 +49,7 @@ ANIMA-HA-P3-GOVERNED-MEMORY-005
 - Phase 1 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P1-REALITY-SUBSTRATE-003/EVIDENCE.md`.
 - Phase 2 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P2-HOUSEHOLD-GRAPH-004/EVIDENCE.md` after checkpoint closure.
 - Phase 2 implementation checkpoint is `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
-- Phase 3 implementation checkpoint and final governed checkpoint are recorded in `.agent/tasks/completed/ANIMA-HA-P3-GOVERNED-MEMORY-005/EVIDENCE.md` after push verification.
+- Phase 3 implementation checkpoint is `0410cdb148cfcf42021d83bf73a6d239fab37a1d`; the final governed metadata checkpoint is recorded in the completed task evidence and Notion after push verification.
 
 ## Current risks
 
