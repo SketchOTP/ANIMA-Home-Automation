@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 3 — GOVERNED MEMORY COMPLETE
+IMPLEMENTATION PHASE 4 — IDENTITY AND POLICY COMPLETE
 
 ## Current objective
 
-Complete the governed PostgreSQL-backed Memory Service and deterministic routine model required before identity/policy, Home Assistant, and cognition phases.
+Complete the deterministic identity, policy, and permission boundary required before plugins, Home Assistant, Luna, and action execution.
 
 ## Active directive
 
-ANIMA-HA-P3-GOVERNED-MEMORY-005
+ANIMA-HA-P4-IDENTITY-POLICY-006
 
 ## Current verified state
 
@@ -27,6 +27,7 @@ ANIMA-HA-P3-GOVERNED-MEMORY-005
 - Phase 1 event identity, source deduplication, journal position, event/record time, source sequence, provenance, freshness, explicit unknown/unavailable/conflict states, projection retry, and replay/rebuild remain green.
 - Phase 2 adds ANIMA-owned canonical graph nodes, typed relationships, recursive containment, entrance connectivity, separate resources/capabilities, aliases, provider references, Truth bindings, transactional commissioning, semantic queries, and graph mutation audit events.
 - Phase 3 adds ANIMA-owned canonical memory records, provenance/taxonomy, deterministic precedence, correction/supersession, expiry/retraction, household-isolated retrieval, a rebuildable PostgreSQL lexical index with explicit fallback, and a journal-derived routine model.
+- Phase 4 adds ANIMA-owned identity evidence and assurance aggregation, semantic action intents and risk classes, exact confirmation challenges, a local pinned OPA/Rego evaluator, PostgreSQL decision persistence, journaled policy audit, explicit autonomy configuration, and fail-closed policy behavior.
 
 ## Current hypotheses / unknowns
 
@@ -34,11 +35,12 @@ ANIMA-HA-P3-GOVERNED-MEMORY-005
 - This SFTP-mounted workspace cannot reliably create a `.venv` symlink or complete mypy traversal; an allowlisted local-filesystem copy passes the full validation and build gate.
 - No native Raspberry Pi run has been performed; ARM64 remains manifest/package evidence only.
 - The canonical journal, truth projection, graph, memory store, derived lexical index, and routine model are PostgreSQL/Psycopg implementations behind ANIMA-owned interfaces. NATS/JetStream, graph extensions, NetworkX persistence, Graphiti, Mem0, FastEmbed, and River remain deferred or rejected for the current phase.
+- OPA/Rego `1.20.1` is the only Phase 4 policy evaluator, pinned by multi-architecture image digest. Cedar remains reference-only; Casbin and OpenFGA are not runtime dependencies.
 
 ## Current blockers
 
-- NONE currently known for Phase 3.
-- Identity/permissions, policy, Home Assistant, Luna, plugins, action execution, durable tasks, UI, and voice remain explicitly out of scope.
+- NONE currently known for Phase 4.
+- Plugins/MCP, Home Assistant, Luna, agent cognition, action execution, verification, durable tasks, external tools, UI, and voice authentication remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -50,6 +52,7 @@ ANIMA-HA-P3-GOVERNED-MEMORY-005
 - Phase 2 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P2-HOUSEHOLD-GRAPH-004/EVIDENCE.md` after checkpoint closure.
 - Phase 2 implementation checkpoint is `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 - Phase 3 implementation checkpoint is `0410cdb148cfcf42021d83bf73a6d239fab37a1d`; the final governed metadata checkpoint is recorded in the completed task evidence and Notion after push verification.
+- Phase 4 implementation and final governed checkpoint are recorded in the completed task evidence and Notion after validation and push verification.
 
 ## Current risks
 
@@ -57,9 +60,10 @@ ANIMA-HA-P3-GOVERNED-MEMORY-005
 - Truth bindings currently consume generic Phase 1 keys; Home Assistant source adapters must remain external-reference mappings when introduced.
 - Public-repository publication requires continued exclusion of secrets, credentials, and runtime state.
 - Mem0/FastEmbed remain unadopted; any future semantic index must first qualify telemetry, offline behavior, model licensing, native ARM64/Pi resource use, and canonical-store rebuild.
+- OPA has official amd64/arm64 image manifests and local REST/policy-test support, but native Raspberry Pi execution and resource measurement remain unverified. No remote bundle or decision-log egress is configured.
 
 ## Next Architect decision point
 
-Architect review of the Phase 3 evidence is required before Phase 4 Identity/Policy. No Phase 4 or later behavior is authorized by this directive.
+Architect review of the Phase 4 evidence is required before Phase 5 Plugin Runtime. No plugin, Home Assistant, Luna, or action behavior is authorized by this directive.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

@@ -66,3 +66,11 @@
 - Codex working tree/runtime: live technical state.
 - `.agent/`: local project state and append-only evidence/history.
 - `.agents/`: reusable Authority operating procedure.
+
+## Phase 4 identity and policy
+
+- `anima_ha.policy` — identity evidence, assurance aggregation, ActionIntent, semantic risk classification, OPA adapter, confirmation challenges, PostgreSQL decision persistence, and fail-closed policy service.
+- `policy/phase4/` — pinned Rego policy data and policy tests.
+- `0005_identity_policy.sql` — evidence, policy bundle, confirmation, and decision tables.
+- `docs/PHASE-4-IDENTITY-POLICY.md` — architecture, prior-art qualification, policy boundary, and evidence limits.
+- OPA image: `openpolicyagent/opa:1.20.1` pinned by multi-architecture index digest in `compose.yaml`.

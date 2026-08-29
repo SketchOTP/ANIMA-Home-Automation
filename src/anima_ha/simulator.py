@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import time
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -21,6 +22,16 @@ from anima_ha.memory import (
     MemoryService,
     MemoryType,
     ProvenanceKind,
+)
+from anima_ha.policy import (
+    ActionIntent,
+    Assurance,
+    EvidenceType,
+    IdentityAggregator,
+    IdentityEvidence,
+    OpaPolicyClient,
+    PolicyService,
+    RequestOrigin,
 )
 from anima_ha.routines import RoutineService
 
@@ -48,6 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
             "rebuild",
             "graph",
             "memory",
+            "policy",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -139,6 +151,53 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 "routine_classification": model.model["classification"],
                 "routine_low_activity_buckets": model.model["low_activity_buckets"],
                 "authority_surface": "none",
+            },
+        )
+    elif scenario == "policy":
+        household_id = uuid4()
+        principal_id = uuid4()
+        now = datetime.now(UTC).replace(microsecond=0)
+        voice = IdentityEvidence(
+            uuid4(),
+            household_id,
+            principal_id,
+            EvidenceType.VOICE_CLAIM,
+            "simulator-policy",
+            now,
+            now,
+            None,
+            Assurance.RECOGNIZED,
+            60,
+            "synthetic-policy",
+        )
+        identity = IdentityAggregator().aggregate(household_id, [voice], now=now)
+        policy_service = PolicyService(
+            OpaPolicyClient(os.environ.get("ANIMA_OPA_URL", "http://127.0.0.1:18181"))
+        )
+        unlock = ActionIntent.create(
+            household_id=household_id,
+            semantic_action="unlock",
+            origin=RequestOrigin.DIRECT_USER,
+            principal_id=principal_id,
+            graph_metadata={"security_sensitive": True},
+        )
+        prohibited = ActionIntent.create(
+            household_id=household_id,
+            semantic_action="install_package",
+            origin=RequestOrigin.DIRECT_USER,
+            principal_id=principal_id,
+        )
+        unlock_decision = policy_service.evaluate(unlock, identity)
+        prohibited_decision = policy_service.evaluate(prohibited, identity)
+        LOGGER.info(
+            "simulator_policy_complete",
+            extra={
+                "unlock_identity": identity.assurance.value,
+                "unlock_decision": unlock_decision.decision.value,
+                "unlock_reason": unlock_decision.reason_code,
+                "prohibited_decision": prohibited_decision.decision.value,
+                "prohibited_reason": prohibited_decision.reason_code,
+                "authority_surface": "policy-evaluation-only",
             },
         )
     elif scenario != "ready":

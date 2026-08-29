@@ -242,3 +242,34 @@ Added forward migration `0004_governed_memory.sql`, `MemoryRecord`/provenance/ta
 - No Mem0 runtime or external embedding network-egress test is applicable because neither is an adopted dependency; source/import scan and local-only integration observation passed.
 - Native Raspberry Pi execution/resource qualification, backup/restore, Home Assistant, Luna, real household, and physical-device evidence remain future work.
 - No autonomous memory extraction or agent-lesson loop exists.
+
+## ANIMA-HA-P4-IDENTITY-POLICY-006 — Phase 4 identity and policy complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build and Phase 1–3 regressions; E3_TARGET_TESTED for x86-64 PostgreSQL + local OPA integration; E2_REPRODUCED for simulator; E1_OBSERVED for ARM64/amd64 image metadata.
+- Implementation and final governed checkpoints are recorded in the completed task evidence after push verification.
+
+### Work performed
+
+Added migration `0005_identity_policy.sql`, ANIMA-owned identity evidence and
+assurance contracts, semantic ActionIntent/risk classification, local pinned
+OPA/Rego policy evaluation, explicit autonomy configuration, exact confirmation
+challenge persistence/consumption, PostgreSQL decision records, Event Journal
+policy audit, fail-closed behavior, policy tests, simulator policy scenario,
+Phase 4 architecture/dependency documentation, and validation workflow updates.
+
+### Acceptance results
+
+- Identity claim/session/voice/proximity distinction, expiry, and conflict handling: PASSED — unit and integration.
+- All required risk classes, four decisions, unknown-risk/admin denial, explicit autonomy, role separation, and memory exclusion: PASSED — OPA integration.
+- Strong-auth, geofence-only access, stale Truth, confirmation binding/replay, and purchase approval: PASSED — OPA/PostgreSQL integration.
+- OPA failure fail-closed, decision persistence, Event Journal audit, migration repeat, and PostgreSQL restart persistence: PASSED — integration.
+- OPA policy check/test, 24 pytest tests, Ruff, strict mypy, Phase 1/2/3 regressions, simulator, package validation, public safety, and clean push: PASSED.
+
+### Risks / limitations
+
+- OPA native ARM64 execution and Pi-class resource measurement remain unverified; official multi-architecture image manifests are observed metadata only.
+- Direct SFTP bind-mount/startup was limited by the colon-bearing GVFS path; local temporary policy copies and normal-path Docker behavior were used for runtime evidence.
+- No physical identity, Home Assistant, Luna, plugin, action-execution, real-door, or real-house evidence is claimed.

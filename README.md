@@ -1,6 +1,6 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline, Phase 1 reality substrate, Phase 2 deterministic Household Graph, and Phase 3 governed memory/routine substrate; cognition and household actions are intentionally not implemented yet.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline, Phase 1 reality substrate, Phase 2 deterministic Household Graph, Phase 3 governed memory/routine substrate, and Phase 4 deterministic identity/policy boundary; cognition and household actions are intentionally not implemented yet.
 
 ## Phase 0 through Phase 3 baseline
 
@@ -17,9 +17,10 @@ This checkpoint provides:
 - an ANIMA-owned PostgreSQL canonical household graph with commissioned topology, recursive place traversal, aliases, provider references, Truth bindings, semantic queries, and journaled graph mutations;
 - an ANIMA-owned PostgreSQL canonical memory store with provenance, lifecycle/correction/expiry/retraction, bounded precedence-aware retrieval, rebuildable local lexical indexing, and explicit degraded fallback;
 - a deterministic journal-derived routine model whose outputs are inferred context rather than Truth, permissions, or automation;
+- ANIMA-owned identity evidence, assurance aggregation, semantic action-risk classification, confirmation challenges, and a local OPA/Rego policy boundary with fail-closed behavior and journaled decisions;
 - a single local validation command and a matching GitHub Actions workflow.
 
-No policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included. Mem0 and local embeddings are not runtime dependencies in this checkpoint.
+No agent cognition, Home Assistant adapter, plugin, UI, voice behavior, action execution, or external action capability is included. Mem0, local embeddings, and policy-editing runtime APIs are not included.
 
 ## Supported baseline
 
@@ -50,6 +51,7 @@ For the full evidence workflow, see [`docs/PHASE-0-RUNTIME-BASELINE.md`](docs/PH
 For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-REALITY-SUBSTRATE.md`](docs/PHASE-1-REALITY-SUBSTRATE.md).
 For the Phase 2 graph contracts, prior-art decisions, commissioning, and evidence boundary, see [`docs/PHASE-2-HOUSEHOLD-GRAPH.md`](docs/PHASE-2-HOUSEHOLD-GRAPH.md).
 For the Phase 3 memory taxonomy, lifecycle, retrieval/index boundary, routine model, prior-art decisions, and evidence boundary, see [`docs/PHASE-3-GOVERNED-MEMORY.md`](docs/PHASE-3-GOVERNED-MEMORY.md).
+For the Phase 4 identity, risk, OPA, confirmation, audit, and fail-closed boundary, see [`docs/PHASE-4-IDENTITY-POLICY.md`](docs/PHASE-4-IDENTITY-POLICY.md).
 
 ## Authority
 

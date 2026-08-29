@@ -1,0 +1,15 @@
+{
+  "policy_version": "phase4-baseline-v1",
+  "anonymous_read": true,
+  "autonomy": {
+    "low_risk_home_control": true,
+    "security_secure_action": true
+  },
+  "assurance_rank": {
+    "ANONYMOUS": 0,
+    "CLAIMED": 1,
+    "RECOGNIZED": 2,
+    "AUTHENTICATED": 3,
+    "STRONG_AUTHENTICATED": 4
+  }
+}

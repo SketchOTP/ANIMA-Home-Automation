@@ -111,3 +111,21 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Architecture: BUILD canonical ANIMA memory/lifecycle/retrieval/routine contracts; ADOPT/WRAP existing PostgreSQL/Psycopg and PostgreSQL full-text derived index; DEFER/WRAP-candidate Mem0; DEFER FastEmbed/pgvector embeddings, LangGraph, Letta, Graphiti, and River.
 - Evidence: unit and synthetic x86-64 PostgreSQL integration; restart persistence; simulator; full static/test/build validation; Phase 1/2 regressions; public-safety and CI evidence.
 - Phase 4 Identity/Policy and later behavior were not implemented.
+
+---
+
+## ANIMA-HA-P4-IDENTITY-POLICY-006 — Identity, Policy and Permission Engine
+
+- Issued: 2026-08-29
+- Status: COMPLETE / PASS pending independent Architect review
+- Project stage: IMPLEMENTATION PHASE 4 — IDENTITY AND POLICY
+- Objective: Build deterministic identity evidence, assurance, semantic action-risk classification, policy evaluation, confirmation, autonomy, decision audit, and fail-closed behavior before Phase 5.
+- Exclusions: No Phase 5 plugins/MCP, Home Assistant, Luna, agent cognition, action execution, verification, durable tasks, external tools, UI, voice authentication, or biometric recognition.
+- Decisions: ADOPT / WRAP local OPA/Rego 1.20.1; BUILD ANIMA contracts, risk, identity, confirmation, audit, and fail-closed adapter; REFERENCE Cedar/Casbin; DEFER/REJECT OpenFGA for this phase.
+- Source: Architect directive `ANIMA-HA-P4-IDENTITY-POLICY-006`.
+
+### Completion record
+
+- Completed: 2026-08-29
+- Evidence: `.agent/tasks/completed/ANIMA-HA-P4-IDENTITY-POLICY-006/EVIDENCE.md`; GitHub Actions run recorded at final checkpoint.
+- Phase 5 Plugin Runtime and later behavior were not implemented.

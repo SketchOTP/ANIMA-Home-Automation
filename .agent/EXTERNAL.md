@@ -174,3 +174,13 @@ Requalify before adopting Mem0 or embeddings, enabling agent/Luna memory
 extraction, deploying on native Raspberry Pi, changing the PostgreSQL image,
 or introducing drift/online-learning requirements that exceed direct
 aggregation.
+
+## ANIMA-HA-P4-IDENTITY-POLICY-006 — policy-engine qualification
+
+- Date checked: 2026-08-29
+- Sources: [OPA v1.20.1 release](https://github.com/open-policy-agent/opa/releases/tag/v1.20.1), [OPA integration](https://www.openpolicyagent.org/docs/integration), [OPA Docker](https://www.openpolicyagent.org/docs/deploy/docker), [OPA bundles](https://www.openpolicyagent.org/docs/management-bundles), [OPA policy testing](https://www.openpolicyagent.org/docs/policy-testing), [Cedar authorization](https://docs.cedarpolicy.com/auth/authorization.html), [Cedar implementation](https://github.com/cedar-policy/cedar), [OpenFGA concepts](https://openfga.dev/docs/concepts), and [Casbin](https://casbin.org/).
+- OPA v1.20.1 is Apache-2.0 and was the current stable upstream release observed on this date. The pinned image index is `sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff`; observed amd64 and arm64 manifests are recorded in `docs/PHASE-4-IDENTITY-POLICY.md`.
+- OPA's local REST evaluation, structured JSON result, filesystem/bundle policy loading, and `opa test` fit the required replaceable evaluator boundary. Compose uses a loopback-only service and read-only policy mount with no remote bundle or decision-log destination.
+- Cedar is reference-only because its native authorizer result is allow/deny; Casbin is reference/reject as core because it does not materially reduce the contextual four-way policy contract; OpenFGA is deferred/rejected for this phase because ReBAC tuples are not the primary household policy problem.
+- Disposition: ADOPT / WRAP OPA; BUILD ANIMA contracts, risk classification, identity aggregation, confirmation, audit, and fail-closed wrapper; REFERENCE Cedar/Casbin; DEFER/REJECT OpenFGA.
+- Recheck trigger: policy schema expansion, native Pi qualification, OPA image update, external bundle/decision logging, or Phase 5 capability integration.

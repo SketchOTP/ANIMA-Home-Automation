@@ -60,6 +60,10 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 
 - `docs/PHASE-2-HOUSEHOLD-GRAPH.md` — canonical graph architecture, prior art, commissioning, query surface, and evidence boundaries.
 - `docs/PHASE-3-GOVERNED-MEMORY.md` — canonical memory/routine architecture, lifecycle, retrieval/index boundary, dependency decisions, and evidence boundaries.
+- `src/anima_ha/policy.py` — ANIMA-owned identity evidence, assurance, ActionIntent/risk classification, OPA adapter, confirmation, decision persistence, and fail-closed policy service.
+- `policy/phase4/` — pinned Rego policy data and `opa test` matrix.
+- `scripts/verify_phase4_policy.py` — synthetic x86-64 PostgreSQL + local OPA integration evidence.
+- `docs/PHASE-4-IDENTITY-POLICY.md` — identity, risk, OPA, confirmation, audit, and fail-closed architecture.
 
 ## Known sensitive/high-risk areas
 

@@ -75,3 +75,12 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Explicit context can outrank inferred routine context by deterministic precedence while remaining separate from Truth and policy. Routine output must state what it does not prove.
 - The current Mem0 source package is Apache-2.0/Python >=3.10 and includes telemetry paths; FastEmbed 0.8.0 is a lightweight ONNX candidate; neither is adopted until offline/privacy/native-ARM64/resource qualification is complete.
 - Direct journal aggregation is smaller than adding River for the current routine requirements; upgrade only when measured drift or online-learning requirements justify it.
+
+## ANIMA-HA-P4-IDENTITY-POLICY-006 — Deterministic authority boundary
+
+- OPA/Rego 1.20.1 is a suitable local replaceable evaluator for ANIMA's structured policy contract; pin both the multi-architecture image digest and the ANIMA policy bundle digest.
+- Identity evidence is not authority: voice and local proximity remain recognized evidence, while strong authentication requires an evidence type and assurance rule that explicitly supports it.
+- Conflicting principal evidence must not strengthen identity; resolving to anonymous/conflicted context is safer than selecting one claim.
+- Explicit Anima autonomy is policy configuration, not memory or routine inference. Household roles are descriptive inputs and do not grant authority without policy.
+- Confirmation and stronger authentication are separate: an exact, expiring, single-use confirmation can authorize a confirmation-gated external/financial operation but does not silently upgrade identity assurance.
+- Policy evaluator failure, malformed output, and unavailable service must produce a durable `DENY` rather than fallback to model or remembered judgment.

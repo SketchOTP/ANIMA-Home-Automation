@@ -132,3 +132,12 @@ full validation, package build, simulator, and public-safety checks passed.
 Phase 4 may consume relevant governed memory after Architect review. Identity,
 policy, permissions, Home Assistant, Luna, plugins, actions, durable tasks,
 UI, and voice remain out of scope.
+
+## ANIMA-HA-P4-IDENTITY-POLICY-006 — Deterministic identity and policy milestone
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Decision: Adopt and wrap local OPA/Rego 1.20.1 behind ANIMA-owned identity, intent, risk, confirmation, audit, and fail-closed contracts.
+- Evidence: OPA policy tests, x86-64 PostgreSQL integration, restart persistence, simulator, Phase 1–3 regressions, static validation, package validation, and public-safety scan passed.
+- Boundary: No policy-write runtime API, memory authority, Home Assistant, Luna, plugin, action-execution, physical identity, or real-home behavior was introduced.
+- Consequence: Phase 5 Plugin Runtime remains gated on independent Architect review of this checkpoint.

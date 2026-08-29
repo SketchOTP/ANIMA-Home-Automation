@@ -10,10 +10,10 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 3 — GOVERNED MEMORY COMPLETE
-- Active directive: ANIMA-HA-P3-GOVERNED-MEMORY-005
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P3-GOVERNED-MEMORY-005/`
-- Last accepted outcome: ANIMA-HA-P3-GOVERNED-MEMORY-005 (pending Architect review)
+- Current stage: IMPLEMENTATION PHASE 4 — IDENTITY AND POLICY COMPLETE
+- Active directive: ANIMA-HA-P4-IDENTITY-POLICY-006
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P4-IDENTITY-POLICY-006/`
+- Last accepted outcome: ANIMA-HA-P3-GOVERNED-MEMORY-005 (accepted by Architect)
 - Last state sync: 2026-08-29
 
 ## Mandatory kernel

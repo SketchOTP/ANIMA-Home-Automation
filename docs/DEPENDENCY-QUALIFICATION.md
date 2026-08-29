@@ -85,3 +85,24 @@ local index.
 | Python standard-library statistics | ADOPT | No extra dependency; deterministic routine aggregation and confidence calculation. |
 
 Primary Phase 3 sources are linked in [`docs/PHASE-3-GOVERNED-MEMORY.md`](PHASE-3-GOVERNED-MEMORY.md). Recheck Mem0, FastEmbed, River, model files, and PostgreSQL/pgvector before adopting a semantic index, native Pi deployment, or agent/runtime integration.
+
+## Phase 4 policy and identity boundary
+
+- Date checked: 2026-08-29
+- Selected policy image: `openpolicyagent/opa:1.20.1@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff`
+- Image manifests observed with `docker buildx imagetools inspect`: Linux amd64 `sha256:4ea5e3f5c5fa36f300448c701d48a5411ee3b7eafe399ec58cf5fb777853ad86`; Linux arm64 `sha256:909992a577c26e3cc5ce996e81760c0786cf55bb5c3dc3f31476f76a30827427`.
+- License: Apache-2.0, verified from the upstream repository license.
+- Maintenance: v1.20.1 was the current stable upstream release observed on 2026-08-29; the release fixed a v1.20.0 numeric-comparison regression.
+- Fit: local HTTP evaluation, structured JSON result, Rego tests, filesystem policy loading, and bundle support match ANIMA's replaceable policy boundary.
+- Runtime: the official image is small enough for a Pi-class local service; this checkpoint measures the host runtime, not native Pi runtime.
+- Security boundary: Compose binds OPA to loopback, mounts policies read-only, configures no remote bundle or decision-log destination, and routes all evaluator errors to ANIMA fail-closed denial.
+- Restart/replacement path: replace the image with another pinned OPA release or replace `OpaPolicyClient` with another evaluator implementing the ANIMA contract; policy version/digest remains attached to every decision.
+- Sources: [OPA release](https://github.com/open-policy-agent/opa/releases/tag/v1.20.1), [OPA integration](https://www.openpolicyagent.org/docs/integration), [OPA Docker](https://www.openpolicyagent.org/docs/deploy/docker), [OPA bundles](https://www.openpolicyagent.org/docs/management-bundles), [OPA tests](https://www.openpolicyagent.org/docs/policy-testing), [Cedar](https://docs.cedarpolicy.com/auth/authorization.html), [OpenFGA](https://openfga.dev/docs/concepts), and [Casbin](https://casbin.org/).
+
+| Candidate | Disposition | Result |
+| --- | --- | --- |
+| OPA/Rego 1.20.1 | ADOPT / WRAP | Local structured evaluator; ANIMA owns contracts, risk, identity, audit, and fail-closed behavior |
+| Cedar | REFERENCE | Typed policy/schema lessons; native output is allow/deny |
+| Casbin | REFERENCE / REJECT as core | Embedded RBAC/ABAC is useful but not a material fit improvement for the required four-way contextual result |
+| OpenFGA | DEFER / REJECT for Phase 4 | ReBAC tuple service is unnecessary for current household policy scale |
+| Direct Python | BUILD for wrapper/contracts only | Used for ANIMA-owned semantics, not as a replacement for policy-as-code evaluation |
