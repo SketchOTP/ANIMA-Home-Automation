@@ -29,6 +29,7 @@
 - Home Assistant — household automation substrate and replaceable device/event adapter.
 - Luna 5.6 with medium reasoning — primary cloud cognition model for the prototype.
 - Modular plugins/connectors/MCP — customer-selectable external and household capabilities behind ANIMA-owned contracts.
+- Phase 5 dependencies: `mcp==2.1.1` and `jsonschema==4.26.0`, wrapped behind the ANIMA plugin/tool boundary; no plugin package installation is available at runtime.
 
 ## Phase 1 reality substrate
 
@@ -73,4 +74,7 @@
 - `policy/phase4/` — pinned Rego policy data and policy tests.
 - `0005_identity_policy.sql` — evidence, policy bundle, confirmation, and decision tables.
 - `docs/PHASE-4-IDENTITY-POLICY.md` — architecture, prior-art qualification, policy boundary, and evidence limits.
+- `anima_ha.plugins` — manifest validation, native entry-point discovery, lifecycle, normalized tool registry, MCP stdio/Streamable HTTP adapter, policy-gated invocation, secret/config boundary, event ingress, persistence, and failure containment.
+- `anima_ha.mcp_reference` — synthetic out-of-process MCP reference server used by Phase 5 tests.
+- `docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md` — plugin/capability architecture, dependency decisions, trust boundary, and evidence limitations.
 - OPA image: `openpolicyagent/opa:1.20.1` pinned by multi-architecture index digest in `compose.yaml`.

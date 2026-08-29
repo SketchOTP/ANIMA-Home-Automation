@@ -64,9 +64,15 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `policy/phase4/` — pinned Rego policy data and `opa test` matrix.
 - `scripts/verify_phase4_policy.py` — synthetic x86-64 PostgreSQL + local OPA integration evidence.
 - `docs/PHASE-4-IDENTITY-POLICY.md` — identity, risk, OPA, confirmation, audit, and fail-closed architecture.
+- `src/anima_ha/plugins.py` — ANIMA-owned plugin manifests, lifecycle, capability/tool registry, native/MCP runtimes, JSON Schema boundary, policy-gated invocation, secrets/config isolation, persistence, and event ingress.
+- `src/anima_ha/mcp_reference.py` — synthetic MCP stdio server for bounded Phase 5 integration evidence.
+- `src/anima_ha/db/migrations/0006_plugin_runtime.sql` — plugin and normalized tool persistence.
+- `scripts/verify_phase5_plugins.py` — PostgreSQL/OPA/MCP/native lifecycle and persistence integration harness.
+- `tests/test_plugins.py` — Phase 5 contract, policy-gate, schema, discovery, failure, and MCP stdio tests.
+- `docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md` — plugin runtime architecture and qualification decisions.
 
 ## Known sensitive/high-risk areas
 
-- Future Home Assistant, identity/authority, credentials, external connectors, physical actions, and semantic embedding services require explicit boundaries and qualification. Memory is implemented but remains local, synthetic, and pre-cognition.
+- Future Home Assistant, identity/authority, credentials, external connectors, physical actions, and semantic embedding services require explicit boundaries and qualification. Memory, policy, and plugin runtime are implemented but remain local, synthetic, and pre-cognition. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.

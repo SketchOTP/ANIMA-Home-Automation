@@ -184,3 +184,16 @@ aggregation.
 - Cedar is reference-only because its native authorizer result is allow/deny; Casbin is reference/reject as core because it does not materially reduce the contextual four-way policy contract; OpenFGA is deferred/rejected for this phase because ReBAC tuples are not the primary household policy problem.
 - Disposition: ADOPT / WRAP OPA; BUILD ANIMA contracts, risk classification, identity aggregation, confirmation, audit, and fail-closed wrapper; REFERENCE Cedar/Casbin; DEFER/REJECT OpenFGA.
 - Recheck trigger: policy schema expansion, native Pi qualification, OPA image update, external bundle/decision logging, or Phase 5 capability integration.
+
+## ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 — plugin and MCP qualification
+
+- Date checked: 2026-08-29
+- Sources: [MCP Python SDK 2.1.1 on PyPI](https://pypi.org/project/mcp/2.1.1/), [official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), [PyPA entry points](https://packaging.python.org/en/latest/specifications/entry-points/), [PyPA plugin discovery](https://packaging.python.org/en/latest/guides/creating-and-discovering-plugins/), [jsonschema](https://pypi.org/project/jsonschema/), and [Pluggy documentation](https://pluggy.readthedocs.io/en/stable/).
+- MCP `2.1.1` is the current stable v2 release observed on this date. Its PyPI wheel is pure Python, MIT-licensed, and publishes the v2 line; the official SDK documents client support for local stdio and URL-based Streamable HTTP. The package's transitive async/HTTP stack is pinned by `uv.lock`; no native extension is required by the MCP package itself. Native ARM64 execution was not performed.
+- `jsonschema 4.26.0` is MIT, Python >=3.10, production/stable, and supports Draft 2020-12. It is adopted only behind ANIMA's schema boundary; schemas are size/depth bounded and `$ref` is rejected to prevent automatic remote dereferencing.
+- PyPA defines entry-point groups as the portable installed-plugin advertisement mechanism and documents `importlib.metadata.entry_points(group=...)`; ANIMA adopts the standard group but does not auto-enable discovered plugins.
+- Pluggy is maintained MIT-licensed in-process hook/registry prior art; it does not provide MCP transport, process isolation, secret minimization, or ANIMA policy ownership, so it remains reference-only.
+- FastMCP is reference/deferred because the official SDK `MCPServer` is sufficient for the synthetic server and adopting another server abstraction would add coupling without saving meaningful Phase 5 work.
+- Subprocess MCP is adopted for optional plugin failure containment; it is explicitly not a malicious-code sandbox. Container-per-plugin isolation is deferred pending a later measured security/deployment requirement.
+- Disposition: BUILD ANIMA manifest/registry/lifecycle/invocation/secrets/config/event/audit; ADOPT/WRAP official MCP and `jsonschema`; ADOPT standard entry-point discovery; REFERENCE/DEFER FastMCP and Pluggy; DEFER container sandbox and marketplace/install/update services.
+- Recheck trigger: MCP SDK release/protocol change, Streamable HTTP deployment, native Pi qualification, malicious-code isolation requirement, or Phase 6/Home Assistant capability integration.

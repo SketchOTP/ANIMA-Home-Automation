@@ -10,10 +10,10 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 4 — IDENTITY AND POLICY COMPLETE
-- Active directive: ANIMA-HA-P4-IDENTITY-POLICY-006
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P4-IDENTITY-POLICY-006/`
-- Last accepted outcome: ANIMA-HA-P3-GOVERNED-MEMORY-005 (accepted by Architect)
+- Current stage: IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME
+- Active directive: ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007/`
+- Last accepted outcome: ANIMA-HA-P4-IDENTITY-POLICY-006 (accepted by Architect at `50ea9c73e31b2037120da5d12e04555fa08b1da5`)
 - Last state sync: 2026-08-29
 
 ## Mandatory kernel

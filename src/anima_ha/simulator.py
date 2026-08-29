@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import sys
 import time
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -23,11 +24,22 @@ from anima_ha.memory import (
     MemoryType,
     ProvenanceKind,
 )
+from anima_ha.plugins import (
+    CORE_VERSION,
+    NATIVE_SIMULATOR_MANIFEST,
+    McpRuntime,
+    NativeSimulatorPlugin,
+    PluginManager,
+    PluginManifest,
+    RuntimeKind,
+    TrustClass,
+)
 from anima_ha.policy import (
     ActionIntent,
     Assurance,
     EvidenceType,
     IdentityAggregator,
+    IdentityContext,
     IdentityEvidence,
     OpaPolicyClient,
     PolicyService,
@@ -60,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
             "graph",
             "memory",
             "policy",
+            "plugins",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -198,6 +211,67 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 "prohibited_decision": prohibited_decision.decision.value,
                 "prohibited_reason": prohibited_decision.reason_code,
                 "authority_surface": "policy-evaluation-only",
+            },
+        )
+    elif scenario == "plugins":
+        manager = PluginManager()
+        native = NativeSimulatorPlugin()
+        manager.register(NATIVE_SIMULATOR_MANIFEST, native)
+        mcp_manifest = PluginManifest(
+            plugin_id="anima.simulator.mcp",
+            plugin_version="0.1.0",
+            manifest_version=1,
+            requires_core=CORE_VERSION,
+            name="Simulator MCP",
+            description="Synthetic MCP capability",
+            runtime_kind=RuntimeKind.MCP_STDIO,
+            trust_class=TrustClass.OPTIONAL_EXTERNAL,
+            capabilities=("home.simulation",),
+            tools=(
+                {
+                    "name": "synthetic_echo",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {"message": {"type": "string"}},
+                        "required": ["message"],
+                        "additionalProperties": False,
+                    },
+                    "risk_class": "READ_ONLY",
+                    "semantic_action": "query_plugin",
+                    "read_only": True,
+                    "idempotency": "IDEMPOTENT",
+                    "external_content_trust": "PLUGIN_TRUSTED",
+                },
+            ),
+        )
+        manager.register(
+            mcp_manifest,
+            McpRuntime(
+                RuntimeKind.MCP_STDIO, command=sys.executable, args=["-m", "anima_ha.mcp_reference"]
+            ),
+        )
+        native_state = manager.enable(NATIVE_SIMULATOR_MANIFEST.plugin_id).state.value
+        mcp_state = manager.enable(mcp_manifest.plugin_id).state.value
+        identity = IdentityContext(uuid4(), None, Assurance.ANONYMOUS)
+        policy_service = PolicyService(
+            OpaPolicyClient(os.environ.get("ANIMA_OPA_URL", "http://127.0.0.1:18181"))
+        )
+        plugin_result = manager.invoke(
+            "anima.simulator.mcp.synthetic_echo",
+            {"message": "simulator"},
+            household_id=identity.household_id,
+            identity=identity,
+            policy_service=policy_service,
+        )
+        manager.disable(mcp_manifest.plugin_id)
+        LOGGER.info(
+            "simulator_plugins_complete",
+            extra={
+                "native_state": native_state,
+                "mcp_state": mcp_state,
+                "invocation": plugin_result.outcome.value,
+                "registry_after_disable": len(manager.list_tools()),
+                "authority_surface": "policy-gated-plugin-invocation",
             },
         )
     elif scenario != "ready":

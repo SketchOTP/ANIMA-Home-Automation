@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 4 — IDENTITY AND POLICY COMPLETE
+IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME
 
 ## Current objective
 
-Complete the deterministic identity, policy, and permission boundary required before plugins, Home Assistant, Luna, and action execution.
+Complete the modular plugin runtime and capability/tool registry while preserving the Phase 4 authority boundary.
 
 ## Active directive
 
-ANIMA-HA-P4-IDENTITY-POLICY-006
+ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
 
 ## Current verified state
 
@@ -35,12 +35,13 @@ ANIMA-HA-P4-IDENTITY-POLICY-006
 - This SFTP-mounted workspace cannot reliably create a `.venv` symlink or complete mypy traversal; an allowlisted local-filesystem copy passes the full validation and build gate.
 - No native Raspberry Pi run has been performed; ARM64 remains manifest/package evidence only.
 - The canonical journal, truth projection, graph, memory store, derived lexical index, and routine model are PostgreSQL/Psycopg implementations behind ANIMA-owned interfaces. NATS/JetStream, graph extensions, NetworkX persistence, Graphiti, Mem0, FastEmbed, and River remain deferred or rejected for the current phase.
-- OPA/Rego `1.20.1` is the only Phase 4 policy evaluator, pinned by multi-architecture image digest. Cedar remains reference-only; Casbin and OpenFGA are not runtime dependencies.
+- OPA/Rego `1.20.1` remains the only Phase 4 policy evaluator, pinned by multi-architecture image digest. Cedar remains reference-only; Casbin and OpenFGA are not runtime dependencies.
+- Phase 5 accepted baseline is Phase 4 governed SHA `50ea9c73e31b2037120da5d12e04555fa08b1da5` with CI run `33271197523`; this directive's implementation checkpoint must remain separately identified from that accepted product checkpoint.
 
 ## Current blockers
 
-- NONE currently known for Phase 4.
-- Plugins/MCP, Home Assistant, Luna, agent cognition, action execution, verification, durable tasks, external tools, UI, and voice authentication remain explicitly out of scope.
+- NONE currently known for Phase 5.
+- Home Assistant, Luna, agent cognition, action execution, verification, durable tasks, external tools, UI, and voice authentication remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -52,7 +53,7 @@ ANIMA-HA-P4-IDENTITY-POLICY-006
 - Phase 2 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P2-HOUSEHOLD-GRAPH-004/EVIDENCE.md` after checkpoint closure.
 - Phase 2 implementation checkpoint is `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 - Phase 3 implementation checkpoint is `0410cdb148cfcf42021d83bf73a6d239fab37a1d`; the final governed metadata checkpoint is recorded in the completed task evidence and Notion after push verification.
-- Phase 4 implementation checkpoint is `67f9b785af4f22e4a9d6e1358478f74d8444eade`; final governed checkpoint is `7ebd324e5a49446fea20ae9a47d92248783c58e9`, GitHub Actions run `33271150640` passed, and GitHub `main` resolves to the same SHA.
+- Phase 4 accepted governed checkpoint is `50ea9c73e31b2037120da5d12e04555fa08b1da5`; accepted CI run is `33271197523`. Later metadata-only self-reference is not treated as a new product acceptance.
 
 ## Current risks
 
@@ -61,9 +62,10 @@ ANIMA-HA-P4-IDENTITY-POLICY-006
 - Public-repository publication requires continued exclusion of secrets, credentials, and runtime state.
 - Mem0/FastEmbed remain unadopted; any future semantic index must first qualify telemetry, offline behavior, model licensing, native ARM64/Pi resource use, and canonical-store rebuild.
 - OPA has official amd64/arm64 image manifests and local REST/policy-test support, but native Raspberry Pi execution and resource measurement remain unverified. No remote bundle or decision-log egress is configured.
+- Phase 5 MCP and subprocess evidence will be synthetic/x86-64 unless a native ARM64 run is explicitly performed; subprocess isolation is not a malicious-code sandbox.
 
 ## Next Architect decision point
 
-Architect review of the Phase 4 evidence is required before Phase 5 Plugin Runtime. No plugin, Home Assistant, Luna, or action behavior is authorized by this directive.
+Architect review of the Phase 5 evidence is required before Phase 6 Home Assistant integration. No Home Assistant, Luna, physical action, or later behavior is authorized by this directive.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

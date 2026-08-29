@@ -129,3 +129,16 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Completed: 2026-08-29
 - Evidence: `.agent/tasks/completed/ANIMA-HA-P4-IDENTITY-POLICY-006/EVIDENCE.md`; GitHub Actions run recorded at final checkpoint.
 - Phase 5 Plugin Runtime and later behavior were not implemented.
+
+---
+
+## ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 — Plugin Runtime and Capability/Tool Registry
+
+- Issued: 2026-08-29
+- Status: IN PROGRESS
+- Project stage: IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME
+- Objective: Build the ANIMA-owned manifest, lifecycle, capability registry, normalized tool descriptor, MCP/native runtime boundary, policy-gated invocation, secret/config isolation, validated plugin event ingress, persistence, and failure containment.
+- Reconciled prerequisite: Phase 4 accepted product checkpoint `50ea9c73e31b2037120da5d12e04555fa08b1da5`; accepted CI `33271197523`. This directive does not create a checkpoint loop for that accepted history.
+- Exclusions: No Home Assistant adapter, Luna/Agents SDK, physical actions, action verification, durable tasks, production external services, UI, voice, or runtime package installation.
+- Required external discovery: Official MCP Python SDK v2, FastMCP, PyPA entry points, Pluggy, JSON Schema validation, and subprocess/container isolation.
+- Source: Architect directive `ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007`.

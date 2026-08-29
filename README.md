@@ -52,6 +52,7 @@ For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-RE
 For the Phase 2 graph contracts, prior-art decisions, commissioning, and evidence boundary, see [`docs/PHASE-2-HOUSEHOLD-GRAPH.md`](docs/PHASE-2-HOUSEHOLD-GRAPH.md).
 For the Phase 3 memory taxonomy, lifecycle, retrieval/index boundary, routine model, prior-art decisions, and evidence boundary, see [`docs/PHASE-3-GOVERNED-MEMORY.md`](docs/PHASE-3-GOVERNED-MEMORY.md).
 For the Phase 4 identity, risk, OPA, confirmation, audit, and fail-closed boundary, see [`docs/PHASE-4-IDENTITY-POLICY.md`](docs/PHASE-4-IDENTITY-POLICY.md).
+For the Phase 5 manifest, lifecycle, native/MCP runtime, capability registry, policy gate, secrets, event ingress, and failure containment, see [`docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md`](docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md).
 
 ## Authority
 
