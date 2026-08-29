@@ -18,6 +18,10 @@ compose.yaml           isolated PostgreSQL development service
 
 Future Phase 1 modules must be added behind ANIMA-owned interfaces and may not turn this baseline migration into a product schema without a new directive.
 
+## Versioning strategy
+
+ANIMA Core is versioned as the Python distribution version in `pyproject.toml` using PEP 440-compatible versions; this checkpoint is `0.1.0`. Future plugins will be independently versioned distributions or connectors, will declare the Core contract version they support, and will be selected through the customer capability profile. Plugin compatibility and replacement decisions belong to the plugin phase; no plugin runtime is implemented here.
+
 ## Fresh checkout
 
 1. Install `uv 0.12.7` from the official uv distribution.

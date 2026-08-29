@@ -19,6 +19,7 @@
 - pytest: PASSED, 4 tests.
 - Source distribution and wheel build: PASSED; migration SQL included in wheel.
 - Fresh checkout from the implementation checkpoint: PASSED for sync, validation, build, simulator readiness, and repeat migrations.
+- Core versioning strategy: PASSED; Core uses the PEP 440 package version and future plugins will independently declare Core contract compatibility.
 - PostgreSQL container health: PASSED; PostgreSQL 16.15, pgvector 0.8.6 available.
 - Migration initialization/repeat: PASSED; first run applied `0001_runtime_baseline`, repeat applied zero.
 - Restart persistence: PASSED; migration/runtime metadata remained present after `docker compose restart db`.
