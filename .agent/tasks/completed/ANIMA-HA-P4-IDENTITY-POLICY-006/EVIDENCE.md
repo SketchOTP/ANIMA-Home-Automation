@@ -4,7 +4,8 @@
 
 - Starting checkpoint: `66a6f94f999e9e5d1b0134945b3e6aae3a00d60d`, clean `main` tracking `origin/main`.
 - Retrieval confidence: `ADEQUATE`.
-- Implementation checkpoint and final governed checkpoint are recorded in the final GitHub and Notion readback after commit/push.
+- Implementation checkpoint: `67f9b785af4f22e4a9d6e1358478f74d8444eade`.
+- Final governed checkpoint: `7ebd324e5a49446fea20ae9a47d92248783c58e9`; GitHub Actions run `33271150640` passed and remote `main` resolves to this SHA.
 
 ## Dependency decision
 
@@ -42,6 +43,8 @@
 - Strict mypy: `PASSED`, 23 source files.
 - Pytest: `PASSED`, 24 tests.
 - Package validation: `PASSED` from local-disk reproduction checkout; direct SFTP `uv build` remains blocked by the mount's `.venv` symlink limitation.
+- Fresh-checkout reproduction: `PASSED` from a clean local-disk clone at the final SHA; locked sync, idempotent migration, full validation, and package build succeeded.
+- CI: `PASSED`, GitHub Actions run `33271150640` on final SHA.
 - Public-safety scan and clean-tree verification: performed before final push.
 
 ## Evidence limits

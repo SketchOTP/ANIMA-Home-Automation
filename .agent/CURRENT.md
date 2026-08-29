@@ -52,7 +52,7 @@ ANIMA-HA-P4-IDENTITY-POLICY-006
 - Phase 2 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P2-HOUSEHOLD-GRAPH-004/EVIDENCE.md` after checkpoint closure.
 - Phase 2 implementation checkpoint is `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 - Phase 3 implementation checkpoint is `0410cdb148cfcf42021d83bf73a6d239fab37a1d`; the final governed metadata checkpoint is recorded in the completed task evidence and Notion after push verification.
-- Phase 4 implementation and final governed checkpoint are recorded in the completed task evidence and Notion after validation and push verification.
+- Phase 4 implementation checkpoint is `67f9b785af4f22e4a9d6e1358478f74d8444eade`; final governed checkpoint is `7ebd324e5a49446fea20ae9a47d92248783c58e9`, GitHub Actions run `33271150640` passed, and GitHub `main` resolves to the same SHA.
 
 ## Current risks
 
