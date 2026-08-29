@@ -35,3 +35,18 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - External discovery: NOT REQUIRED unless an unexpected Git/Authority issue requires authoritative documentation.
 - Stop/escalation conditions: Meaningful history conflict, unclear sensitive-material publication, goal disagreement, uncorrectable validation failure, blocked authentication/permissions, or any need for implementation.
 - Source: Architect directive `ANIMA-HA-P0-GOVERNANCE-BASELINE-001`.
+
+---
+
+## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Establish Implementation Phase 0 runtime baseline
+
+- Issued: 2026-08-28
+- Status: IN PROGRESS
+- Project stage: IMPLEMENTATION PHASE 0 — RUNTIME BASELINE
+- Goal link: Establishes the reproducible repository and runtime foundation required before Phase 1 truth/state work while preserving `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE`.
+- Objective: Establish the smallest portable Python, tooling, isolated PostgreSQL, migration, simulator, validation, and CI baseline with no household intelligence.
+- Scope: Runtime/toolchain qualification, package structure, configuration/secrets boundary, JSON logging, tests/lint/type checks, CI, PostgreSQL/pgvector evaluation, runtime-only migrations, versioning, simulator entrypoint, restart/persistence proof, fresh-checkout proof, documentation, and governed records.
+- Exclusions: No Event Journal, Truth/State, household graph, memory, policy, agent cognition, Home Assistant adapter, NATS semantics, plugins/MCP, durable tasks, external tools, UI, voice, or product schema.
+- Required external discovery: Current primary/official sources for Python packaging/tooling, PostgreSQL/pgvector, Docker portability, and GitHub Actions.
+- Stop/escalation conditions: Incompatible licensing, no credible ARM64 path, Pi-incompatible architecture, irreproducible fresh checkout, unexpectedly heavy infrastructure, premature Phase 1 semantics, unsafe public publication, or SSOT architecture change.
+- Source: Architect directive `ANIMA-HA-P0-RUNTIME-BASELINE-002`.

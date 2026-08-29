@@ -16,11 +16,13 @@
 
 ## Technical profile
 
-- Languages: UNKNOWN — implementation has not started
-- Frameworks: UNKNOWN — implementation has not started
-- Major dependencies: NONE ADOPTED — candidates are governed by the Notion SSOT and require qualification
-- Build/test commands: NONE DEFINED — implementation has not started
+- Languages: Python 3.12.x
+- Frameworks: None adopted in Phase 0; modular monolith package boundary is established
+- Major dependencies: `psycopg[binary]` 3.3.4; development tools are pinned in `pyproject.toml` and `uv.lock`
+- Build/test commands: `uv sync --locked --dev`; `./scripts/validate.sh`; `uv build`
 - Runtime environments: Target Raspberry Pi 5-class ARM64 controller; portable ARM64/x86-64 development/target environments
+- Persistent substrate: PostgreSQL 16.15 through pinned pgvector 0.8.6 image digest; runtime-only migration metadata in Phase 0
+- Local infrastructure: Docker Engine with Compose v2 and a named PostgreSQL volume
 
 ## Important integrations
 

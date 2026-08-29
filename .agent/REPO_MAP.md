@@ -1,14 +1,20 @@
 # Repository Map
 
-Last verified against: GOVERNANCE CHECKPOINT 2026-08-28
+Last verified against: IMPLEMENTATION PHASE 0 RUNTIME BASELINE 2026-08-28
 
 ## Entry points
 
-- NONE — implementation has not started; repository entry point is not yet defined.
+- `anima-validate` — deterministic local format/lint/type/unit gate.
+- `anima-migrate` — runtime-only ordered SQL migration runner.
+- `anima-sim` — readiness-only simulator framework entrypoint; household events are deferred.
 
 ## Major modules / packages
 
-- NONE — implementation has not started.
+- `src/anima_ha/config.py` — environment-backed runtime configuration.
+- `src/anima_ha/logging_setup.py` — JSON structured logging boundary.
+- `src/anima_ha/db/` — PostgreSQL connection and runtime migration boundary.
+- `src/anima_ha/simulator.py` — future synthetic-input entrypoint without event semantics.
+- `tests/` — deterministic Phase 0 unit tests.
 
 ## Important interfaces / contracts
 
@@ -19,7 +25,7 @@ Last verified against: GOVERNANCE CHECKPOINT 2026-08-28
 
 ## Tests
 
-- NONE — implementation has not started.
+- `uv run --locked --group dev pytest` — four baseline tests.
 
 ## Generated / cache / build areas
 
@@ -32,6 +38,15 @@ Last verified against: GOVERNANCE CHECKPOINT 2026-08-28
 - `.agent/`
 - `.gitignore`
 - `LICENSE`
+
+## Phase 0 infrastructure
+
+- `compose.yaml` — isolated, health-checked pgvector/PostgreSQL service with named persistence volume.
+- `docs/PHASE-0-RUNTIME-BASELINE.md` — setup, boundaries, and evidence limits.
+- `docs/DEPENDENCY-QUALIFICATION.md` — dependency decisions, sources, licenses, and recheck triggers.
+- `.github/workflows/ci.yml` — hosted CI invoking the same validation command.
+
+The `src/anima_ha/db` area is runtime-only. It is not a Phase 1 Event Journal, Truth/State, memory, graph, policy, or household schema.
 
 ## Known sensitive/high-risk areas
 

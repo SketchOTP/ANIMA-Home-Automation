@@ -4,42 +4,45 @@ Last updated: 2026-08-28
 
 ## Current stage
 
-GOVERNANCE BASELINE
+IMPLEMENTATION PHASE 0 — RUNTIME BASELINE
 
 ## Current objective
 
-Reconcile the installed Authority 3.0 governance package with the existing GitHub repository and publish a verified governance-only checkpoint to `main`.
+Complete the minimal reproducible repository/runtime/engineering baseline required before Phase 1 truth/state work.
 
 ## Active directive
 
-NONE
+ANIMA-HA-P0-RUNTIME-BASELINE-002
 
 ## Current verified state
 
 - The project directory was empty before this bootstrap.
-- No ANIMA HA implementation, tests, or dependencies are present in the project directory.
+- Phase 0 now contains only runtime/engineering baseline code; no household intelligence or product behavior is implemented.
 - The local project is a Git repository on `main`, configured with the required identity and connected to `git@github.com:SketchOTP/ANIMA-Home-Automation.git`.
 - The existing GitHub baseline commit is `088b267467fff93bfd225b9a94a6f4999759fb9f` and contains `.gitignore` and `LICENSE`.
 - The requested ANIMA HA goal is adopted at the prototype boundary `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE`.
 - The canonical Notion SSOT is the ANIMA HA Authority, Product Specification & Cold-Start Handoff page.
 - Authority 3.0 governance files are installed and published in governance baseline commit `6fbabc892f53876fd94614ccc531dc7478a80288`.
+- Python 3.12.x, uv 0.12.7, pinned development tooling, PostgreSQL 16.15/pgvector 0.8.6, migrations, structured logging, simulator framework, tests, and CI baseline are implemented in the current working tree.
 
 ## Current hypotheses / unknowns
 
-- The implementation language, framework, service boundaries, dependency versions, deployment layout, and test commands are all unknown until the first implementation investigation.
+- Native Raspberry Pi execution has not yet been performed; ARM64 support is evidenced by image manifest and wheel metadata only.
+- This SFTP-mounted workspace cannot reliably create a `.venv` symlink or complete mypy traversal; an allowlisted local-filesystem copy passes the full validation and build gate.
 - The governance-checkpoint SHA is `6fbabc892f53876fd94614ccc531dc7478a80288`; a subsequent metadata record may advance `main` without changing the baseline contents.
 - Exact dependency choices remain candidates until qualification and explicit adoption.
 
 ## Current blockers
 
-- NONE for governance reconciliation.
-- Product implementation is explicitly not authorized by this directive.
+- NONE currently known for Phase 0.
+- Phase 1 household behavior remains explicitly out of scope.
 
 ## Latest accepted evidence
 
 - `AUTHORITY-BOOTSTRAP-001`: governance package installed and inspected; `E2_REPRODUCED` for the bootstrap artifact set only. This is not implementation or prototype acceptance evidence.
 - Remote baseline `088b267467fff93bfd225b9a94a6f4999759fb9f`: observed and preserved as the Git history parent.
 - Governance baseline `6fbabc892f53876fd94614ccc531dc7478a80288`: committed locally; push verification pending.
+- Phase 0 qualification and validation evidence is recorded in `docs/DEPENDENCY-QUALIFICATION.md` and `docs/PHASE-0-RUNTIME-BASELINE.md`.
 
 ## Current risks
 
@@ -50,6 +53,6 @@ NONE
 
 ## Next Architect decision point
 
-Review the governance-only checkpoint, then establish the smallest defensible Phase 1 plan and issue one bounded discovery/foundation directive.
+Review the Phase 0 runtime checkpoint and its fresh-checkout evidence; no Phase 1 behavior is authorized by this directive.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

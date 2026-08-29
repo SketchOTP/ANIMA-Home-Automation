@@ -4,6 +4,16 @@ Use this ledger for major architecture decisions, strategic reversals, project m
 
 ---
 
+## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Phase 0 runtime baseline
+
+- Date: 2026-08-28/29
+- Decision: Adopt Python 3.12.x, uv lockfiles, pinned Ruff/pytest/mypy tooling, Psycopg behind an ANIMA database boundary, and a pinned pgvector PostgreSQL 16 image for runtime-only persistence proof.
+- Boundary: Phase 0 infrastructure only; no household intelligence or Phase 1 product semantics.
+- Evidence: Full checks/build pass on an allowlisted local-filesystem reproduction; x86-64 database health/restart/persistence pass; ARM64 is manifest/wheel evidence only.
+- Recheck: Before native Pi acceptance, image refresh, or Phase 1 schema/service expansion.
+
+---
+
 ## AUTHORITY-BOOTSTRAP-001 — Authority 3.0 adopted for ANIMA HA
 
 - Date: 2026-08-28

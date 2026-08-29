@@ -10,9 +10,9 @@
 
 ## Current pointers
 
-- Current stage: GOVERNANCE BASELINE
-- Active directive: NONE
-- Active task packet: NONE
+- Current stage: IMPLEMENTATION PHASE 0 — RUNTIME BASELINE
+- Active directive: ANIMA-HA-P0-RUNTIME-BASELINE-002
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P0-RUNTIME-BASELINE-002/`
 - Last accepted outcome: ANIMA-HA-P0-GOVERNANCE-BASELINE-001
 - Last state sync: 2026-08-28
 

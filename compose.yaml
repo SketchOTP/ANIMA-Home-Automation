@@ -1,0 +1,22 @@
+name: anima-ha
+
+services:
+  db:
+    image: pgvector/pgvector:pg16-bookworm@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+    environment:
+      POSTGRES_DB: ${ANIMA_DB_NAME:-anima}
+      POSTGRES_USER: ${ANIMA_DB_USER:-anima}
+      POSTGRES_PASSWORD: ${ANIMA_DB_PASSWORD:?set ANIMA_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${ANIMA_DB_PORT:-55432}:5432"
+    volumes:
+      - anima_ha_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+
+volumes:
+  anima_ha_postgres_data:

@@ -1,0 +1,54 @@
+[project]
+name = "anima-ha"
+version = "0.1.0"
+description = "ANIMA HA implementation baseline"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "psycopg[binary]==3.3.4",
+]
+
+[dependency-groups]
+dev = [
+    "mypy==1.17.1",
+    "pytest==9.1.1",
+    "ruff==0.16.5",
+]
+
+[project.scripts]
+anima-migrate = "anima_ha.db.migrate:main"
+anima-sim = "anima_ha.simulator:main"
+anima-validate = "anima_ha.validate:main"
+
+[build-system]
+requires = ["uv_build==0.10.11"]
+build-backend = "uv_build"
+
+[tool.uv]
+default-groups = ["dev"]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+exclude = ['^\.venv/']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

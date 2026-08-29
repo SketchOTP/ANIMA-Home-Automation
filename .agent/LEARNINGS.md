@@ -4,6 +4,14 @@ Temporary observations do not belong here. Add only findings likely to remain us
 
 ---
 
+## ANIMA-HA-P0-RUNTIME-BASELINE-002
+
+- A pinned uv lockfile plus a narrow Python 3.12 support line gives Phase 0 reproducible package resolution without prematurely selecting future agent/event frameworks.
+- The SFTP-mounted workspace cannot reliably host Python virtual-environment symlinks or mypy traversal; validation must distinguish this host filesystem limitation from application failures and can use a clean local-filesystem reproduction.
+- The pgvector PostgreSQL image provides both amd64 and arm64 manifests and can be used as an extension-ready persistence substrate while vector/product schemas remain deferred.
+
+---
+
 ## AUTHORITY-BOOTSTRAP-LEARNING-001 — Governance and implementation state are separate
 
 - Date: 2026-08-28
