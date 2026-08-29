@@ -66,3 +66,12 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Brick and Haystack are useful semantic vocabulary prior art but are not runtime dependencies; Graphiti belongs to later learned/temporal context, not deterministic commissioning.
 - Graph mutations can share the Phase 1 journal transactionally through a caller-owned Psycopg connection, preserving one audit boundary without a second audit store.
 - Security sensitivity and household roles are graph facts only. They must not grant authority or become policy before the authorized policy phase.
+
+## ANIMA-HA-P3-GOVERNED-MEMORY-005 — Canonical memory must own semantics
+
+- PostgreSQL canonical memory plus a disposable PostgreSQL full-text index is sufficient for the Phase 3 prototype without adding a service or embedding model.
+- Memory taxonomy, provenance, precedence, correction, expiry, and retraction belong to ANIMA; Mem0's extraction/conflict behavior cannot be the authority boundary even when `infer=False` is available.
+- Derived search indexes must be disposable: deleting the index must leave canonical records readable and rebuild must restore indexed retrieval.
+- Explicit context can outrank inferred routine context by deterministic precedence while remaining separate from Truth and policy. Routine output must state what it does not prove.
+- The current Mem0 source package is Apache-2.0/Python >=3.10 and includes telemetry paths; FastEmbed 0.8.0 is a lightweight ONNX candidate; neither is adopted until offline/privacy/native-ARM64/resource qualification is complete.
+- Direct journal aggregation is smaller than adding River for the current routine requirements; upgrade only when measured drift or online-learning requirements justify it.

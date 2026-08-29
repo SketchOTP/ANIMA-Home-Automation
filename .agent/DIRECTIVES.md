@@ -92,3 +92,22 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Implementation checkpoint: `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 - Evidence: unit validation and x86-64 PostgreSQL integration; synthetic fixture/simulator; no HA or physical-home evidence.
 - Phase 3 Memory Service and later behavior were not implemented.
+
+---
+
+## ANIMA-HA-P3-GOVERNED-MEMORY-005 — Governed Memory Service and Routine Model
+
+- Issued: 2026-08-29
+- Status: COMPLETE / PASS pending independent Architect review
+- Project stage: IMPLEMENTATION PHASE 3 — GOVERNED MEMORY
+- Objective: Build canonical PostgreSQL memory with provenance, taxonomy, precedence, lifecycle/correction/expiry/retraction, bounded retrieval, rebuildable local index, and deterministic routine context.
+- Exclusions: No Phase 4 identity/policy, Home Assistant, Luna, plugins/MCP, action execution, durable tasks, external tools, UI, or voice.
+- Required external discovery: Mem0, direct PostgreSQL/pgvector, LangGraph, Letta, Graphiti, FastEmbed/local embedding options, and direct statistics versus River.
+- Source: Architect directive `ANIMA-HA-P3-GOVERNED-MEMORY-005`.
+
+### Completion record
+
+- Completed: 2026-08-29
+- Architecture: BUILD canonical ANIMA memory/lifecycle/retrieval/routine contracts; ADOPT/WRAP existing PostgreSQL/Psycopg and PostgreSQL full-text derived index; DEFER/WRAP-candidate Mem0; DEFER FastEmbed/pgvector embeddings, LangGraph, Letta, Graphiti, and River.
+- Evidence: unit and synthetic x86-64 PostgreSQL integration; restart persistence; simulator; full static/test/build validation; Phase 1/2 regressions; public-safety and CI evidence.
+- Phase 4 Identity/Policy and later behavior were not implemented.

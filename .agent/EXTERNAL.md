@@ -136,3 +136,41 @@ PostgreSQL/Psycopg repository preserves ANIMA ownership of identity, semantics,
 provider isolation, Truth bindings, mutation audit, and query behavior. The
 Home Assistant registry remains future provider input only; its IDs are not
 canonical household identity.
+
+## ANIMA-HA-P3-GOVERNED-MEMORY-005 — memory, embedding, and routine prior art
+
+- Date checked: 2026-08-29
+- Trigger: Phase 3 required current qualification of canonical-memory engines, local embeddings, and routine-model options.
+- Sources: [Mem0 package metadata](https://raw.githubusercontent.com/mem0ai/mem0/main/pyproject.toml); [Mem0 memory implementation](https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py); [Mem0 server telemetry](https://github.com/mem0ai/mem0/blob/main/server/README.md); [FastEmbed](https://github.com/qdrant/fastembed) and [FastEmbed PyPI](https://pypi.org/project/fastembed/); [River](https://github.com/online-ml/river) and [River PyPI](https://pypi.org/project/river/); [LangGraph](https://github.com/langchain-ai/langgraph); [Letta MemFS](https://github.com/letta-ai/letta-docs-md/blob/main/concepts/memfs/index.md); [Graphiti](https://github.com/getzep/graphiti); [PostgreSQL text search](https://www.postgresql.org/docs/16/textsearch.html).
+- Freshness: primary sources checked 2026-08-29; exact source versions and limitations are recorded in `docs/PHASE-3-GOVERNED-MEMORY.md`.
+
+### Comparison and disposition
+
+| Candidate | License / maintenance / fit | Decision |
+| --- | --- | --- |
+| Existing PostgreSQL 16 + Psycopg | Already qualified; durable local persistence and transaction boundary | ADOPT / WRAP |
+| Direct ANIMA memory/lifecycle/routine implementation | Preserves type, provenance, precedence, correction, expiry, isolation, and no-authority invariant | BUILD |
+| PostgreSQL full-text search | Mature core local lexical index; no new service; disposable/rebuildable | ADOPT / WRAP |
+| Mem0 OSS 2.0.19 | Apache-2.0, Python >=3.10, PostgreSQL/pgvector and `infer=False`; optional/default telemetry and provider/extraction semantics require a wrapper | DEFER / WRAP candidate |
+| FastEmbed 0.8.0 | Apache-2.0, lightweight ONNX path, Python >=3.10; model download/cache and native Pi cost not qualified | DEFER |
+| Direct pgvector embeddings | Extension already available, but no model/dimension/offline ARM64 qualification | DEFER |
+| LangGraph | MIT; agent graph persistence/orchestration overlaps a later runtime | DEFER / REJECT as foundation |
+| Letta / MemFS | Open-source stateful-agent memory with git-backed files; agent/runtime-owned semantics exceed this phase | DEFER / REJECT as foundation |
+| Graphiti | Apache-2.0 code; LLM/embedding temporal graph enrichment fits later context, not canonical memory | DEFER |
+| River 0.24.2 | BSD-3-Clause and maintained online ML/statistics; more footprint than current deterministic aggregation requires | DEFER |
+| Python standard-library statistics | No new dependency; adequate deterministic bucket probabilities/confidence | ADOPT |
+
+### Boundary conclusion
+
+Canonical memory remains ANIMA-owned PostgreSQL data. No Mem0, embedding model,
+external vector service, or River dependency was adopted. The implementation's
+only retrieval index is local PostgreSQL full-text data that can be deleted and
+rebuilt; fallback reads canonical records directly. This avoids household-data
+egress and preserves a replacement path for future semantic retrieval.
+
+### Recheck triggers
+
+Requalify before adopting Mem0 or embeddings, enabling agent/Luna memory
+extraction, deploying on native Raspberry Pi, changing the PostgreSQL image,
+or introducing drift/online-learning requirements that exceed direct
+aggregation.

@@ -1,12 +1,12 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 2 HOUSEHOLD GRAPH 2026-08-29
+Last verified against: IMPLEMENTATION PHASE 3 GOVERNED MEMORY 2026-08-29
 
 ## Entry points
 
 - `anima-validate` — deterministic local format/lint/type/unit gate.
 - `anima-migrate` — runtime-only ordered SQL migration runner.
-- `anima-sim` — synthetic reality-substrate and commissioned graph scenario entrypoint; no household behavior.
+- `anima-sim` — synthetic reality-substrate, commissioned graph, and governed memory/routine scenario entrypoint; no household behavior.
 
 ## Major modules / packages
 
@@ -19,7 +19,9 @@ Last verified against: IMPLEMENTATION PHASE 2 HOUSEHOLD GRAPH 2026-08-29
 - `src/anima_ha/truth.py` — pure deterministic reconciliation and uncertainty statuses.
 - `src/anima_ha/graph.py` — canonical graph contracts, validation, PostgreSQL repository, semantic queries, Truth bindings, aliases, provider references, and mutation audit.
 - `src/anima_ha/fixtures.py` — deterministic synthetic commissioning topology.
-- `tests/` — deterministic Phase 0/Phase 1/Phase 2 unit tests.
+- `src/anima_ha/memory.py` — canonical memory, lifecycle, retrieval, index rebuild/fallback, and mutation audit.
+- `src/anima_ha/routines.py` — deterministic journal-derived routine model.
+- `tests/` — deterministic Phase 0/Phase 1/Phase 2/Phase 3 unit tests.
 
 ## Important interfaces / contracts
 
@@ -33,6 +35,7 @@ Last verified against: IMPLEMENTATION PHASE 2 HOUSEHOLD GRAPH 2026-08-29
 - `uv run --locked --group dev pytest` — Phase 0/1/2 unit tests.
 - `uv run --locked --group dev python scripts/verify_phase1_postgres.py` — synthetic PostgreSQL integration harness.
 - `uv run --locked --group dev python scripts/verify_phase2_postgres.py` — synthetic PostgreSQL graph integration harness.
+- `uv run --locked --group dev python scripts/verify_phase3_postgres.py` — synthetic PostgreSQL memory/routine integration harness.
 
 ## Generated / cache / build areas
 
@@ -56,9 +59,10 @@ Last verified against: IMPLEMENTATION PHASE 2 HOUSEHOLD GRAPH 2026-08-29
 The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavior is in `events.py`, `journal.py`, and `truth.py`; Phase 2 graph behavior is in `graph.py` and `fixtures.py`. Neither phase implements memory, policy, Home Assistant, or household-specific provider behavior.
 
 - `docs/PHASE-2-HOUSEHOLD-GRAPH.md` — canonical graph architecture, prior art, commissioning, query surface, and evidence boundaries.
+- `docs/PHASE-3-GOVERNED-MEMORY.md` — canonical memory/routine architecture, lifecycle, retrieval/index boundary, dependency decisions, and evidence boundaries.
 
 ## Known sensitive/high-risk areas
 
-- Future Home Assistant, household state, memory, identity/authority, credentials, external connectors, physical actions, and audit data require explicit boundaries and qualification.
+- Future Home Assistant, identity/authority, credentials, external connectors, physical actions, and semantic embedding services require explicit boundaries and qualification. Memory is implemented but remains local, synthetic, and pre-cognition.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.

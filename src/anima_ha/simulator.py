@@ -1,4 +1,4 @@
-"""Development simulator for deterministic Phase 1 reality-substrate scenarios."""
+"""Development simulator for deterministic reality, graph, and memory scenarios."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import logging
 import time
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 from anima_ha.config import RuntimeConfig
 from anima_ha.events import EventEnvelope, ObservationState, TruthObservation
@@ -14,6 +15,14 @@ from anima_ha.fixtures import sample_household_document
 from anima_ha.graph import PostgresHouseholdGraph
 from anima_ha.journal import PostgresRealityStore
 from anima_ha.logging_setup import configure_logging
+from anima_ha.memory import (
+    MemoryProvenance,
+    MemoryRecord,
+    MemoryService,
+    MemoryType,
+    ProvenanceKind,
+)
+from anima_ha.routines import RoutineService
 
 LOGGER = logging.getLogger("anima_ha.simulator")
 
@@ -38,6 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
             "conflict",
             "rebuild",
             "graph",
+            "memory",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -77,6 +87,58 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 "nodes_created": result.created_nodes,
                 "places": len(graph.list_places()),
                 "exterior_entrances": len(graph.exterior_entrances()),
+            },
+        )
+    elif scenario == "memory":
+        household_id = uuid4()
+        now = datetime.now(UTC).replace(microsecond=0)
+        service = MemoryService(config.database_url, config.database_connect_timeout)
+        service.create(
+            MemoryRecord.create(
+                household_id=household_id,
+                memory_type=MemoryType.EXPLICIT_PREFERENCE,
+                content="Notify us about unusual overnight movement.",
+                provenance=MemoryProvenance(ProvenanceKind.EXPLICIT_INPUT, "simulator:memory"),
+                created_at=now,
+            )
+        )
+        service.create(
+            MemoryRecord.create(
+                household_id=household_id,
+                memory_type=MemoryType.TEMPORARY_EPISODIC,
+                content="Guests are staying through tonight.",
+                provenance=MemoryProvenance(ProvenanceKind.EXPLICIT_INPUT, "simulator:temporary"),
+                created_at=now,
+                valid_from=now,
+                valid_until=now + timedelta(hours=8),
+                expires_at=now + timedelta(hours=8),
+            )
+        )
+        memory_results = service.retrieve("overnight", household_id=household_id, top_k=2, now=now)
+        routine = RoutineService(config.database_url, config.database_connect_timeout)
+        for index in range(2):
+            at = now + timedelta(days=index)
+            routine.journal.append(
+                EventEnvelope.create(
+                    event_id=f"sim-memory-routine-low-{household_id}-{index}",
+                    event_type="routine.activity_observation",
+                    source="simulator-memory",
+                    subject_key=f"routine/household/{household_id}",
+                    occurred_at=at,
+                    recorded_at=at + timedelta(seconds=1),
+                    payload={"active": False, "bucket": "01:00"},
+                    source_event_id=f"sim-memory-routine-low-{household_id}-{index}",
+                )
+            )
+        model = routine.rebuild_activity_model(household_id, source="simulator-memory", now=now)
+        LOGGER.info(
+            "simulator_memory_complete",
+            extra={
+                "retrieval_mode": memory_results[0].mode.value if memory_results else "NONE",
+                "retrieved_types": [item.memory.memory_type.value for item in memory_results],
+                "routine_classification": model.model["classification"],
+                "routine_low_activity_buckets": model.model["low_activity_buckets"],
+                "authority_surface": "none",
             },
         )
     elif scenario != "ready":

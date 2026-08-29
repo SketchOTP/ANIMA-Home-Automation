@@ -213,3 +213,32 @@ Added forward migration `0003_household_graph.sql`, ANIMA-owned canonical graph 
 - ARM64 remains manifest/package metadata evidence only; native Raspberry Pi execution and resource measurement remain future gates.
 - Current graph commissioning is a deterministic merge/upsert boundary; a future commissioning UI may add explicit replacement/deletion planning.
 - Memory, policy, Home Assistant, Luna, plugins, action execution, durable tasks, UI, and voice remain unauthorized.
+
+## ANIMA-HA-P3-GOVERNED-MEMORY-005 — Phase 3 governed memory complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build and Phase 1/2 regressions; E3_TARGET_TESTED for x86-64 PostgreSQL memory/routine integration; E2_REPRODUCED for simulator; ARM64 remains E1_OBSERVED manifest/package evidence.
+- Implementation checkpoint: recorded in completed task evidence after final commit.
+
+### Work performed
+
+Added forward migration `0004_governed_memory.sql`, `MemoryRecord`/provenance/taxonomy contracts, append-oriented correction and lifecycle service, deterministic precedence and household-isolated retrieval, PostgreSQL full-text derived index with deletion/rebuild and lexical fallback, journaled memory mutation audit, deterministic routine aggregation/rebuild, simulator memory scenario, tests, and Phase 3 documentation.
+
+### Acceptance results
+
+- Canonical memory identity/type/provenance/confidence/lifecycle: PASSED — contract and PostgreSQL integration.
+- Explicit preference and active temporary context outrank inferred routine; agent lessons cannot encode authority: PASSED — unit/integration.
+- Correction/supersession, automatic/manual expiry, retraction, and index invalidation: PASSED — x86-64 PostgreSQL integration.
+- Bounded relevance, subject/graph filters, cross-household isolation, index deletion/rebuild, degraded fallback: PASSED — x86-64 PostgreSQL integration.
+- Truth remains separate from memory: PASSED — Truth projection retained its direct value after memory operations.
+- Routine bucket probabilities, confidence/sample provenance, deterministic rebuild/update: PASSED — synthetic journal integration.
+- PostgreSQL restart persistence, Phase 1/2 regression, simulator, Ruff, mypy, pytest, package build, CI, public safety, and clean push: PASSED — evidence packet.
+
+### Risks / limitations
+
+- Mem0, FastEmbed, pgvector embeddings, and River were qualified but not adopted; semantic retrieval is local lexical only in this checkpoint.
+- No Mem0 runtime or external embedding network-egress test is applicable because neither is an adopted dependency; source/import scan and local-only integration observation passed.
+- Native Raspberry Pi execution/resource qualification, backup/restore, Home Assistant, Luna, real household, and physical-device evidence remain future work.
+- No autonomous memory extraction or agent-lesson loop exists.

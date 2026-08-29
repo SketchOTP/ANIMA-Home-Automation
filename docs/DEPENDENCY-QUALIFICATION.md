@@ -62,3 +62,26 @@ introduced for the canonical household graph.
 | Graphiti | Apache-2.0 code; active agent temporal-context project | DEFER | LLM/embedding-assisted temporal enrichment belongs to later memory/context work, not commissioned deterministic topology. |
 
 Primary sources: [PostgreSQL recursive queries](https://www.postgresql.org/docs/16/queries-with.html), [Apache AGE](https://github.com/apache/age), [NetworkX](https://github.com/networkx/networkx), [Brick](https://github.com/BrickSchema/Brick), [Project Haystack](https://project-haystack.org/), and [Graphiti](https://github.com/getzep/graphiti).
+
+## Phase 3 governed memory and routine qualification
+
+Checked: 2026-08-29. Phase 3 adds no new service or Python runtime dependency.
+Canonical memory and routine persistence are built on the accepted PostgreSQL
+16/Psycopg boundary; PostgreSQL full-text search is used only as a derived
+local index.
+
+| Candidate | Decision | Qualification result |
+| --- | --- | --- |
+| Existing PostgreSQL 16 + Psycopg | ADOPT / WRAP | Already qualified; retains durable local persistence and the replacement boundary. |
+| ANIMA canonical memory/lifecycle/retrieval/routines | BUILD | Required to retain memory type, provenance, precedence, correction, expiry, retraction, isolation, and the no-authority invariant. |
+| PostgreSQL full-text search | ADOPT / WRAP | Small local lexical index; canonical records survive index deletion and rebuild. |
+| Mem0 OSS 2.0.19 | DEFER / WRAP candidate | Apache-2.0, Python >=3.10, PostgreSQL/pgvector and `infer=False` support are present. Default extraction/conflict behavior is not canonical ANIMA semantics, and current OSS/server sources document telemetry that must be explicitly disabled. Not installed in Phase 3. |
+| FastEmbed 0.8.0 | DEFER | Lightweight ONNX approach and Python >=3.10 are promising, but model download/cache, CPU/RAM, and native ARM64/Pi execution were not qualified. No external embedding is introduced. |
+| pgvector | DEFER | Existing extension remains available, but no model/dimension or vector index is adopted before local ARM64/privacy qualification. |
+| LangGraph | DEFER / REJECT as foundation | Agent/runtime persistence overlap; cannot own ANIMA lifecycle or authority semantics. |
+| Letta / MemFS | DEFER / REJECT as foundation | Agent-owned memory/runtime and broader persistence boundary exceed Phase 3. |
+| Graphiti | DEFER | LLM/embedding temporal graph enrichment belongs to later learned context, not governed canonical memory. |
+| River 0.24.2 | DEFER | BSD-3-Clause online ML is maintained, but direct deterministic aggregation is smaller and sufficient for current routines. |
+| Python standard-library statistics | ADOPT | No extra dependency; deterministic routine aggregation and confidence calculation. |
+
+Primary Phase 3 sources are linked in [`docs/PHASE-3-GOVERNED-MEMORY.md`](PHASE-3-GOVERNED-MEMORY.md). Recheck Mem0, FastEmbed, River, model files, and PostgreSQL/pgvector before adopting a semantic index, native Pi deployment, or agent/runtime integration.

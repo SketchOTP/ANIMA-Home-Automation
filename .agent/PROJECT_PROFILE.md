@@ -37,6 +37,12 @@
 - `anima_ha.truth` — pure deterministic reconciliation and explicit uncertainty statuses.
 - `docs/PHASE-1-REALITY-SUBSTRATE.md` — event, ordering, projection, and replay architecture.
 
+## Phase 3 governed memory
+
+- `anima_ha.memory` — canonical memory contract, provenance/taxonomy, lifecycle, deterministic precedence, household-isolated retrieval, derived-index rebuild, and degraded fallback.
+- `anima_ha.routines` — deterministic journal-derived activity routine model with version, confidence, sample provenance, and rebuild.
+- `docs/PHASE-3-GOVERNED-MEMORY.md` — memory architecture, dependency decisions, privacy boundary, and evidence limits.
+
 ## Compatibility commitments
 
 - Event-driven cognition; no continuous raw household telemetry, camera streams, or ambient audio to the cloud LLM.

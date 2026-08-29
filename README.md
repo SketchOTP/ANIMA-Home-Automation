@@ -1,8 +1,8 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline, Phase 1 reality substrate, and Phase 2 deterministic Household Graph; cognition and household actions are intentionally not implemented yet.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline, Phase 1 reality substrate, Phase 2 deterministic Household Graph, and Phase 3 governed memory/routine substrate; cognition and household actions are intentionally not implemented yet.
 
-## Phase 0, Phase 1, and Phase 2 baseline
+## Phase 0 through Phase 3 baseline
 
 This checkpoint provides:
 
@@ -15,9 +15,11 @@ This checkpoint provides:
 - a simulator framework entrypoint that reports readiness but does not process household events;
 - an ANIMA-owned PostgreSQL event journal, truth observation model, deterministic reconciliation projection, failure tracking, and replay/rebuild path;
 - an ANIMA-owned PostgreSQL canonical household graph with commissioned topology, recursive place traversal, aliases, provider references, Truth bindings, semantic queries, and journaled graph mutations;
+- an ANIMA-owned PostgreSQL canonical memory store with provenance, lifecycle/correction/expiry/retraction, bounded precedence-aware retrieval, rebuildable local lexical indexing, and explicit degraded fallback;
+- a deterministic journal-derived routine model whose outputs are inferred context rather than Truth, permissions, or automation;
 - a single local validation command and a matching GitHub Actions workflow.
 
-No memory, policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included.
+No policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included. Mem0 and local embeddings are not runtime dependencies in this checkpoint.
 
 ## Supported baseline
 
@@ -47,6 +49,7 @@ The validation command runs format, lint, type, and unit checks. The database co
 For the full evidence workflow, see [`docs/PHASE-0-RUNTIME-BASELINE.md`](docs/PHASE-0-RUNTIME-BASELINE.md).
 For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-REALITY-SUBSTRATE.md`](docs/PHASE-1-REALITY-SUBSTRATE.md).
 For the Phase 2 graph contracts, prior-art decisions, commissioning, and evidence boundary, see [`docs/PHASE-2-HOUSEHOLD-GRAPH.md`](docs/PHASE-2-HOUSEHOLD-GRAPH.md).
+For the Phase 3 memory taxonomy, lifecycle, retrieval/index boundary, routine model, prior-art decisions, and evidence boundary, see [`docs/PHASE-3-GOVERNED-MEMORY.md`](docs/PHASE-3-GOVERNED-MEMORY.md).
 
 ## Authority
 

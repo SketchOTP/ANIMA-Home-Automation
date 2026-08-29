@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 2 — HOUSEHOLD GRAPH COMPLETE
+IMPLEMENTATION PHASE 3 — GOVERNED MEMORY COMPLETE
 
 ## Current objective
 
-Complete the deterministic PostgreSQL-backed canonical Household Graph required before memory, policy, Home Assistant, and cognition phases.
+Complete the governed PostgreSQL-backed Memory Service and deterministic routine model required before identity/policy, Home Assistant, and cognition phases.
 
 ## Active directive
 
-NONE
+ANIMA-HA-P3-GOVERNED-MEMORY-005
 
 ## Current verified state
 
@@ -26,18 +26,19 @@ NONE
 - Python 3.12.x, uv 0.12.7, pinned development tooling, PostgreSQL 16.15/pgvector 0.8.6, migrations, structured logging, simulator scenarios, normalized event/observation contracts, append-only journal, deterministic truth projection, failure tracking, rebuild, tests, and CI are implemented in the current working tree.
 - Phase 1 event identity, source deduplication, journal position, event/record time, source sequence, provenance, freshness, explicit unknown/unavailable/conflict states, projection retry, and replay/rebuild remain green.
 - Phase 2 adds ANIMA-owned canonical graph nodes, typed relationships, recursive containment, entrance connectivity, separate resources/capabilities, aliases, provider references, Truth bindings, transactional commissioning, semantic queries, and graph mutation audit events.
+- Phase 3 adds ANIMA-owned canonical memory records, provenance/taxonomy, deterministic precedence, correction/supersession, expiry/retraction, household-isolated retrieval, a rebuildable PostgreSQL lexical index with explicit fallback, and a journal-derived routine model.
 
 ## Current hypotheses / unknowns
 
 - Native Raspberry Pi execution has not yet been performed; ARM64 support is evidenced by image manifest and wheel metadata only.
 - This SFTP-mounted workspace cannot reliably create a `.venv` symlink or complete mypy traversal; an allowlisted local-filesystem copy passes the full validation and build gate.
 - No native Raspberry Pi run has been performed; ARM64 remains manifest/package evidence only.
-- The canonical journal, truth projection, and graph are PostgreSQL/Psycopg implementations behind ANIMA-owned interfaces. NATS/JetStream, graph extensions, NetworkX persistence, Graphiti, and aggregate event-sourcing frameworks remain deferred or rejected for the current phase.
+- The canonical journal, truth projection, graph, memory store, derived lexical index, and routine model are PostgreSQL/Psycopg implementations behind ANIMA-owned interfaces. NATS/JetStream, graph extensions, NetworkX persistence, Graphiti, Mem0, FastEmbed, and River remain deferred or rejected for the current phase.
 
 ## Current blockers
 
-- NONE currently known for Phase 2.
-- Memory, policy, Home Assistant, Luna, plugins, action execution, durable tasks, UI, and voice remain explicitly out of scope.
+- NONE currently known for Phase 3.
+- Identity/permissions, policy, Home Assistant, Luna, plugins, action execution, durable tasks, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -48,15 +49,17 @@ NONE
 - Phase 1 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P1-REALITY-SUBSTRATE-003/EVIDENCE.md`.
 - Phase 2 evidence is recorded in `.agent/tasks/completed/ANIMA-HA-P2-HOUSEHOLD-GRAPH-004/EVIDENCE.md` after checkpoint closure.
 - Phase 2 implementation checkpoint is `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
+- Phase 3 implementation checkpoint and final governed checkpoint are recorded in `.agent/tasks/completed/ANIMA-HA-P3-GOVERNED-MEMORY-005/EVIDENCE.md` after push verification.
 
 ## Current risks
 
 - Native Raspberry Pi runtime/resource qualification and backup/restore remain future evidence items.
 - Truth bindings currently consume generic Phase 1 keys; Home Assistant source adapters must remain external-reference mappings when introduced.
 - Public-repository publication requires continued exclusion of secrets, credentials, and runtime state.
+- Mem0/FastEmbed remain unadopted; any future semantic index must first qualify telemetry, offline behavior, model licensing, native ARM64/Pi resource use, and canonical-store rebuild.
 
 ## Next Architect decision point
 
-Architect review of the Phase 2 evidence is required before a separate Phase 3 directive. No Phase 3 or later behavior is authorized by this directive.
+Architect review of the Phase 3 evidence is required before Phase 4 Identity/Policy. No Phase 4 or later behavior is authorized by this directive.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

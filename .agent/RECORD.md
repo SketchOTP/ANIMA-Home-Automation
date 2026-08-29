@@ -104,3 +104,31 @@ No Home Assistant or physical-home evidence is claimed.
 Phase 3 may consume semantic household identity after Architect review. Memory,
 policy, Home Assistant, Luna, plugins, actions, durable tasks, UI, and voice
 remain out of scope until separately authorized.
+
+## ANIMA-HA-P3-GOVERNED-MEMORY-005 — Governed local memory
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Related directive/outcome: `ANIMA-HA-P3-GOVERNED-MEMORY-005`
+
+### Decision / event
+
+Built canonical ANIMA memory on the existing PostgreSQL/Psycopg boundary with
+typed provenance, deterministic precedence, append-oriented lifecycle, and a
+disposable local lexical index. Added a deterministic journal-derived routine
+model. Mem0, local embeddings, LangGraph, Letta, Graphiti, and River remain
+deferred; no new service was introduced.
+
+### Evidence
+
+Contract/unit checks and synthetic x86-64 PostgreSQL integration passed for
+memory lifecycle, explicit/inferred precedence, temporary expiry, retraction,
+cross-household isolation, index rebuild/fallback, Truth separation, journal
+audit, routine rebuild/update, and restart persistence. Phase 1/2 regressions,
+full validation, package build, simulator, and public-safety checks passed.
+
+### Consequence
+
+Phase 4 may consume relevant governed memory after Architect review. Identity,
+policy, permissions, Home Assistant, Luna, plugins, actions, durable tasks,
+UI, and voice remain out of scope.
