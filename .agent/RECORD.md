@@ -141,3 +141,12 @@ UI, and voice remain out of scope.
 - Evidence: OPA policy tests, x86-64 PostgreSQL integration, restart persistence, simulator, Phase 1–3 regressions, static validation, package validation, and public-safety scan passed.
 - Boundary: No policy-write runtime API, memory authority, Home Assistant, Luna, plugin, action-execution, physical identity, or real-home behavior was introduced.
 - Consequence: Phase 5 Plugin Runtime remains gated on independent Architect review of this checkpoint.
+
+## ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 — Governed capability boundary
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Decision: Build an ANIMA-owned plugin/capability registry and adopt/wrap MCP Python SDK `2.1.1` plus `jsonschema 4.26.0`; keep plugin metadata subordinate to Phase 4 policy.
+- Evidence: x86-64 unit/integration/simulator evidence, PostgreSQL migration/restart/persistence, real local MCP stdio exchange, OPA-gated invocation, CI `33277823326`, fresh-checkout build/validation, and public-safety scan passed at implementation checkpoint `c186c34bcf93e9ff03d39c3e966fcb540583d478`.
+- Boundary: Native plugins are trusted in-process; optional MCP plugins are supervised out-of-process. No runtime package installation, policy/permission mutation, raw secrets, Home Assistant, Luna, physical actions, or later behavior were introduced. Subprocess is not a malicious-code sandbox.
+- Consequence: Phase 6 Home Assistant Adapter remains pending Architect review.

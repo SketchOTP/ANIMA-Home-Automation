@@ -142,3 +142,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Home Assistant adapter, Luna/Agents SDK, physical actions, action verification, durable tasks, production external services, UI, voice, or runtime package installation.
 - Required external discovery: Official MCP Python SDK v2, FastMCP, PyPA entry points, Pluggy, JSON Schema validation, and subprocess/container isolation.
 - Source: Architect directive `ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007`.
+
+### Completion record
+
+- Completed: 2026-08-29
+- Status: COMPLETE / PASS pending independent Architect review
+- Implementation checkpoint: `c186c34bcf93e9ff03d39c3e966fcb540583d478`; GitHub Actions run `33277823326` passed for that exact SHA. Any later closure commit contains metadata/evidence only.
+- Architecture: BUILD ANIMA manifest, lifecycle, registry, tool normalization, policy-gated invocation, secrets/config boundary, persistence, audit, and event ingress; ADOPT/WRAP MCP Python SDK `2.1.1`, `jsonschema 4.26.0`, and PyPA entry-point discovery; REFERENCE/DEFER FastMCP and Pluggy; DEFER container sandbox and marketplace/install/update system.
+- Evidence: unit, local x86-64 PostgreSQL/OPA/MCP integration, simulator, restart persistence, fresh local-disk checkout, CI, and public-safety scan. ARM64 remains package/metadata evidence only.
+- Phase 6 Home Assistant Adapter and later behavior were not implemented.

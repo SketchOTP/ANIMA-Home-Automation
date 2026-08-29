@@ -4,7 +4,7 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME
+IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME COMPLETE / PENDING ARCHITECT REVIEW
 
 ## Current objective
 
@@ -36,7 +36,7 @@ ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
 - No native Raspberry Pi run has been performed; ARM64 remains manifest/package evidence only.
 - The canonical journal, truth projection, graph, memory store, derived lexical index, and routine model are PostgreSQL/Psycopg implementations behind ANIMA-owned interfaces. NATS/JetStream, graph extensions, NetworkX persistence, Graphiti, Mem0, FastEmbed, and River remain deferred or rejected for the current phase.
 - OPA/Rego `1.20.1` remains the only Phase 4 policy evaluator, pinned by multi-architecture image digest. Cedar remains reference-only; Casbin and OpenFGA are not runtime dependencies.
-- Phase 5 accepted baseline is Phase 4 governed SHA `50ea9c73e31b2037120da5d12e04555fa08b1da5` with CI run `33271197523`; this directive's implementation checkpoint must remain separately identified from that accepted product checkpoint.
+- Phase 5 accepted prerequisite is Phase 4 governed SHA `50ea9c73e31b2037120da5d12e04555fa08b1da5` with CI run `33271197523`; Phase 5 implementation checkpoint is `c186c34bcf93e9ff03d39c3e966fcb540583d478` with CI `33277823326`. Any later closure commit contains metadata/evidence only.
 
 ## Current blockers
 
@@ -63,6 +63,7 @@ ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
 - Mem0/FastEmbed remain unadopted; any future semantic index must first qualify telemetry, offline behavior, model licensing, native ARM64/Pi resource use, and canonical-store rebuild.
 - OPA has official amd64/arm64 image manifests and local REST/policy-test support, but native Raspberry Pi execution and resource measurement remain unverified. No remote bundle or decision-log egress is configured.
 - Phase 5 MCP and subprocess evidence will be synthetic/x86-64 unless a native ARM64 run is explicitly performed; subprocess isolation is not a malicious-code sandbox.
+- Phase 5 adds `mcp==2.1.1` and `jsonschema==4.26.0`, ANIMA-owned manifest/lifecycle/registry contracts, policy-gated native/MCP invocation, scoped secrets/configuration, declared plugin events, persistence, and failure containment. Streamable HTTP is adapter-supported but not exercised against a permanent remote endpoint.
 
 ## Next Architect decision point
 

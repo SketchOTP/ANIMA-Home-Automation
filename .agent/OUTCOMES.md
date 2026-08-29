@@ -273,3 +273,32 @@ Phase 4 architecture/dependency documentation, and validation workflow updates.
 - OPA native ARM64 execution and Pi-class resource measurement remain unverified; official multi-architecture image manifests are observed metadata only.
 - Direct SFTP bind-mount/startup was limited by the colon-bearing GVFS path; local temporary policy copies and normal-path Docker behavior were used for runtime evidence.
 - No physical identity, Home Assistant, Luna, plugin, action-execution, real-door, or real-house evidence is claimed.
+
+## ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 — Phase 5 plugin capability runtime complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build and Phase 1–4 regressions; E3_TARGET_TESTED for x86-64 PostgreSQL/OPA/MCP integration; E2_REPRODUCED for simulator and fresh-checkout reproduction; E1_OBSERVED for ARM64 package metadata.
+- Implementation checkpoint: `c186c34bcf93e9ff03d39c3e966fcb540583d478`; CI run `33277823326` passed for that exact SHA.
+
+### Work performed
+
+Added forward migration `0006_plugin_runtime.sql`; ANIMA-owned versioned manifests, compatibility validation, lifecycle state, capability registry, canonical tool descriptors, bounded JSON Schema validation, native entry-point discovery, official MCP v2 stdio/Streamable HTTP adapter, policy-gated invocation, result normalization, scoped secret brokerage, configuration isolation, plugin-event ingress, PostgreSQL persistence/restore, lifecycle audit, native/MCP reference plugins, failing runtime containment, simulator coverage, and Phase 5 documentation.
+
+### Acceptance results
+
+- Manifest version, stable identity, core compatibility, duplicate/collision, schema bounds, and no-install boundary: PASSED — unit tests.
+- Native discovery/enable separation, native lifecycle, normalized MCP stdio listing/call, disable/re-enable, persisted restore, and simulator: PASSED — unit/integration/simulator.
+- Policy gating, required policy boundary, denial/structured outcomes, manifest risk authority, unknown-risk fail-closed path, and result validation: PASSED — unit and Phase 4 policy integration.
+- MCP crash/start failure, timeout, bounded restart attempts, and healthy-plugin independence: PASSED — unit and integration.
+- Declared-only fake secrets, sanitized child environment, configuration isolation, no raw secret persistence/audit, network declarations, and plugin event provenance: PASSED — unit/integration/code inspection.
+- PostgreSQL migration/repeat, restart persistence (`4|2` plugin/tool rows before and after), Phase 1–4 regressions, full validation, package build, fresh checkout, CI, and public safety: PASSED.
+
+### Evidence limits / risks
+
+- MCP and PostgreSQL runtime evidence is synthetic and x86-64; no Home Assistant, Luna, physical action, real external service, or real household claim is made.
+- Streamable HTTP is implemented behind the same adapter but not exercised against a permanent remote service; no remote service was added.
+- Native Raspberry Pi execution/resource qualification remains unverified. Subprocess MCP is a failure-isolation boundary, not a malicious-code sandbox; container hardening is deferred.
+- Direct build from the GVFS/SFTP checkout remains blocked by its known `.venv` symlink limitation; local-disk fresh-checkout build passed.
+- Phase 6 Home Assistant Adapter and later behavior were not implemented.

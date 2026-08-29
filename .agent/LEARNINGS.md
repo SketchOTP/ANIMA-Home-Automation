@@ -84,3 +84,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Explicit Anima autonomy is policy configuration, not memory or routine inference. Household roles are descriptive inputs and do not grant authority without policy.
 - Confirmation and stronger authentication are separate: an exact, expiring, single-use confirmation can authorize a confirmation-gated external/financial operation but does not silently upgrade identity assurance.
 - Policy evaluator failure, malformed output, and unavailable service must produce a durable `DENY` rather than fallback to model or remembered judgment.
+
+## ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 — Capability boundary learnings
+
+- Official MCP Python SDK `2.1.1` is the current stable v2 line observed on 2026-08-29, with a pure-Python wheel and documented stdio/Streamable HTTP client boundary; wrapping it keeps MCP replaceable.
+- Standard PyPA entry-point discovery is useful for trusted native plugins, but discovery must remain separate from enablement so installed code is not automatically available.
+- A canonical tool descriptor must treat plugin/MCP metadata as untrusted hints: ANIMA manifest risk, identity, and Phase 4 policy remain authoritative; unknown consequential classification fails closed.
+- Short-lived MCP subprocess connections give bounded crash/timeout containment and easy reconnect evidence, but they do not constitute a malicious-code sandbox. Stronger container isolation requires a separate measured decision.
+- Secret minimization is enforceable at the runtime boundary by constructing a child environment from only base execution variables plus manifest-declared references; raw values remain absent from descriptors, persistence, and audit.
