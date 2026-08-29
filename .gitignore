@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ANIMA HA local/private runtime material
+.env.*
+!.env.example
+secrets/
+runtime/
+data/
+logs/
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+*.token
+*.credentials
