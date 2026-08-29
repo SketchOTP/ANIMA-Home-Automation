@@ -2,6 +2,45 @@
 
 ---
 
+## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Phase 0 runtime baseline complete
+
+- Completed: 2026-08-28/29
+- Verdict: COMPLETE / PASS
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for the baseline checks; ARM64 remains E1_OBSERVED metadata evidence.
+- Implementation checkpoint: `3fd0bfd1dc2c26798423a8077d2a1d9ca3bc3480`
+- GitHub Actions: run `33232446199`, success.
+
+### Work performed
+
+Established the documented Python 3.12 modular package boundary, uv lockfile, environment-only configuration, JSON logging, strict test/lint/type validation, CI, pinned pgvector/PostgreSQL service, runtime-only migrations, simulator readiness entrypoint, and fresh-checkout workflow. Deferred all later-phase household intelligence.
+
+### Acceptance results
+
+- Repository structure documented: PASSED
+- Versions reproducibly constrained: PASSED
+- Startup/configuration documented: PASSED
+- No committed secrets: PASSED; placeholder reviewed
+- Configuration varies by environment: PASSED
+- Structured logging: PASSED
+- Tests/lint/static checks: PASSED
+- CI: PASSED
+- Database health and persistence: PASSED
+- Migration initialization/repeat: PASSED
+- Simulator readiness: PASSED
+- ARM64/x86-64 compatibility: PASSED at documented evidence level only; native Pi run deferred
+- Fresh-checkout reproduction: PASSED on local filesystem
+- Dependency qualification records: PASSED
+- Clean pushed checkpoint: PASSED
+
+### Risks / blockers
+
+- Native Raspberry Pi execution and target resource qualification remain future evidence items.
+- Backup/restore is documented as a later explicit validation, not claimed complete here.
+- SFTP-mounted workspace virtualenv symlink/mypy traversal limitation remains environment-specific.
+
+---
+
 ## AUTHORITY-BOOTSTRAP-001 — Directive AUTHORITY-BOOTSTRAP-001
 
 - Completed: 2026-08-28

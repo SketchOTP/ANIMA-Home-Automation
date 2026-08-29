@@ -50,3 +50,11 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required external discovery: Current primary/official sources for Python packaging/tooling, PostgreSQL/pgvector, Docker portability, and GitHub Actions.
 - Stop/escalation conditions: Incompatible licensing, no credible ARM64 path, Pi-incompatible architecture, irreproducible fresh checkout, unexpectedly heavy infrastructure, premature Phase 1 semantics, unsafe public publication, or SSOT architecture change.
 - Source: Architect directive `ANIMA-HA-P0-RUNTIME-BASELINE-002`.
+
+### Completion record — ANIMA-HA-P0-RUNTIME-BASELINE-002
+
+- Completed: 2026-08-28/29
+- Status: COMPLETE / PASS
+- Implementation checkpoint: `3fd0bfd1dc2c26798423a8077d2a1d9ca3bc3480`
+- Evidence: `.agent/tasks/completed/ANIMA-HA-P0-RUNTIME-BASELINE-002/EVIDENCE.md`
+- No Phase 1 product behavior was implemented.

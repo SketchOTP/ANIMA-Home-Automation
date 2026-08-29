@@ -4,7 +4,7 @@ Last updated: 2026-08-28
 
 ## Current stage
 
-IMPLEMENTATION PHASE 0 — RUNTIME BASELINE
+IMPLEMENTATION PHASE 0 — RUNTIME BASELINE COMPLETE
 
 ## Current objective
 
@@ -12,7 +12,7 @@ Complete the minimal reproducible repository/runtime/engineering baseline requir
 
 ## Active directive
 
-ANIMA-HA-P0-RUNTIME-BASELINE-002
+NONE
 
 ## Current verified state
 
@@ -43,6 +43,8 @@ ANIMA-HA-P0-RUNTIME-BASELINE-002
 - Remote baseline `088b267467fff93bfd225b9a94a6f4999759fb9f`: observed and preserved as the Git history parent.
 - Governance baseline `6fbabc892f53876fd94614ccc531dc7478a80288`: committed locally; push verification pending.
 - Phase 0 qualification and validation evidence is recorded in `docs/DEPENDENCY-QUALIFICATION.md` and `docs/PHASE-0-RUNTIME-BASELINE.md`.
+- Phase 0 implementation checkpoint is `3fd0bfd1dc2c26798423a8077d2a1d9ca3bc3480`; GitHub Actions run `33232446199` passed for that SHA.
+- Phase 0 acceptance evidence is preserved in `.agent/tasks/completed/ANIMA-HA-P0-RUNTIME-BASELINE-002/EVIDENCE.md` after packet closure.
 
 ## Current risks
 
@@ -53,6 +55,6 @@ ANIMA-HA-P0-RUNTIME-BASELINE-002
 
 ## Next Architect decision point
 
-Review the Phase 0 runtime checkpoint and its fresh-checkout evidence; no Phase 1 behavior is authorized by this directive.
+Architect review of Phase 0 evidence is required before a separate Phase 1 directive; no Phase 1 behavior is authorized by this directive.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.
