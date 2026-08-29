@@ -192,7 +192,7 @@ Built ANIMA-owned immutable `EventEnvelope` and `TruthObservation` contracts, a 
 - Verdict: COMPLETE / PASS
 - Retrieval confidence: ADEQUATE
 - Evidence level: E4_REGRESSION_PROTECTED for unit/static/build checks; E3_TARGET_TESTED for x86-64 PostgreSQL graph integration; E2_REPRODUCED for synthetic simulator; ARM64 remains E1_OBSERVED manifest/package evidence.
-- Implementation checkpoint: recorded after final commit verification.
+- Implementation checkpoint: `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 
 ### Work performed
 

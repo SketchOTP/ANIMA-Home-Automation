@@ -111,3 +111,28 @@ Native Pi run, image digest update, Phase 1 memory schema design, backup/restore
 ### Boundary conclusion
 
 The selected design preserves the event-sourcing benefits needed here—durable history plus rebuildable derived state—without delegating ANIMA's event/truth meanings to a framework or adding a second persistence service. The decision does not change the SSOT architecture or phase ordering.
+
+## ANIMA-HA-P2-HOUSEHOLD-GRAPH-004 — canonical graph prior art
+
+- Date checked: 2026-08-29
+- Trigger: Phase 2 required prior-art comparison before selecting canonical graph persistence.
+- Sources: [PostgreSQL recursive queries](https://www.postgresql.org/docs/16/queries-with.html); [Apache AGE](https://github.com/apache/age); [NetworkX](https://github.com/networkx/networkx); [Brick Schema](https://github.com/BrickSchema/Brick); [Project Haystack](https://project-haystack.org/); [Graphiti](https://github.com/getzep/graphiti).
+
+### Comparison and disposition
+
+| Candidate | License / maintenance | Fit, persistence, portability, and replacement path | Decision |
+| --- | --- | --- | --- |
+| PostgreSQL recursive CTE | PostgreSQL License; mature core feature in PostgreSQL 16 | Durable transactional relational persistence; recursive hierarchy traversal; already qualified for x86-64 and ARM64 image path; replace repository behind ANIMA contracts if needed | ADOPT / WRAP |
+| Apache AGE | Apache-2.0; active PostgreSQL extension | Adds an extension and graph query abstraction without measured need for the expected household scale; PostgreSQL CTE repository is the replacement path | REJECT |
+| NetworkX | BSD-3-Clause; mature Python project | In-process algorithms only; no authoritative durable persistence, restart, or transaction boundary; future analysis adapter could wrap it | REJECT as canonical persistence |
+| Brick Schema | BSD-3-Clause; building semantic project | Broad RDF ontology and useful building vocabulary; runtime adoption would add semantic/dependency coupling; ANIMA graph contracts are the replacement boundary | REFERENCE / ADAPT |
+| Project Haystack | Academic Free License 3.0; open building/IoT semantic project | Useful tags and relationships, but does not replace ANIMA-owned UUID, provenance, lifecycle, or provider-reference semantics | REFERENCE / ADAPT |
+| Graphiti | Apache-2.0 code; active temporal agent-context project | LLM/embedding-assisted temporal graph construction fits later learned memory/context, not deterministic commissioned topology | DEFER |
+
+### Boundary conclusion
+
+No new graph database, extension, or service was introduced. The selected
+PostgreSQL/Psycopg repository preserves ANIMA ownership of identity, semantics,
+provider isolation, Truth bindings, mutation audit, and query behavior. The
+Home Assistant registry remains future provider input only; its IDs are not
+canonical household identity.

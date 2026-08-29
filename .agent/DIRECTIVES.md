@@ -89,5 +89,6 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Completed: 2026-08-29
 - Status: COMPLETE / PASS
 - Architecture: BUILD ANIMA graph contracts/repository; ADOPT/WRAP PostgreSQL/Psycopg; REFERENCE/ADAPT Brick/Haystack; DEFER Graphiti; REJECT AGE and NetworkX as canonical persistence.
+- Implementation checkpoint: `ed261e8a3bc794ededdc3084f63b816152988820`; GitHub Actions run `33261359336` passed for that exact SHA.
 - Evidence: unit validation and x86-64 PostgreSQL integration; synthetic fixture/simulator; no HA or physical-home evidence.
 - Phase 3 Memory Service and later behavior were not implemented.
