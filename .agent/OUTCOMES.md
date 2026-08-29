@@ -185,3 +185,31 @@ Built ANIMA-owned immutable `EventEnvelope` and `TruthObservation` contracts, a 
 - Native Raspberry Pi execution/resource qualification and backup/restore remain future evidence items.
 - Current truth reconciliation is generic and intentionally does not include Household Graph semantics, authority, or source-specific Home Assistant behavior.
 - PostgreSQL integration evidence is synthetic and x86-64 only; it is not real-home or HA evidence.
+
+## ANIMA-HA-P2-HOUSEHOLD-GRAPH-004 — Phase 2 Household Graph complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build checks; E3_TARGET_TESTED for x86-64 PostgreSQL graph integration; E2_REPRODUCED for synthetic simulator; ARM64 remains E1_OBSERVED manifest/package evidence.
+- Implementation checkpoint: recorded after final commit verification.
+
+### Work performed
+
+Added forward migration `0003_household_graph.sql`, ANIMA-owned canonical graph contracts, deterministic commissioning validation and synthetic fixture, PostgreSQL recursive semantic queries, transactionally journaled graph mutations, provider remap/retirement, rename/alias preservation, Truth-backed presence query, simulator graph scenario, and Phase 2 integration evidence.
+
+### Acceptance results
+
+- Canonical identity, place containment, recursive traversal, cycle rejection, entrance topology, resources/capabilities, and security metadata: PASSED — unit/integration.
+- Provider many-to-one mapping, capability mapping, collision/remap, and external-ID isolation: PASSED — PostgreSQL integration.
+- Alias resolution, ambiguity behavior, canonical rename, and old-alias preservation: PASSED — unit/PostgreSQL integration.
+- Truth binding with underlying event provenance and no new inference: PASSED — x86-64 PostgreSQL integration.
+- Transactional commissioning, idempotent reload, graph mutation audit, retirement boundary: PASSED — PostgreSQL integration.
+- Phase 1 regression, full tests, Ruff, mypy, build, CI, public safety, restart/persistence, and clean push: recorded at checkpoint closure.
+
+### Evidence limits / risks
+
+- The household is synthetic and provider references are examples; no Home Assistant or physical-home claim is made.
+- ARM64 remains manifest/package metadata evidence only; native Raspberry Pi execution and resource measurement remain future gates.
+- Current graph commissioning is a deterministic merge/upsert boundary; a future commissioning UI may add explicit replacement/deletion planning.
+- Memory, policy, Home Assistant, Luna, plugins, action execution, durable tasks, UI, and voice remain unauthorized.

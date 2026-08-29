@@ -46,3 +46,19 @@ NATS/JetStream, OPA, Mem0, Hatchet, Home Assistant runtime, Luna/OpenAI Agents S
 - [pgvector project and Docker tags](https://github.com/pgvector/pgvector)
 - [Docker multi-platform images](https://docs.docker.com/build/building/multi-platform/)
 - [GitHub Python Actions guidance](https://docs.github.com/en/actions/tutorials/build-and-test-code/python)
+
+## Phase 2 graph prior-art qualification
+
+Checked: 2026-08-29. No new runtime dependency or infrastructure service was
+introduced for the canonical household graph.
+
+| Candidate | License / maintenance | Decision | Qualification and replacement path |
+| --- | --- | --- | --- |
+| PostgreSQL 16 recursive CTE | PostgreSQL License; mature core feature | ADOPT / WRAP | Supports hierarchical traversal and remains on the already-qualified PostgreSQL/Psycopg boundary. ANIMA owns contracts and can replace the repository implementation without changing callers. |
+| Apache AGE | Apache-2.0; active PostgreSQL extension | REJECT | Requires an extra extension/query model and does not save enough work for this bounded household graph. Existing PostgreSQL tables/CTEs are the lower-risk replacement path. |
+| NetworkX | BSD-3-Clause; mature Python library | REJECT as storage | In-process graph structures do not provide authoritative persistence, transactionality, or restart durability. A future algorithm adapter could wrap it if measured need appears. |
+| Brick Schema | BSD-3-Clause; building ontology project | REFERENCE / ADAPT | Semantic vocabulary and relationship prior art only; no RDF dependency or runtime lock-in. |
+| Project Haystack | Academic Free License 3.0; open building/IoT semantic project | REFERENCE / ADAPT | Tagging and semantic lessons only; ANIMA requires its own identity, provenance, lifecycle, and provider-reference semantics. |
+| Graphiti | Apache-2.0 code; active agent temporal-context project | DEFER | LLM/embedding-assisted temporal enrichment belongs to later memory/context work, not commissioned deterministic topology. |
+
+Primary sources: [PostgreSQL recursive queries](https://www.postgresql.org/docs/16/queries-with.html), [Apache AGE](https://github.com/apache/age), [NetworkX](https://github.com/networkx/networkx), [Brick](https://github.com/BrickSchema/Brick), [Project Haystack](https://project-haystack.org/), and [Graphiti](https://github.com/getzep/graphiti).

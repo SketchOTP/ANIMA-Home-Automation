@@ -10,6 +10,8 @@ from datetime import UTC, datetime, timedelta
 
 from anima_ha.config import RuntimeConfig
 from anima_ha.events import EventEnvelope, ObservationState, TruthObservation
+from anima_ha.fixtures import sample_household_document
+from anima_ha.graph import PostgresHouseholdGraph
 from anima_ha.journal import PostgresRealityStore
 from anima_ha.logging_setup import configure_logging
 
@@ -35,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
             "unavailable",
             "conflict",
             "rebuild",
+            "graph",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -65,7 +68,18 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
         "simulator_ready",
         extra={"mode": "reality-substrate", "event_semantics": "deterministic-synthetic-only"},
     )
-    if scenario != "ready":
+    if scenario == "graph":
+        graph = PostgresHouseholdGraph(config.database_url, config.database_connect_timeout)
+        result = graph.commission(sample_household_document())
+        LOGGER.info(
+            "simulator_graph_complete",
+            extra={
+                "nodes_created": result.created_nodes,
+                "places": len(graph.list_places()),
+                "exterior_entrances": len(graph.exterior_entrances()),
+            },
+        )
+    elif scenario != "ready":
         base = datetime.now(UTC).replace(microsecond=0)
         observation = TruthObservation(
             truth_key="simulator/example/value",

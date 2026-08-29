@@ -54,81 +54,91 @@ class PostgresEventJournal:
         self.connect_timeout = connect_timeout
 
     def append(self, event: EventEnvelope) -> AppendResult:
+        with psycopg.connect(
+            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+        ) as connection:
+            result = self.append_in_connection(connection, event)
+            connection.commit()
+            return result
+
+    def append_in_connection(
+        self, connection: psycopg.Connection[Any], event: EventEnvelope
+    ) -> AppendResult:
+        """Append within a caller-owned transaction.
+
+        This is used when a graph mutation and its journal audit event must commit
+        atomically.  The caller owns commit/rollback.
+        """
         if event.schema_version != SUPPORTED_EVENT_SCHEMA_VERSION:
             raise UnsupportedEventSchema(
                 f"event schema {event.schema_version} is unsupported; "
                 f"supported={SUPPORTED_EVENT_SCHEMA_VERSION}"
             )
-        with psycopg.connect(
-            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
-        ) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO anima_event_journal (
-                        event_id, schema_version, event_type, source, source_event_id,
-                        subject_key, occurred_at, recorded_at, source_sequence,
-                        correlation_id, causation_id, confidence, evidence_kind,
-                        importance, delivery_class, payload, metadata
-                    ) VALUES (
-                        %(event_id)s, %(schema_version)s, %(event_type)s, %(source)s,
-                        %(source_event_id)s, %(subject_key)s, %(occurred_at)s,
-                        %(recorded_at)s, %(source_sequence)s, %(correlation_id)s,
-                        %(causation_id)s, %(confidence)s, %(evidence_kind)s,
-                        %(importance)s, %(delivery_class)s, %(payload)s::jsonb,
-                        %(metadata)s::jsonb
-                    )
-                    ON CONFLICT DO NOTHING
-                    RETURNING journal_position
-                    """,
-                    {
-                        "event_id": event.event_id,
-                        "schema_version": event.schema_version,
-                        "event_type": event.event_type,
-                        "source": event.source,
-                        "source_event_id": event.source_event_id,
-                        "subject_key": event.subject_key,
-                        "occurred_at": event.occurred_at,
-                        "recorded_at": event.recorded_at,
-                        "source_sequence": event.source_sequence,
-                        "correlation_id": event.correlation_id,
-                        "causation_id": event.causation_id,
-                        "confidence": event.confidence,
-                        "evidence_kind": event.evidence_kind.value,
-                        "importance": event.importance.value,
-                        "delivery_class": event.delivery_class.value,
-                        "payload": json.dumps(event.payload, sort_keys=True),
-                        "metadata": json.dumps(event.metadata, sort_keys=True),
-                    },
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_event_journal (
+                    event_id, schema_version, event_type, source, source_event_id,
+                    subject_key, occurred_at, recorded_at, source_sequence,
+                    correlation_id, causation_id, confidence, evidence_kind,
+                    importance, delivery_class, payload, metadata
+                ) VALUES (
+                    %(event_id)s, %(schema_version)s, %(event_type)s, %(source)s,
+                    %(source_event_id)s, %(subject_key)s, %(occurred_at)s,
+                    %(recorded_at)s, %(source_sequence)s, %(correlation_id)s,
+                    %(causation_id)s, %(confidence)s, %(evidence_kind)s,
+                    %(importance)s, %(delivery_class)s, %(payload)s::jsonb,
+                    %(metadata)s::jsonb
                 )
-                inserted = cursor.fetchone()
-                if inserted:
-                    connection.commit()
-                    return AppendResult(event.event_id, int(inserted["journal_position"]), False)
-                cursor.execute(
-                    """
-                    SELECT journal_position, event_id, source_event_id
-                    FROM anima_event_journal
-                    WHERE event_id = %(event_id)s
-                       OR (%(source_event_id)s::text IS NOT NULL AND source = %(source)s
-                           AND source_event_id = %(source_event_id)s)
-                    ORDER BY journal_position
-                    LIMIT 1
-                    """,
-                    {
-                        "event_id": event.event_id,
-                        "source": event.source,
-                        "source_event_id": event.source_event_id,
-                    },
-                )
-                existing = cursor.fetchone()
-                if existing is None:
-                    raise ProjectionError("event insert was ignored but no duplicate was found")
-                connection.commit()
-                key = "event_id" if existing["event_id"] == event.event_id else "source_event_id"
-                return AppendResult(
-                    str(existing["event_id"]), int(existing["journal_position"]), True, key
-                )
+                ON CONFLICT DO NOTHING
+                RETURNING journal_position
+                """,
+                {
+                    "event_id": event.event_id,
+                    "schema_version": event.schema_version,
+                    "event_type": event.event_type,
+                    "source": event.source,
+                    "source_event_id": event.source_event_id,
+                    "subject_key": event.subject_key,
+                    "occurred_at": event.occurred_at,
+                    "recorded_at": event.recorded_at,
+                    "source_sequence": event.source_sequence,
+                    "correlation_id": event.correlation_id,
+                    "causation_id": event.causation_id,
+                    "confidence": event.confidence,
+                    "evidence_kind": event.evidence_kind.value,
+                    "importance": event.importance.value,
+                    "delivery_class": event.delivery_class.value,
+                    "payload": json.dumps(event.payload, sort_keys=True),
+                    "metadata": json.dumps(event.metadata, sort_keys=True),
+                },
+            )
+            inserted = cursor.fetchone()
+            if inserted:
+                return AppendResult(event.event_id, int(inserted["journal_position"]), False)
+            cursor.execute(
+                """
+                SELECT journal_position, event_id, source_event_id
+                FROM anima_event_journal
+                WHERE event_id = %(event_id)s
+                   OR (%(source_event_id)s::text IS NOT NULL AND source = %(source)s
+                       AND source_event_id = %(source_event_id)s)
+                ORDER BY journal_position
+                LIMIT 1
+                """,
+                {
+                    "event_id": event.event_id,
+                    "source": event.source,
+                    "source_event_id": event.source_event_id,
+                },
+            )
+            existing = cursor.fetchone()
+            if existing is None:
+                raise ProjectionError("event insert was ignored but no duplicate was found")
+            key = "event_id" if existing["event_id"] == event.event_id else "source_event_id"
+            return AppendResult(
+                str(existing["event_id"]), int(existing["journal_position"]), True, key
+            )
 
     def list_events(
         self,

@@ -71,3 +71,23 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required external discovery: Direct PostgreSQL/Psycopg implementation compared with Python `eventsourcing`, NATS JetStream, and KurrentDB/EventStoreDB.
 - Completion record: PASS; implementation checkpoint recorded in `.agent/tasks/completed/ANIMA-HA-P1-REALITY-SUBSTRATE-003/EVIDENCE.md`.
 - Source: Architect directive `ANIMA-HA-P1-REALITY-SUBSTRATE-003`.
+
+---
+
+## ANIMA-HA-P2-HOUSEHOLD-GRAPH-004 — Deterministic canonical Household Graph
+
+- Issued: 2026-08-29
+- Status: COMPLETE / PASS
+- Project stage: IMPLEMENTATION PHASE 2 — HOUSEHOLD GRAPH
+- Objective: Build the ANIMA-owned PostgreSQL canonical household graph with identity, containment, entrance topology, resources/capabilities, aliases, provider references, Truth bindings, commissioning, semantic queries, and journaled graph mutations.
+- Exclusions: No memory, policy, Home Assistant adapter, Luna, plugins/MCP, actions, durable tasks, external tools, UI, or voice.
+- Required external discovery: PostgreSQL recursive CTEs, Apache AGE, NetworkX, Brick, Project Haystack, and Graphiti.
+- Source: Architect directive `ANIMA-HA-P2-HOUSEHOLD-GRAPH-004`.
+
+### Completion record
+
+- Completed: 2026-08-29
+- Status: COMPLETE / PASS
+- Architecture: BUILD ANIMA graph contracts/repository; ADOPT/WRAP PostgreSQL/Psycopg; REFERENCE/ADAPT Brick/Haystack; DEFER Graphiti; REJECT AGE and NetworkX as canonical persistence.
+- Evidence: unit validation and x86-64 PostgreSQL integration; synthetic fixture/simulator; no HA or physical-home evidence.
+- Phase 3 Memory Service and later behavior were not implemented.

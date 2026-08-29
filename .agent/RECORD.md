@@ -77,3 +77,30 @@ Unit/static/build validation and synthetic x86-64 PostgreSQL integration passed 
 ### Consequence
 
 Phase 2 can consume a stable provider-independent reality substrate. No Household Graph, memory, policy, Home Assistant, Luna, or later behavior is included.
+
+## ANIMA-HA-P2-HOUSEHOLD-GRAPH-004 — Canonical semantic household graph
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Related directive/outcome: `ANIMA-HA-P2-HOUSEHOLD-GRAPH-004`
+
+### Decision / event
+
+Adopted an ANIMA-owned relational canonical graph on PostgreSQL 16 with
+recursive CTE traversal, typed semantic relationships, commissioned UUID
+identity, separate provider references, aliases, Truth bindings, and Phase 1
+journal mutation audit. Brick/Haystack are reference material only; AGE and
+NetworkX are not canonical persistence; Graphiti is deferred.
+
+### Evidence
+
+Pure validation and x86-64 PostgreSQL integration cover the synthetic topology,
+cycle/reference/entrance validation, recursive resources, aliases, provider
+mapping/remap, Truth provenance, idempotent commissioning, audit, and restart.
+No Home Assistant or physical-home evidence is claimed.
+
+### Consequence
+
+Phase 3 may consume semantic household identity after Architect review. Memory,
+policy, Home Assistant, Luna, plugins, actions, durable tasks, UI, and voice
+remain out of scope until separately authorized.

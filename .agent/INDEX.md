@@ -10,10 +10,10 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 1 — REALITY SUBSTRATE COMPLETE
+- Current stage: IMPLEMENTATION PHASE 2 — HOUSEHOLD GRAPH COMPLETE
 - Active directive: NONE
 - Active task packet: NONE
-- Last accepted outcome: ANIMA-HA-P1-REALITY-SUBSTRATE-003
+- Last accepted outcome: ANIMA-HA-P2-HOUSEHOLD-GRAPH-004
 - Last state sync: 2026-08-29
 
 ## Mandatory kernel

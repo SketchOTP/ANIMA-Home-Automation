@@ -58,3 +58,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - The maintained Python `eventsourcing` library is a valid BSD-3-Clause PostgreSQL-capable candidate, but its aggregate/application abstractions are not the ANIMA observation/truth contract; keep it deferred behind a replaceable boundary.
 - NATS JetStream remains a later event-bus candidate because its durable consumers and at-least-once redelivery would add a second duplicate-handling/persistence layer before independent consumers justify it.
 - KurrentDB/EventStoreDB is not the prototype baseline because its current Kurrent License is not OSI-approved and its separate service is unnecessary for this Pi-oriented Phase 1.
+
+## ANIMA-HA-P2-HOUSEHOLD-GRAPH-004 — Canonical graph ownership
+
+- PostgreSQL recursive CTEs are sufficient for the expected commissioned household topology; AGE would add a graph extension/query model without measured need.
+- Canonical household identity must be ANIMA-owned and UUID-based. Home Assistant/provider IDs remain external references and may map many-to-one to resources or separately to capabilities.
+- Brick and Haystack are useful semantic vocabulary prior art but are not runtime dependencies; Graphiti belongs to later learned/temporal context, not deterministic commissioning.
+- Graph mutations can share the Phase 1 journal transactionally through a caller-owned Psycopg connection, preserving one audit boundary without a second audit store.
+- Security sensitivity and household roles are graph facts only. They must not grant authority or become policy before the authorized policy phase.

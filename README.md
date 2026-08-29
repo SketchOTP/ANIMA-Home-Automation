@@ -1,8 +1,8 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline and Phase 1 reality substrate; household intelligence is intentionally not implemented yet.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline, Phase 1 reality substrate, and Phase 2 deterministic Household Graph; cognition and household actions are intentionally not implemented yet.
 
-## Phase 0 and Phase 1 baseline
+## Phase 0, Phase 1, and Phase 2 baseline
 
 This checkpoint provides:
 
@@ -14,9 +14,10 @@ This checkpoint provides:
 - a pgvector-ready PostgreSQL development service with a migration runner;
 - a simulator framework entrypoint that reports readiness but does not process household events;
 - an ANIMA-owned PostgreSQL event journal, truth observation model, deterministic reconciliation projection, failure tracking, and replay/rebuild path;
+- an ANIMA-owned PostgreSQL canonical household graph with commissioned topology, recursive place traversal, aliases, provider references, Truth bindings, semantic queries, and journaled graph mutations;
 - a single local validation command and a matching GitHub Actions workflow.
 
-No Household Graph, memory, policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included.
+No memory, policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included.
 
 ## Supported baseline
 
@@ -45,6 +46,7 @@ The validation command runs format, lint, type, and unit checks. The database co
 
 For the full evidence workflow, see [`docs/PHASE-0-RUNTIME-BASELINE.md`](docs/PHASE-0-RUNTIME-BASELINE.md).
 For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-REALITY-SUBSTRATE.md`](docs/PHASE-1-REALITY-SUBSTRATE.md).
+For the Phase 2 graph contracts, prior-art decisions, commissioning, and evidence boundary, see [`docs/PHASE-2-HOUSEHOLD-GRAPH.md`](docs/PHASE-2-HOUSEHOLD-GRAPH.md).
 
 ## Authority
 

@@ -1,12 +1,12 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 1 REALITY SUBSTRATE 2026-08-29
+Last verified against: IMPLEMENTATION PHASE 2 HOUSEHOLD GRAPH 2026-08-29
 
 ## Entry points
 
 - `anima-validate` — deterministic local format/lint/type/unit gate.
 - `anima-migrate` — runtime-only ordered SQL migration runner.
-- `anima-sim` — synthetic reality-substrate scenario entrypoint; no household behavior.
+- `anima-sim` — synthetic reality-substrate and commissioned graph scenario entrypoint; no household behavior.
 
 ## Major modules / packages
 
@@ -17,7 +17,9 @@ Last verified against: IMPLEMENTATION PHASE 1 REALITY SUBSTRATE 2026-08-29
 - `src/anima_ha/events.py` — immutable normalized event and observation contracts.
 - `src/anima_ha/journal.py` — PostgreSQL journal, truth projection, failure tracking, and rebuild.
 - `src/anima_ha/truth.py` — pure deterministic reconciliation and uncertainty statuses.
-- `tests/` — deterministic Phase 0/Phase 1 unit tests.
+- `src/anima_ha/graph.py` — canonical graph contracts, validation, PostgreSQL repository, semantic queries, Truth bindings, aliases, provider references, and mutation audit.
+- `src/anima_ha/fixtures.py` — deterministic synthetic commissioning topology.
+- `tests/` — deterministic Phase 0/Phase 1/Phase 2 unit tests.
 
 ## Important interfaces / contracts
 
@@ -28,8 +30,9 @@ Last verified against: IMPLEMENTATION PHASE 1 REALITY SUBSTRATE 2026-08-29
 
 ## Tests
 
-- `uv run --locked --group dev pytest` — eleven unit tests.
+- `uv run --locked --group dev pytest` — Phase 0/1/2 unit tests.
 - `uv run --locked --group dev python scripts/verify_phase1_postgres.py` — synthetic PostgreSQL integration harness.
+- `uv run --locked --group dev python scripts/verify_phase2_postgres.py` — synthetic PostgreSQL graph integration harness.
 
 ## Generated / cache / build areas
 
@@ -50,7 +53,9 @@ Last verified against: IMPLEMENTATION PHASE 1 REALITY SUBSTRATE 2026-08-29
 - `docs/DEPENDENCY-QUALIFICATION.md` — dependency decisions, sources, licenses, and recheck triggers.
 - `.github/workflows/ci.yml` — hosted CI invoking the same validation command.
 
-The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavior is in `events.py`, `journal.py`, and `truth.py`; it is not a Household Graph, memory, policy, or household-specific schema.
+The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavior is in `events.py`, `journal.py`, and `truth.py`; Phase 2 graph behavior is in `graph.py` and `fixtures.py`. Neither phase implements memory, policy, Home Assistant, or household-specific provider behavior.
+
+- `docs/PHASE-2-HOUSEHOLD-GRAPH.md` — canonical graph architecture, prior art, commissioning, query surface, and evidence boundaries.
 
 ## Known sensitive/high-risk areas
 
