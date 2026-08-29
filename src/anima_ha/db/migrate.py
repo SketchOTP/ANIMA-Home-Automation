@@ -1,4 +1,4 @@
-"""Minimal ordered SQL migration runner for runtime metadata only."""
+"""Minimal ordered SQL migration runner for ANIMA-owned persistence schemas."""
 
 from __future__ import annotations
 

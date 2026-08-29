@@ -18,10 +18,10 @@
 
 - Languages: Python 3.12.x
 - Frameworks: None adopted in Phase 0; modular monolith package boundary is established
-- Major dependencies: `psycopg[binary]` 3.3.4; development tools are pinned in `pyproject.toml` and `uv.lock`
+- Major dependencies: `psycopg[binary]` 3.3.4 behind ANIMA-owned journal/projection interfaces; development tools are pinned in `pyproject.toml` and `uv.lock`
 - Build/test commands: `uv sync --locked --dev`; `./scripts/validate.sh`; `uv build`
 - Runtime environments: Target Raspberry Pi 5-class ARM64 controller; portable ARM64/x86-64 development/target environments
-- Persistent substrate: PostgreSQL 16.15 through pinned pgvector 0.8.6 image digest; runtime-only migration metadata in Phase 0
+- Persistent substrate: PostgreSQL 16.15 through pinned pgvector 0.8.6 image digest; canonical append-only event journal and derived truth projection are PostgreSQL-backed
 - Local infrastructure: Docker Engine with Compose v2 and a named PostgreSQL volume
 
 ## Important integrations
@@ -29,6 +29,13 @@
 - Home Assistant — household automation substrate and replaceable device/event adapter.
 - Luna 5.6 with medium reasoning — primary cloud cognition model for the prototype.
 - Modular plugins/connectors/MCP — customer-selectable external and household capabilities behind ANIMA-owned contracts.
+
+## Phase 1 reality substrate
+
+- `anima_ha.events` — immutable normalized event and truth-observation contracts.
+- `anima_ha.journal` — PostgreSQL journal, deduplication, projection checkpoint/failure boundary, and rebuild facade.
+- `anima_ha.truth` — pure deterministic reconciliation and explicit uncertainty statuses.
+- `docs/PHASE-1-REALITY-SUBSTRATE.md` — event, ordering, projection, and replay architecture.
 
 ## Compatibility commitments
 

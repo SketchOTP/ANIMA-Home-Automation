@@ -49,3 +49,12 @@ Future checkpoints must preserve that history and must not replace or force-upda
 ### Recheck trigger
 
 Any future history rewrite proposal, remote migration, or change to the repository's default branch.
+
+## ANIMA-HA-P1-REALITY-SUBSTRATE-003 — PostgreSQL is sufficient for Phase 1 authority
+
+- PostgreSQL unique constraints/`ON CONFLICT`, generated identity positions, JSONB payloads, and transactional projections are sufficient for the prototype's canonical journal and derived truth substrate without a second broker.
+- A journal-first transaction boundary preserves malformed/projector-failing events for retry and rebuild; projection checkpoints must advance only after projection commit.
+- Source sequence is a per-source ordering signal, not physical arrival order. Latest ties must remain visible so contradictory values are not silently selected.
+- The maintained Python `eventsourcing` library is a valid BSD-3-Clause PostgreSQL-capable candidate, but its aggregate/application abstractions are not the ANIMA observation/truth contract; keep it deferred behind a replaceable boundary.
+- NATS JetStream remains a later event-bus candidate because its durable consumers and at-least-once redelivery would add a second duplicate-handling/persistence layer before independent consumers justify it.
+- KurrentDB/EventStoreDB is not the prototype baseline because its current Kurrent License is not OSI-approved and its separate service is unnecessary for this Pi-oriented Phase 1.

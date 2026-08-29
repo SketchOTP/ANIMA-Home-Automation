@@ -59,3 +59,21 @@ Remote `main` was observed at `088b267467fff93bfd225b9a94a6f4999759fb9f` with a 
 ### Consequence
 
 `main` now has one coherent governance history through `6fbabc892f53876fd94614ccc531dc7478a80288`. Product implementation remains deferred until the Architect reviews this checkpoint and issues a separate bounded directive.
+
+## ANIMA-HA-P1-REALITY-SUBSTRATE-003 — Phase 1 reality substrate
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Related directive/outcome: `ANIMA-HA-P1-REALITY-SUBSTRATE-003`
+
+### Decision / event
+
+Adopted PostgreSQL 16 through the existing Psycopg boundary as the canonical Phase 1 event journal and derived truth substrate. Built the ANIMA event/observation contracts, deterministic reconciliation, projection retry boundary, and replay/rebuild. Deferred NATS/JetStream and aggregate event-sourcing frameworks; rejected KurrentDB/EventStoreDB as the prototype foundation.
+
+### Evidence
+
+Unit/static/build validation and synthetic x86-64 PostgreSQL integration passed for concurrent deduplication, append-only enforcement, source ordering, uncertainty/conflict semantics, journal-first projection retry, restart persistence, and rebuild equivalence. Full checkpoint details are in the completed task packet.
+
+### Consequence
+
+Phase 2 can consume a stable provider-independent reality substrate. No Household Graph, memory, policy, Home Assistant, Luna, or later behavior is included.

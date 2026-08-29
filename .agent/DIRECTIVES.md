@@ -58,3 +58,16 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Implementation checkpoint: `3fd0bfd1dc2c26798423a8077d2a1d9ca3bc3480`
 - Evidence: `.agent/tasks/completed/ANIMA-HA-P0-RUNTIME-BASELINE-002/EVIDENCE.md`
 - No Phase 1 product behavior was implemented.
+
+---
+
+## ANIMA-HA-P1-REALITY-SUBSTRATE-003 — Core contracts, event journal and Truth/State service
+
+- Issued: 2026-08-29
+- Status: COMPLETE
+- Project stage: IMPLEMENTATION PHASE 1 — REALITY SUBSTRATE
+- Objective: Build ANIMA-owned normalized event/observation contracts, a PostgreSQL canonical append-only journal, deterministic Truth/State projection, failure retry, replay/rebuild, and synthetic simulator scenarios.
+- Exclusions: No Household Graph, memory, identity/permissions, policy, plugins/MCP, NATS production integration, Home Assistant, Luna, action execution, durable tasks, external tools, UI, or voice.
+- Required external discovery: Direct PostgreSQL/Psycopg implementation compared with Python `eventsourcing`, NATS JetStream, and KurrentDB/EventStoreDB.
+- Completion record: PASS; implementation checkpoint recorded in `.agent/tasks/completed/ANIMA-HA-P1-REALITY-SUBSTRATE-003/EVIDENCE.md`.
+- Source: Architect directive `ANIMA-HA-P1-REALITY-SUBSTRATE-003`.

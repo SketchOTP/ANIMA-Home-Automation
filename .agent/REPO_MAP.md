@@ -1,12 +1,12 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 0 RUNTIME BASELINE 2026-08-28
+Last verified against: IMPLEMENTATION PHASE 1 REALITY SUBSTRATE 2026-08-29
 
 ## Entry points
 
 - `anima-validate` — deterministic local format/lint/type/unit gate.
 - `anima-migrate` — runtime-only ordered SQL migration runner.
-- `anima-sim` — readiness-only simulator framework entrypoint; household events are deferred.
+- `anima-sim` — synthetic reality-substrate scenario entrypoint; no household behavior.
 
 ## Major modules / packages
 
@@ -14,7 +14,10 @@ Last verified against: IMPLEMENTATION PHASE 0 RUNTIME BASELINE 2026-08-28
 - `src/anima_ha/logging_setup.py` — JSON structured logging boundary.
 - `src/anima_ha/db/` — PostgreSQL connection and runtime migration boundary.
 - `src/anima_ha/simulator.py` — future synthetic-input entrypoint without event semantics.
-- `tests/` — deterministic Phase 0 unit tests.
+- `src/anima_ha/events.py` — immutable normalized event and observation contracts.
+- `src/anima_ha/journal.py` — PostgreSQL journal, truth projection, failure tracking, and rebuild.
+- `src/anima_ha/truth.py` — pure deterministic reconciliation and uncertainty statuses.
+- `tests/` — deterministic Phase 0/Phase 1 unit tests.
 
 ## Important interfaces / contracts
 
@@ -25,7 +28,8 @@ Last verified against: IMPLEMENTATION PHASE 0 RUNTIME BASELINE 2026-08-28
 
 ## Tests
 
-- `uv run --locked --group dev pytest` — four baseline tests.
+- `uv run --locked --group dev pytest` — eleven unit tests.
+- `uv run --locked --group dev python scripts/verify_phase1_postgres.py` — synthetic PostgreSQL integration harness.
 
 ## Generated / cache / build areas
 
@@ -46,7 +50,7 @@ Last verified against: IMPLEMENTATION PHASE 0 RUNTIME BASELINE 2026-08-28
 - `docs/DEPENDENCY-QUALIFICATION.md` — dependency decisions, sources, licenses, and recheck triggers.
 - `.github/workflows/ci.yml` — hosted CI invoking the same validation command.
 
-The `src/anima_ha/db` area is runtime-only. It is not a Phase 1 Event Journal, Truth/State, memory, graph, policy, or household schema.
+The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavior is in `events.py`, `journal.py`, and `truth.py`; it is not a Household Graph, memory, policy, or household-specific schema.
 
 ## Known sensitive/high-risk areas
 

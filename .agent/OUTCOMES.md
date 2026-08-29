@@ -152,3 +152,36 @@ Initialized local Git, configured `SketchOTP <sketchotp@gmail.com>`, connected `
 ### Architect decision required
 
 YES — accept or reject this governance-only checkpoint, then authorize the first bounded Phase 1 discovery/implementation directive separately.
+
+---
+
+## ANIMA-HA-P1-REALITY-SUBSTRATE-003 — Phase 1 reality substrate complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build checks; E3_TARGET_TESTED for x86-64 PostgreSQL integration; ARM64 remains E1_OBSERVED metadata evidence.
+- Implementation checkpoint: recorded in the completed task evidence and final GitHub checkpoint.
+
+### Work performed
+
+Built ANIMA-owned immutable `EventEnvelope` and `TruthObservation` contracts, a PostgreSQL append-only journal with event/source idempotency, journal queries, a deterministic truth projection with explicit current/stale/unknown/unavailable/conflicting results, projection failure tracking/retry, and journal replay/rebuild. Added synthetic simulator scenarios and a repeatable PostgreSQL integration harness. No Home Assistant, Household Graph, memory, policy, agent, or action behavior was added.
+
+### Acceptance results
+
+- Valid normalized events persist durably: PASSED — PostgreSQL integration.
+- Immutable identity, monotonic journal position, separate event/record time: PASSED — contracts/integration.
+- Duplicate and concurrent duplicate ingestion: PASSED — unique constraints and 8-way integration test.
+- Append-only journal protection: PASSED — database trigger integration test.
+- Deterministic queries/order and source-sequence handling: PASSED — implementation/unit/integration.
+- Known, stale, unknown, unavailable, and conflicting state with provenance: PASSED — reducer/integration.
+- Projection failure preserves event and retries: PASSED — injected x86-64 PostgreSQL integration.
+- Restart persistence and full rebuild equivalence: PASSED — x86-64 PostgreSQL integration.
+- Unsupported event schema fails explicitly: PASSED — unit contract test.
+- CI, Phase 0 regression, package build, public safety, and clean push: recorded after final checkpoint verification.
+
+### Risks / limitations
+
+- Native Raspberry Pi execution/resource qualification and backup/restore remain future evidence items.
+- Current truth reconciliation is generic and intentionally does not include Household Graph semantics, authority, or source-specific Home Assistant behavior.
+- PostgreSQL integration evidence is synthetic and x86-64 only; it is not real-home or HA evidence.

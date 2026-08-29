@@ -1,8 +1,8 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository is currently establishing the implementation baseline; household intelligence is intentionally not implemented yet.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the accepted Phase 0 runtime baseline and Phase 1 reality substrate; household intelligence is intentionally not implemented yet.
 
-## Phase 0 baseline
+## Phase 0 and Phase 1 baseline
 
 This checkpoint provides:
 
@@ -13,9 +13,10 @@ This checkpoint provides:
 - deterministic unit, lint, format, and type checks;
 - a pgvector-ready PostgreSQL development service with a migration runner;
 - a simulator framework entrypoint that reports readiness but does not process household events;
+- an ANIMA-owned PostgreSQL event journal, truth observation model, deterministic reconciliation projection, failure tracking, and replay/rebuild path;
 - a single local validation command and a matching GitHub Actions workflow.
 
-No Event Journal, Truth/State Service, household graph, memory, policy, agent cognition, Home Assistant adapter, plugin, UI, or voice behavior is included in this baseline.
+No Household Graph, memory, policy, agent cognition, Home Assistant adapter, plugin, UI, voice behavior, or external action capability is included.
 
 ## Supported baseline
 
@@ -43,6 +44,7 @@ On filesystem mounts that cannot create virtual-environment symlinks (including 
 The validation command runs format, lint, type, and unit checks. The database commands use only the local `.env` file and do not require household configuration.
 
 For the full evidence workflow, see [`docs/PHASE-0-RUNTIME-BASELINE.md`](docs/PHASE-0-RUNTIME-BASELINE.md).
+For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-REALITY-SUBSTRATE.md`](docs/PHASE-1-REALITY-SUBSTRATE.md).
 
 ## Authority
 

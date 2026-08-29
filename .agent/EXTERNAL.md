@@ -91,3 +91,23 @@ The image retains the later vector option without enabling product behavior or a
 ### Recheck trigger
 
 Native Pi run, image digest update, Phase 1 memory schema design, backup/restore qualification, or resource pressure on the target controller.
+
+## ANIMA-HA-P1-REALITY-SUBSTRATE-003 — event journal and projection prior art
+
+- Date checked: 2026-08-29
+- Trigger: Phase 1 required a persistence/prior-art comparison before implementing the canonical event journal and Truth/State service.
+- Sources: [Python eventsourcing project](https://github.com/pyeventsourcing/eventsourcing); [eventsourcing PostgreSQL documentation](https://eventsourcing.readthedocs.io/en/stable/topics/tutorial/part3.html); [NATS JetStream concepts](https://docs.nats.io/concepts/jetstream); [KurrentDB introduction](https://docs.kurrent.io/server/latest/); [KurrentDB repository](https://github.com/Kurrent-io/KurrentDB).
+
+### Comparison and disposition
+
+| Candidate | Disposition | Qualification | ANIMA decision |
+| --- | --- | --- | --- |
+| Existing PostgreSQL + Psycopg | ADOPT / WRAP | Already qualified in Phase 0; PostgreSQL 16/pgvector image has ARM64/x86-64 manifests; transactional SQL, unique constraints, JSONB, restart persistence | Canonical journal and derived truth projection behind ANIMA-owned interfaces |
+| Direct ANIMA journal/reducer implementation | BUILD | Keeps event envelope, provenance, time semantics, truth quality, reconciliation, and replay owned by ANIMA | Selected for Phase 1 |
+| Python `eventsourcing` 9.5.5 documentation/project | DEFER | BSD-3-Clause, maintained, typed, and PostgreSQL-capable through Psycopg; aggregate/application model does not directly fit external observations and ANIMA truth semantics | Reconsider only if a later bounded spike shows material code reduction without coupling |
+| NATS JetStream | DEFER | Official docs describe persistent streams, durable consumers, replay, and at-least-once redelivery | Add only when independent asynchronous consumers justify a broker; do not replace canonical journal |
+| KurrentDB/EventStoreDB | REJECT for prototype baseline | Current KurrentDB docs identify Kurrent License v1 as not OSI-approved; separate event-native service adds operational/storage overhead and is unnecessary for Phase 1 | Keep as non-foundational alternative; replacement path is PostgreSQL |
+
+### Boundary conclusion
+
+The selected design preserves the event-sourcing benefits needed here—durable history plus rebuildable derived state—without delegating ANIMA's event/truth meanings to a framework or adding a second persistence service. The decision does not change the SSOT architecture or phase ordering.
