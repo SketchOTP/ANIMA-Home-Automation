@@ -105,8 +105,8 @@ Native Pi run, image digest update, Phase 1 memory schema design, backup/restore
 | Existing PostgreSQL + Psycopg | ADOPT / WRAP | Already qualified in Phase 0; PostgreSQL 16/pgvector image has ARM64/x86-64 manifests; transactional SQL, unique constraints, JSONB, restart persistence | Canonical journal and derived truth projection behind ANIMA-owned interfaces |
 | Direct ANIMA journal/reducer implementation | BUILD | Keeps event envelope, provenance, time semantics, truth quality, reconciliation, and replay owned by ANIMA | Selected for Phase 1 |
 | Python `eventsourcing` 9.5.5 documentation/project | DEFER | BSD-3-Clause, maintained, typed, and PostgreSQL-capable through Psycopg; aggregate/application model does not directly fit external observations and ANIMA truth semantics | Reconsider only if a later bounded spike shows material code reduction without coupling |
-| NATS JetStream | DEFER | Official docs describe persistent streams, durable consumers, replay, and at-least-once redelivery | Add only when independent asynchronous consumers justify a broker; do not replace canonical journal |
-| KurrentDB/EventStoreDB | REJECT for prototype baseline | Current KurrentDB docs identify Kurrent License v1 as not OSI-approved; separate event-native service adds operational/storage overhead and is unnecessary for Phase 1 | Keep as non-foundational alternative; replacement path is PostgreSQL |
+| NATS JetStream (current server; version not pinned) | DEFER | NATS server is Apache-2.0; official JetStream docs describe persistent streams, durable consumers, replay, and at-least-once redelivery | Add only when independent asynchronous consumers justify a broker; do not replace canonical journal |
+| KurrentDB/EventStoreDB v26.0 | REJECT for prototype baseline | Current KurrentDB docs identify Kurrent License v1 as not OSI-approved; separate event-native service adds operational/storage overhead and is unnecessary for Phase 1 | Keep as non-foundational alternative; replacement path is PostgreSQL |
 
 ### Boundary conclusion
 
