@@ -161,7 +161,7 @@ YES — accept or reject this governance-only checkpoint, then authorize the fir
 - Verdict: COMPLETE / PASS
 - Retrieval confidence: ADEQUATE
 - Evidence level: E4_REGRESSION_PROTECTED for unit/static/build checks; E3_TARGET_TESTED for x86-64 PostgreSQL integration; ARM64 remains E1_OBSERVED metadata evidence.
-- Implementation checkpoint: recorded in the completed task evidence and final GitHub checkpoint.
+- Implementation checkpoint: `0ee72b736aa27e1b52d652eafb8e045e4b892148`; GitHub Actions run `33252987351` passed for that exact SHA.
 
 ### Work performed
 
@@ -178,7 +178,7 @@ Built ANIMA-owned immutable `EventEnvelope` and `TruthObservation` contracts, a 
 - Projection failure preserves event and retries: PASSED — injected x86-64 PostgreSQL integration.
 - Restart persistence and full rebuild equivalence: PASSED — x86-64 PostgreSQL integration.
 - Unsupported event schema fails explicitly: PASSED — unit contract test.
-- CI, Phase 0 regression, package build, public safety, and clean push: recorded after final checkpoint verification.
+- CI, Phase 0 regression, package build, public safety, and clean push: PASSED — GitHub Actions run `33252987351`; final metadata checkpoint follows this evidence closure.
 
 ### Risks / limitations
 
