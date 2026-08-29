@@ -10,6 +10,8 @@ if command -v opa >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1; then
     policy_tmp=$(mktemp -d)
     cp policy/phase4/* "$policy_tmp"/
+    chmod 755 "$policy_tmp"
+    chmod 644 "$policy_tmp"/*
     docker run --rm -v "$policy_tmp:/policies:ro" "$OPA_IMAGE" test /policies --fail-on-empty
 else
     echo "OPA validation requires opa or Docker" >&2
