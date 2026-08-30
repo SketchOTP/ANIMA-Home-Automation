@@ -193,3 +193,26 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Architecture: BUILD typed ANIMA attention/context/replay; ADOPT/REUSE/WRAP PostgreSQL and existing Phase 1–5 services; REFERENCE CloudEvents SQL/CEL/OpenTelemetry; DEFER CEL runtimes/NATS/provider tokenization; PROHIBIT executable attention scripts and behavioral automation.
 - Evidence: 50 tests, strict static/build validation, 10,020-event PostgreSQL restart/replay harness, Phase 1–5 regressions, real isolated Phase 6 HA regression, replay CLI, simulator, and public-safety review passed.
 - Phase 8 Luna Agent Runtime and later behavior were not implemented.
+
+---
+
+## ANIMA-HA-P8-LUNA-AGENT-RUNTIME-010 — Agents SDK Luna runtime
+
+- Issued: 2026-08-29
+- Status: SUPERSEDED by operator ruling; no implementation performed
+- Correct blocking result: `NEEDS_ARCHITECT_DECISION` because the prior Agents SDK/API-key path could not consume the operator-required Codex CLI ChatGPT OAuth session.
+- Historical boundary: repository remained unchanged at accepted Phase 7 checkpoint `44d4f59737aeed9aa55583eb49823a37535d607d`.
+
+---
+
+## ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R — Constrained Codex OAuth agent runtime
+
+- Issued: 2026-08-30
+- Status: IN PROGRESS
+- Project stage: IMPLEMENTATION PHASE 8 — CODEX OAUTH AGENT RUNTIME
+- Accepted prerequisite: Phase 7 governed checkpoint `44d4f59737aeed9aa55583eb49823a37535d607d`; accepted CI `33287068428`.
+- Objective: Build ANIMA-owned durable cognition episodes and a bounded sequential structured-decision loop around isolated `codex exec` turns using ChatGPT OAuth, `gpt-5.6-luna`, and medium reasoning.
+- Required boundary: Codex receives only Phase 7 cloud-safe context and bounded tool descriptors, returns exactly one `TOOL_REQUEST` or `FINAL`, and never receives direct shell, filesystem, MCP, HA, policy, database, app, plugin, or web capability access. ANIMA alone invokes tools through Phase 5 and Phase 4.
+- Exclusions: No Phase 9 generalized execution/concurrency/leases, durable tasks, production external tools, UI, voice, API-key path, Agents SDK foundation, direct Responses integration, or Codex coding-agent capability access.
+- Required external discovery: current official Codex CLI non-interactive/auth/config/model/JSONL/structured-output behavior and replacement-path comparison with Codex SDK, App Server, Agents SDK, and Responses API.
+- Source: operator-authorized Architect directive `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R`.

@@ -1,18 +1,18 @@
 # Current Project State
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Current stage
 
-IMPLEMENTATION PHASE 7 COMPLETE — PENDING ARCHITECT REVIEW
+IMPLEMENTATION PHASE 8 — CODEX OAUTH AGENT RUNTIME
 
 ## Current objective
 
-Await independent Architect review of the completed deterministic Attention Layer and Context Broker checkpoint. Do not begin Phase 8 without authorization.
+Implement the operator-authorized constrained Anima cognition loop through isolated `codex exec` turns using ChatGPT OAuth, `gpt-5.6-luna`, and medium reasoning while ANIMA retains context, tool, policy, budget, persistence, privacy, and outcome authority.
 
 ## Active directive
 
-NONE — `ANIMA-HA-P7-ATTENTION-CONTEXT-009` is complete and returned for review.
+`ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` — active. The prior `ANIMA-HA-P8-LUNA-AGENT-RUNTIME-010` is `SUPERSEDED`, with its correct blocking result preserved as historical evidence.
 
 ## Current verified state
 
@@ -52,10 +52,18 @@ NONE — `ANIMA-HA-P7-ATTENTION-CONTEXT-009` is complete and returned for review
 - Target evidence passed with 10,000 ordinary plus 20 guaranteed source events, restart after 5,000, exactly four aggregate and 20 guaranteed triggers, complete source journal, live/replay equivalence, context digest persistence, and Profile A/B comparison.
 - Typed ANIMA predicates and existing PostgreSQL were selected; CloudEvents SQL, CEL, and OpenTelemetry remain reference material; CEL runtimes and NATS/JetStream remain deferred. No new service or runtime dependency was added.
 
+## Phase 8 qualification state
+
+- Phase 7 is Architect accepted at governed checkpoint `44d4f59737aeed9aa55583eb49823a37535d607d`; GitHub Actions `33287068428` passed.
+- Codex CLI `0.150.0-alpha.8` reports `Logged in using ChatGPT` without credential inspection.
+- The installed model catalog lists `gpt-5.6-luna` with `medium` reasoning support.
+- An isolated strict-config live probe succeeded using ChatGPT OAuth, Luna, medium reasoning, ephemeral mode, ignored user config/rules, read-only sandbox, disabled shell/unified-exec/multi-agent/apps/plugins/web/image/memory/dependency-install controls, and no direct capability event.
+- The documented `tools.view_image=false` spelling is unsupported by this CLI; the stable equivalent `features.view_image=false` is supported and is the required adapter mapping.
+
 ## Current blockers
 
-- NONE for the completed Phase 7 directive.
-- Phase 8 Luna/Agent Runtime, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
+- NONE after the operator superseded the API-key/Agents SDK design and the installed Codex isolation controls passed qualification.
+- Phase 9 generalized action execution/concurrency, durable tasks, external production tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -81,6 +89,6 @@ NONE — `ANIMA-HA-P7-ATTENTION-CONTEXT-009` is complete and returned for review
 
 ## Next Architect decision point
 
-Architect review of Phase 7 implementation checkpoint `77aafbe5f78333b1c50d042fb1ceb19e74dbe698` and CI `33286882961` is required before Phase 8.
+Complete `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` and return the governed checkpoint for independent Architect review before Phase 9.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

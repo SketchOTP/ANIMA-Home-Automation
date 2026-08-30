@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 7 COMPLETE — PENDING ARCHITECT REVIEW
-- Active directive: NONE — awaiting Architect review of ANIMA-HA-P7-ATTENTION-CONTEXT-009
-- Active task packet: NONE
-- Last accepted outcome: ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 (accepted by Architect at `e1488d9a2d6280945cc2fd8bdba435733f0ba287`)
-- Last completed outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 implementation `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`, CI `33286882961`
-- Last state sync: 2026-08-29
+- Current stage: IMPLEMENTATION PHASE 8 — CODEX OAUTH AGENT RUNTIME
+- Active directive: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R/`
+- Last accepted outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 (accepted by Architect at `44d4f59737aeed9aa55583eb49823a37535d607d`)
+- Last completed outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 governed checkpoint `44d4f59737aeed9aa55583eb49823a37535d607d`, CI `33287068428`
+- Last state sync: 2026-08-30
 
 ## Mandatory kernel
 

@@ -125,3 +125,25 @@ Checked: 2026-08-29. Phase 7 adds no Python package, expression runtime, broker,
 | OpenTelemetry Context/Baggage | current stable specification | REFERENCE | Appropriate for technical correlation; baggage must not carry household-sensitive ContextPacket data. |
 
 Recheck if rule complexity materially exceeds typed predicates, independent concurrent consumers justify a broker, Phase 8 introduces provider-specific token budgeting, or native Pi measurements change the footprint decision.
+
+## Phase 8 Codex OAuth cognition qualification
+
+Checked: 2026-08-30. No Python package or infrastructure service was added.
+The installed Codex CLI `0.150.0-alpha.8` was qualified as an external local
+executable and wrapped behind `CodexTurnAdapter`.
+
+| Candidate | Decision | Qualification result |
+| --- | --- | --- |
+| ANIMA episode/runtime/contracts | BUILD | Preserves context projection, tool/policy authority, privacy, budgets, persistence, audit, and outcomes. |
+| Codex CLI `codex exec` | ADOPT / WRAP | `codex login status` reported ChatGPT login; the installed catalog exposed `gpt-5.6-luna` and medium reasoning; strict ephemeral structured JSONL execution passed on x86-64. The binary is an alpha build and must be requalified on update. |
+| Codex SDK | REFERENCE / DEFER | Possible future programmatic replacement; no current benefit sufficient to change the qualified Python adapter boundary. |
+| Codex App Server | REFERENCE / DEFER | Broader persistent RPC lifecycle is unnecessary for isolated one-turn processes. |
+| OpenAI Agents SDK | DEFER / REJECT for this directive | Does not provide the operator-required Codex CLI ChatGPT OAuth foundation. |
+| Responses API | DEFER | Requires a separately authorized API credential/billing path. |
+
+The child process receives an allowlisted environment; no OAuth credential file
+was read and no API key is forwarded. All Codex direct capabilities are disabled
+or rejected at the JSONL boundary. Official source links, exact command boundary,
+live usage/latency, and replacement risks are recorded in
+[`PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md`](PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md).
+There is no native ARM64/Pi runtime evidence for the installed Codex binary.

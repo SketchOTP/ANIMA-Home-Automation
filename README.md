@@ -1,8 +1,8 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the Architect-accepted Phase 0–6 foundations and the Phase 7 Attention/Context implementation pending Architect review; Luna cognition and Phase 8+ behavior are intentionally not implemented yet.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the Architect-accepted Phase 0–7 foundations and the Phase 8 Codex OAuth/Luna runtime pending Architect review.
 
-## Phase 0 through Phase 7 baseline
+## Phase 0 through Phase 8 baseline
 
 This checkpoint provides:
 
@@ -21,8 +21,9 @@ This checkpoint provides:
 - a single local validation command and a matching GitHub Actions workflow.
 - an ANIMA-owned Home Assistant adapter that preserves provider identity, normalizes HA state/events into the Phase 1 contracts, exposes bounded semantic tools through the Phase 5 registry and Phase 4 policy gate, and verifies low-risk service actions against observed HA state.
 - a deterministic PostgreSQL-backed Attention Layer with guaranteed-event handling, durable cursor/cooldown/rate/aggregation state, immutable decisions, durable reasoning triggers, sparse provenance-rich ContextPackets, ANIMA-owned trust/egress controls, and side-effect-free replay/profile comparison.
+- an ANIMA-owned bounded cognition loop using isolated ephemeral Codex CLI ChatGPT OAuth turns, Luna 5.6 at medium reasoning, schema-only decisions, mandatory Phase 5/4 tool-policy routing, durable episodes, cloud-safe context projection, and explicit failure/budget outcomes.
 
-No Luna/agent cognition, UI, voice behavior, generalized action engine, or external action capability is included. Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6 integration is limited to an isolated HA test instance and low-risk virtual entities; it is not physical-home evidence.
+No UI, voice behavior, generalized Phase 9 action engine, durable future-task runtime, or production external action capability is included. Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 8 live cognition uses synthetic tools and is not physical-home evidence.
 
 ## Supported baseline
 
@@ -57,6 +58,7 @@ For the Phase 4 identity, risk, OPA, confirmation, audit, and fail-closed bounda
 For the Phase 5 manifest, lifecycle, native/MCP runtime, capability registry, policy gate, secrets, event ingress, and failure containment, see [`docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md`](docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md).
 For the Phase 6 adapter, discovery, provider mapping, synchronization, reconnect, policy-gated semantic tools, and observed-state verification, see [`docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md`](docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md).
 For the Phase 7 attention profiles, guaranteed triggers, durable cursor/aggregation, sparse ContextPackets, trust/egress controls, and replay boundary, see [`docs/PHASE-7-ATTENTION-CONTEXT.md`](docs/PHASE-7-ATTENTION-CONTEXT.md).
+For the Phase 8 Codex OAuth boundary, structured cognition loop, durable episodes, policy-gated tools, privacy controls, dependency decision, and evidence limits, see [`docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md`](docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md).
 
 ## Authority
 

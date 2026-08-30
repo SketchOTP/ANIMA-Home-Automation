@@ -12,6 +12,16 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
+from anima_ha.agent import (
+    AgentRuntime,
+    CodexTurnResult,
+    EpisodeRequest,
+    FinalDecision,
+    InMemoryEpisodeStore,
+    ScriptedCodexAdapter,
+    TokenUsage,
+    ToolRequestDecision,
+)
 from anima_ha.attention import AttentionReplay, default_attention_profile
 from anima_ha.config import RuntimeConfig
 from anima_ha.events import (
@@ -89,6 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
             "plugins",
             "home-assistant",
             "attention",
+            "agent",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -344,6 +355,86 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 ),
                 "side_effects": "none",
                 "authority_surface": "attention-only",
+            },
+        )
+    elif scenario == "agent":
+        household_id = uuid4()
+        trigger_id = uuid4()
+        context_id = uuid4()
+        manager = PluginManager()
+        native = NativeSimulatorPlugin()
+        manager.register(NATIVE_SIMULATOR_MANIFEST, native)
+        manager.enable(NATIVE_SIMULATOR_MANIFEST.plugin_id)
+        descriptor = manager.list_tools()[0]
+        fake_codex = ScriptedCodexAdapter(
+            [
+                CodexTurnResult(
+                    ToolRequestDecision(descriptor.tool_id, {}),
+                    TokenUsage(50, 0, 10, 3),
+                    1.0,
+                    ("turn.completed",),
+                ),
+                CodexTurnResult(
+                    FinalDecision(
+                        "ENOUGH_EVIDENCE",
+                        True,
+                        "The synthetic household runtime is ready.",
+                        "Read-only status succeeded.",
+                    ),
+                    TokenUsage(60, 20, 15, 4),
+                    1.0,
+                    ("turn.completed",),
+                ),
+            ]
+        )
+        packet = {
+            "context_packet_id": str(context_id),
+            "schema_version": 1,
+            "trigger_id": str(trigger_id),
+            "selection_profile_version": "simulator.agent.v1",
+            "digest": f"simulator-agent-{trigger_id}",
+            "omissions": [],
+            "sections": {
+                "events": {
+                    "status": "READY",
+                    "items": [
+                        {
+                            "kind": "user_request",
+                            "data": {"request": "Is the synthetic runtime ready?"},
+                            "source_refs": ["simulator-agent-request"],
+                            "trust": "LOCAL_TRUSTED",
+                            "egress": "CLOUD_ALLOWED",
+                        }
+                    ],
+                    "error_code": None,
+                }
+            },
+        }
+        episode = AgentRuntime(fake_codex, manager, InMemoryEpisodeStore()).run(
+            EpisodeRequest(
+                trigger_id,
+                context_id,
+                household_id,
+                packet,
+                (descriptor,),
+                IdentityContext(household_id, None, Assurance.ANONYMOUS),
+                PolicyService(
+                    OpaPolicyClient(os.environ.get("ANIMA_OPA_URL", "http://127.0.0.1:18181"))
+                ),
+            )
+        )
+        LOGGER.info(
+            "simulator_agent_complete",
+            extra={
+                "runtime": fake_codex.codex_version,
+                "model": fake_codex.model,
+                "disposition": episode.episode.final_disposition.value
+                if episode.episode.final_disposition
+                else None,
+                "turns": episode.episode.codex_turn_count,
+                "tool_requests": episode.episode.tool_request_count,
+                "authority_surface": "phase5-tool-gateway-phase4-policy",
+                "phase9_behavior": False,
             },
         )
     elif scenario == "home-assistant":

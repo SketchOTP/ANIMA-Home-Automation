@@ -233,3 +233,36 @@ The selected image is `ghcr.io/home-assistant/home-assistant:2026.8.2@sha256:566
 | Arbitrary Python attention callbacks | PROHIBITED | Executable customer rules would violate bounded, inspectable attention semantics. |
 
 No new dependency or infrastructure was introduced. Recheck when rule complexity demonstrates a need for CEL, multiple independent consumers justify a broker, trace propagation is adopted, or native Pi resource evidence changes the tradeoff.
+
+## ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R — Codex OAuth cognition boundary
+
+- Date checked: 2026-08-30
+- Trigger: The operator superseded the API-key Agents SDK design and required the existing Codex CLI ChatGPT OAuth session for Phase 8 cognition.
+- Sources: [Codex CLI reference](https://developers.openai.com/codex/cli/reference), [Codex configuration reference](https://developers.openai.com/codex/config-reference), [Codex non-interactive mode](https://learn.chatgpt.com/codex/non-interactive-mode), [Codex SDK](https://developers.openai.com/codex/sdk), [Codex App Server](https://developers.openai.com/codex/app-server), [Agents SDK](https://openai.github.io/openai-agents-python/), [Responses API](https://platform.openai.com/docs/api-reference/responses), and the Apache-2.0 Codex repository license.
+- Freshness: Official pages and installed runtime inspected 2026-08-30. Exact installed CLI: `codex-cli 0.150.0-alpha.8`.
+
+| Candidate | Disposition | Finding |
+| --- | --- | --- |
+| ANIMA durable episode/structured loop | BUILD | Required so ANIMA, not the provider, owns context, tools, policy, privacy, budgets, audit, and outcomes. |
+| Codex CLI `codex exec` | ADOPT / WRAP | Installed status reports ChatGPT OAuth; model catalog exposes `gpt-5.6-luna` with medium reasoning; strict ephemeral JSONL/output-schema live probe passed with direct capability controls disabled. |
+| Codex SDK | REFERENCE / DEFER | Programmatic replacement candidate, but unnecessary for the qualified Python subprocess boundary. |
+| Codex App Server | REFERENCE / DEFER | Long-lived RPC surface is broader than the bounded one-turn runtime needs. |
+| OpenAI Agents SDK | DEFER / REJECT for Phase 8 foundation | Valuable provider/API agent framework but does not consume the selected Codex CLI OAuth session. |
+| Responses API | DEFER | Direct API credential and billing path is outside the operator ruling. |
+
+### Boundary conclusion
+
+The selected adapter launches a fresh empty working directory, ignores user
+configuration/rules, uses strict config/read-only sandbox/ephemeral history,
+disables shell, unified exec, multi-agent, apps, plugins, web, image, memories,
+dependency installation, analytics, and feedback, and accepts only bounded
+agent-message JSONL. The supported CLI uses `features.view_image=false` rather
+than the rejected `tools.view_image=false` spelling. OAuth credential contents
+were not inspected. No Python dependency or service was added.
+
+### Recheck triggers
+
+Codex CLI upgrade (especially because the installed build is alpha), model
+catalog/config change, ChatGPT OAuth policy change, native ARM64/Pi deployment,
+structured-output protocol change, or an Architect-authorized move to the SDK,
+App Server, Agents SDK, or Responses API.
