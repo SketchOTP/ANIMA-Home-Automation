@@ -266,3 +266,13 @@ Codex CLI upgrade (especially because the installed build is alpha), model
 catalog/config change, ChatGPT OAuth policy change, native ARM64/Pi deployment,
 structured-output protocol change, or an Architect-authorized move to the SDK,
 App Server, Agents SDK, or Responses API.
+
+## ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 — locks and idempotency
+
+- Date checked: 2026-08-30
+- Trigger: Phase 9 introduced a new execution coordinator with resource serialization, ambiguous-side-effect handling, and idempotency semantics.
+- Sources: [PostgreSQL 16 explicit locking](https://www.postgresql.org/docs/16/explicit-locking.html), [PostgreSQL advisory-lock functions](https://www.postgresql.org/docs/17/functions-admin.html), [PostgreSQL pg_locks](https://www.postgresql.org/docs/16/view-pg-locks.html), and [Stripe idempotent requests](https://docs.stripe.com/api/idempotent_requests?lang=curl).
+- Freshness: official documentation checked 2026-08-30.
+- Findings: PostgreSQL session locks persist until explicit unlock/session end, transaction locks release at transaction end, and `pg_try_advisory_lock` returns immediately on contention. Stripe's mature pattern stores the first result for a key and rejects parameter reuse; ANIMA applies the pattern to durable action claims but keeps stricter `UNKNOWN_RESULT` handling after possible external dispatch.
+- Disposition: ADOPT / WRAP PostgreSQL session-level advisory locking; REFERENCE Stripe parameter-bound idempotency; BUILD ANIMA lifecycle, durable records, verification, and recovery semantics; REJECT Redis/Redlock as the foundational fencing mechanism; DEFER Temporal/Hatchet to Phase 10.
+- Recheck trigger: PostgreSQL major-version change, measured lock contention/deadlock need, provider-native idempotency support, physical-home/HA execution qualification, or Phase 10 durable workflow authorization.

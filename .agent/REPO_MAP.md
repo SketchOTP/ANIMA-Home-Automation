@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 8 CODEX OAUTH AGENT RUNTIME 2026-08-30
+Last verified against: IMPLEMENTATION PHASE 9 ACTION EXECUTION AND CONCURRENCY 2026-08-30
 
 ## Entry points
 
@@ -27,6 +27,7 @@ Last verified against: IMPLEMENTATION PHASE 8 CODEX OAUTH AGENT RUNTIME 2026-08-
 - `src/anima_ha/context.py` — sparse bounded ContextPacket selection, provenance, trust/egress classification, deterministic pruning, persistence, and cloud-safe projection.
 - `src/anima_ha/phase7_replay.py` — side-effect-free Phase 7 replay CLI.
 - `src/anima_ha/agent.py` — durable bounded cognition episodes, cloud-safe projection, structured Codex CLI adapter, sequential Phase 5/4 tool loop, budgets, audit, and explicit outcomes.
+- `src/anima_ha/action.py` — deterministic consequential-action lifecycle, canonical-resource locking, freshness/preconditions, final policy reauthorization, idempotency, verification, partial/unknown outcomes, and restart reconciliation.
 - `src/anima_ha/agent_instructions.py` — versioned provider instructions and authority/evidence boundary.
 - `tests/` — deterministic Phase 0–8 unit tests and isolated provider fixtures.
 
@@ -80,6 +81,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md` — plugin runtime architecture and qualification decisions.
 - `src/anima_ha/db/migrations/0007_home_assistant_adapter.sql` — HA instance status and bounded provider inventory persistence.
 - `scripts/verify_phase6_home_assistant.py` — real pinned HA container, PostgreSQL, OPA, registry/event/action/reconnect evidence harness.
+- `scripts/verify_phase9_action_execution.py` — isolated pinned HA action-coordinator harness covering real provider execution, PostgreSQL resource contention, post-action verification, and durable replay.
 - `tests/test_home_assistant.py` — Phase 6 normalization, race, mapping, health, policy, lifecycle, and verification tests.
 - `docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md` — adapter architecture, dependency decisions, synchronization, action verification, and evidence limits.
 - `src/anima_ha/db/migrations/0008_attention_context.sql` — durable attention profiles/cursors/decisions/triggers/aggregates/failures/metrics and ContextPackets.
@@ -87,13 +89,15 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `tests/test_attention.py` — guaranteed, suppression, high-volume replay, sparse context, uncertainty, trust/egress, scenario, and degraded-source tests.
 - `docs/PHASE-7-ATTENTION-CONTEXT.md` — attention/context/replay architecture, dependency decisions, and evidence limits.
 - `src/anima_ha/db/migrations/0009_codex_agent_runtime.sql` — durable agent episodes, turns, and tool requests with duplicate-trigger protection.
+- `src/anima_ha/db/migrations/0010_action_execution.sql` — durable action claims and per-effect outcomes with idempotency/status indexes.
 - `scripts/verify_phase8_agent_runtime.py` — OAuth-free PostgreSQL migration/audit/duplicate/restart integration harness.
 - `scripts/verify_phase8_live_oauth.py` — manual local ChatGPT OAuth/Luna synthetic A–I acceptance matrix; excluded from hosted CI.
 - `tests/test_agent.py` — Phase 8 cloud boundary, strict process contract, tool-policy loop, failure, budget, and injection tests.
 - `docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md` — cognition boundary, dependency decisions, durable episode model, privacy/failure behavior, and evidence limits.
+- `docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md` — action lifecycle, advisory locks, idempotency, verification, ambiguity/restart semantics, and evidence limits.
 
 ## Known sensitive/high-risk areas
 
-- HA and Codex OAuth credentials remain runtime-owned secrets; neither is persisted or exposed to Luna. HA IDs remain provider references; only bounded low-risk virtual HA actions are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, generalized Phase 9 execution, external production connectors, and semantic embedding services require separate authorization. Phase 5 subprocesses are not malicious-code sandboxes.
+- HA and Codex OAuth credentials remain runtime-owned secrets; neither is persisted or exposed to Luna. HA IDs remain provider references; only bounded low-risk virtual HA actions are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, Phase 10 durable work, external production connectors, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.

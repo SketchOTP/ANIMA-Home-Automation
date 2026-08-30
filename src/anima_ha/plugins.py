@@ -810,6 +810,7 @@ class PluginManager:
         capability_id: UUID | None = None,
         policy_service: PolicyService | None = None,
         policy_context: PolicyContext | None = None,
+        confirmation: Any | None = None,
     ) -> InvocationResult:
         started = time.monotonic()
         tool = self.tools.get(tool_id)
@@ -905,7 +906,7 @@ class PluginManager:
                     provenance=tool.provenance,
                     external_content_trust=tool.external_content_trust,
                 )
-            decision = policy_service.evaluate(intent, identity, policy_context)
+            decision = policy_service.evaluate(intent, identity, policy_context, confirmation)
             outcome = {
                 Decision.DENY: InvocationOutcome.POLICY_DENIED,
                 Decision.REQUIRE_CONFIRMATION: InvocationOutcome.REQUIRE_CONFIRMATION,

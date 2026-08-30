@@ -4,15 +4,15 @@ Last updated: 2026-08-30
 
 ## Current stage
 
-IMPLEMENTATION PHASE 8 COMPLETE — PENDING ARCHITECT REVIEW
+PHASE 9 CHECKPOINT CLOSURE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Await independent Architect review of the completed constrained Codex OAuth/Luna runtime checkpoint. Do not begin Phase 9 without authorization.
+Publish the already-implemented deterministic action-execution/concurrency checkpoint, obtain exact-SHA hosted CI evidence, and return it for independent Architect review. Phase 10 remains unauthorized.
 
 ## Active directive
 
-NONE — `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` is complete and returned for review. The prior `ANIMA-HA-P8-LUNA-AGENT-RUNTIME-010` remains `SUPERSEDED` historical evidence.
+`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure and publication only; Phase 9 implementation is local and pending exact-SHA publication/CI/review. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
 
 ## Current verified state
 
@@ -63,10 +63,19 @@ NONE — `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` is complete and returned for rev
 - Durable episodes, cloud-safe projection, versioned instructions, strict isolated `codex exec`, structured sequential decisions, Phase 5/4 tool-policy routing, result filtering, budgets/timeouts, audit, fake CI adapter, and simulator parity are implemented.
 - The final live A–I matrix passed with 14 Luna turns, model-selected one/two-tool sequences, three no-action outcomes, confirmation/stronger-auth stops, honest tool failure, prompt-injection containment, and zero forbidden direct capability events.
 
+## Phase 9 implementation state
+
+- ANIMA-owned `ActionExecutionCoordinator` is implemented in `src/anima_ha/action.py` and can be inserted between Phase 8 agent decisions and the Phase 5 gateway for consequential tools.
+- Durable `anima_actions` and `anima_action_effects` records are added by migration `0010_action_execution.sql`; idempotency keys are unique and parameter mismatches are explicit conflicts.
+- Canonical resource UUIDs use non-blocking PostgreSQL session-level advisory locks. Conflicts return immediately and are not queued behind stale intents; no PostgreSQL transaction remains open across the connector call.
+- The coordinator refreshes latest state after lock acquisition, validates caller-supplied Truth preconditions, re-evaluates Phase 4 policy, records `EXECUTING` before the external call, refreshes again after the call, and requires observed verification for consequential tools.
+- Ambiguous timeout/error results become `UNKNOWN_RESULT`; mixed effect results become `PARTIAL`; no blind retry or automatic compensation is performed. Restart reconciliation marks planned work `RECOVERY_REQUIRED` and in-flight work `UNKNOWN_RESULT`.
+- Focused evidence: 10 Phase 9 tests plus existing suite; local-filesystem Ruff, strict mypy, and 94-test suite passed; PostgreSQL migration/repeat, durable replay, and real advisory-lock conflict passed; the isolated pinned HA coordinator harness passed real `set_power`, contradictory two-principal same-resource contention, post-action refresh, and durable replay.
+
 ## Current blockers
 
-- NONE for the completed Phase 8 directive.
-- Phase 9 generalized action execution/concurrency, durable tasks, external production tools, UI, and voice remain explicitly out of scope.
+- NONE for the issued Phase 9 implementation directive; independent Architect review remains the acceptance gate.
+- Phase 10 durable tasks, external production tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -89,9 +98,10 @@ NONE — `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` is complete and returned for rev
 - OPA has official amd64/arm64 image manifests and local REST/policy-test support, but native Raspberry Pi execution and resource measurement remain unverified. No remote bundle or decision-log egress is configured.
 - Phase 5 MCP and subprocess evidence will be synthetic/x86-64 unless a native ARM64 run is explicitly performed; subprocess isolation is not a malicious-code sandbox.
 - Phase 5 adds `mcp==2.1.1` and `jsonschema==4.26.0`, ANIMA-owned manifest/lifecycle/registry contracts, policy-gated native/MCP invocation, scoped secrets/configuration, declared plugin events, persistence, and failure containment. Streamable HTTP is adapter-supported but not exercised against a permanent remote endpoint.
+- Phase 9 action coordination is implemented against the Phase 5 gateway and PostgreSQL; live provider evidence is isolated virtual HA on x86-64. No native ARM64/Pi or physical-home execution evidence exists. The installed Codex CLI remains pre-stable and Phase 9 does not add a production connector.
 
 ## Next Architect decision point
 
-Architect review of the Phase 8 implementation checkpoint and governed closure is required before Phase 9.
+Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

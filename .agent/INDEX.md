@@ -10,11 +10,12 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 8 COMPLETE — PENDING ARCHITECT REVIEW
-- Active directive: NONE — awaiting Architect review of ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R
+- Current stage: PHASE 9 CHECKPOINT CLOSURE — PENDING ARCHITECT ACCEPTANCE
+- Active directive: ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C — closure and publication only
 - Active task packet: NONE
-- Last accepted outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 (accepted by Architect at `44d4f59737aeed9aa55583eb49823a37535d607d`)
-- Last completed outcome: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R implementation `8486cd10b7962df11898bc8b61b1ec46d0809dd5`, CI `33293828743`
+- Completed task packet: `.agent/tasks/completed/ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011/`
+- Last accepted outcome: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R (accepted by Architect at `7153b127106c8e921185a38b1b4606fa42e5f92b`)
+- Last completed outcome: ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 implementation in current working tree; implementation and governed closure SHAs pending
 - Last state sync: 2026-08-30
 
 ## Mandatory kernel

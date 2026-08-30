@@ -118,3 +118,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Disabling direct capabilities requires both proactive strict config and reactive JSONL rejection. `agents.enabled=false` and `features.multi_agent=false` are both supported; the installed CLI requires `features.view_image=false` rather than `tools.view_image=false`.
 - Model structured output is not perfectly deterministic. Invalid output must remain an explicit model failure and must never reach tool execution; live evidence included one such safe rejection before a complete passing matrix.
 - ChatGPT OAuth usage provides token/latency evidence but not an API-dollar calculation or API retention control. Privacy depends on deterministic payload minimization plus the account/workspace server-side policy.
+
+## ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 — Action safety learnings
+
+- A durable `EXECUTING` marker must be committed before an external side effect; after restart it is evidence of possible side effect, not permission to retry.
+- PostgreSQL session-level advisory locks can serialize canonical resources without a long transaction, but `pg_try_advisory_lock` is required when stale conflicting requests must fail immediately rather than queue.
+- Latest-state preconditions must be checked after lock acquisition, and consequential verification must use a post-call refresh. Service acknowledgement alone is not success.
+- Idempotency must bind a key to canonical request parameters. Reusing the key with different parameters is a conflict; repeating the same request returns the stored outcome without another connector call.
+- Partial multi-effect outcomes require durable per-effect evidence and explicit non-compensation semantics. Ambiguous timeout/error after dispatch must remain `UNKNOWN_RESULT`.

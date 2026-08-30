@@ -225,3 +225,27 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Architecture: BUILD ANIMA durable episode/structured loop; ADOPT/WRAP Codex CLI ChatGPT OAuth, `gpt-5.6-luna`, medium reasoning, JSONL/output schema, and Phase 5/4; REFERENCE/DEFER Codex SDK/App Server; DEFER/REJECT API-key Agents SDK/Responses foundations for this directive.
 - Evidence: 84 tests, strict static/build/OPA, PostgreSQL restart, Phase 1–7 regressions, real isolated Phase 6 HA regression, simulator, public safety, and live OAuth A–I matrix passed.
 - Phase 9 Action Execution/Verification/Concurrency and later behavior were not implemented.
+
+## ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 — Deterministic action execution boundary
+
+- Issued: 2026-08-30
+- Status: ISSUED / implementation complete pending Architect review
+- Project stage: IMPLEMENTATION PHASE 9 — ACTION EXECUTION, VERIFICATION AND CONCURRENCY
+- Objective: Make consequential agent-selected actions safe against stale/changing reality through resource conflict serialization, latest-state refresh, precondition validation, final policy reauthorization, idempotent connector execution, observed post-action verification, partial/unknown-result semantics, and crash/restart reconciliation.
+- Scope: ANIMA-owned action coordinator and durable action/effect records; PostgreSQL session-level advisory locks for short-lived canonical-resource mutual exclusion; reuse Phase 1 Truth/Event Journal, Phase 2 canonical resources, Phase 4 OPA, Phase 5 Tool Gateway, Phase 6 refresh/verification, and Phase 8 agent bridge.
+- Exclusions: No Phase 10 scheduling/durable future work, UI, voice, production external tools, automatic compensation, blind retries, stale-intent queueing, or transaction held across an external call.
+- Required exit evidence: Simulated and isolated-provider races, duplicate action IDs/idempotency keys, contradictory commands, stale/manual state changes, ambiguous connector timeout, partial multi-effect outcome, process crash/restart, distinct-resource concurrency, and verification failure must remain structured with no duplicate or false-success claims.
+- External discovery: PostgreSQL advisory-lock documentation and Stripe idempotency documentation checked 2026-08-30; see `.agent/EXTERNAL.md`.
+- Source: Canonical Notion SSOT active directive `ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011`, retrieved 2026-08-30.
+
+## ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C — Publish and close the Phase 9 checkpoint
+
+- Issued: 2026-08-30
+- Status: IN PROGRESS / closure and publication only
+- Project stage: PHASE 9 CHECKPOINT CLOSURE — PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`, not accepted; the local Phase 9 implementation must be committed, pushed, and independently reviewable before acceptance.
+- Objective: Preserve the validated Phase 9 implementation, perform fresh applicable validation, commit/push an implementation checkpoint, obtain passing hosted CI on its exact SHA, commit/push the governed evidence closure, and obtain passing hosted CI on the exact final SHA.
+- Starting accepted checkpoint: `7153b127106c8e921185a38b1b4606fa42e5f92b` (Phase 8).
+- Required final state: local `HEAD == main == origin/main`, clean working tree, Phase 9 implementation and evidence visible on GitHub, Notion reconciled to both exact SHAs and CI runs, and Phase 9 recorded as `COMPLETE — PENDING ARCHITECT ACCEPTANCE`.
+- Exclusions: No new Phase 9 architecture, no Phase 10 durable tasks/scheduling/UI/voice, no production connectors, no compensation workflows, no new dependency decisions, and no external discovery unless a fresh validation defect requires it.
+- Source: Architect directive in the Notion SSOT, retrieved 2026-08-30.

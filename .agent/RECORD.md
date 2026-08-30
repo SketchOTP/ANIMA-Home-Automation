@@ -176,3 +176,12 @@ UI, and voice remain out of scope.
 - Evidence: live x86-64 OAuth A–I matrix, 84 tests, PostgreSQL episode restart/duplicate protection, strict static/build/OPA, Phase 1–7 regressions, real isolated Phase 6 HA, public safety, and GitHub Actions `33293828743` on `8486cd10b7962df11898bc8b61b1ec46d0809dd5` passed.
 - Boundary: no OAuth token inspection, API key, API-dollar estimate, raw reasoning persistence, physical action, native ARM64/Pi claim, generalized Phase 9 execution/concurrency, durable task, UI, or voice behavior.
 - Consequence: Phase 9 remains gated on independent Architect acceptance of the governed Phase 8 closure.
+
+## ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 — Deterministic action boundary
+
+- Date: 2026-08-30
+- Type: MILESTONE / ARCHITECTURE
+- Decision: Build ANIMA-owned action coordination and durable action/effect records; adopt/wrap PostgreSQL session-level advisory locks for non-blocking canonical-resource conflict detection; reuse Phase 4 policy, Phase 5 gateway, Phase 6 provider refresh/verification, and Phase 8 bridge. Reference Stripe-style parameter-bound idempotency; reject Redis/Redlock as foundational fencing; defer Temporal/Hatchet and future work to Phase 10.
+- Evidence: 10 focused tests, 94-test local-filesystem regression, Ruff, strict mypy, migration repeat, durable PostgreSQL replay, real PostgreSQL advisory-lock conflict, and the isolated HA coordinator harness passed. The live harness executed the real pinned HA 2026.8.2 virtual entity through the coordinator, verified post-action state, demonstrated a contradictory two-principal same-resource conflict, and replayed without a second connector call.
+- Boundary: no transaction spans an external call; stale conflicting requests are not queued; ambiguous effects are not retried; partial effects are not compensated; live HA evidence is isolated virtual/demo x86-64 only; no native Pi or physical-home claim.
+- Consequence: Phase 9 is complete pending independent Architect review; Phase 10 remains unauthorized.

@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import threading
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -27,6 +27,7 @@ from uuid import UUID, uuid4
 import psycopg
 from psycopg.rows import dict_row
 
+from anima_ha.action import ActionExecutionCoordinator, ActionRequest, ActionStatus
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
@@ -239,6 +240,8 @@ class EpisodeRequest:
     policy_service: PolicyService
     policy_context: PolicyContext | None = None
     origin: RequestOrigin = RequestOrigin.AUTONOMOUS_AGENT
+    action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
+    action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1236,12 +1239,14 @@ class AgentRuntime:
         *,
         limits: EpisodeLimits | None = None,
         journal: EventSink | None = None,
+        action_executor: ActionExecutionCoordinator | None = None,
     ) -> None:
         self.adapter = adapter
         self.gateway = gateway
         self.store = store
         self.limits = limits or EpisodeLimits()
         self.journal = journal
+        self.action_executor = action_executor
 
     def _audit(self, episode: AgentEpisode, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
@@ -1495,15 +1500,69 @@ class AgentRuntime:
                         external_content_trust=tool.external_content_trust,
                     )
                 else:
-                    result = self.gateway.invoke(
-                        decision.tool_id,
-                        decision.arguments,
-                        household_id=request.household_id,
-                        identity=request.identity,
-                        origin=request.origin,
-                        policy_service=request.policy_service,
-                        policy_context=request.policy_context,
-                    )
+                    if not tool.read_only and self.action_executor is None:
+                        result = InvocationResult(
+                            InvocationOutcome.PLUGIN_ERROR,
+                            tool.tool_id,
+                            tool.plugin_id,
+                            tool.version,
+                            0.0,
+                            error_class="ACTION_EXECUTOR_REQUIRED",
+                            provenance=tool.provenance,
+                            external_content_trust=tool.external_content_trust,
+                        )
+                    elif not tool.read_only:
+                        action_executor = self.action_executor
+                        assert action_executor is not None
+                        execution = action_executor.execute(
+                            ActionRequest.create(
+                                idempotency_key=f"episode:{episode.episode_id}:tool:{tool_count}",
+                                household_id=request.household_id,
+                                tool=tool,
+                                arguments=decision.arguments,
+                                identity=request.identity,
+                                policy_service=request.policy_service,
+                                policy_context=request.policy_context or PolicyContext(),
+                                refresher=request.action_refresher,
+                                verifier=request.action_verifier,
+                                origin=request.origin,
+                            )
+                        )
+                        result = execution.invocation or InvocationResult(
+                            {
+                                ActionStatus.POLICY_DENIED: InvocationOutcome.POLICY_DENIED,
+                                ActionStatus.REQUIRE_CONFIRMATION: (
+                                    InvocationOutcome.REQUIRE_CONFIRMATION
+                                ),
+                                ActionStatus.REQUIRE_STRONGER_AUTH: (
+                                    InvocationOutcome.REQUIRE_STRONGER_AUTH
+                                ),
+                                ActionStatus.VERIFICATION_FAILED: (
+                                    InvocationOutcome.VERIFICATION_FAILED
+                                ),
+                                ActionStatus.UNKNOWN_RESULT: InvocationOutcome.UNKNOWN_RESULT,
+                                ActionStatus.PARTIAL: InvocationOutcome.UNKNOWN_RESULT,
+                                ActionStatus.RECOVERY_REQUIRED: InvocationOutcome.UNKNOWN_RESULT,
+                            }.get(execution.record.status, InvocationOutcome.PLUGIN_ERROR),
+                            tool.tool_id,
+                            tool.plugin_id,
+                            tool.version,
+                            0.0,
+                            result=execution.record.result,
+                            error_class=execution.record.detail,
+                            provenance=tool.provenance,
+                            external_content_trust=tool.external_content_trust,
+                        )
+                    else:
+                        result = self.gateway.invoke(
+                            decision.tool_id,
+                            decision.arguments,
+                            household_id=request.household_id,
+                            identity=request.identity,
+                            origin=request.origin,
+                            policy_service=request.policy_service,
+                            policy_context=request.policy_context,
+                        )
             sanitized = sanitize_tool_result(result, self.limits.max_tool_result_bytes)
             self.store.record_tool_request(
                 episode.episode_id, tool_count, turn_count, decision, result, sanitized

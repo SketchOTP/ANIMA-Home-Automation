@@ -383,3 +383,33 @@ Built an ANIMA-owned durable episode runtime around isolated, ephemeral, strict-
 - Live evidence is x86-64, synthetic household/tool, and ChatGPT-hosted cognition; no native ARM64/Pi, physical-home, production external-service, API ZDR, or deterministic-model claim.
 - One focused weather attempt returned invalid structured output and failed closed before the final complete matrix passed.
 - Phase 9 generalized action execution/verification/concurrency, physical-resource locks/leases, durable future tasks, UI, voice, and later behavior remain unimplemented.
+
+## ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011 — Deterministic action execution complete
+
+- Completed: 2026-08-30
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for local static/unit regression evidence; E3_TARGET_TESTED for x86-64 PostgreSQL persistence/advisory-lock behavior and the isolated Home Assistant 2026.8.2 action path. No native ARM64/Pi or physical-home evidence.
+
+### Work performed
+
+Built `ActionExecutionCoordinator` with durable idempotency claims, canonical-resource non-blocking locks, latest-state refresh, Truth preconditions, final Phase 4 policy reauthorization, committed `EXECUTING` fencing before connector invocation, post-action refresh/verification, explicit partial/unknown outcomes, and restart reconciliation. Added migration `0010_action_execution.sql` for action and per-effect records. Added optional Phase 8 routing so consequential tool decisions can use the coordinator; read-only tools retain the existing direct gateway path. Phase 5 now accepts confirmation data on the final gateway policy evaluation.
+
+### Acceptance results
+
+- Fresh-state and stale-precondition rejection before connector invocation: PASSED.
+- Non-blocking same-resource conflict with no queueing and distinct-resource lock behavior: PASSED in in-memory/unit and real PostgreSQL advisory-lock harness.
+- Duplicate same-key replay executes once; same-key parameter mismatch is an explicit idempotency conflict: PASSED.
+- Final policy denial prevents execution; connector timeout/error after execution begins is `UNKNOWN_RESULT`: PASSED.
+- Post-action refresh/verifier, verification failure, and connector success without observed verification: PASSED.
+- Mixed multi-effect outcome is durable as `PARTIAL`; no compensation or blind retry: PASSED.
+- Restart reconciliation distinguishes abandoned plans (`RECOVERY_REQUIRED`) from in-flight side effects (`UNKNOWN_RESULT`): PASSED.
+- Local-filesystem Ruff, strict mypy, 93 tests, migration repeat, durable PostgreSQL action replay, and advisory-lock conflict: PASSED.
+- `scripts/verify_phase9_action_execution.py`: PASSED — real isolated HA `set_power` execution through the coordinator, contradictory authenticated requests from two household principals, real PostgreSQL same-resource race with no queueing, post-action provider refresh, and durable replay without a second connector call.
+
+### Risks / limitations
+
+- The live action harness uses isolated virtual/demo HA entities on x86-64; it does not establish physical-home behavior or general provider qualification.
+- Native ARM64/Raspberry Pi execution is unverified. No production external connector or Phase 10 durable task behavior was added.
+- Connector idempotency is represented by the ANIMA durable key and connector metadata; providers that do not support idempotent execution are rejected before invocation.
+- A process crash after an external call begins is conservatively `UNKNOWN_RESULT`; reconciliation is explicit and never retries or compensates automatically.
