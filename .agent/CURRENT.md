@@ -8,11 +8,11 @@ PHASE 9 COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-The deterministic action-execution/concurrency checkpoint is published with exact-SHA hosted CI evidence and is ready for independent Architect review. Phase 10 remains unauthorized.
+Correct the four independently identified Phase 9 execution-safety gaps while preserving the accepted Phase 0–8 architecture. Phase 10 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure complete; implementation checkpoint `7b3d759992ce6cef56914ef19aa8626df0214031` passed CI `33323237014`, and final governed checkpoint `7b1cb07bd95c9f4641605dee89134990390c0640` passed CI `33323380633`. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
+`ANIMA-HA-P9-EXECUTION-HARDENING-011H` — bounded correctness continuation after independent review found missing system-owned preconditions in the live agent path, missing provider idempotency forwarding, connector-claim success bypass, and missing ambiguous-dispatch reconciliation. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`; published Phase 9 remains `CONTINUE`, not accepted.
 
 ## Current verified state
 
@@ -72,10 +72,16 @@ The deterministic action-execution/concurrency checkpoint is published with exac
 - Ambiguous timeout/error results become `UNKNOWN_RESULT`; mixed effect results become `PARTIAL`; no blind retry or automatic compensation is performed. Restart reconciliation marks planned work `RECOVERY_REQUIRED` and in-flight work `UNKNOWN_RESULT`.
 - Focused evidence: 10 Phase 9 tests plus existing suite; local-filesystem Ruff, strict mypy, and 94-test suite passed; PostgreSQL migration/repeat, durable replay, and real advisory-lock conflict passed; the isolated pinned HA coordinator harness passed real `set_power`, contradictory two-principal same-resource contention, post-action refresh, and durable replay.
 
+### Phase 9 hardening corrections
+
+- Trusted `ActionSafetySpec` metadata owns canonical lock scopes, mandatory Truth preconditions, expected effects, and optional provider-native-idempotency capability. The live AgentRuntime path attaches baseline known-state preconditions before coordinator submission.
+- `ProviderExecutionContext` carries ANIMA execution identity and an optional provider idempotency key outside model-visible schemas. Providers without native idempotency remain executable under local ANIMA deduplication and observation-first recovery.
+- Connector acknowledgements/effect claims are evidence only. Fresh post-dispatch observation and verification derive terminal effect/outcome status, including timeout-success, unknown, definitive-failure, partial, and already-satisfied no-dispatch cases.
+
 ## Current blockers
 
-- NONE for the closure work; independent Architect acceptance remains the Phase 9 gate.
-- Phase 10 durable tasks, external production tools, UI, and voice remain explicitly out of scope.
+- Phase 9 hardening is implemented and published, but Architect acceptance remains blocked pending independent review of the corrected checkpoint.
+- Phase 10 durable tasks, external production tools, UI, and voice remain explicitly out of scope and unauthorized.
 
 ## Latest accepted evidence
 
@@ -102,6 +108,13 @@ The deterministic action-execution/concurrency checkpoint is published with exac
 
 ## Next Architect decision point
 
-Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10. Phase 9 status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; final governed checkpoint `7b1cb07bd95c9f4641605dee89134990390c0640` passed CI `33323380633` and is recorded in Notion.
+Review the Phase 9 hardening checkpoint after fresh evidence and hosted CI. Phase 9 remains `CONTINUE`; Phase 10 is unauthorized.
+
+## Phase 9 hardening publication state
+
+- Implementation checkpoint: `fd9cd822cc6bb10d5ab49b705a9e365c9fd42160`.
+- Implementation GitHub Actions: `33339779556` passed on that exact SHA.
+- Governed evidence closure is this subsequent metadata checkpoint; its exact SHA and CI are recorded in the Notion SSOT after push verification.
+- Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

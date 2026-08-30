@@ -2,6 +2,17 @@
 
 ---
 
+## ANIMA-HA-P9-EXECUTION-HARDENING-011H — Phase 9 execution hardening
+
+- Date: 2026-08-30
+- Verdict: COMPLETE / PENDING ARCHITECT ACCEPTANCE
+- Disposition: `CONTINUE`; Phase 10 unauthorized.
+- Scope: Trusted safety profiles and mandatory preconditions, provider execution context with optional native idempotency, observation-first verification, ambiguous-dispatch reconciliation, per-effect evidence, and real AgentRuntime regression.
+- Evidence: 63 focused tests, 94 full tests, strict mypy, Ruff, OPA 4/4, package build, migration repeat, Phase 1–8 regressions, Phase 6 isolated HA, Phase 7 restart/replay, Phase 8 persistence, and Phase 9 isolated HA all passed in a local-filesystem reproduction.
+- Limitation: GVFS/SFTP mount was unavailable for reliable Python execution; no native ARM64/Pi, physical-home, high-risk, or production evidence is claimed.
+
+---
+
 ## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Phase 0 runtime baseline complete
 
 - Completed: 2026-08-28/29
@@ -439,3 +450,33 @@ Built `ActionExecutionCoordinator` with durable idempotency claims, canonical-re
 ## Authority snapshot correction — Phase 9 closure metadata
 
 - Corrected the mutable `CURRENT.md` wording to identify Phase 9 as `COMPLETE — PENDING ARCHITECT ACCEPTANCE` and to record the exact published implementation/final checkpoints and CI runs. No product or architecture behavior changed.
+
+## ANIMA-HA-P9-EXECUTION-HARDENING-011H — Phase 9 execution hardening published
+
+- Completed: 2026-08-30
+- Verdict: COMPLETE — PENDING ARCHITECT ACCEPTANCE; Architect disposition remains `CONTINUE`.
+- Starting checkpoint: `1b546f8cfbde0e8009adb769e2817ff03a7cc51e` (published Phase 9 checkpoint under review).
+- Implementation checkpoint: `fd9cd822cc6bb10d5ab49b705a9e365c9fd42160`.
+- Implementation GitHub Actions: `33339779556` passed on the exact implementation SHA.
+
+### Corrective result
+
+- Trusted `ActionSafetySpec` metadata now owns canonical lock scopes, mandatory Truth preconditions, expected effects, and provider-native-idempotency capability; Luna/model arguments cannot remove or weaken those requirements.
+- The live AgentRuntime path derives baseline known-state preconditions before creating `ActionRequest`, and the coordinator performs its own trusted safety-spec checks.
+- `ProviderExecutionContext` carries ANIMA execution identity and an optional provider key outside model-visible schemas; unsupported native idempotency remains executable with local ANIMA deduplication and no blind ambiguous retry.
+- Connector acknowledgements and effect claims are persisted as evidence only. Observable consequential effects require fresh post-dispatch observation, Truth reconciliation, and verification before terminal outcome derivation.
+- Possible-dispatch timeout/error outcomes are refreshed and reconciled. Verified success returns success with ambiguity retained; inconclusive state returns `UNKNOWN_RESULT`; definitive mismatch returns verification failure; mixed verified/unknown effects return `PARTIAL`.
+- Already-satisfied actions return success with `executed=false`, fresh evidence, and zero connector calls.
+
+### Fresh evidence
+
+- 63 focused hardening/coordinator/provider/agent tests and 94 full pytest tests: PASSED.
+- Ruff on changed files, strict mypy (36 source files), OPA 4/4, package sdist/wheel, migration initial/repeat, Phase 1–5 integrations, Phase 7 restart/replay (10,020 events), Phase 8 persistence/restart, and Phase 6/9 isolated HA harnesses: PASSED.
+- PostgreSQL advisory-lock conflict/ordering/release, local idempotency, concurrent duplicate at-most-once dispatch, stale/manual-change rejection through AgentRuntime, provider-context forwarding, connector-claim non-authority, timeout reconciliation, partial verification, crash/restart recovery, and no-op dispatch tests: PASSED.
+- Targeted public-safety scan and `git diff --check`: PASSED.
+
+### Limits and publication
+
+- Evidence was reproduced from a local filesystem because the GVFS/SFTP workspace was unreliable for environment execution. HA evidence is isolated virtual/demo HA on x86-64; native ARM64/Pi, physical-home, high-risk/security, and production-provider behavior are not claimed.
+- This outcome does not accept Phase 9. It records a bounded correctness continuation for Architect review. No Phase 10 behavior was implemented.
+- Governed evidence closure is a subsequent metadata-only checkpoint; its exact SHA and final GitHub Actions result are recorded in the Notion SSOT after push verification.

@@ -258,3 +258,24 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Governed closure checkpoint: this closure commit; exact SHA and final GitHub Actions run are recorded in the Notion SSOT after push verification.
 - Fresh local and isolated-provider validation passed; limitations remain x86-64, virtual/demo HA only, no native Pi/ARM64 or physical-home evidence.
 - Phase 10 remains unauthorized.
+
+## ANIMA-HA-P9-EXECUTION-HARDENING-011H — Correct Phase 9 execution-safety gaps
+
+- Issued: 2026-08-30
+- Status: IN PROGRESS / bounded correctness continuation
+- Project stage: PHASE 9 EXECUTION HARDENING — PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`; published Phase 9 is not accepted.
+- Objective: Correct system-owned precondition attachment, provider idempotency forwarding, connector-claim success bypass, and ambiguous-dispatch reconciliation while preserving Phase 0–8 and valid Phase 9 architecture.
+- Exclusions: No Phase 10 durable tasks/scheduling, compensation, UI, voice, production connectors, new infrastructure, policy/Truth/plugin redesign, or external discovery unless a concrete connector defect requires it.
+- Source: Architect directive recorded in the canonical Notion SSOT, retrieved 2026-08-30.
+
+### Completion record
+
+- Completed: 2026-08-30
+- Status: COMPLETE — PENDING ARCHITECT ACCEPTANCE; Architect disposition remains `CONTINUE`.
+- Implementation checkpoint: `fd9cd822cc6bb10d5ab49b705a9e365c9fd42160`; GitHub Actions `33339779556` passed on that exact SHA.
+- Corrections: trusted system-owned safety profiles and live AgentRuntime preconditions; non-model-visible provider execution context with optional native idempotency forwarding; observation-first effect verification; ambiguous-dispatch refresh/reconciliation; verified no-op and partial outcomes.
+- Fresh validation: 94 pytest tests, focused hardening tests, Ruff, strict mypy, OPA 4/4, package build, migration repeat, Phase 1–8 regressions, PostgreSQL lock/idempotency/recovery evidence, and isolated HA harness passed.
+- Governed evidence closure: subsequent metadata-only checkpoint; exact SHA and final CI are recorded in the Notion SSOT after push verification.
+- Limitations: x86-64 local-filesystem reproduction and isolated virtual Home Assistant only; native ARM64/Pi, physical-home, high-risk, and production-provider evidence remain unclaimed.
+- Phase 10 remains unauthorized.
