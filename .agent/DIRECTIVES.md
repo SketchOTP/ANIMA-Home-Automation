@@ -249,3 +249,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required final state: local `HEAD == main == origin/main`, clean working tree, Phase 9 implementation and evidence visible on GitHub, Notion reconciled to both exact SHAs and CI runs, and Phase 9 recorded as `COMPLETE — PENDING ARCHITECT ACCEPTANCE`.
 - Exclusions: No new Phase 9 architecture, no Phase 10 durable tasks/scheduling/UI/voice, no production connectors, no compensation workflows, no new dependency decisions, and no external discovery unless a fresh validation defect requires it.
 - Source: Architect directive in the Notion SSOT, retrieved 2026-08-30.
+
+### Completion record
+
+- Completed: 2026-08-30
+- Status: COMPLETE / Phase 9 `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
+- Implementation checkpoint: `7b3d759992ce6cef56914ef19aa8626df0214031`; GitHub Actions `33323237014` passed on the exact SHA.
+- Governed closure checkpoint: this closure commit; exact SHA and final GitHub Actions run are recorded in the Notion SSOT after push verification.
+- Fresh local and isolated-provider validation passed; limitations remain x86-64, virtual/demo HA only, no native Pi/ARM64 or physical-home evidence.
+- Phase 10 remains unauthorized.

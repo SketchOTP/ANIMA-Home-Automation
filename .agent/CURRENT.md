@@ -12,7 +12,7 @@ Publish the already-implemented deterministic action-execution/concurrency check
 
 ## Active directive
 
-`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure and publication only; Phase 9 implementation is local and pending exact-SHA publication/CI/review. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
+`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure and publication only; implementation checkpoint `7b3d759992ce6cef56914ef19aa8626df0214031` is pushed and CI `33323237014` passed. Final governed closure is pending this metadata commit and its exact-SHA CI. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
 
 ## Current verified state
 
@@ -74,7 +74,7 @@ Publish the already-implemented deterministic action-execution/concurrency check
 
 ## Current blockers
 
-- NONE for the issued Phase 9 implementation directive; independent Architect review remains the acceptance gate.
+- NONE for the closure work; independent Architect acceptance remains the Phase 9 gate.
 - Phase 10 durable tasks, external production tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
@@ -102,6 +102,6 @@ Publish the already-implemented deterministic action-execution/concurrency check
 
 ## Next Architect decision point
 
-Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10.
+Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10. Phase 9 status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the final governed SHA is this closure commit and is recorded in Notion after push verification.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

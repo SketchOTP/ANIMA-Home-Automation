@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 9 ACTION EXECUTION AND CONCURRENCY 2026-08-30
+Last verified against: PUBLISHED PHASE 9 CHECKPOINT CLOSURE 2026-08-30
 
 ## Entry points
 

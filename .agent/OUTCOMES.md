@@ -413,3 +413,25 @@ Built `ActionExecutionCoordinator` with durable idempotency claims, canonical-re
 - Native ARM64/Raspberry Pi execution is unverified. No production external connector or Phase 10 durable task behavior was added.
 - Connector idempotency is represented by the ANIMA durable key and connector metadata; providers that do not support idempotent execution are rejected before invocation.
 - A process crash after an external call begins is conservatively `UNKNOWN_RESULT`; reconciliation is explicit and never retries or compensates automatically.
+
+## ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C — Published Phase 9 checkpoint
+
+- Completed: 2026-08-30
+- Verdict: COMPLETE / Phase 9 `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
+- Retrieval confidence: ADEQUATE
+- Starting accepted checkpoint: `7153b127106c8e921185a38b1b4606fa42e5f92b` (Phase 8).
+- Implementation checkpoint: `7b3d759992ce6cef56914ef19aa8626df0214031`; GitHub Actions run `33323237014` passed on the exact SHA.
+- Final governed checkpoint: this closure commit; exact SHA and final GitHub Actions run are recorded in the Notion SSOT after push verification.
+
+### Fresh validation
+
+- Local-filesystem `uv sync --locked --dev`, Ruff format/check, strict mypy, 94 tests, migration repeat, OPA 4/4, and package sdist/wheel: PASSED.
+- Phase 1–8 regression harnesses, including real isolated HA Phase 6 and PostgreSQL Phase 7/8 restart evidence: PASSED.
+- Phase 9 real isolated HA coordinator harness: PASSED for real `set_power`, contradictory Alex/Sam same-resource contention, post-action verification, and durable replay without a second connector call.
+- Additional critical checks: sorted multi-resource lock order, concurrent duplicate at-most-once dispatch, committed `EXECUTING` before connector dispatch, and advisory-lock release on session loss: PASSED.
+- `git diff --check` and public repository safety scan: PASSED before implementation publication.
+
+### Publication boundary
+
+- The implementation and evidence are now visible on GitHub `main`; no unrelated files, household/private runtime artifacts, secrets, or Phase 10 behavior were included.
+- Evidence remains x86-64 and isolated virtual/demo Home Assistant only; native ARM64/Raspberry Pi, physical-home, high-risk/security, production-provider, and Architect acceptance evidence are not claimed.
