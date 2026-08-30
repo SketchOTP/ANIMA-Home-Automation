@@ -4,15 +4,15 @@ Last updated: 2026-08-30
 
 ## Current stage
 
-PHASE 9 CHECKPOINT CLOSURE — PENDING ARCHITECT ACCEPTANCE
+PHASE 9 COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Publish the already-implemented deterministic action-execution/concurrency checkpoint, obtain exact-SHA hosted CI evidence, and return it for independent Architect review. Phase 10 remains unauthorized.
+The deterministic action-execution/concurrency checkpoint is published with exact-SHA hosted CI evidence and is ready for independent Architect review. Phase 10 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure and publication only; implementation checkpoint `7b3d759992ce6cef56914ef19aa8626df0214031` is pushed and CI `33323237014` passed. Final governed closure is pending this metadata commit and its exact-SHA CI. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
+`ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C` — closure complete; implementation checkpoint `7b3d759992ce6cef56914ef19aa8626df0214031` passed CI `33323237014`, and final governed checkpoint `7b1cb07bd95c9f4641605dee89134990390c0640` passed CI `33323380633`. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`.
 
 ## Current verified state
 
@@ -102,6 +102,6 @@ Publish the already-implemented deterministic action-execution/concurrency check
 
 ## Next Architect decision point
 
-Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10. Phase 9 status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the final governed SHA is this closure commit and is recorded in Notion after push verification.
+Architect review of the Phase 9 implementation checkpoint and governed closure is required before Phase 10. Phase 9 status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; final governed checkpoint `7b1cb07bd95c9f4641605dee89134990390c0640` passed CI `33323380633` and is recorded in Notion.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

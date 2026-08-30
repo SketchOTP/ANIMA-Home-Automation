@@ -34,3 +34,7 @@ Evidence is x86-64 and uses isolated virtual/demo Home Assistant entities. It do
 - Final governed checkpoint: this closure commit; its exact SHA and final CI run are recorded in the Notion SSOT after push verification.
 - Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`.
 - Phase 10 remains unauthorized; no Phase 10 behavior is included.
+
+## Authority snapshot correction
+
+- The committed `CURRENT.md` wording was corrected after publication to state `PHASE 9 COMPLETE — PENDING ARCHITECT ACCEPTANCE` and to name the exact final governed checkpoint and CI. This is governance metadata only; no implementation behavior changed.

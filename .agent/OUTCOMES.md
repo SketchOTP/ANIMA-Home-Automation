@@ -435,3 +435,7 @@ Built `ActionExecutionCoordinator` with durable idempotency claims, canonical-re
 
 - The implementation and evidence are now visible on GitHub `main`; no unrelated files, household/private runtime artifacts, secrets, or Phase 10 behavior were included.
 - Evidence remains x86-64 and isolated virtual/demo Home Assistant only; native ARM64/Raspberry Pi, physical-home, high-risk/security, production-provider, and Architect acceptance evidence are not claimed.
+
+## Authority snapshot correction — Phase 9 closure metadata
+
+- Corrected the mutable `CURRENT.md` wording to identify Phase 9 as `COMPLETE — PENDING ARCHITECT ACCEPTANCE` and to record the exact published implementation/final checkpoints and CI runs. No product or architecture behavior changed.

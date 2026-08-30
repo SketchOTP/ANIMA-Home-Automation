@@ -15,7 +15,7 @@
 - Active task packet: NONE
 - Completed task packet: `.agent/tasks/completed/ANIMA-HA-P9-ACTION-EXECUTION-CONCURRENCY-011/`
 - Last accepted outcome: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R (accepted by Architect at `7153b127106c8e921185a38b1b4606fa42e5f92b`)
-- Last completed outcome: ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C; implementation SHA `7b3d759992ce6cef56914ef19aa8626df0214031`, final governed SHA is this closure commit
+- Last completed outcome: ANIMA-HA-P9-CHECKPOINT-CLOSURE-011C; implementation SHA `7b3d759992ce6cef56914ef19aa8626df0214031`, final governed SHA `7b1cb07bd95c9f4641605dee89134990390c0640`, final CI `33323380633`
 - Last state sync: 2026-08-30
 
 ## Mandatory kernel
