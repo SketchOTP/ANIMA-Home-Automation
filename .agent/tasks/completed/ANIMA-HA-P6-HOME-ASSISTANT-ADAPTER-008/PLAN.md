@@ -6,4 +6,4 @@
 4. Prove real HA 2026.8.2 discovery, event/truth ingestion, reconnect, low-risk action verification, and failure honesty.
 5. Run regression/static/build/public-safety/CI gates and publish governed evidence.
 
-Phase 7 Attention/Context Broker and later behavior are excluded.
+Completed. Phase 7 Attention/Context Broker and later behavior were excluded.

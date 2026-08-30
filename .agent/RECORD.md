@@ -150,3 +150,11 @@ UI, and voice remain out of scope.
 - Evidence: x86-64 unit/integration/simulator evidence, PostgreSQL migration/restart/persistence, real local MCP stdio exchange, OPA-gated invocation, CI `33277823326`, fresh-checkout build/validation, and public-safety scan passed at implementation checkpoint `c186c34bcf93e9ff03d39c3e966fcb540583d478`.
 - Boundary: Native plugins are trusted in-process; optional MCP plugins are supervised out-of-process. No runtime package installation, policy/permission mutation, raw secrets, Home Assistant, Luna, physical actions, or later behavior were introduced. Subprocess is not a malicious-code sandbox.
 - Consequence: Phase 6 Home Assistant Adapter remains pending Architect review.
+## ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 — Governed Home Assistant substrate boundary
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Decision: Adopt/wrap `hass-client==1.2.3` behind an ANIMA-owned adapter and test against pinned Home Assistant Core `2026.8.2`; retain HA IDs as scoped provider references and require Phase 4/5 policy plus observed-state verification for low-risk control.
+- Evidence: real isolated x86-64 HA WebSocket/registry/service runtime, PostgreSQL Truth/Journal/mapping persistence, OPA gating, restart/gap behavior, 43 tests, strict static/build validation, and CI `33284454470` on `ecae55af1894889e0948d11a9ae01288c217c646` passed.
+- Boundary: no physical-device claim, generic HA service tool, credential persistence, blind canonicalization, API-acknowledgement success, Luna, or Phase 7 behavior.
+- Consequence: Phase 7 remains gated on independent Architect acceptance.

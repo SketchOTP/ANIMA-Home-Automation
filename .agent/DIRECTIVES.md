@@ -41,7 +41,7 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 ## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Establish Implementation Phase 0 runtime baseline
 
 - Issued: 2026-08-28
-- Status: IN PROGRESS
+- Status: COMPLETE / PENDING ARCHITECT REVIEW
 - Project stage: IMPLEMENTATION PHASE 0 — RUNTIME BASELINE
 - Goal link: Establishes the reproducible repository and runtime foundation required before Phase 1 truth/state work while preserving `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE`.
 - Objective: Establish the smallest portable Python, tooling, isolated PostgreSQL, migration, simulator, validation, and CI baseline with no household intelligence.
@@ -164,3 +164,4 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Phase 7 attention/context, Luna/Agents SDK, generalized concurrency/leases, full Phase 9 action engine, durable tasks, production external tools, UI, or voice.
 - Required external discovery: `hass-client 1.2.3`, direct aiohttp, maintained alternatives, direct pinned HA container, and `ha-testcontainer 2.7.0` as test-only orchestration.
 - Source: Architect directive `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008`.
+- Implementation checkpoint: `ecae55af1894889e0948d11a9ae01288c217c646`; GitHub Actions `33284454470` passed for the exact SHA.

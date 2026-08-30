@@ -302,3 +302,27 @@ Added forward migration `0006_plugin_runtime.sql`; ANIMA-owned versioned manifes
 - Native Raspberry Pi execution/resource qualification remains unverified. Subprocess MCP is a failure-isolation boundary, not a malicious-code sandbox; container hardening is deferred.
 - Direct build from the GVFS/SFTP checkout remains blocked by its known `.venv` symlink limitation; local-disk fresh-checkout build passed.
 - Phase 6 Home Assistant Adapter and later behavior were not implemented.
+## ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 — Phase 6 Home Assistant adapter complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build and Phase 1–5 regressions; E3_TARGET_TESTED for real x86-64 HA container/PostgreSQL/OPA integration; E2_REPRODUCED for simulator; E1_OBSERVED for ARM64 manifest/package metadata.
+- Implementation checkpoint: `ecae55af1894889e0948d11a9ae01288c217c646`; CI `33284454470` passed for that exact SHA.
+
+### Work performed
+
+Added the ANIMA-owned Home Assistant adapter, stable provider scope/inventory, provider-reference mapping, Phase 1 state/event normalization, subscribe-buffer-snapshot synchronization, registry reconciliation, explicit health and bounded reconnect/gap semantics, secret-brokered authentication, and a trusted Phase 5 HA plugin exposing only bounded policy-gated semantic read/power tools with observed-state verification.
+
+### Acceptance results
+
+- Real pinned HA 2026.8.2 authentication, discovery, WebSocket state/registry events, ordinary/unknown/unavailable Truth, mapping/unmapped/many-to-one behavior, and duplicate/race handling: PASSED.
+- OPA deny/confirmation/strong-auth gating before HA and low-risk service execution through the Phase 5 gateway: PASSED.
+- Fresh observed-state success, deliberate acknowledged-but-unobserved verification failure, disconnect/reconnect/resubscribe/reconcile/gap, invalid authentication, disable/re-enable, and PostgreSQL restore: PASSED.
+- Ruff, strict mypy, 43 pytest tests, Phase 1–5 integration regressions, migration repeat, simulator, local-disk fresh-copy locked install/build, public safety, and exact-SHA CI: PASSED.
+
+### Evidence limits
+
+- HA evidence uses isolated virtual/demo entities on x86-64; it is not physical-home/device evidence.
+- ARM64/Pi is manifest/package metadata only; native execution and Pi resource qualification remain unverified.
+- Customer OAuth, security-access actions, full action concurrency/leases, Luna, and Phase 7 Attention/Context Broker remain unimplemented and unauthorized.

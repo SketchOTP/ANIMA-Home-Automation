@@ -10,10 +10,11 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER
-- Active directive: ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008/`
+- Current stage: IMPLEMENTATION PHASE 6 — COMPLETE / PENDING ARCHITECT REVIEW
+- Active directive: NONE — Phase 6 returned for Architect review
+- Active task packet: NONE
 - Last accepted outcome: ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007 (accepted by Architect at `b426d66e7293a132dcdb4abaa96bc7594cdf7b73`)
+- Last completed outcome: ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 implementation `ecae55af1894889e0948d11a9ae01288c217c646`, CI `33284454470`
 - Last state sync: 2026-08-29
 
 ## Mandatory kernel

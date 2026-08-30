@@ -4,7 +4,7 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER IMPLEMENTED / VALIDATION IN PROGRESS
+IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER COMPLETE / PENDING ARCHITECT REVIEW
 
 ## Current objective
 
@@ -12,7 +12,7 @@ Connect ANIMA to an isolated real Home Assistant instance through canonical trut
 
 ## Active directive
 
-ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008
+NONE — `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008` returned for Architect review
 
 ## Current verified state
 
@@ -46,7 +46,7 @@ ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008
 
 ## Current blockers
 
-- NONE currently known for Phase 6 implementation; final GitHub CI and governed closure remain pending.
+- NONE currently known for Phase 6; exact implementation checkpoint `ecae55af1894889e0948d11a9ae01288c217c646` passed GitHub CI `33284454470`.
 - Phase 7 Attention/Context Broker, Luna, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
@@ -73,6 +73,6 @@ ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008
 
 ## Next Architect decision point
 
-Finish Phase 6 checkpoint/CI/Notion evidence, then return it for Architect review. Phase 7 is not authorized.
+Architect review of Phase 6 is required. Phase 7 is not authorized.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.
