@@ -23,6 +23,7 @@ anima-migrate = "anima_ha.db.migrate:main"
 anima-sim = "anima_ha.simulator:main"
 anima-validate = "anima_ha.validate:main"
 anima-mcp-reference = "anima_ha.mcp_reference:main"
+anima-attention-replay = "anima_ha.phase7_replay:main"
 
 [project.entry-points."anima_ha.plugins"]
 simulator = "anima_ha.plugins:native_reference_factory"

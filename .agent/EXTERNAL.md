@@ -213,3 +213,23 @@ aggregation.
 | Direct pinned container fixture | ADOPT for tests | Smaller deterministic onboarding/token/demo evidence path and no runtime dependency. |
 
 The selected image is `ghcr.io/home-assistant/home-assistant:2026.8.2@sha256:56690a89c79a0de98035e1719f8324a92d5859c1192ff45adb0230ea81cb42a5`. Container manifest support is not native Pi evidence. Recheck on HA/client upgrade, OAuth work, registry API change, or native ARM64 execution.
+
+## ANIMA-HA-P7-ATTENTION-CONTEXT-009 — attention/filter/transport prior art
+
+- Date checked: 2026-08-29
+- Trigger: Phase 7 required a bounded local attention representation and restart-safe consumer before Luna.
+- Sources: [CloudEvents SQL v1.0.0](https://github.com/cloudevents/spec/blob/main/cloudevents/sql/spec.md); [`cel-expr-python` 0.1.3](https://pypi.org/project/cel-expr-python/); [`cel-python` 0.5.0](https://pypi.org/project/cel-python/); [NATS JetStream](https://docs.nats.io/nats-concepts/jetstream); [OpenTelemetry Context](https://opentelemetry.io/docs/specs/otel/context/); [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/).
+- Freshness: official specifications, repositories, and current package metadata checked 2026-08-29.
+
+| Candidate | Disposition | Finding |
+| --- | --- | --- |
+| ANIMA-owned typed predicates | BUILD | Explicit terminating matches cover current event/source/subject/importance/Truth needs without executable customer logic. |
+| PostgreSQL journal consumer state | ADOPT / REUSE / WRAP | Existing transaction, monotonic position, unique constraints, and persistence provide cursor/decision/aggregate/trigger restart safety. |
+| CloudEvents SQL v1.0.0 | REFERENCE | Apache-2.0 declarative filtering prior art; adopting its runtime/contract would not reduce current implementation risk. |
+| Official `cel-expr-python==0.1.3` | REFERENCE / DEFER | Apache/CEL Apache-2.0 wrapper; CPython 3.12 Linux x86-64 and ARM64 wheels observed, about 17.3/16.5 MB. Young and unnecessary for the bounded rule set. |
+| Community `cel-python==0.5.0` | DEFER / REJECT as foundation | Beta pure-Python implementation with Python >=3.10 support, but no measured advantage over typed configuration. |
+| NATS/JetStream | DEFER | Mature Apache-2.0 durable at-least-once delivery and credible ARM64 path; adds a second persistent consumer/redelivery system before independent consumers require it. |
+| OpenTelemetry Context/Baggage | REFERENCE | Appropriate technical correlation mechanism; official guidance warns that baggage can propagate sensitive data, so household context remains in ANIMA ContextPackets. |
+| Arbitrary Python attention callbacks | PROHIBITED | Executable customer rules would violate bounded, inspectable attention semantics. |
+
+No new dependency or infrastructure was introduced. Recheck when rule complexity demonstrates a need for CEL, multiple independent consumers justify a broker, trace propagation is adopted, or native Pi resource evidence changes the tradeoff.

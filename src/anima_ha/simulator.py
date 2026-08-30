@@ -9,10 +9,18 @@ import sys
 import time
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import uuid4
 
+from anima_ha.attention import AttentionReplay, default_attention_profile
 from anima_ha.config import RuntimeConfig
-from anima_ha.events import EventEnvelope, ObservationState, TruthObservation
+from anima_ha.events import (
+    DeliveryClass,
+    EventEnvelope,
+    EventImportance,
+    ObservationState,
+    TruthObservation,
+)
 from anima_ha.fixtures import sample_household_document
 from anima_ha.graph import PostgresHouseholdGraph
 from anima_ha.home_assistant import (
@@ -80,6 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
             "policy",
             "plugins",
             "home-assistant",
+            "attention",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -279,6 +288,62 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 "invocation": plugin_result.outcome.value,
                 "registry_after_disable": len(manager.list_tools()),
                 "authority_surface": "policy-gated-plugin-invocation",
+            },
+        )
+    elif scenario == "attention":
+        base = datetime.now(UTC).replace(microsecond=0)
+        events: list[dict[str, Any]] = [
+            {
+                "journal_position": index + 1,
+                "event_id": f"sim-attention-motion-{index}",
+                "event_type": "household.motion",
+                "source": "simulator",
+                "subject_key": f"room/{index % 2}/motion",
+                "occurred_at": base + timedelta(seconds=index // 10),
+                "recorded_at": base + timedelta(seconds=index // 10),
+                "importance": EventImportance.NORMAL.value,
+                "delivery_class": DeliveryClass.BEST_EFFORT.value,
+                "payload": {"active": True},
+                "metadata": {},
+                "correlation_id": None,
+                "causation_id": None,
+            }
+            for index in range(100)
+        ]
+        events.append(
+            {
+                "journal_position": 101,
+                "event_id": "sim-attention-user-request",
+                "event_type": "user.request",
+                "source": "simulator",
+                "subject_key": "person/synthetic",
+                "occurred_at": base + timedelta(seconds=5),
+                "recorded_at": base + timedelta(seconds=5),
+                "importance": EventImportance.IMPORTANT.value,
+                "delivery_class": DeliveryClass.GUARANTEED.value,
+                "payload": {"request": "What happened?"},
+                "metadata": {},
+                "correlation_id": None,
+                "causation_id": None,
+            }
+        )
+        replay = AttentionReplay().evaluate(
+            default_attention_profile("simulator.attention.v1"),
+            events,
+            flush_at=base + timedelta(minutes=2),
+        )
+        LOGGER.info(
+            "simulator_attention_complete",
+            extra={
+                "source_events": len(events),
+                "decisions": len(replay.decisions),
+                "triggers": len(replay.triggers),
+                "guaranteed_preserved": any(
+                    "sim-attention-user-request" in trigger.source_event_ids
+                    for trigger in replay.triggers
+                ),
+                "side_effects": "none",
+                "authority_surface": "attention-only",
             },
         )
     elif scenario == "home-assistant":

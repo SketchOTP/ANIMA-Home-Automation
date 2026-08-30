@@ -100,3 +100,12 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Service acknowledgement is not resulting state. Low-risk success requires a fresh observed HA state matching the request; otherwise return verification failure/unknown result.
 - `hass-client` supplies useful protocol coverage but not ANIMA lifecycle semantics. Reconnect, resubscription, reconciliation, bounded retry, status, and policy/tool boundaries remain ANIMA-owned.
 - `ha-testcontainer` 2.7.0 is useful prior art but its observed undeclared Playwright import cost made direct pinned-container orchestration the smaller Phase 6 harness.
+
+## ANIMA-HA-P7-ATTENTION-CONTEXT-009 — Attention and context boundaries
+
+- PostgreSQL journal position, advisory transaction locking, deterministic IDs, and unique constraints are sufficient for one restart-safe attention consumer; JetStream remains unnecessary until independent consumers justify duplicate durable delivery.
+- Guaranteed reasoning is an event-class invariant, not a high numeric priority: distinct guaranteed canonical events bypass ordinary cooldown, rate limiting, and aggregation.
+- A durable aggregate trigger may retain thousands of source IDs while its bounded ContextPacket carries a sample, total count, digest, and trigger reference. Durability and model-input sparsity are separate concerns.
+- Context relevance must terminate in canonical graph/Truth/memory/tool contracts. Tool inclusion records relevance and health only; policy authorization remains unevaluated until invocation.
+- Trust and cloud egress are separate ANIMA-owned classifications. External content remains untrusted even when relevant, and `LOCAL_ONLY` data is absent from the future cloud projection.
+- Typed predicates are currently smaller and safer than CEL; CloudEvents SQL/CEL remain replacement prior art if rule complexity later demonstrates need.

@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER COMPLETE / PENDING ARCHITECT REVIEW
+IMPLEMENTATION PHASE 7 — ATTENTION LAYER AND CONTEXT BROKER
 
 ## Current objective
 
-Connect ANIMA to an isolated real Home Assistant instance through canonical truth, identity, policy, and plugin boundaries without implementing Phase 7 behavior.
+Build deterministic restart-safe attention decisions, durable reasoning triggers, sparse provenance-rich context packets, and side-effect-free replay without implementing Luna or agent behavior.
 
 ## Active directive
 
-NONE — `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008` returned for Architect review
+`ANIMA-HA-P7-ATTENTION-CONTEXT-009`
 
 ## Current verified state
 
@@ -44,10 +44,16 @@ NONE — `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008` returned for Architect review
 - Phase 6 wraps `hass-client==1.2.3` against pinned HA Core `2026.8.2`, preserving provider references, Phase 1 normalization, Phase 2 mappings, Phase 4 policy, and Phase 5 lifecycle/tools.
 - Real isolated HA evidence passes for discovery, WebSocket events, registry reconcile, explicit uncertainty, low-risk service execution, observed-state verification, deliberate verification failure, reconnect/gap, invalid auth, and restart.
 
+## Phase 7 active state
+
+- Phase 6 is Architect accepted at governed checkpoint `e1488d9a2d6280945cc2fd8bdba435733f0ba287`; GitHub Actions run `33284537147` passed.
+- Phase 7 is authorized to add deterministic attention, durable triggers, sparse ContextPackets, and local replay/profile comparison only.
+- Current primary-source qualification supports BUILDing typed ANIMA predicates and REUSEing PostgreSQL; CloudEvents SQL, CEL, and OpenTelemetry are reference material, while CEL runtimes and NATS/JetStream remain deferred.
+
 ## Current blockers
 
-- NONE currently known for Phase 6; exact implementation checkpoint `ecae55af1894889e0948d11a9ae01288c217c646` passed GitHub CI `33284454470`.
-- Phase 7 Attention/Context Broker, Luna, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
+- NONE currently known for Phase 7.
+- Phase 8 Luna/Agent Runtime, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -73,6 +79,6 @@ NONE — `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008` returned for Architect review
 
 ## Next Architect decision point
 
-Architect review of Phase 6 is required. Phase 7 is not authorized.
+Architect review of the eventual Phase 7 checkpoint is required before Phase 8.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

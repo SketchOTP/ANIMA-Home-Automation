@@ -109,3 +109,19 @@ Primary Phase 3 sources are linked in [`docs/PHASE-3-GOVERNED-MEMORY.md`](PHASE-
 ## Phase 6 Home Assistant integration
 
 Phase 6 adopts and wraps `hass-client==1.2.3` (Apache-2.0, Python >=3.10, pure Python) behind `HomeAssistantAdapter`. Target evidence uses Home Assistant Core `2026.8.2` at the exact multi-platform GHCR digest recorded in `PHASE-6-HOME-ASSISTANT-ADAPTER.md`. Direct protocol duplication was rejected; `ha-testcontainer==2.7.0` remains test-harness reference/deferred because qualification exposed an undeclared base-import dependency on Playwright. Recheck on HA/client upgrades, protocol/registry changes, customer OAuth work, or native Raspberry Pi qualification.
+
+## Phase 7 attention and context qualification
+
+Checked: 2026-08-29. Phase 7 adds no Python package, expression runtime, broker, or infrastructure service. The exact comparison and source links are recorded in [`PHASE-7-ATTENTION-CONTEXT.md`](PHASE-7-ATTENTION-CONTEXT.md).
+
+| Candidate | Version/status | Decision | Qualification result |
+| --- | --- | --- | --- |
+| ANIMA typed attention predicates | Phase 7 schema v1 | BUILD | Small terminating configuration retains ANIMA event/time/guarantee semantics and prohibits executable customer callbacks. |
+| Existing PostgreSQL/Psycopg | PostgreSQL 16 accepted baseline | ADOPT / REUSE / WRAP | Transactional cursor, immutable decisions, durable aggregates/triggers, restart, and replay fit without a second durable subsystem. |
+| CloudEvents SQL | v1.0.0 | REFERENCE | Apache-2.0 declarative event-filter prior art; ANIMA does not adopt its event contract or runtime. |
+| `cel-expr-python` | 0.1.3 | REFERENCE / DEFER | Official Apache/CEL Apache-2.0 wrapper; Python 3.12 Linux wheels observed for x86-64 (about 17.3 MB) and ARM64 (about 16.5 MB). Young and disproportionate for current predicates. |
+| `cel-python` | 0.5.0 Beta | DEFER / REJECT as foundation | Community pure-Python implementation; no current material benefit over typed rules. |
+| NATS/JetStream | current official docs; no version pinned | DEFER | Apache-2.0 and credible ARM64 path, but at-least-once/redelivery plus a second durable consumer system is unnecessary for one journal consumer. |
+| OpenTelemetry Context/Baggage | current stable specification | REFERENCE | Appropriate for technical correlation; baggage must not carry household-sensitive ContextPacket data. |
+
+Recheck if rule complexity materially exceeds typed predicates, independent concurrent consumers justify a broker, Phase 8 introduces provider-specific token budgeting, or native Pi measurements change the footprint decision.

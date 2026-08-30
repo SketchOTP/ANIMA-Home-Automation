@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "profile_version": "phase7.v1",
+  "guaranteed_event_types": [
+    "user.request",
+    "security.alarm",
+    "safety.leak",
+    "system.health.critical"
+  ],
+  "rules": [
+    {
+      "rule_id": "user_request",
+      "action": "TRIGGER",
+      "event_types": ["user.request"],
+      "priority": 90
+    },
+    {
+      "rule_id": "critical_uncertainty",
+      "action": "TRIGGER",
+      "event_types": ["truth.observation"],
+      "importance": ["IMPORTANT", "CRITICAL"],
+      "truth_states": ["UNKNOWN", "UNAVAILABLE"],
+      "priority": 85
+    },
+    {
+      "rule_id": "ordinary_motion",
+      "action": "AGGREGATE",
+      "event_types": ["household.motion"],
+      "aggregation_window_seconds": 60,
+      "priority": 35
+    },
+    {
+      "rule_id": "material_state_change",
+      "action": "TRIGGER",
+      "event_types": ["truth.observation"],
+      "cooldown_seconds": 30,
+      "rate_limit_count": 10,
+      "rate_limit_window_seconds": 60,
+      "priority": 50
+    },
+    {
+      "rule_id": "ignore_lifecycle_noise",
+      "action": "IGNORE",
+      "event_types": ["plugin.health.sample"],
+      "priority": 0
+    }
+  ]
+}

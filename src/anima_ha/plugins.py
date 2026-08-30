@@ -262,6 +262,9 @@ class ToolDescriptor:
     availability: bool
     version: str
     provenance: str
+    applies_to_node_kinds: tuple[str, ...] = ()
+    applies_to_capabilities: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
 
     @classmethod
     def from_manifest(
@@ -300,6 +303,13 @@ class ToolDescriptor:
             availability=available,
             version=manifest.plugin_version,
             provenance=manifest.source,
+            applies_to_node_kinds=tuple(
+                str(value) for value in item.get("applies_to_node_kinds", [])
+            ),
+            applies_to_capabilities=tuple(
+                str(value) for value in item.get("applies_to_capabilities", [])
+            ),
+            tags=tuple(str(value) for value in item.get("tags", [])),
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -321,6 +331,9 @@ class ToolDescriptor:
             "availability": self.availability,
             "version": self.version,
             "provenance": self.provenance,
+            "applies_to_node_kinds": list(self.applies_to_node_kinds),
+            "applies_to_capabilities": list(self.applies_to_capabilities),
+            "tags": list(self.tags),
         }
 
 

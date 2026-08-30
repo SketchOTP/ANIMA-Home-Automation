@@ -165,3 +165,22 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required external discovery: `hass-client 1.2.3`, direct aiohttp, maintained alternatives, direct pinned HA container, and `ha-testcontainer 2.7.0` as test-only orchestration.
 - Source: Architect directive `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008`.
 - Implementation checkpoint: `ecae55af1894889e0948d11a9ae01288c217c646`; GitHub Actions `33284454470` passed for the exact SHA.
+
+### Architect acceptance
+
+- Accepted: 2026-08-29
+- Governed checkpoint: `e1488d9a2d6280945cc2fd8bdba435733f0ba287`
+- GitHub Actions: `33284537147` passed for the exact governed SHA.
+
+---
+
+## ANIMA-HA-P7-ATTENTION-CONTEXT-009 — Attention Layer and Context Broker
+
+- Issued: 2026-08-29
+- Status: IN PROGRESS
+- Project stage: IMPLEMENTATION PHASE 7 — ATTENTION AND CONTEXT
+- Accepted prerequisite: Phase 6 governed checkpoint `e1488d9a2d6280945cc2fd8bdba435733f0ba287`; accepted CI `33284537147`.
+- Objective: Consume canonical journal events through restart-safe deterministic attention, preserve guaranteed classes, emit durable reasoning triggers, and build bounded provenance/trust/egress-aware ContextPackets for future cognition.
+- Exclusions: No Luna/Agents SDK, LLM calls, agent reasoning, action planning, concurrency/leases, durable task engine, external research tools, UI, or voice.
+- Required external discovery: typed predicates, CloudEvents SQL v1, official/community CEL Python runtimes, PostgreSQL cursor/trigger persistence, NATS/JetStream, and OpenTelemetry Context/Baggage.
+- Source: Architect directive `ANIMA-HA-P7-ATTENTION-CONTEXT-009`.

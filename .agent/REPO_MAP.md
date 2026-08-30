@@ -1,12 +1,13 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 6 HOME ASSISTANT ADAPTER 2026-08-29
+Last verified against: IMPLEMENTATION PHASE 7 ATTENTION AND CONTEXT 2026-08-29
 
 ## Entry points
 
 - `anima-validate` — deterministic local format/lint/type/unit gate.
 - `anima-migrate` — runtime-only ordered SQL migration runner.
 - `anima-sim` — synthetic reality, graph, memory, policy, plugin, and HA-normalization scenarios; no cognition or physical household behavior.
+- `anima-attention-replay` — read-only journal-range attention/ContextPacket replay and profile comparison; no model, tool, HA action, or external side effect.
 
 ## Major modules / packages
 
@@ -22,7 +23,10 @@ Last verified against: IMPLEMENTATION PHASE 6 HOME ASSISTANT ADAPTER 2026-08-29
 - `src/anima_ha/memory.py` — canonical memory, lifecycle, retrieval, index rebuild/fallback, and mutation audit.
 - `src/anima_ha/routines.py` — deterministic journal-derived routine model.
 - `src/anima_ha/home_assistant.py` — wrapped HA client, provider inventory/mapping, normalization, synchronization, health, reconnect, and semantic low-risk tools.
-- `tests/` — deterministic Phase 0–6 unit tests and isolated provider fixtures.
+- `src/anima_ha/attention.py` — typed attention profiles, immutable decisions, durable cursor/cooldown/rate/aggregation state, reasoning triggers, metrics, replay, and profile comparison.
+- `src/anima_ha/context.py` — sparse bounded ContextPacket selection, provenance, trust/egress classification, deterministic pruning, persistence, and cloud-safe projection.
+- `src/anima_ha/phase7_replay.py` — side-effect-free Phase 7 replay CLI.
+- `tests/` — deterministic Phase 0–7 unit tests and isolated provider fixtures.
 
 ## Important interfaces / contracts
 
@@ -37,6 +41,7 @@ Last verified against: IMPLEMENTATION PHASE 6 HOME ASSISTANT ADAPTER 2026-08-29
 - `uv run --locked --group dev python scripts/verify_phase1_postgres.py` — synthetic PostgreSQL integration harness.
 - `uv run --locked --group dev python scripts/verify_phase2_postgres.py` — synthetic PostgreSQL graph integration harness.
 - `uv run --locked --group dev python scripts/verify_phase3_postgres.py` — synthetic PostgreSQL memory/routine integration harness.
+- `uv run --locked --group dev python scripts/verify_phase7_attention.py` — 10,020-event PostgreSQL cursor/restart/aggregation/context/replay harness.
 
 ## Generated / cache / build areas
 
@@ -75,9 +80,13 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase6_home_assistant.py` — real pinned HA container, PostgreSQL, OPA, registry/event/action/reconnect evidence harness.
 - `tests/test_home_assistant.py` — Phase 6 normalization, race, mapping, health, policy, lifecycle, and verification tests.
 - `docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md` — adapter architecture, dependency decisions, synchronization, action verification, and evidence limits.
+- `src/anima_ha/db/migrations/0008_attention_context.sql` — durable attention profiles/cursors/decisions/triggers/aggregates/failures/metrics and ContextPackets.
+- `config/attention/phase7.v1.json` — versioned provider-independent prototype attention profile.
+- `tests/test_attention.py` — guaranteed, suppression, high-volume replay, sparse context, uncertainty, trust/egress, scenario, and degraded-source tests.
+- `docs/PHASE-7-ATTENTION-CONTEXT.md` — attention/context/replay architecture, dependency decisions, and evidence limits.
 
 ## Known sensitive/high-risk areas
 
-- HA credentials remain runtime-only secrets; HA IDs remain provider references; only bounded low-risk virtual actions are evidenced. Future physical/high-risk actions, external connectors, cognition, and semantic embedding services require separate authorization. Phase 5 subprocesses are not malicious-code sandboxes.
+- HA credentials remain runtime-only secrets; HA IDs remain provider references; only bounded low-risk virtual actions are evidenced. Phase 7 packets redact secret fields, preserve external-content distrust, and do not imply tool authorization. Future Luna cognition, physical/high-risk actions, external connectors, and semantic embedding services require separate authorization. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.
