@@ -184,3 +184,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Luna/Agents SDK, LLM calls, agent reasoning, action planning, concurrency/leases, durable task engine, external research tools, UI, or voice.
 - Required external discovery: typed predicates, CloudEvents SQL v1, official/community CEL Python runtimes, PostgreSQL cursor/trigger persistence, NATS/JetStream, and OpenTelemetry Context/Baggage.
 - Source: Architect directive `ANIMA-HA-P7-ATTENTION-CONTEXT-009`.
+
+### Completion record
+
+- Completed: 2026-08-29
+- Status: COMPLETE / PASS pending independent Architect review
+- Implementation checkpoint: `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`; GitHub Actions run `33286882961` passed for that exact SHA.
+- Architecture: BUILD typed ANIMA attention/context/replay; ADOPT/REUSE/WRAP PostgreSQL and existing Phase 1–5 services; REFERENCE CloudEvents SQL/CEL/OpenTelemetry; DEFER CEL runtimes/NATS/provider tokenization; PROHIBIT executable attention scripts and behavioral automation.
+- Evidence: 50 tests, strict static/build validation, 10,020-event PostgreSQL restart/replay harness, Phase 1–5 regressions, real isolated Phase 6 HA regression, replay CLI, simulator, and public-safety review passed.
+- Phase 8 Luna Agent Runtime and later behavior were not implemented.

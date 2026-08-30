@@ -51,7 +51,7 @@
 - Phase 5 PostgreSQL/OPA/native/MCP: PASSED.
 - Phase 6 real Home Assistant Core 2026.8.2 container: PASSED; real WebSocket discovery/events, provider mapping, policy-gated virtual action verification, reconnect/gap, invalid auth, disable/re-enable, PostgreSQL persistence.
 - Public-safety review: PASSED; candidate file review, secret/private-key pattern scan, large-file scan, and Git diff check found no publishable credential/private runtime artifact. Synthetic placeholders contain no live secret.
-- Hosted CI: pending implementation checkpoint push.
+- Hosted CI: PASSED — GitHub Actions `33286882961` on exact implementation SHA `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`.
 
 ## Evidence ladder and limits
 

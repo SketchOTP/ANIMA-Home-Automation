@@ -158,3 +158,12 @@ UI, and voice remain out of scope.
 - Evidence: real isolated x86-64 HA WebSocket/registry/service runtime, PostgreSQL Truth/Journal/mapping persistence, OPA gating, restart/gap behavior, 43 tests, strict static/build validation, and CI `33284454470` on `ecae55af1894889e0948d11a9ae01288c217c646` passed.
 - Boundary: no physical-device claim, generic HA service tool, credential persistence, blind canonicalization, API-acknowledgement success, Luna, or Phase 7 behavior.
 - Consequence: Phase 7 remains gated on independent Architect acceptance.
+
+## ANIMA-HA-P7-ATTENTION-CONTEXT-009 — Deterministic cognition-opportunity boundary
+
+- Date: 2026-08-29
+- Type: MILESTONE / ARCHITECTURE
+- Decision: Build typed ANIMA attention and sparse ContextPackets on the existing PostgreSQL journal/state stack; preserve guaranteed reasoning, immutable profile-qualified decisions, restart-safe aggregation, explicit Truth uncertainty, ANIMA-owned trust/egress, and side-effect-free replay. CloudEvents SQL/CEL/OpenTelemetry remain reference; CEL runtimes and NATS remain deferred.
+- Evidence: implementation `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`, CI `33286882961`, 50 tests, strict static/build checks, 10,020-event PostgreSQL restart/replay target, Phase 1–5 integrations, real isolated Phase 6 HA regression, simulator/replay CLI, and public-safety review passed.
+- Boundary: attention selects when future cognition may run; no rule selects an action. Context inclusion does not grant authority. No Luna, cloud call, autonomous behavior, new physical-device behavior, CEL, or NATS was introduced.
+- Consequence: Phase 8 remains gated on independent Architect review and explicit authorization.

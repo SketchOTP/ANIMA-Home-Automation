@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 7 — ATTENTION LAYER AND CONTEXT BROKER
+IMPLEMENTATION PHASE 7 COMPLETE — PENDING ARCHITECT REVIEW
 
 ## Current objective
 
-Build deterministic restart-safe attention decisions, durable reasoning triggers, sparse provenance-rich context packets, and side-effect-free replay without implementing Luna or agent behavior.
+Await independent Architect review of the completed deterministic Attention Layer and Context Broker checkpoint. Do not begin Phase 8 without authorization.
 
 ## Active directive
 
-`ANIMA-HA-P7-ATTENTION-CONTEXT-009`
+NONE — `ANIMA-HA-P7-ATTENTION-CONTEXT-009` is complete and returned for review.
 
 ## Current verified state
 
@@ -44,15 +44,17 @@ Build deterministic restart-safe attention decisions, durable reasoning triggers
 - Phase 6 wraps `hass-client==1.2.3` against pinned HA Core `2026.8.2`, preserving provider references, Phase 1 normalization, Phase 2 mappings, Phase 4 policy, and Phase 5 lifecycle/tools.
 - Real isolated HA evidence passes for discovery, WebSocket events, registry reconcile, explicit uncertainty, low-risk service execution, observed-state verification, deliberate verification failure, reconnect/gap, invalid auth, and restart.
 
-## Phase 7 active state
+## Phase 7 implementation state
 
 - Phase 6 is Architect accepted at governed checkpoint `e1488d9a2d6280945cc2fd8bdba435733f0ba287`; GitHub Actions run `33284537147` passed.
-- Phase 7 is authorized to add deterministic attention, durable triggers, sparse ContextPackets, and local replay/profile comparison only.
-- Current primary-source qualification supports BUILDing typed ANIMA predicates and REUSEing PostgreSQL; CloudEvents SQL, CEL, and OpenTelemetry are reference material, while CEL runtimes and NATS/JetStream remain deferred.
+- Phase 7 implementation checkpoint is `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`; GitHub Actions run `33286882961` passed on that exact SHA.
+- PostgreSQL-backed deterministic attention, guaranteed-event bypass, durable cursor/cooldown/rate/aggregation state, immutable decisions, durable reasoning triggers, sparse ContextPackets, trust/egress classification, and side-effect-free replay/profile comparison are implemented.
+- Target evidence passed with 10,000 ordinary plus 20 guaranteed source events, restart after 5,000, exactly four aggregate and 20 guaranteed triggers, complete source journal, live/replay equivalence, context digest persistence, and Profile A/B comparison.
+- Typed ANIMA predicates and existing PostgreSQL were selected; CloudEvents SQL, CEL, and OpenTelemetry remain reference material; CEL runtimes and NATS/JetStream remain deferred. No new service or runtime dependency was added.
 
 ## Current blockers
 
-- NONE currently known for Phase 7.
+- NONE for the completed Phase 7 directive.
 - Phase 8 Luna/Agent Runtime, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
@@ -79,6 +81,6 @@ Build deterministic restart-safe attention decisions, durable reasoning triggers
 
 ## Next Architect decision point
 
-Architect review of the eventual Phase 7 checkpoint is required before Phase 8.
+Architect review of Phase 7 implementation checkpoint `77aafbe5f78333b1c50d042fb1ceb19e74dbe698` and CI `33286882961` is required before Phase 8.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

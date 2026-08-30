@@ -326,3 +326,32 @@ Added the ANIMA-owned Home Assistant adapter, stable provider scope/inventory, p
 - HA evidence uses isolated virtual/demo entities on x86-64; it is not physical-home/device evidence.
 - ARM64/Pi is manifest/package metadata only; native execution and Pi resource qualification remain unverified.
 - Customer OAuth, security-access actions, full action concurrency/leases, Luna, and Phase 7 Attention/Context Broker remain unimplemented and unauthorized.
+
+## ANIMA-HA-P7-ATTENTION-CONTEXT-009 — Phase 7 attention/context complete
+
+- Completed: 2026-08-29
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for target/unit/static/build and Phase 1–6 regression coverage; E3_TARGET_TESTED for synthetic x86-64 PostgreSQL attention/context/restart; E2_REPRODUCED for simulator/replay CLI; ARM64 remains E1_OBSERVED metadata evidence.
+- Implementation checkpoint: `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`; GitHub Actions run `33286882961` passed for that exact SHA.
+
+### Work performed
+
+Built versioned typed attention profiles, immutable decisions, durable PostgreSQL cursor/cooldown/rate/aggregation/failure state, guaranteed reasoning, durable `ReasoningTrigger` records, sparse versioned ContextPackets, deterministic relevance/budgets/pruning, trust and egress controls, persisted packet digests, cloud-safe projection, pure replay/profile comparison, simulator scenario, and high-volume integration harness. No new dependency or service was introduced.
+
+### Acceptance results
+
+- Canonical journal input, transactional cursor, restart/no-skip/no-duplicate behavior: PASSED.
+- Guaranteed bypass, duplicate/no-change, cooldown, rate, aggregation/restart, critical fail-toward-trigger: PASSED.
+- Sparse Graph/Truth/Event/Memory/Routine/Identity/Tool context with provenance and uncertainty: PASSED.
+- Explicit/inferred distinction, memory no-authority, bounded tools, no Rego dump, external distrust, egress redaction, secret exclusion, deterministic pruning, degraded source: PASSED.
+- High volume: 10,000 ordinary + 20 guaranteed; expected/actual four aggregates + 20 guaranteed = 24 triggers; all source events retained; midstream restart and pure replay equivalence passed.
+- Profile comparison: 24 versus 28 triggers, zero guaranteed loss, actual packet-byte difference reported; no automatic promotion.
+- Migrations repeat, 50 tests, Ruff, strict mypy, package build, OPA, Phase 1–5 integration, real isolated Phase 6 HA regression, simulator, replay CLI, public safety, exact-SHA CI: PASSED.
+
+### Risks / limitations
+
+- Native Raspberry Pi/ARM64 execution remains unverified; Phase 7 runtime evidence is synthetic x86-64 PostgreSQL.
+- Context budgeting is serialized-byte based and provider-neutral; Phase 8 may add a replaceable model tokenizer after qualification.
+- NATS/JetStream and CEL remain deferred until measured consumer/rule complexity justifies them.
+- No Luna, cloud cognition, autonomous action, new physical-home behavior, durable tasks, UI, or voice was implemented.
