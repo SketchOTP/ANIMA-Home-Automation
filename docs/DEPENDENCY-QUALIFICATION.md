@@ -106,3 +106,6 @@ Primary Phase 3 sources are linked in [`docs/PHASE-3-GOVERNED-MEMORY.md`](PHASE-
 | Casbin | REFERENCE / REJECT as core | Embedded RBAC/ABAC is useful but not a material fit improvement for the required four-way contextual result |
 | OpenFGA | DEFER / REJECT for Phase 4 | ReBAC tuple service is unnecessary for current household policy scale |
 | Direct Python | BUILD for wrapper/contracts only | Used for ANIMA-owned semantics, not as a replacement for policy-as-code evaluation |
+## Phase 6 Home Assistant integration
+
+Phase 6 adopts and wraps `hass-client==1.2.3` (Apache-2.0, Python >=3.10, pure Python) behind `HomeAssistantAdapter`. Target evidence uses Home Assistant Core `2026.8.2` at the exact multi-platform GHCR digest recorded in `PHASE-6-HOME-ASSISTANT-ADAPTER.md`. Direct protocol duplication was rejected; `ha-testcontainer==2.7.0` remains test-harness reference/deferred because qualification exposed an undeclared base-import dependency on Playwright. Recheck on HA/client upgrades, protocol/registry changes, customer OAuth work, or native Raspberry Pi qualification.

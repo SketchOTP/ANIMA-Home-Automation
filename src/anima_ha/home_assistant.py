@@ -1,0 +1,1125 @@
+"""Home Assistant provider adapter behind ANIMA-owned contracts.
+
+Home Assistant identifiers remain scoped provider references.  This module
+owns connection supervision, reconciliation, normalization, bounded semantic
+actions, and provider-level verification; HA wire objects do not cross it.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import logging
+import threading
+import time
+from collections.abc import Callable
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime
+from enum import StrEnum
+from typing import Any, Protocol, cast
+from uuid import NAMESPACE_URL, UUID, uuid5
+
+import psycopg
+from aiohttp import ClientSession
+from hass_client import HomeAssistantClient
+from hass_client.exceptions import AuthenticationFailed
+from psycopg.rows import dict_row
+
+from anima_ha.events import (
+    DeliveryClass,
+    EventEnvelope,
+    EventImportance,
+    EvidenceKind,
+    ObservationState,
+    TruthObservation,
+)
+from anima_ha.graph import PostgresHouseholdGraph
+from anima_ha.journal import PostgresRealityStore
+from anima_ha.plugins import (
+    CORE_VERSION,
+    MANIFEST_VERSION,
+    PluginManifest,
+    PluginValidationError,
+    RuntimeKind,
+    TrustClass,
+)
+
+LOGGER = logging.getLogger(__name__)
+PROVIDER = "home_assistant"
+EXPECTED_HA_VERSION = "2026.8.2"
+HA_IMAGE = (
+    "ghcr.io/home-assistant/home-assistant:2026.8.2@"
+    "sha256:56690a89c79a0de98035e1719f8324a92d5859c1192ff45adb0230ea81cb42a5"
+)
+
+
+class HAAdapterError(RuntimeError):
+    """Base exception for bounded adapter failures."""
+
+
+class HAAuthenticationError(HAAdapterError):
+    """Authentication failed and should not be retried aggressively."""
+
+
+class HAMappingError(HAAdapterError):
+    """A canonical target has no unambiguous commissioned HA mapping."""
+
+
+class HAHealth(StrEnum):
+    STARTING = "STARTING"
+    CONNECTING = "CONNECTING"
+    RECONCILING = "RECONCILING"
+    ONLINE = "ONLINE"
+    DEGRADED = "DEGRADED"
+    OFFLINE = "OFFLINE"
+    AUTH_FAILED = "AUTH_FAILED"
+
+
+class MappingStatus(StrEnum):
+    MAPPED = "MAPPED"
+    UNMAPPED = "UNMAPPED"
+
+
+class HAActionOutcome(StrEnum):
+    SUCCESS = "SUCCESS"
+    SERVICE_FAILED = "SERVICE_FAILED"
+    VERIFICATION_FAILED = "VERIFICATION_FAILED"
+    UNKNOWN_RESULT = "UNKNOWN_RESULT"
+    TARGET_UNAVAILABLE = "TARGET_UNAVAILABLE"
+
+
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
+def _parse_time(value: Any, fallback: datetime | None = None) -> datetime:
+    if isinstance(value, datetime):
+        parsed = value
+    elif value:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    else:
+        parsed = fallback or _utcnow()
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def _json(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+    return cast(dict[str, Any], json.loads(json.dumps(value, default=str)))
+
+
+def _bounded_attributes(value: Any) -> dict[str, Any]:
+    attributes = _json(value)
+    allowed = {
+        "friendly_name",
+        "unit_of_measurement",
+        "device_class",
+        "state_class",
+        "icon",
+        "supported_features",
+    }
+    return {key: attributes[key] for key in sorted(allowed & attributes.keys())}
+
+
+@dataclass(frozen=True, slots=True)
+class HAInstanceConfig:
+    instance_id: UUID
+    websocket_url: str
+    token_secret_name: str
+    expected_version: str = EXPECTED_HA_VERSION
+    freshness_seconds: int = 300
+    command_timeout: float = 10.0
+    verification_timeout: float = 8.0
+    reconnect_attempts: int = 3
+    reconnect_backoff_seconds: float = 0.5
+    healthcheck_seconds: float = 1.0
+    ssl: bool = True
+
+    def __post_init__(self) -> None:
+        if not self.websocket_url.endswith("/api/websocket"):
+            raise ValueError("websocket_url must end with /api/websocket")
+        if not self.token_secret_name.strip():
+            raise ValueError("token_secret_name is required")
+        if self.reconnect_attempts not in range(1, 6):
+            raise ValueError("reconnect_attempts must be between 1 and 5")
+
+    @property
+    def provider_scope(self) -> str:
+        return str(self.instance_id)
+
+
+@dataclass(frozen=True, slots=True)
+class HAProviderObject:
+    kind: str
+    external_id: str
+    metadata: dict[str, Any]
+    mapping_status: MappingStatus = MappingStatus.UNMAPPED
+    canonical_target_id: UUID | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class HADiscoverySnapshot:
+    version: str
+    config: dict[str, Any]
+    states: tuple[dict[str, Any], ...]
+    services: dict[str, Any]
+    areas: tuple[dict[str, Any], ...]
+    devices: tuple[dict[str, Any], ...]
+    entities: tuple[dict[str, Any], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class HAAdapterStatus:
+    health: HAHealth
+    connected_version: str | None = None
+    last_successful_state_sync: datetime | None = None
+    last_received_event: datetime | None = None
+    subscriptions_active: bool = False
+    discovered_counts: dict[str, int] = field(default_factory=dict)
+    mapped_count: int = 0
+    unmapped_count: int = 0
+    reconnect_attempt: int = 0
+    last_error_category: str | None = None
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "health": self.health.value,
+            "connected_version": self.connected_version,
+            "last_successful_state_sync": self.last_successful_state_sync.isoformat()
+            if self.last_successful_state_sync
+            else None,
+            "last_received_event": self.last_received_event.isoformat()
+            if self.last_received_event
+            else None,
+            "subscriptions_active": self.subscriptions_active,
+            "discovered_counts": self.discovered_counts,
+            "mapped_count": self.mapped_count,
+            "unmapped_count": self.unmapped_count,
+            "reconnect_attempt": self.reconnect_attempt,
+            "last_error_category": self.last_error_category,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class HAActionResult:
+    outcome: HAActionOutcome
+    entity_id: str
+    requested_state: str
+    observed_state: str | None = None
+    service_acknowledged: bool = False
+    detail: str | None = None
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "outcome": self.outcome.value,
+            "entity_id": self.entity_id,
+            "requested_state": self.requested_state,
+            "observed_state": self.observed_state,
+            "service_acknowledged": self.service_acknowledged,
+            "detail": self.detail,
+        }
+
+
+class HAConnection(Protocol):
+    @property
+    def version(self) -> str | None: ...
+
+    @property
+    def connected(self) -> bool: ...
+
+    def start(self) -> HADiscoverySnapshot: ...
+    def activate(self) -> list[dict[str, Any]]: ...
+    def stop(self) -> None: ...
+    def snapshot(self) -> HADiscoverySnapshot: ...
+    def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any: ...
+    def get_state(self, entity_id: str) -> dict[str, Any] | None: ...
+    def ping(self) -> None: ...
+
+
+class HassClientConnection:
+    """Supervised synchronous boundary around the async hass-client SDK."""
+
+    def __init__(
+        self,
+        config: HAInstanceConfig,
+        token: str,
+        *,
+        event_callback: Callable[[dict[str, Any]], None],
+        disconnect_callback: Callable[[str], None],
+    ) -> None:
+        self.config = config
+        self._token = token
+        self._event_callback = event_callback
+        self._disconnect_callback = disconnect_callback
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._client: HomeAssistantClient | None = None
+        self._session: ClientSession | None = None
+        self._listener: asyncio.Task[None] | None = None
+        self._buffering = True
+        self._buffer: list[dict[str, Any]] = []
+        self._stopping = False
+        self.version: str | None = None
+
+    @property
+    def connected(self) -> bool:
+        return bool(self._client and self._client.connected)
+
+    def _run_loop(self) -> None:
+        asyncio.set_event_loop(self._loop)
+        self._loop.run_forever()
+
+    def _submit(self, coroutine: Any, timeout: float | None = None) -> Any:
+        future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+        try:
+            return future.result(timeout or self.config.command_timeout)
+        except TimeoutError:
+            future.cancel()
+            raise
+
+    async def _on_event(self, event: dict[str, Any]) -> None:
+        normalized = _json(event)
+        if self._buffering:
+            self._buffer.append(normalized)
+        else:
+            self._event_callback(normalized)
+
+    def _listener_done(self, task: asyncio.Task[None]) -> None:
+        if self._stopping:
+            return
+        error = "ConnectionClosed"
+        if not task.cancelled():
+            try:
+                exc = task.exception()
+                if exc is not None:
+                    error = type(exc).__name__
+            except asyncio.CancelledError:
+                return
+        self._disconnect_callback(error)
+
+    async def _start_async(self) -> HADiscoverySnapshot:
+        self._session = ClientSession()
+        self._client = HomeAssistantClient(
+            self.config.websocket_url, self._token, aiohttp_session=self._session
+        )
+        try:
+            await asyncio.wait_for(
+                self._client.connect(ssl=self.config.ssl), self.config.command_timeout
+            )
+        except AuthenticationFailed as exc:
+            raise HAAuthenticationError("Home Assistant authentication failed") from exc
+        self.version = self._client.version
+        self._listener = asyncio.create_task(self._client.start_listening())
+        self._listener.add_done_callback(self._listener_done)
+        await asyncio.sleep(0)
+        await self._client.subscribe_events(self._on_event, "state_changed")
+        for event_type in (
+            "area_registry_updated",
+            "device_registry_updated",
+            "entity_registry_updated",
+        ):
+            await self._client.subscribe_events(self._on_event, event_type)
+        return await self._snapshot_async()
+
+    async def _snapshot_async(self) -> HADiscoverySnapshot:
+        if self._client is None:
+            raise HAAdapterError("Home Assistant client is not started")
+        config, states, services, areas, devices, entities = await asyncio.gather(
+            self._client.get_config(),
+            self._client.get_states(),
+            self._client.get_services(),
+            self._client.get_area_registry(),
+            self._client.get_device_registry(),
+            self._client.get_entity_registry(),
+        )
+        return HADiscoverySnapshot(
+            version=str(self._client.version),
+            config=_json(config),
+            states=tuple(_json(item) for item in states),
+            services=_json(services),
+            areas=tuple(_json(item) for item in areas),
+            devices=tuple(_json(item) for item in devices),
+            entities=tuple(_json(item) for item in entities),
+        )
+
+    async def _activate_async(self) -> list[dict[str, Any]]:
+        buffered = list(self._buffer)
+        self._buffer.clear()
+        self._buffering = False
+        return buffered
+
+    async def _stop_async(self) -> None:
+        self._stopping = True
+        if self._client is not None and self._client.connected:
+            try:
+                await asyncio.wait_for(self._client.disconnect(), timeout=2.0)
+            except TimeoutError:
+                pass
+        if self._listener and not self._listener.done():
+            self._listener.cancel()
+        if self._session is not None and not self._session.closed:
+            await self._session.close()
+
+    def start(self) -> HADiscoverySnapshot:
+        self._thread.start()
+        return cast(
+            HADiscoverySnapshot,
+            self._submit(self._start_async(), self.config.command_timeout * 3),
+        )
+
+    def activate(self) -> list[dict[str, Any]]:
+        return cast(list[dict[str, Any]], self._submit(self._activate_async()))
+
+    def stop(self) -> None:
+        if self._thread.is_alive():
+            try:
+                self._submit(self._stop_async())
+            finally:
+                self._loop.call_soon_threadsafe(self._loop.stop)
+                self._thread.join(timeout=self.config.command_timeout)
+        self._token = ""
+
+    def snapshot(self) -> HADiscoverySnapshot:
+        return cast(
+            HADiscoverySnapshot,
+            self._submit(self._snapshot_async(), self.config.command_timeout * 3),
+        )
+
+    async def _call_service_async(self, domain: str, service: str, target: dict[str, Any]) -> Any:
+        if self._client is None:
+            raise HAAdapterError("Home Assistant client is not started")
+        return await self._client.call_service(domain, service, target=target)
+
+    def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any:
+        return self._submit(
+            self._call_service_async(domain, service, target), self.config.command_timeout
+        )
+
+    def get_state(self, entity_id: str) -> dict[str, Any] | None:
+        snapshot = self.snapshot()
+        return next(
+            (state for state in snapshot.states if state.get("entity_id") == entity_id), None
+        )
+
+    async def _ping_async(self) -> None:
+        if self._client is None:
+            raise HAAdapterError("Home Assistant client is not started")
+        await self._client.get_config()
+
+    def ping(self) -> None:
+        self._submit(self._ping_async(), self.config.command_timeout)
+
+
+class PostgresHAStore:
+    def __init__(self, database_url: str, connect_timeout: int = 5) -> None:
+        self.database_url = database_url
+        self.connect_timeout = connect_timeout
+
+    def _connect(self) -> psycopg.Connection[Any]:
+        return psycopg.connect(
+            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+        )
+
+    def save_status(self, config: HAInstanceConfig, status: HAAdapterStatus, enabled: bool) -> None:
+        payload = status.to_payload()
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO anima_ha_instances
+                   (instance_id, websocket_url, token_secret_name, expected_version, enabled,
+                    health, connected_version, last_state_sync, last_event_at, diagnostics)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                   ON CONFLICT (instance_id) DO UPDATE SET
+                     websocket_url=EXCLUDED.websocket_url,
+                     token_secret_name=EXCLUDED.token_secret_name,
+                     expected_version=EXCLUDED.expected_version,
+                     enabled=EXCLUDED.enabled,
+                     health=EXCLUDED.health,
+                     connected_version=EXCLUDED.connected_version,
+                     last_state_sync=EXCLUDED.last_state_sync,
+                     last_event_at=EXCLUDED.last_event_at,
+                     diagnostics=EXCLUDED.diagnostics,
+                     updated_at=now()""",
+                (
+                    config.instance_id,
+                    config.websocket_url,
+                    config.token_secret_name,
+                    config.expected_version,
+                    enabled,
+                    status.health.value,
+                    status.connected_version,
+                    status.last_successful_state_sync,
+                    status.last_received_event,
+                    json.dumps(payload, sort_keys=True),
+                ),
+            )
+            connection.commit()
+
+    def replace_inventory(
+        self, instance_id: UUID, objects: list[HAProviderObject], seen_at: datetime
+    ) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE anima_ha_provider_inventory SET present=false WHERE instance_id=%s",
+                (instance_id,),
+            )
+            for item in objects:
+                metadata = {
+                    **item.metadata,
+                    "mapping_status": item.mapping_status.value,
+                    "canonical_target_id": str(item.canonical_target_id)
+                    if item.canonical_target_id
+                    else None,
+                }
+                cursor.execute(
+                    """INSERT INTO anima_ha_provider_inventory
+                       (instance_id, external_object_kind, external_id, metadata, present,
+                        first_seen_at, last_seen_at)
+                       VALUES (%s,%s,%s,%s::jsonb,true,%s,%s)
+                       ON CONFLICT (instance_id, external_object_kind, external_id) DO UPDATE SET
+                         metadata=EXCLUDED.metadata,
+                         present=true,
+                         last_seen_at=EXCLUDED.last_seen_at""",
+                    (
+                        instance_id,
+                        item.kind,
+                        item.external_id,
+                        json.dumps(metadata, sort_keys=True),
+                        seen_at,
+                        seen_at,
+                    ),
+                )
+            connection.commit()
+
+    def inventory(self, instance_id: UUID) -> list[dict[str, Any]]:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT external_object_kind, external_id, metadata, present
+                   FROM anima_ha_provider_inventory WHERE instance_id=%s
+                   ORDER BY external_object_kind, external_id""",
+                (instance_id,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+
+class HomeAssistantAdapter:
+    def __init__(
+        self,
+        config: HAInstanceConfig,
+        reality: PostgresRealityStore,
+        graph: PostgresHouseholdGraph,
+        store: PostgresHAStore,
+    ) -> None:
+        self.config, self.reality, self.graph, self.store = config, reality, graph, store
+        self.connection: HAConnection | None = None
+        self.status = HAAdapterStatus(HAHealth.STARTING)
+        self._enabled = False
+        self._transport_online = False
+        self._lock = threading.RLock()
+        self._reconcile_lock = threading.Lock()
+        self._registry_worker_lock = threading.Lock()
+        self._registry_dirty = threading.Event()
+        self._monitor_stop = threading.Event()
+        self._monitor_thread: threading.Thread | None = None
+
+    def _start_monitor(self) -> None:
+        self._monitor_stop.set()
+        previous = self._monitor_thread
+        if (
+            previous is not None
+            and previous.is_alive()
+            and previous is not threading.current_thread()
+        ):
+            previous.join(timeout=self.config.command_timeout)
+        self._monitor_stop = threading.Event()
+
+        def monitor() -> None:
+            while not self._monitor_stop.wait(self.config.healthcheck_seconds):
+                connection = self.connection
+                if not self._enabled or connection is None:
+                    return
+                try:
+                    connection.ping()
+                except Exception as exc:
+                    self.disconnected(type(exc).__name__)
+                    return
+
+        self._monitor_thread = threading.Thread(target=monitor, daemon=True)
+        self._monitor_thread.start()
+
+    def _set_status(self, health: HAHealth, **changes: Any) -> None:
+        self.status = replace(self.status, health=health, **changes)
+        self.store.save_status(self.config, self.status, self._enabled)
+
+    def _audit(self, event_type: str, payload: dict[str, Any], *, important: bool = True) -> None:
+        now = _utcnow()
+        self.reality.ingest(
+            EventEnvelope.create(
+                event_id=str(
+                    uuid5(
+                        NAMESPACE_URL, f"{self.config.instance_id}:{event_type}:{now.isoformat()}"
+                    )
+                ),
+                event_type=event_type,
+                source=f"provider:{PROVIDER}:{self.config.provider_scope}",
+                subject_key=f"provider/{PROVIDER}/{self.config.provider_scope}",
+                occurred_at=now,
+                payload=payload,
+                importance=EventImportance.IMPORTANT if important else EventImportance.NORMAL,
+                delivery_class=DeliveryClass.GUARANTEED,
+                metadata={"provider": PROVIDER, "provider_scope": self.config.provider_scope},
+            ),
+            project=False,
+        )
+
+    def _provider_object(self, kind: str, item: dict[str, Any]) -> HAProviderObject:
+        key = {"area": "area_id", "device": "id", "entity": "entity_id"}[kind]
+        external_id = str(item.get(key, ""))
+        target = self.graph.resolve_provider_reference(
+            PROVIDER, self.config.provider_scope, kind, external_id
+        )
+        metadata_keys = {
+            "area": {"name", "floor_id", "aliases"},
+            "device": {"name", "name_by_user", "area_id", "via_device_id", "config_entries"},
+            "entity": {"name", "original_name", "device_id", "area_id", "platform", "disabled_by"},
+        }[kind]
+        metadata = {key: item.get(key) for key in sorted(metadata_keys) if key in item}
+        return HAProviderObject(
+            kind,
+            external_id,
+            _json(metadata),
+            MappingStatus.MAPPED if target else MappingStatus.UNMAPPED,
+            target.canonical_id if target else None,
+        )
+
+    def _inventory(self, snapshot: HADiscoverySnapshot) -> list[HAProviderObject]:
+        return [
+            *(self._provider_object("area", item) for item in snapshot.areas),
+            *(self._provider_object("device", item) for item in snapshot.devices),
+            *(self._provider_object("entity", item) for item in snapshot.entities),
+        ]
+
+    def _truth_key(self, entity_id: str) -> str:
+        target = self.graph.resolve_provider_reference(
+            PROVIDER, self.config.provider_scope, "entity", entity_id
+        )
+        if target is not None:
+            return f"state/{target.kind.value.casefold()}/{target.canonical_id}/value"
+        return f"provider/{PROVIDER}/{self.config.provider_scope}/entity/{entity_id}/state"
+
+    def normalize_state_event(
+        self, state: dict[str, Any], *, snapshot: bool = False
+    ) -> EventEnvelope:
+        """Normalize one provider state into the canonical Phase 1 event contract."""
+        entity_id = str(state["entity_id"])
+        raw_state = str(state.get("state", "unknown"))
+        source_updated = str(state.get("last_updated") or state.get("last_changed") or "")
+        digest_document = {
+            "instance": self.config.provider_scope,
+            "entity_id": entity_id,
+            "state": raw_state,
+            "last_updated": source_updated,
+            "attributes": _bounded_attributes(state.get("attributes")),
+        }
+        digest = hashlib.sha256(
+            json.dumps(digest_document, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        received_at = _utcnow()
+        observed_at = _parse_time(state.get("last_updated"), received_at)
+        observation_state = {
+            "unknown": ObservationState.UNKNOWN,
+            "unavailable": ObservationState.UNAVAILABLE,
+        }.get(raw_state.casefold(), ObservationState.KNOWN)
+        observation = TruthObservation(
+            truth_key=self._truth_key(entity_id),
+            source=f"provider:{PROVIDER}:{self.config.provider_scope}:{entity_id}",
+            observed_at=observed_at,
+            received_at=received_at,
+            state=observation_state,
+            value=raw_state if observation_state == ObservationState.KNOWN else None,
+            confidence=1.0,
+            evidence_kind=(
+                EvidenceKind.DIRECT
+                if observation_state == ObservationState.KNOWN
+                else EvidenceKind.UNKNOWN
+                if observation_state == ObservationState.UNKNOWN
+                else EvidenceKind.UNAVAILABLE
+            ),
+            freshness_seconds=self.config.freshness_seconds,
+            metadata={
+                "provider": PROVIDER,
+                "provider_scope": self.config.provider_scope,
+                "external_object_kind": "entity",
+                "external_id": entity_id,
+                "last_changed": state.get("last_changed"),
+                "last_updated": state.get("last_updated"),
+                "context_id": _json(state.get("context")).get("id"),
+                "attributes": _bounded_attributes(state.get("attributes")),
+                "snapshot": snapshot,
+            },
+        )
+        return EventEnvelope.create(
+            event_id=str(uuid5(NAMESPACE_URL, f"ha-state:{digest}")),
+            event_type="truth.observation",
+            source=f"provider:{PROVIDER}:{self.config.provider_scope}",
+            source_event_id=f"state:{digest}",
+            subject_key=f"provider/{PROVIDER}/{self.config.provider_scope}/entity/{entity_id}",
+            occurred_at=observed_at,
+            payload=observation.to_payload(),
+            confidence=1.0,
+            evidence_kind=observation.evidence_kind,
+            metadata={
+                "provider": PROVIDER,
+                "provider_scope": self.config.provider_scope,
+                "external_id": entity_id,
+                "snapshot": snapshot,
+            },
+        )
+
+    def _ingest_state(self, state: dict[str, Any], *, snapshot: bool) -> None:
+        if not state.get("entity_id"):
+            return
+        self.reality.ingest(self.normalize_state_event(state, snapshot=snapshot))
+
+    def _apply_snapshot(self, snapshot: HADiscoverySnapshot) -> None:
+        if snapshot.version != self.config.expected_version:
+            raise HAAdapterError(
+                f"Home Assistant version mismatch: expected={self.config.expected_version} "
+                f"observed={snapshot.version}"
+            )
+        inventory = self._inventory(snapshot)
+        synced_at = _utcnow()
+        self.store.replace_inventory(self.config.instance_id, inventory, synced_at)
+        for state in snapshot.states:
+            self._ingest_state(state, snapshot=True)
+        mapped = sum(item.mapping_status == MappingStatus.MAPPED for item in inventory)
+        # A disconnect callback may run while a registry snapshot is being applied.
+        # Never let that stale work hide the authoritative OFFLINE transition.
+        if self._transport_online or self.status.health == HAHealth.CONNECTING:
+            self._set_status(
+                HAHealth.RECONCILING,
+                connected_version=snapshot.version,
+                last_successful_state_sync=synced_at,
+                subscriptions_active=True,
+                discovered_counts={
+                    "states": len(snapshot.states),
+                    "services": sum(
+                        len(value)
+                        for value in snapshot.services.values()
+                        if isinstance(value, dict)
+                    ),
+                    "areas": len(snapshot.areas),
+                    "devices": len(snapshot.devices),
+                    "entities": len(snapshot.entities),
+                },
+                mapped_count=mapped,
+                unmapped_count=len(inventory) - mapped,
+                last_error_category=None,
+            )
+
+    def start(self, connection: HAConnection) -> None:
+        with self._lock:
+            self.connection = connection
+            self._enabled = True
+            self._transport_online = False
+            self._set_status(HAHealth.CONNECTING)
+            try:
+                snapshot = connection.start()
+                self._apply_snapshot(snapshot)
+                self._transport_online = True
+                buffered = connection.activate()
+                for event in buffered:
+                    self._handle_event(event)
+                self._audit(
+                    "home_assistant.reconciled",
+                    {
+                        "version": snapshot.version,
+                        "buffered_events": len(buffered),
+                        "missed_transitions_recovered": False,
+                    },
+                )
+                self._set_status(HAHealth.ONLINE, reconnect_attempt=0)
+                self._start_monitor()
+            except HAAuthenticationError:
+                self._transport_online = False
+                self._set_status(HAHealth.AUTH_FAILED, last_error_category="AUTH_FAILED")
+                raise
+            except Exception as exc:
+                self._transport_online = False
+                self._set_status(HAHealth.OFFLINE, last_error_category=type(exc).__name__)
+                raise
+
+    def stop(self) -> None:
+        with self._lock:
+            self._enabled = False
+            self._transport_online = False
+            self._monitor_stop.set()
+            self._registry_dirty.clear()
+            if self.connection is not None:
+                self.connection.stop()
+            self._set_status(
+                HAHealth.OFFLINE,
+                subscriptions_active=False,
+                last_error_category=None,
+            )
+
+    def disconnected(self, error_category: str) -> None:
+        if not self._enabled:
+            return
+        if not self._transport_online and self.status.health == HAHealth.OFFLINE:
+            return
+        self._transport_online = False
+        self._registry_dirty.clear()
+        self._set_status(
+            HAHealth.OFFLINE,
+            subscriptions_active=False,
+            last_error_category=error_category,
+        )
+        self._audit(
+            "home_assistant.connection_gap_started",
+            {"error_category": error_category, "missed_transitions": "UNKNOWN"},
+        )
+
+    def _handle_event(self, event: dict[str, Any]) -> None:
+        if not self._enabled or not self._transport_online:
+            return
+        event_type = str(event.get("event_type", ""))
+        now = _utcnow()
+        if event_type == "state_changed":
+            new_state = _json(_json(event.get("data")).get("new_state"))
+            if new_state:
+                self._ingest_state(new_state, snapshot=False)
+        elif event_type in {
+            "area_registry_updated",
+            "device_registry_updated",
+            "entity_registry_updated",
+        }:
+            self._audit(
+                "home_assistant.registry_changed",
+                {
+                    "provider_event_type": event_type,
+                    "action": _json(event.get("data")).get("action"),
+                },
+                important=False,
+            )
+            self._registry_dirty.set()
+            threading.Thread(target=self._reconcile_registry_changes, daemon=True).start()
+        connection = self.connection
+        if self._transport_online and connection is not None and connection.connected:
+            self._set_status(HAHealth.ONLINE, last_received_event=now)
+
+    def _reconcile_registry_changes(self) -> None:
+        """Coalesce bursts without dropping a change that arrives during reconciliation."""
+        if not self._registry_worker_lock.acquire(blocking=False):
+            return
+        try:
+            while self._registry_dirty.is_set():
+                self._registry_dirty.clear()
+                time.sleep(0.2)
+                try:
+                    self.reconcile()
+                except Exception as exc:
+                    if self._enabled and self.status.health != HAHealth.OFFLINE:
+                        self._set_status(HAHealth.DEGRADED, last_error_category=type(exc).__name__)
+                        self._audit(
+                            "home_assistant.registry_reconciliation_failed",
+                            {"error_category": type(exc).__name__},
+                        )
+        finally:
+            self._registry_worker_lock.release()
+            if self._registry_dirty.is_set():
+                threading.Thread(target=self._reconcile_registry_changes, daemon=True).start()
+
+    def receive_provider_event(self, event: dict[str, Any]) -> None:
+        """Receive one validated transport event without exposing HA objects upstream."""
+        self._handle_event(event)
+
+    def reconcile(self) -> None:
+        if not self._reconcile_lock.acquire(blocking=False):
+            return
+        try:
+            connection = self.connection
+            if connection is None or not connection.connected or not self._transport_online:
+                raise HAAdapterError("Home Assistant is not connected")
+            self._set_status(HAHealth.RECONCILING)
+            snapshot = connection.snapshot()
+            if (
+                not self._enabled
+                or not self._transport_online
+                or connection is not self.connection
+                or not connection.connected
+            ):
+                raise HAAdapterError("Home Assistant disconnected during reconciliation")
+            self._apply_snapshot(snapshot)
+            if (
+                not self._enabled
+                or not self._transport_online
+                or connection is not self.connection
+                or not connection.connected
+            ):
+                raise HAAdapterError("Home Assistant disconnected during reconciliation")
+            self._audit(
+                "home_assistant.reconciled",
+                {
+                    "version": snapshot.version,
+                    "missed_transitions_recovered": False,
+                    "historical_gap": "NOT_RECOVERABLE_FROM_CURRENT_STATE_SNAPSHOT",
+                },
+            )
+            self._set_status(HAHealth.ONLINE)
+        finally:
+            self._reconcile_lock.release()
+
+    def reconnect(self, connection_factory: Callable[[], HAConnection]) -> bool:
+        self._monitor_stop.set()
+        old = self.connection
+        if old is not None:
+            old.stop()
+        for attempt in range(1, self.config.reconnect_attempts + 1):
+            self._set_status(HAHealth.CONNECTING, reconnect_attempt=attempt)
+            try:
+                self.start(connection_factory())
+                self._audit(
+                    "home_assistant.connection_gap_closed",
+                    {"attempt": attempt, "missed_transitions": "UNKNOWN"},
+                )
+                return True
+            except HAAuthenticationError:
+                return False
+            except Exception:
+                if attempt < self.config.reconnect_attempts:
+                    time.sleep(min(self.config.reconnect_backoff_seconds * 2 ** (attempt - 1), 5.0))
+        return False
+
+    def provider_inventory(self) -> list[dict[str, Any]]:
+        return self.store.inventory(self.config.instance_id)
+
+    def _entity_for(self, resource_id: UUID, capability_id: UUID | None = None) -> str:
+        references = []
+        if capability_id is not None:
+            references.extend(self.graph.provider_references_for(capability_id))
+        if not any(
+            item.provider == PROVIDER
+            and item.provider_scope == self.config.provider_scope
+            and item.external_object_kind == "entity"
+            for item in references
+        ):
+            references.extend(self.graph.provider_references_for(resource_id))
+        entity_ids = sorted(
+            {
+                item.external_id
+                for item in references
+                if item.provider == PROVIDER
+                and item.provider_scope == self.config.provider_scope
+                and item.external_object_kind == "entity"
+            }
+        )
+        if len(entity_ids) != 1:
+            raise HAMappingError(
+                "canonical target requires exactly one commissioned Home Assistant entity mapping"
+            )
+        return entity_ids[0]
+
+    def read_state(self, resource_id: UUID, capability_id: UUID | None = None) -> dict[str, Any]:
+        entity_id = self._entity_for(resource_id, capability_id)
+        if self.connection is None or not self.connection.connected:
+            raise HAAdapterError("Home Assistant is offline")
+        state = self.connection.get_state(entity_id)
+        if state is None:
+            raise HAAdapterError("mapped Home Assistant entity is absent")
+        return {
+            "entity_provider_reference": entity_id,
+            "truth_key": self._truth_key(entity_id),
+            "state": state.get("state"),
+            "observed_at": state.get("last_updated"),
+        }
+
+    def set_power(
+        self, resource_id: UUID, desired_on: bool, capability_id: UUID | None = None
+    ) -> HAActionResult:
+        entity_id = self._entity_for(resource_id, capability_id)
+        domain = entity_id.split(".", 1)[0]
+        if domain not in {"input_boolean", "light", "switch"}:
+            raise HAMappingError("set_power supports only bounded low-risk power domains")
+        requested = "on" if desired_on else "off"
+        connection = self.connection
+        if connection is None or not connection.connected:
+            return HAActionResult(
+                HAActionOutcome.UNKNOWN_RESULT, entity_id, requested, detail="adapter offline"
+            )
+        current = connection.get_state(entity_id)
+        if current and str(current.get("state")).casefold() == "unavailable":
+            return HAActionResult(
+                HAActionOutcome.TARGET_UNAVAILABLE,
+                entity_id,
+                requested,
+                observed_state="unavailable",
+            )
+        try:
+            connection.call_service(
+                domain, "turn_on" if desired_on else "turn_off", {"entity_id": entity_id}
+            )
+        except TimeoutError:
+            return HAActionResult(
+                HAActionOutcome.UNKNOWN_RESULT,
+                entity_id,
+                requested,
+                service_acknowledged=False,
+                detail="service call timed out",
+            )
+        except Exception as exc:
+            return HAActionResult(
+                HAActionOutcome.SERVICE_FAILED,
+                entity_id,
+                requested,
+                detail=type(exc).__name__,
+            )
+        deadline = time.monotonic() + self.config.verification_timeout
+        observed: str | None = None
+        while time.monotonic() < deadline:
+            state = connection.get_state(entity_id)
+            observed = str(state.get("state")) if state else None
+            if observed == requested:
+                self._ingest_state(state or {}, snapshot=False)
+                return HAActionResult(
+                    HAActionOutcome.SUCCESS,
+                    entity_id,
+                    requested,
+                    observed_state=observed,
+                    service_acknowledged=True,
+                )
+            time.sleep(0.1)
+        return HAActionResult(
+            HAActionOutcome.VERIFICATION_FAILED,
+            entity_id,
+            requested,
+            observed_state=observed,
+            service_acknowledged=True,
+            detail="provider state did not reach requested result",
+        )
+
+
+class HomeAssistantPlugin:
+    """Trusted built-in plugin exposing only bounded semantic HA operations."""
+
+    def __init__(
+        self,
+        adapter: HomeAssistantAdapter,
+        connection_factory: Callable[[str], HAConnection],
+    ) -> None:
+        self.adapter = adapter
+        self.connection_factory = connection_factory
+        self.started = False
+
+    def start(self, secret_env: dict[str, str]) -> None:
+        token = secret_env.get(self.adapter.config.token_secret_name)
+        if not token:
+            raise PluginValidationError("declared Home Assistant token is unavailable")
+        self.adapter.start(self.connection_factory(token))
+        self.started = True
+
+    def stop(self) -> None:
+        self.adapter.stop()
+        self.started = False
+
+    def list_tools(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "name": "read_state",
+                "input_schema": home_assistant_manifest(self.adapter.config).tools[0][
+                    "input_schema"
+                ],
+            },
+            {
+                "name": "set_power",
+                "input_schema": home_assistant_manifest(self.adapter.config).tools[1][
+                    "input_schema"
+                ],
+            },
+        ]
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+        resource_id = UUID(str(arguments["resource_id"]))
+        capability = arguments.get("capability_id")
+        capability_id = UUID(str(capability)) if capability else None
+        if name == "read_state":
+            return self.adapter.read_state(resource_id, capability_id)
+        if name == "set_power":
+            return self.adapter.set_power(
+                resource_id, bool(arguments["desired_on"]), capability_id
+            ).to_payload()
+        raise PluginValidationError("unknown Home Assistant semantic tool")
+
+
+def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
+    id_schema = {"type": "string", "format": "uuid"}
+    common: dict[str, Any] = {
+        "type": "object",
+        "required": ["resource_id"],
+        "properties": {"resource_id": id_schema, "capability_id": id_schema},
+        "additionalProperties": False,
+    }
+    set_power_schema = {
+        **common,
+        "required": ["resource_id", "desired_on"],
+        "properties": {**common["properties"], "desired_on": {"type": "boolean"}},
+    }
+    return PluginManifest(
+        plugin_id="anima.provider.home-assistant",
+        plugin_version="0.1.0",
+        manifest_version=MANIFEST_VERSION,
+        requires_core=CORE_VERSION,
+        name="Home Assistant provider",
+        description="Bounded Home Assistant household substrate adapter",
+        runtime_kind=RuntimeKind.TRUSTED_NATIVE,
+        trust_class=TrustClass.TRUSTED_NATIVE,
+        capabilities=("home.state", "home.control"),
+        tools=(
+            {
+                "name": "read_state",
+                "description": "Read a commissioned canonical household resource state",
+                "input_schema": common,
+                "output_schema": {"type": "object"},
+                "semantic_action": "read_state",
+                "risk_class": "READ_ONLY",
+                "read_only": True,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "set_power",
+                "description": "Set power on a commissioned low-risk household resource",
+                "input_schema": set_power_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "set_power",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "verification_requirement": "PROVIDER_STATE_MATCH",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+        ),
+        configuration_schema={
+            "type": "object",
+            "required": ["instance_id", "websocket_url"],
+            "properties": {
+                "instance_id": id_schema,
+                "websocket_url": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+        required_secrets=(config.token_secret_name,),
+        network_requirements=("specific_home_assistant_instance",),
+        healthcheck={"kind": "adapter_state", "expected": "ONLINE"},
+        timeouts={
+            "startup": 30.0,
+            "tool": max(config.command_timeout, config.verification_timeout),
+        },
+        restart_policy={
+            "max_attempts": config.reconnect_attempts,
+            "backoff_seconds": config.reconnect_backoff_seconds,
+        },
+        source="builtin:anima_ha.home_assistant",
+    )

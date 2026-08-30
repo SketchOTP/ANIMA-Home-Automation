@@ -4,15 +4,15 @@ Last updated: 2026-08-29
 
 ## Current stage
 
-IMPLEMENTATION PHASE 5 — PLUGIN CAPABILITY RUNTIME COMPLETE / PENDING ARCHITECT REVIEW
+IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER IMPLEMENTED / VALIDATION IN PROGRESS
 
 ## Current objective
 
-Complete the modular plugin runtime and capability/tool registry while preserving the Phase 4 authority boundary.
+Connect ANIMA to an isolated real Home Assistant instance through canonical truth, identity, policy, and plugin boundaries without implementing Phase 7 behavior.
 
 ## Active directive
 
-ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
+ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008
 
 ## Current verified state
 
@@ -38,10 +38,16 @@ ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
 - OPA/Rego `1.20.1` remains the only Phase 4 policy evaluator, pinned by multi-architecture image digest. Cedar remains reference-only; Casbin and OpenFGA are not runtime dependencies.
 - Phase 5 accepted prerequisite is Phase 4 governed SHA `50ea9c73e31b2037120da5d12e04555fa08b1da5` with CI run `33271197523`; Phase 5 implementation checkpoint is `c186c34bcf93e9ff03d39c3e966fcb540583d478` with CI `33277823326`. Any later closure commit contains metadata/evidence only.
 
+## Phase 6 implementation state
+
+- Phase 5 is Architect accepted at `b426d66e7293a132dcdb4abaa96bc7594cdf7b73`; CI `33277980009` passed.
+- Phase 6 wraps `hass-client==1.2.3` against pinned HA Core `2026.8.2`, preserving provider references, Phase 1 normalization, Phase 2 mappings, Phase 4 policy, and Phase 5 lifecycle/tools.
+- Real isolated HA evidence passes for discovery, WebSocket events, registry reconcile, explicit uncertainty, low-risk service execution, observed-state verification, deliberate verification failure, reconnect/gap, invalid auth, and restart.
+
 ## Current blockers
 
-- NONE currently known for Phase 5.
-- Home Assistant, Luna, agent cognition, action execution, verification, durable tasks, external tools, UI, and voice authentication remain explicitly out of scope.
+- NONE currently known for Phase 6 implementation; final GitHub CI and governed closure remain pending.
+- Phase 7 Attention/Context Broker, Luna, generalized actions, durable tasks, external tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
 
@@ -67,6 +73,6 @@ ANIMA-HA-P5-PLUGIN-CAPABILITY-RUNTIME-007
 
 ## Next Architect decision point
 
-Architect review of the Phase 5 evidence is required before Phase 6 Home Assistant integration. No Home Assistant, Luna, physical action, or later behavior is authorized by this directive.
+Finish Phase 6 checkpoint/CI/Notion evidence, then return it for Architect review. Phase 7 is not authorized.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

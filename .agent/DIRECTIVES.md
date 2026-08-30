@@ -151,3 +151,16 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Architecture: BUILD ANIMA manifest, lifecycle, registry, tool normalization, policy-gated invocation, secrets/config boundary, persistence, audit, and event ingress; ADOPT/WRAP MCP Python SDK `2.1.1`, `jsonschema 4.26.0`, and PyPA entry-point discovery; REFERENCE/DEFER FastMCP and Pluggy; DEFER container sandbox and marketplace/install/update system.
 - Evidence: unit, local x86-64 PostgreSQL/OPA/MCP integration, simulator, restart persistence, fresh local-disk checkout, CI, and public-safety scan. ARM64 remains package/metadata evidence only.
 - Phase 6 Home Assistant Adapter and later behavior were not implemented.
+
+---
+
+## ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 — Home Assistant Adapter
+
+- Issued: 2026-08-29
+- Status: IN PROGRESS
+- Project stage: IMPLEMENTATION PHASE 6 — HOME ASSISTANT ADAPTER
+- Accepted prerequisite: Phase 5 governed checkpoint `b426d66e7293a132dcdb4abaa96bc7594cdf7b73`; accepted CI `33277980009`.
+- Objective: Connect ANIMA to a real isolated Home Assistant Core 2026.8.2 instance through an ANIMA-owned adapter, normalize discovery/state/events into existing contracts, preserve provider-reference identity, and expose verified low-risk semantic actions through the mandatory Phase 4/5 policy gateway.
+- Exclusions: No Phase 7 attention/context, Luna/Agents SDK, generalized concurrency/leases, full Phase 9 action engine, durable tasks, production external tools, UI, or voice.
+- Required external discovery: `hass-client 1.2.3`, direct aiohttp, maintained alternatives, direct pinned HA container, and `ha-testcontainer 2.7.0` as test-only orchestration.
+- Source: Architect directive `ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008`.

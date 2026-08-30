@@ -73,6 +73,8 @@ class InvocationOutcome(StrEnum):
     POLICY_DENIED = "POLICY_DENIED"
     REQUIRE_CONFIRMATION = "REQUIRE_CONFIRMATION"
     REQUIRE_STRONGER_AUTH = "REQUIRE_STRONGER_AUTH"
+    VERIFICATION_FAILED = "VERIFICATION_FAILED"
+    UNKNOWN_RESULT = "UNKNOWN_RESULT"
 
 
 class ExternalContentTrust(StrEnum):
@@ -829,15 +831,35 @@ class PluginManager:
             )
         decision: PolicyDecision | None = None
         if policy_service:
-            semantic_action = {
-                "READ_ONLY": "query_plugin",
-                "LOW_RISK_HOME_CONTROL": "turn_off",
-                "SECURITY_SECURE_ACTION": "lock",
-                "SECURITY_ACCESS_ACTION": "unlock",
-                "EXTERNAL_SIDE_EFFECT": "send_message",
-                "FINANCIAL_PURCHASE": "purchase",
-                "ADMIN_SYSTEM_PROHIBITED": "install_package",
-            }.get(tool.risk_class, "unknown_consequential_operation")
+            semantic_action = tool.semantic_action
+            if resource_id is None and arguments.get("resource_id") is not None:
+                try:
+                    resource_id = UUID(str(arguments["resource_id"]))
+                except ValueError:
+                    return InvocationResult(
+                        InvocationOutcome.INVALID_ARGUMENTS,
+                        tool_id,
+                        tool.plugin_id,
+                        tool.version,
+                        (time.monotonic() - started) * 1000,
+                        error_class="InvalidResourceId",
+                        provenance=tool.provenance,
+                        external_content_trust=tool.external_content_trust,
+                    )
+            if capability_id is None and arguments.get("capability_id") is not None:
+                try:
+                    capability_id = UUID(str(arguments["capability_id"]))
+                except ValueError:
+                    return InvocationResult(
+                        InvocationOutcome.INVALID_ARGUMENTS,
+                        tool_id,
+                        tool.plugin_id,
+                        tool.version,
+                        (time.monotonic() - started) * 1000,
+                        error_class="InvalidCapabilityId",
+                        provenance=tool.provenance,
+                        external_content_trust=tool.external_content_trust,
+                    )
             intent_kwargs: dict[str, Any] = {
                 "household_id": household_id,
                 "semantic_action": semantic_action,
@@ -849,6 +871,7 @@ class PluginManager:
                     "plugin_id": tool.plugin_id,
                     "security_sensitive": tool.risk_class.startswith("SECURITY"),
                     "read_only": tool.read_only,
+                    "writable": not tool.read_only,
                     "external_side_effect": tool.risk_class == "EXTERNAL_SIDE_EFFECT",
                     "financial": tool.risk_class == "FINANCIAL_PURCHASE",
                 },
@@ -858,6 +881,17 @@ class PluginManager:
             intent = ActionIntent.create(
                 **intent_kwargs,
             )
+            if intent.risk_class.value != tool.risk_class:
+                return InvocationResult(
+                    InvocationOutcome.POLICY_DENIED,
+                    tool_id,
+                    tool.plugin_id,
+                    tool.version,
+                    (time.monotonic() - started) * 1000,
+                    error_class="TOOL_RISK_CLASS_MISMATCH",
+                    provenance=tool.provenance,
+                    external_content_trust=tool.external_content_trust,
+                )
             decision = policy_service.evaluate(intent, identity, policy_context)
             outcome = {
                 Decision.DENY: InvocationOutcome.POLICY_DENIED,
@@ -884,6 +918,33 @@ class PluginManager:
                 raise PluginValidationError("result is not a JSON object")
             if tool.output_schema:
                 validate_instance(tool.output_schema, result)
+            result_outcome = result.get("outcome") if isinstance(result, dict) else None
+            if result_outcome in {"VERIFICATION_FAILED", "SERVICE_FAILED", "TARGET_UNAVAILABLE"}:
+                return InvocationResult(
+                    InvocationOutcome.VERIFICATION_FAILED,
+                    tool_id,
+                    tool.plugin_id,
+                    tool.version,
+                    (time.monotonic() - started) * 1000,
+                    result=result,
+                    error_class=str(result_outcome),
+                    provenance=tool.provenance,
+                    external_content_trust=tool.external_content_trust,
+                    policy_decision=decision,
+                )
+            if result_outcome == "UNKNOWN_RESULT":
+                return InvocationResult(
+                    InvocationOutcome.UNKNOWN_RESULT,
+                    tool_id,
+                    tool.plugin_id,
+                    tool.version,
+                    (time.monotonic() - started) * 1000,
+                    result=result,
+                    error_class="UNKNOWN_RESULT",
+                    provenance=tool.provenance,
+                    external_content_trust=tool.external_content_trust,
+                    policy_decision=decision,
+                )
             return InvocationResult(
                 InvocationOutcome.SUCCESS,
                 tool_id,

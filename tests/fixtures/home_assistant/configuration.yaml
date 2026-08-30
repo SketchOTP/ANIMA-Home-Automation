@@ -1,0 +1,8 @@
+default_config:
+
+demo:
+
+input_boolean:
+  anima_test_power:
+    name: ANIMA Test Power
+    initial: false

@@ -197,3 +197,19 @@ aggregation.
 - Subprocess MCP is adopted for optional plugin failure containment; it is explicitly not a malicious-code sandbox. Container-per-plugin isolation is deferred pending a later measured security/deployment requirement.
 - Disposition: BUILD ANIMA manifest/registry/lifecycle/invocation/secrets/config/event/audit; ADOPT/WRAP official MCP and `jsonschema`; ADOPT standard entry-point discovery; REFERENCE/DEFER FastMCP and Pluggy; DEFER container sandbox and marketplace/install/update services.
 - Recheck trigger: MCP SDK release/protocol change, Streamable HTTP deployment, native Pi qualification, malicious-code isolation requirement, or Phase 6/Home Assistant capability integration.
+## ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 — HA client and test target
+
+- Date checked: 2026-08-29
+- Trigger: Phase 6 required a real HA target and current client/test-harness comparison.
+- Sources: [Home Assistant WebSocket API](https://developers.home-assistant.io/docs/api/websocket/); [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/); [hass-client 1.2.3](https://pypi.org/project/hass-client/); [ha-testcontainer 2.7.0](https://pypi.org/project/ha-testcontainer/); [HA Core releases](https://github.com/home-assistant/core/releases).
+- Freshness: official/current sources, package metadata, source inspection, OCI manifest, and x86-64 runtime checked 2026-08-29.
+
+| Candidate | Disposition | Finding |
+| --- | --- | --- |
+| HA Core `2026.8.2` pinned GHCR image | ADOPT for target evidence | Real WebSocket/registry/service target; index digest has observed amd64 and arm64 children. |
+| `hass-client==1.2.3` | ADOPT / WRAP | Apache-2.0, Python >=3.10, pure Python; required API surfaces present. ANIMA retains reconnect/reconcile semantics. |
+| Direct `aiohttp` implementation | REJECT for runtime | Would duplicate the selected client's protocol surface; raw test helpers remain fixture-only. |
+| `ha-testcontainer==2.7.0` | REFERENCE / DEFER | MIT/alpha; qualification found base import depended on separately installed Playwright, whose package was 45.5 MiB. |
+| Direct pinned container fixture | ADOPT for tests | Smaller deterministic onboarding/token/demo evidence path and no runtime dependency. |
+
+The selected image is `ghcr.io/home-assistant/home-assistant:2026.8.2@sha256:56690a89c79a0de98035e1719f8324a92d5859c1192ff45adb0230ea81cb42a5`. Container manifest support is not native Pi evidence. Recheck on HA/client upgrade, OAuth work, registry API change, or native ARM64 execution.

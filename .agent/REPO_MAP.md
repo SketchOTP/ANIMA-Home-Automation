@@ -1,12 +1,12 @@
 # Repository Map
 
-Last verified against: IMPLEMENTATION PHASE 3 GOVERNED MEMORY 2026-08-29
+Last verified against: IMPLEMENTATION PHASE 6 HOME ASSISTANT ADAPTER 2026-08-29
 
 ## Entry points
 
 - `anima-validate` — deterministic local format/lint/type/unit gate.
 - `anima-migrate` — runtime-only ordered SQL migration runner.
-- `anima-sim` — synthetic reality-substrate, commissioned graph, and governed memory/routine scenario entrypoint; no household behavior.
+- `anima-sim` — synthetic reality, graph, memory, policy, plugin, and HA-normalization scenarios; no cognition or physical household behavior.
 
 ## Major modules / packages
 
@@ -21,7 +21,8 @@ Last verified against: IMPLEMENTATION PHASE 3 GOVERNED MEMORY 2026-08-29
 - `src/anima_ha/fixtures.py` — deterministic synthetic commissioning topology.
 - `src/anima_ha/memory.py` — canonical memory, lifecycle, retrieval, index rebuild/fallback, and mutation audit.
 - `src/anima_ha/routines.py` — deterministic journal-derived routine model.
-- `tests/` — deterministic Phase 0/Phase 1/Phase 2/Phase 3 unit tests.
+- `src/anima_ha/home_assistant.py` — wrapped HA client, provider inventory/mapping, normalization, synchronization, health, reconnect, and semantic low-risk tools.
+- `tests/` — deterministic Phase 0–6 unit tests and isolated provider fixtures.
 
 ## Important interfaces / contracts
 
@@ -70,9 +71,13 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase5_plugins.py` — PostgreSQL/OPA/MCP/native lifecycle and persistence integration harness.
 - `tests/test_plugins.py` — Phase 5 contract, policy-gate, schema, discovery, failure, and MCP stdio tests.
 - `docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md` — plugin runtime architecture and qualification decisions.
+- `src/anima_ha/db/migrations/0007_home_assistant_adapter.sql` — HA instance status and bounded provider inventory persistence.
+- `scripts/verify_phase6_home_assistant.py` — real pinned HA container, PostgreSQL, OPA, registry/event/action/reconnect evidence harness.
+- `tests/test_home_assistant.py` — Phase 6 normalization, race, mapping, health, policy, lifecycle, and verification tests.
+- `docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md` — adapter architecture, dependency decisions, synchronization, action verification, and evidence limits.
 
 ## Known sensitive/high-risk areas
 
-- Future Home Assistant, identity/authority, credentials, external connectors, physical actions, and semantic embedding services require explicit boundaries and qualification. Memory, policy, and plugin runtime are implemented but remain local, synthetic, and pre-cognition. Phase 5 subprocesses are not malicious-code sandboxes.
+- HA credentials remain runtime-only secrets; HA IDs remain provider references; only bounded low-risk virtual actions are evidenced. Future physical/high-risk actions, external connectors, cognition, and semantic embedding services require separate authorization. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.

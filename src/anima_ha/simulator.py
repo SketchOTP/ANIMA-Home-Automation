@@ -15,6 +15,12 @@ from anima_ha.config import RuntimeConfig
 from anima_ha.events import EventEnvelope, ObservationState, TruthObservation
 from anima_ha.fixtures import sample_household_document
 from anima_ha.graph import PostgresHouseholdGraph
+from anima_ha.home_assistant import (
+    EXPECTED_HA_VERSION,
+    HAInstanceConfig,
+    HomeAssistantAdapter,
+    PostgresHAStore,
+)
 from anima_ha.journal import PostgresRealityStore
 from anima_ha.logging_setup import configure_logging
 from anima_ha.memory import (
@@ -73,6 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
             "memory",
             "policy",
             "plugins",
+            "home-assistant",
         ),
         default="ready",
         help="inject a bounded synthetic reality-substrate scenario",
@@ -272,6 +279,41 @@ def run(*, once: bool = False, duration: float = 0.0, scenario: str = "ready") -
                 "invocation": plugin_result.outcome.value,
                 "registry_after_disable": len(manager.list_tools()),
                 "authority_surface": "policy-gated-plugin-invocation",
+            },
+        )
+    elif scenario == "home-assistant":
+        document = sample_household_document()
+        graph = PostgresHouseholdGraph(config.database_url, config.database_connect_timeout)
+        graph.commission(document)
+        adapter = HomeAssistantAdapter(
+            HAInstanceConfig(
+                instance_id=uuid4(),
+                websocket_url="ws://127.0.0.1:8123/api/websocket",
+                token_secret_name="ANIMA_SIMULATOR_HA_TOKEN",
+                expected_version=EXPECTED_HA_VERSION,
+            ),
+            PostgresRealityStore(config.database_url, config.database_connect_timeout),
+            graph,
+            PostgresHAStore(config.database_url, config.database_connect_timeout),
+        )
+        event = adapter.normalize_state_event(
+            {
+                "entity_id": "input_boolean.synthetic_power",
+                "state": "on",
+                "last_changed": datetime.now(UTC).isoformat(),
+                "last_updated": datetime.now(UTC).isoformat(),
+                "attributes": {"friendly_name": "Synthetic Power"},
+            }
+        )
+        LOGGER.info(
+            "simulator_home_assistant_contract_complete",
+            extra={
+                "event_type": event.event_type,
+                "provider": event.metadata["provider"],
+                "truth_state": event.payload["state"],
+                "external_id": event.metadata["external_id"],
+                "network_connection": "not-used",
+                "authority_surface": "normalization-only",
             },
         )
     elif scenario != "ready":

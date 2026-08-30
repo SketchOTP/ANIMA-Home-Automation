@@ -18,7 +18,7 @@
 
 - Languages: Python 3.12.x
 - Frameworks: None adopted in Phase 0; modular monolith package boundary is established
-- Major dependencies: `psycopg[binary]` 3.3.4 behind ANIMA-owned journal/projection interfaces; development tools are pinned in `pyproject.toml` and `uv.lock`
+- Major dependencies: `psycopg[binary]` 3.3.4, OPA 1.20.1, MCP 2.1.1, JSON Schema 4.26.0, and `hass-client` 1.2.3, all behind ANIMA-owned boundaries; versions are pinned.
 - Build/test commands: `uv sync --locked --dev`; `./scripts/validate.sh`; `uv build`
 - Runtime environments: Target Raspberry Pi 5-class ARM64 controller; portable ARM64/x86-64 development/target environments
 - Persistent substrate: PostgreSQL 16.15 through pinned pgvector 0.8.6 image digest; canonical append-only event journal and derived truth projection are PostgreSQL-backed
@@ -30,6 +30,7 @@
 - Luna 5.6 with medium reasoning — primary cloud cognition model for the prototype.
 - Modular plugins/connectors/MCP — customer-selectable external and household capabilities behind ANIMA-owned contracts.
 - Phase 5 dependencies: `mcp==2.1.1` and `jsonschema==4.26.0`, wrapped behind the ANIMA plugin/tool boundary; no plugin package installation is available at runtime.
+- Phase 6 target: Home Assistant Core `2026.8.2` pinned by multi-platform image digest; `hass-client==1.2.3` is wrapped behind the built-in HA adapter.
 
 ## Phase 1 reality substrate
 
@@ -77,4 +78,6 @@
 - `anima_ha.plugins` — manifest validation, native entry-point discovery, lifecycle, normalized tool registry, MCP stdio/Streamable HTTP adapter, policy-gated invocation, secret/config boundary, event ingress, persistence, and failure containment.
 - `anima_ha.mcp_reference` — synthetic out-of-process MCP reference server used by Phase 5 tests.
 - `docs/PHASE-5-PLUGIN-CAPABILITY-RUNTIME.md` — plugin/capability architecture, dependency decisions, trust boundary, and evidence limitations.
+- `anima_ha.home_assistant` — stable provider scope, discovery/inventory, Phase 1 normalization, Phase 2 mapping, reconnect/health, and verified low-risk semantic tools.
+- `docs/PHASE-6-HOME-ASSISTANT-ADAPTER.md` — HA adapter architecture and real-container evidence boundary.
 - OPA image: `openpolicyagent/opa:1.20.1` pinned by multi-architecture index digest in `compose.yaml`.

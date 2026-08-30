@@ -92,3 +92,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - A canonical tool descriptor must treat plugin/MCP metadata as untrusted hints: ANIMA manifest risk, identity, and Phase 4 policy remain authoritative; unknown consequential classification fails closed.
 - Short-lived MCP subprocess connections give bounded crash/timeout containment and easy reconnect evidence, but they do not constitute a malicious-code sandbox. Stronger container isolation requires a separate measured decision.
 - Secret minimization is enforceable at the runtime boundary by constructing a child environment from only base execution variables plus manifest-declared references; raw values remain absent from descriptors, persistence, and audit.
+## ANIMA-HA-P6-HOME-ASSISTANT-ADAPTER-008 — Provider truth and action honesty
+
+- Subscribe-and-buffer before snapshot prevents the startup interval from losing observable transitions; Phase 1 source ordering/deduplication remains authoritative when buffered events replay.
+- HA areas/devices/entities are scoped provider references. Names and registry IDs cannot safely create or merge canonical household identity.
+- HA disconnect permits current-state reconciliation after return but not reconstruction of missed transition history; journal the gap and preserve uncertainty.
+- Service acknowledgement is not resulting state. Low-risk success requires a fresh observed HA state matching the request; otherwise return verification failure/unknown result.
+- `hass-client` supplies useful protocol coverage but not ANIMA lifecycle semantics. Reconnect, resubscription, reconciliation, bounded retry, status, and policy/tool boundaries remain ANIMA-owned.
+- `ha-testcontainer` 2.7.0 is useful prior art but its observed undeclared Playwright import cost made direct pinned-container orchestration the smaller Phase 6 harness.

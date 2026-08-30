@@ -5,6 +5,7 @@ description = "ANIMA HA implementation baseline"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "hass-client==1.2.3",
     "jsonschema==4.26.0",
     "mcp==2.1.1",
     "psycopg[binary]==3.3.4",
@@ -56,7 +57,7 @@ files = ["src", "tests"]
 exclude = ['^\.venv/']
 
 [[tool.mypy.overrides]]
-module = ["jsonschema", "jsonschema.*"]
+module = ["hass_client", "hass_client.*", "jsonschema", "jsonschema.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
