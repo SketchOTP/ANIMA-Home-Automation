@@ -355,3 +355,31 @@ Built versioned typed attention profiles, immutable decisions, durable PostgreSQ
 - Context budgeting is serialized-byte based and provider-neutral; Phase 8 may add a replaceable model tokenizer after qualification.
 - NATS/JetStream and CEL remain deferred until measured consumer/rule complexity justifies them.
 - No Luna, cloud cognition, autonomous action, new physical-home behavior, durable tasks, UI, or voice was implemented.
+
+## ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R — Phase 8 constrained cognition complete
+
+- Completed: 2026-08-30
+- Verdict: COMPLETE / PASS pending independent Architect review
+- Retrieval confidence: ADEQUATE
+- Evidence level: E4_REGRESSION_PROTECTED for unit/static/build/CI plus Phase 1–7 regressions; E3_TARGET_TESTED for real x86-64 ChatGPT OAuth/Luna A–I and PostgreSQL episode restart; E2_REPRODUCED for scripted simulator; ARM64 remains untested for this runtime.
+- Implementation checkpoint: `8486cd10b7962df11898bc8b61b1ec46d0809dd5`; GitHub Actions `33293828743` passed for that exact SHA without OAuth credentials.
+
+### Work performed
+
+Built an ANIMA-owned durable episode runtime around isolated, ephemeral, strict-config `codex exec` turns authenticated by Codex-owned ChatGPT OAuth and explicitly using `gpt-5.6-luna` with medium reasoning. Added cloud-safe ContextPacket reprojection, versioned instructions, schema-only one-decision turns, sequential Phase 5/4 tool-policy routing, argument/result filtering, finite budgets/timeouts, process-group termination, JSONL capability guards, durable usage/outcome/audit, scripted CI adapter, simulator scenario, and local live harness. No new Python package or infrastructure service was introduced.
+
+### Acceptance results
+
+- OAuth status/model/medium configuration, no API-key fallback, exact isolation controls, empty workspaces, ignored user config/rules, bounded stdin/streams, and no raw reasoning persistence: PASSED.
+- Dynamic allowed-tool schema, ANIMA argument revalidation, mandatory Phase 5/4 routing, runtime-owned outcomes, confirmation/stronger-auth stops, tool/provider/timeout/budget/boundary distinction: PASSED.
+- Cloud-safe packet omission/redaction, tool-output re-filtering, external distrust, secret-free child environment, and server-side retention limitation documentation: PASSED.
+- Live A–I broad-catalogue matrix: PASSED; 14 turns; one two-tool model-selected sequence; three no-action results; zero command/file/MCP/web/direct-capability events.
+- Usage/latency: 112,592 input, 4,864 cached input, 1,555 output, 508 reasoning-output tokens; median 4,468.88 ms, p95 6,347.26 ms; no API dollar estimate applied.
+- Migration repeat, PostgreSQL restart, duplicate claim, 84 tests, Ruff, strict mypy, package build, OPA, Phase 1–7 integrations, real isolated Phase 6 HA, simulator, public safety, and exact-SHA CI: PASSED.
+
+### Risks / limitations
+
+- Codex CLI `0.150.0-alpha.8` is the exact tested binary and requires requalification on update.
+- Live evidence is x86-64, synthetic household/tool, and ChatGPT-hosted cognition; no native ARM64/Pi, physical-home, production external-service, API ZDR, or deterministic-model claim.
+- One focused weather attempt returned invalid structured output and failed closed before the final complete matrix passed.
+- Phase 9 generalized action execution/verification/concurrency, physical-resource locks/leases, durable future tasks, UI, voice, and later behavior remain unimplemented.

@@ -10,11 +10,11 @@
 
 ## Current pointers
 
-- Current stage: IMPLEMENTATION PHASE 8 — CODEX OAUTH AGENT RUNTIME
-- Active directive: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R/`
+- Current stage: IMPLEMENTATION PHASE 8 COMPLETE — PENDING ARCHITECT REVIEW
+- Active directive: NONE — awaiting Architect review of ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R
+- Active task packet: NONE
 - Last accepted outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 (accepted by Architect at `44d4f59737aeed9aa55583eb49823a37535d607d`)
-- Last completed outcome: ANIMA-HA-P7-ATTENTION-CONTEXT-009 governed checkpoint `44d4f59737aeed9aa55583eb49823a37535d607d`, CI `33287068428`
+- Last completed outcome: ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R implementation `8486cd10b7962df11898bc8b61b1ec46d0809dd5`, CI `33293828743`
 - Last state sync: 2026-08-30
 
 ## Mandatory kernel

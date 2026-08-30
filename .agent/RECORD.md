@@ -167,3 +167,12 @@ UI, and voice remain out of scope.
 - Evidence: implementation `77aafbe5f78333b1c50d042fb1ceb19e74dbe698`, CI `33286882961`, 50 tests, strict static/build checks, 10,020-event PostgreSQL restart/replay target, Phase 1–5 integrations, real isolated Phase 6 HA regression, simulator/replay CLI, and public-safety review passed.
 - Boundary: attention selects when future cognition may run; no rule selects an action. Context inclusion does not grant authority. No Luna, cloud call, autonomous behavior, new physical-device behavior, CEL, or NATS was introduced.
 - Consequence: Phase 8 remains gated on independent Architect review and explicit authorization.
+
+## ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R — Operator-selected constrained cognition milestone
+
+- Date: 2026-08-30
+- Type: MILESTONE / ARCHITECTURE / OPERATOR RULING
+- Decision: Preserve the prior Agents SDK/API-key directive as superseded history and adopt/wrap Codex CLI ChatGPT OAuth for Luna 5.6 medium cognition behind an ANIMA-owned durable structured loop. Codex receives no direct shell, file, MCP, web, app, plugin, database, HA, or policy capability; all requested tools remain Phase 5/4 governed.
+- Evidence: live x86-64 OAuth A–I matrix, 84 tests, PostgreSQL episode restart/duplicate protection, strict static/build/OPA, Phase 1–7 regressions, real isolated Phase 6 HA, public safety, and GitHub Actions `33293828743` on `8486cd10b7962df11898bc8b61b1ec46d0809dd5` passed.
+- Boundary: no OAuth token inspection, API key, API-dollar estimate, raw reasoning persistence, physical action, native ARM64/Pi claim, generalized Phase 9 execution/concurrency, durable task, UI, or voice behavior.
+- Consequence: Phase 9 remains gated on independent Architect acceptance of the governed Phase 8 closure.

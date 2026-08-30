@@ -4,15 +4,15 @@ Last updated: 2026-08-30
 
 ## Current stage
 
-IMPLEMENTATION PHASE 8 — CODEX OAUTH AGENT RUNTIME
+IMPLEMENTATION PHASE 8 COMPLETE — PENDING ARCHITECT REVIEW
 
 ## Current objective
 
-Implement the operator-authorized constrained Anima cognition loop through isolated `codex exec` turns using ChatGPT OAuth, `gpt-5.6-luna`, and medium reasoning while ANIMA retains context, tool, policy, budget, persistence, privacy, and outcome authority.
+Await independent Architect review of the completed constrained Codex OAuth/Luna runtime checkpoint. Do not begin Phase 9 without authorization.
 
 ## Active directive
 
-`ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` — active. The prior `ANIMA-HA-P8-LUNA-AGENT-RUNTIME-010` is `SUPERSEDED`, with its correct blocking result preserved as historical evidence.
+NONE — `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` is complete and returned for review. The prior `ANIMA-HA-P8-LUNA-AGENT-RUNTIME-010` remains `SUPERSEDED` historical evidence.
 
 ## Current verified state
 
@@ -59,10 +59,13 @@ Implement the operator-authorized constrained Anima cognition loop through isola
 - The installed model catalog lists `gpt-5.6-luna` with `medium` reasoning support.
 - An isolated strict-config live probe succeeded using ChatGPT OAuth, Luna, medium reasoning, ephemeral mode, ignored user config/rules, read-only sandbox, disabled shell/unified-exec/multi-agent/apps/plugins/web/image/memory/dependency-install controls, and no direct capability event.
 - The documented `tools.view_image=false` spelling is unsupported by this CLI; the stable equivalent `features.view_image=false` is supported and is the required adapter mapping.
+- Phase 8 implementation checkpoint is `8486cd10b7962df11898bc8b61b1ec46d0809dd5`; GitHub Actions `33293828743` passed without OAuth credentials.
+- Durable episodes, cloud-safe projection, versioned instructions, strict isolated `codex exec`, structured sequential decisions, Phase 5/4 tool-policy routing, result filtering, budgets/timeouts, audit, fake CI adapter, and simulator parity are implemented.
+- The final live A–I matrix passed with 14 Luna turns, model-selected one/two-tool sequences, three no-action outcomes, confirmation/stronger-auth stops, honest tool failure, prompt-injection containment, and zero forbidden direct capability events.
 
 ## Current blockers
 
-- NONE after the operator superseded the API-key/Agents SDK design and the installed Codex isolation controls passed qualification.
+- NONE for the completed Phase 8 directive.
 - Phase 9 generalized action execution/concurrency, durable tasks, external production tools, UI, and voice remain explicitly out of scope.
 
 ## Latest accepted evidence
@@ -89,6 +92,6 @@ Implement the operator-authorized constrained Anima cognition loop through isola
 
 ## Next Architect decision point
 
-Complete `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R` and return the governed checkpoint for independent Architect review before Phase 9.
+Architect review of the Phase 8 implementation checkpoint and governed closure is required before Phase 9.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

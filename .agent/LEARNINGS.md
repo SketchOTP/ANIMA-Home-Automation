@@ -109,3 +109,12 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Context relevance must terminate in canonical graph/Truth/memory/tool contracts. Tool inclusion records relevance and health only; policy authorization remains unevaluated until invocation.
 - Trust and cloud egress are separate ANIMA-owned classifications. External content remains untrusted even when relevant, and `LOCAL_ONLY` data is absent from the future cloud projection.
 - Typed predicates are currently smaller and safer than CEL; CloudEvents SQL/CEL remain replacement prior art if rule complexity later demonstrates need.
+
+## ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R — Constrained Codex cognition learnings
+
+- Codex CLI ChatGPT OAuth can support a bounded application cognition adapter without token extraction when Codex owns login and ANIMA only checks status/invokes the CLI.
+- `codex exec` structured output on the tested CLI/model rejects a root `oneOf` and open variable objects; a flat all-required decision schema plus canonical JSON text for tool arguments preserves strict output while allowing ANIMA to perform exact Phase 5 schema validation.
+- Stateless one-turn processes keep episode continuity ANIMA-owned. A structured transcript is sufficient for model-selected sequential tools without Codex session resume/history.
+- Disabling direct capabilities requires both proactive strict config and reactive JSONL rejection. `agents.enabled=false` and `features.multi_agent=false` are both supported; the installed CLI requires `features.view_image=false` rather than `tools.view_image=false`.
+- Model structured output is not perfectly deterministic. Invalid output must remain an explicit model failure and must never reach tool execution; live evidence included one such safe rejection before a complete passing matrix.
+- ChatGPT OAuth usage provides token/latency evidence but not an API-dollar calculation or API retention control. Privacy depends on deterministic payload minimization plus the account/workspace server-side policy.

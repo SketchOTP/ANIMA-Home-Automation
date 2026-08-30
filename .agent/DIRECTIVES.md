@@ -216,3 +216,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Phase 9 generalized execution/concurrency/leases, durable tasks, production external tools, UI, voice, API-key path, Agents SDK foundation, direct Responses integration, or Codex coding-agent capability access.
 - Required external discovery: current official Codex CLI non-interactive/auth/config/model/JSONL/structured-output behavior and replacement-path comparison with Codex SDK, App Server, Agents SDK, and Responses API.
 - Source: operator-authorized Architect directive `ANIMA-HA-P8-CODEX-OAUTH-RUNTIME-010R`.
+
+### Completion record
+
+- Completed: 2026-08-30
+- Status: COMPLETE / PASS pending independent Architect review
+- Implementation checkpoint: `8486cd10b7962df11898bc8b61b1ec46d0809dd5`; GitHub Actions `33293828743` passed for that exact SHA without OAuth credentials.
+- Architecture: BUILD ANIMA durable episode/structured loop; ADOPT/WRAP Codex CLI ChatGPT OAuth, `gpt-5.6-luna`, medium reasoning, JSONL/output schema, and Phase 5/4; REFERENCE/DEFER Codex SDK/App Server; DEFER/REJECT API-key Agents SDK/Responses foundations for this directive.
+- Evidence: 84 tests, strict static/build/OPA, PostgreSQL restart, Phase 1–7 regressions, real isolated Phase 6 HA regression, simulator, public safety, and live OAuth A–I matrix passed.
+- Phase 9 Action Execution/Verification/Concurrency and later behavior were not implemented.
