@@ -27,13 +27,19 @@ from uuid import UUID, uuid4
 import psycopg
 from psycopg.rows import dict_row
 
-from anima_ha.action import ActionExecutionCoordinator, ActionRequest, ActionStatus
+from anima_ha.action import (
+    ActionExecutionCoordinator,
+    ActionRequest,
+    ActionStatus,
+    TruthPrecondition,
+)
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
     ExternalContentTrust,
     InvocationOutcome,
     InvocationResult,
+    ProviderExecutionContext,
     ToolDescriptor,
     validate_instance,
 )
@@ -298,6 +304,7 @@ class ToolGateway(Protocol):
         capability_id: UUID | None = None,
         policy_service: PolicyService | None = None,
         policy_context: PolicyContext | None = None,
+        execution_context: ProviderExecutionContext | None = None,
     ) -> InvocationResult: ...
 
 
@@ -1514,6 +1521,16 @@ class AgentRuntime:
                     elif not tool.read_only:
                         action_executor = self.action_executor
                         assert action_executor is not None
+                        action_context = request.policy_context or PolicyContext()
+                        baseline_preconditions = tuple(
+                            TruthPrecondition(
+                                item.truth_key,
+                                expected_state=item.status,
+                                expected_value=item.value,
+                            )
+                            for item in action_context.truth
+                            if item.status == "KNOWN" and item.value is not None
+                        )
                         execution = action_executor.execute(
                             ActionRequest.create(
                                 idempotency_key=f"episode:{episode.episode_id}:tool:{tool_count}",
@@ -1522,7 +1539,8 @@ class AgentRuntime:
                                 arguments=decision.arguments,
                                 identity=request.identity,
                                 policy_service=request.policy_service,
-                                policy_context=request.policy_context or PolicyContext(),
+                                policy_context=action_context,
+                                preconditions=baseline_preconditions,
                                 refresher=request.action_refresher,
                                 verifier=request.action_verifier,
                                 origin=request.origin,

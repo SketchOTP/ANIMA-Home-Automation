@@ -68,3 +68,26 @@ entity, including a real same-resource race and post-action provider refresh.
 This remains isolated x86-64 evidence and makes no physical-home or general
 production-provider claim. Phase 9 remains implementation-complete pending
 independent Architect review.
+
+## Execution hardening continuation
+
+Independent review identified four gaps in the published checkpoint: the live
+Phase 8 agent path could omit preconditions, provider idempotency identity was
+not forwarded, connector effect claims could bypass observation, and ambiguous
+possible-dispatch outcomes could terminalize before reconciliation.
+
+The hardening continuation resolves these by attaching system-owned baseline and
+mandatory Truth preconditions, resolving trusted action profiles from plugin
+metadata, and keeping model-visible tool arguments unchanged. Canonical lock
+scopes may include trusted `resource:<id>` and `capability:<resource>:<id>`
+identities. ANIMA creates a `ProviderExecutionContext` containing the execution
+identity and an optional provider idempotency key; connectors without native
+idempotency remain executable, but ambiguous results are never blindly retried.
+
+Expected effects are constructed before dispatch. Connector acknowledgements and
+effect claims are persisted as evidence only. Consequential actions refresh
+provider state after dispatch and derive per-effect outcomes from authoritative
+observation sources such as `FRESH_TRUTH`; timeout, transport, and possible
+dispatch results are reconciled before becoming `SUCCESS`, `PARTIAL`,
+`VERIFICATION_FAILED`, or `UNKNOWN_RESULT`. Already-satisfied effects complete
+with `executed=false` and zero connector calls.

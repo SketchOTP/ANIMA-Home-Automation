@@ -52,9 +52,11 @@ class Gateway:
             }
         )
         self.calls = 0
+        self.contexts: list[Any] = []
 
     def invoke(self, tool_id: str, arguments: dict[str, Any], **kwargs: Any) -> InvocationResult:
         self.calls += 1
+        self.contexts.append(kwargs.get("execution_context"))
         return InvocationResult(
             self.outcome,
             tool_id,
@@ -67,7 +69,7 @@ class Gateway:
         )
 
 
-def tool() -> ToolDescriptor:
+def tool(*, provider_idempotency_supported: bool = False) -> ToolDescriptor:
     return ToolDescriptor(
         tool_id="anima.test.set_power",
         plugin_id="anima.test",
@@ -86,6 +88,10 @@ def tool() -> ToolDescriptor:
         availability=True,
         version="1.0.0",
         provenance="test",
+        execution_spec={
+            "profile": "set_power",
+            "provider_idempotency_supported": provider_idempotency_supported,
+        },
     )
 
 
@@ -97,22 +103,24 @@ def request(
     refresher: Any = None,
     preconditions: tuple[TruthPrecondition, ...] = (),
     verifier: Any = None,
+    provider_idempotency_supported: bool = False,
 ) -> tuple[ActionExecutionCoordinator, ActionRequest, Gateway, InMemoryActionStore]:
     store = InMemoryActionStore()
     coordinator = ActionExecutionCoordinator(gateway, store, InMemoryResourceLocker())
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
     action = ActionRequest.create(
         idempotency_key=key,
         household_id=HOUSEHOLD,
-        tool=tool(),
+        tool=tool(provider_idempotency_supported=provider_idempotency_supported),
         arguments={"resource_id": str(RESOURCE), "desired_on": True},
         identity=IdentityContext(HOUSEHOLD, None, Assurance.AUTHENTICATED),
         policy_service=PolicyService(evaluator or AllowEvaluator()),
-        refresher=refresher
-        or (
-            lambda resources: TruthSnapshot(
-                {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
-            )
-        ),
+        refresher=refresher or (lambda resources: next(snapshots)),
         preconditions=preconditions,
         verifier=verifier,
     )
@@ -126,6 +134,19 @@ def test_stale_precondition_is_rejected_before_gateway() -> None:
         preconditions=(TruthPrecondition("power", expected_value="off", expected_version="old"),),
         refresher=lambda resources: TruthSnapshot(
             {"power": {"state": "KNOWN", "value": "on", "version": "new"}}
+        ),
+    )
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.PRECONDITION_FAILED
+    assert gateway.calls == 0
+
+
+def test_system_owned_precondition_is_required_even_when_request_omits_one() -> None:
+    gateway = Gateway()
+    coordinator, action, gateway, _ = request(
+        gateway,
+        refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "UNKNOWN", "value": None, "version": "lost"}}
         ),
     )
     result = coordinator.execute(action)
@@ -186,13 +207,116 @@ def test_idempotency_replays_without_second_connector_call_and_rejects_key_reuse
     assert gateway.calls == 1
 
 
+def test_provider_idempotency_context_is_forwarded_without_model_arguments() -> None:
+    gateway = Gateway()
+    coordinator, action, gateway, _ = request(gateway, provider_idempotency_supported=True)
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.SUCCEEDED
+    context = gateway.contexts[0]
+    assert context.execution_id == action.action_id
+    assert context.anima_idempotency_key == action.idempotency_key
+    assert context.provider_idempotency_key == f"anima:{action.action_id}"
+    assert "provider_idempotency_key" not in action.arguments
+
+
+def test_connector_without_native_idempotency_remains_executable() -> None:
+    gateway = Gateway()
+    coordinator, action, gateway, _ = request(gateway)
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.SUCCEEDED
+    assert gateway.contexts[0].provider_idempotency_key is None
+
+
 def test_ambiguous_connector_timeout_is_unknown_and_not_retried() -> None:
     gateway = Gateway(InvocationOutcome.PLUGIN_TIMEOUT)
-    coordinator, action, gateway, store = request(gateway)
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "UNKNOWN", "value": None, "version": "lost"}}),
+        ]
+    )
+    coordinator, action, gateway, store = request(
+        gateway,
+        refresher=lambda resources: next(snapshots),
+    )
     result = coordinator.execute(action)
     assert result.record.status == ActionStatus.UNKNOWN_RESULT
     assert gateway.calls == 1
     assert store.get(action.action_id) == result.record
+
+
+def test_ambiguous_timeout_is_success_when_fresh_observation_proves_effect() -> None:
+    gateway = Gateway(InvocationOutcome.PLUGIN_TIMEOUT)
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
+    coordinator, action, gateway, _ = request(gateway, refresher=lambda resources: next(snapshots))
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.SUCCEEDED
+    assert result.record.result is not None
+    assert result.record.result["connector_ambiguity"] is True
+    assert gateway.calls == 1
+
+
+def test_ambiguous_timeout_with_definitive_non_matching_observation_fails() -> None:
+    gateway = Gateway(InvocationOutcome.PLUGIN_TIMEOUT)
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "2"}}),
+        ]
+    )
+    coordinator, action, gateway, _ = request(gateway, refresher=lambda resources: next(snapshots))
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.VERIFICATION_FAILED
+    assert gateway.calls == 1
+
+
+def test_connector_effect_claim_cannot_create_success_without_observation() -> None:
+    gateway = Gateway(result={"effects": [{"outcome": "SUCCEEDED", "observed": {"state": "on"}}]})
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "2"}}),
+        ]
+    )
+    coordinator, action, gateway, _ = request(gateway, refresher=lambda resources: next(snapshots))
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.VERIFICATION_FAILED
+    assert result.record.result is not None
+    assert result.record.result["connector_evidence"]["effects"][0]["outcome"] == "SUCCEEDED"
+
+
+def test_already_satisfied_action_does_not_dispatch() -> None:
+    gateway = Gateway()
+    coordinator, action, gateway, _ = request(
+        gateway,
+        refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "KNOWN", "value": "on", "version": "1"}}
+        ),
+    )
+    result = coordinator.execute(action)
+    assert result.record.status == ActionStatus.SUCCEEDED
+    assert result.record.result == {
+        "executed": False,
+        "effects": [
+            {
+                "effect_id": "set_power:power",
+                "truth_key": "power",
+                "expected_state": "KNOWN",
+                "expected_value": "on",
+                "outcome": "VERIFIED",
+                "observed": {"state": "KNOWN", "value": "on", "version": "1"},
+                "source": "FRESH_TRUTH",
+                "detail": None,
+            }
+        ],
+        "observed": {"power": {"state": "KNOWN", "value": "on", "version": "1"}},
+    }
+    assert gateway.calls == 0
 
 
 def test_partial_effects_are_durable_without_compensation() -> None:
@@ -204,7 +328,23 @@ def test_partial_effects_are_durable_without_compensation() -> None:
             ]
         }
     )
-    coordinator, action, _, store = request(gateway)
+    snapshots = iter(
+        [
+            TruthSnapshot(
+                {
+                    "power": {"state": "KNOWN", "value": "off", "version": "1"},
+                    "backup": {"state": "KNOWN", "value": "off", "version": "1"},
+                }
+            ),
+            TruthSnapshot(
+                {
+                    "power": {"state": "KNOWN", "value": "on", "version": "2"},
+                    "backup": {"state": "UNKNOWN", "value": None, "version": "2"},
+                }
+            ),
+        ]
+    )
+    coordinator, action, _, store = request(gateway, refresher=lambda resources: next(snapshots))
     result = coordinator.execute(action)
     assert result.record.status == ActionStatus.PARTIAL
     assert len(store.effects) == 2

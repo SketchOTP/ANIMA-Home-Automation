@@ -41,6 +41,7 @@ from anima_ha.plugins import (
     MANIFEST_VERSION,
     PluginManifest,
     PluginValidationError,
+    ProviderExecutionContext,
     RuntimeKind,
     TrustClass,
 )
@@ -1040,7 +1041,14 @@ class HomeAssistantPlugin:
             },
         ]
 
-    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+    def invoke(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        execution_context: ProviderExecutionContext | None = None,
+    ) -> Any:
+        del timeout, execution_context
         resource_id = UUID(str(arguments["resource_id"]))
         capability = arguments.get("capability_id")
         capability_id = UUID(str(capability)) if capability else None
@@ -1099,6 +1107,10 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                 "idempotency": "IDEMPOTENT",
                 "verification_requirement": "PROVIDER_STATE_MATCH",
                 "external_content_trust": "PLUGIN_TRUSTED",
+                "execution_spec": {
+                    "profile": "home_assistant.set_power",
+                    "provider_idempotency_supported": False,
+                },
             },
         ),
         configuration_schema={

@@ -17,6 +17,7 @@ from anima_ha.plugins import (
     PluginManifest,
     PluginState,
     PluginValidationError,
+    ProviderExecutionContext,
     RuntimeKind,
     SecretBroker,
     TrustClass,
@@ -32,6 +33,7 @@ class AllowEvaluator:
 class EchoNative:
     def __init__(self) -> None:
         self.secret_env: dict[str, str] = {}
+        self.execution_contexts: list[ProviderExecutionContext | None] = []
 
     def start(self, secret_env: dict[str, str]) -> None:
         self.secret_env = dict(secret_env)
@@ -52,10 +54,26 @@ class EchoNative:
             }
         ]
 
-    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+    def invoke(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        execution_context: ProviderExecutionContext | None = None,
+    ) -> Any:
+        self.execution_contexts.append(execution_context)
         if name != "read":
             raise PluginValidationError("unknown native tool")
         return {"value": arguments["value"]}
+
+    def invoke_with_context(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        execution_context: ProviderExecutionContext,
+    ) -> Any:
+        return self.invoke(name, arguments, timeout, execution_context)
 
 
 def manifest(
@@ -135,7 +153,8 @@ def test_entry_point_discovery_is_separate_from_enablement() -> None:
 
 def test_native_lifecycle_policy_gate_and_disable() -> None:
     manager = PluginManager()
-    plugin = manager.register(manifest(), EchoNative())
+    native = EchoNative()
+    plugin = manager.register(manifest(), native)
     assert plugin.state == PluginState.REGISTERED
     assert manager.enable(plugin.manifest.plugin_id).state == PluginState.HEALTHY
     identity = IdentityContext(uuid4(), None, Assurance.ANONYMOUS)
@@ -152,6 +171,17 @@ def test_native_lifecycle_policy_gate_and_disable() -> None:
         policy_service=PolicyService(AllowEvaluator()),
     )
     assert result.outcome == InvocationOutcome.SUCCESS
+    context = ProviderExecutionContext(uuid4(), "anima-local-key", "provider-key")
+    result = manager.invoke(
+        tool_id,
+        {"value": "y"},
+        household_id=identity.household_id,
+        identity=identity,
+        policy_service=PolicyService(AllowEvaluator()),
+        execution_context=context,
+    )
+    assert result.outcome == InvocationOutcome.SUCCESS
+    assert native.execution_contexts[-1] == context
     manager.disable(plugin.manifest.plugin_id)
     assert manager.list_tools() == []
 
@@ -236,7 +266,13 @@ def test_failure_and_timeout_are_contained() -> None:
             raise RuntimeError("startup crash")
 
     class Hanging(EchoNative):
-        def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+        def invoke(
+            self,
+            name: str,
+            arguments: dict[str, Any],
+            timeout: float,
+            execution_context: ProviderExecutionContext | None = None,
+        ) -> Any:
             raise TimeoutError("bounded timeout")
 
     manager = PluginManager()

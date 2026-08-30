@@ -9,6 +9,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from anima_ha.action import (
+    ActionExecutionCoordinator,
+    ActionStatus,
+    InMemoryActionStore,
+    InMemoryResourceLocker,
+    TruthSnapshot,
+)
 from anima_ha.agent import (
     AgentRuntime,
     CodexBoundaryViolation,
@@ -43,7 +50,13 @@ from anima_ha.plugins import (
     ToolDescriptor,
     TrustClass,
 )
-from anima_ha.policy import Assurance, IdentityContext, PolicyContext, PolicyService
+from anima_ha.policy import (
+    Assurance,
+    IdentityContext,
+    PolicyContext,
+    PolicyService,
+    TruthPolicyContext,
+)
 
 HOUSEHOLD_ID = UUID("ecbd0d84-6f5f-40f8-928f-1d5dfe758dd7")
 
@@ -78,6 +91,37 @@ def tool(tool_id: str = "anima.test.read", *, risk: str = "READ_ONLY") -> ToolDe
         availability=True,
         version="1.0.0",
         provenance="synthetic-test",
+    )
+
+
+def action_tool() -> ToolDescriptor:
+    return ToolDescriptor(
+        tool_id="anima.test.set_power",
+        plugin_id="anima.test",
+        capability_id="home.control",
+        name="set_power",
+        description="Set synthetic power.",
+        input_schema={
+            "type": "object",
+            "properties": {
+                "resource_id": {"type": "string", "format": "uuid"},
+                "desired_on": {"type": "boolean"},
+            },
+            "required": ["resource_id", "desired_on"],
+            "additionalProperties": False,
+        },
+        output_schema={"type": "object"},
+        risk_class="LOW_RISK_HOME_CONTROL",
+        semantic_action="set_power",
+        read_only=False,
+        idempotency=Idempotency.KEYED,
+        timeout=2.0,
+        verification_requirement="PROVIDER_STATE_MATCH",
+        external_content_trust=ExternalContentTrust.PLUGIN_TRUSTED,
+        availability=True,
+        version="1.0.0",
+        provenance="synthetic-test",
+        execution_spec={"profile": "set_power"},
     )
 
 
@@ -147,7 +191,12 @@ def final(
     )
 
 
-def request(tools: tuple[ToolDescriptor, ...] = ()) -> EpisodeRequest:
+def request(
+    tools: tuple[ToolDescriptor, ...] = (),
+    *,
+    policy_context: PolicyContext | None = None,
+    action_refresher: Any = None,
+) -> EpisodeRequest:
     packet = context_packet()
     return EpisodeRequest(
         UUID(str(packet["trigger_id"])),
@@ -157,7 +206,8 @@ def request(tools: tuple[ToolDescriptor, ...] = ()) -> EpisodeRequest:
         tools,
         IdentityContext(HOUSEHOLD_ID, None, Assurance.ANONYMOUS),
         PolicyService(AllowEvaluator()),
-        PolicyContext(),
+        policy_context,
+        action_refresher=action_refresher,
     )
 
 
@@ -494,6 +544,49 @@ def test_real_phase5_gateway_and_phase4_service_bridge_execute_only_after_allow(
     result = agent.run(request((descriptor,)))
     assert result.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
     assert native.invocations == 1
+
+
+def test_real_agent_path_rejects_manual_change_against_system_owned_baseline() -> None:
+    descriptor = action_tool()
+    provider_gateway = Gateway()
+    action_store = InMemoryActionStore()
+    coordinator = ActionExecutionCoordinator(
+        provider_gateway, action_store, InMemoryResourceLocker()
+    )
+    baseline = PolicyContext(
+        truth=(TruthPolicyContext("power", "KNOWN", "off"),),
+    )
+    state_after_manual_change = TruthSnapshot(
+        {"power": {"state": "KNOWN", "value": "on", "version": "2"}}
+    )
+    episode_request = request(
+        (descriptor,),
+        policy_context=baseline,
+        action_refresher=lambda resources: state_after_manual_change,
+    )
+    agent = AgentRuntime(
+        ScriptedCodexAdapter(
+            [
+                CodexTurnResult(
+                    ToolRequestDecision(
+                        descriptor.tool_id,
+                        {"resource_id": str(uuid4()), "desired_on": True},
+                    ),
+                    TokenUsage(),
+                    1.0,
+                    ("turn.completed",),
+                ),
+                final(),
+            ]
+        ),
+        provider_gateway,
+        InMemoryEpisodeStore(),
+        action_executor=coordinator,
+    )
+    agent.run(episode_request)
+    record = next(iter(action_store.records.values()))
+    assert record.status == ActionStatus.PRECONDITION_FAILED
+    assert provider_gateway.calls == []
 
 
 def test_real_phase5_gateway_does_not_execute_when_phase4_denies() -> None:

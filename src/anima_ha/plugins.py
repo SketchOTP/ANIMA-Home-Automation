@@ -77,6 +77,23 @@ class InvocationOutcome(StrEnum):
     UNKNOWN_RESULT = "UNKNOWN_RESULT"
 
 
+class DispatchState(StrEnum):
+    BEFORE_DISPATCH = "BEFORE_DISPATCH"
+    POSSIBLY_DISPATCHED = "POSSIBLY_DISPATCHED"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderExecutionContext:
+    """ANIMA-owned execution identity passed only across the provider boundary."""
+
+    execution_id: UUID
+    anima_idempotency_key: str
+    provider_idempotency_key: str | None = None
+    attempt_number: int = 1
+    possible_prior_dispatch: bool = False
+
+
 class ExternalContentTrust(StrEnum):
     LOCAL_TRUSTED = "LOCAL_TRUSTED"
     PLUGIN_TRUSTED = "PLUGIN_TRUSTED"
@@ -265,6 +282,7 @@ class ToolDescriptor:
     applies_to_node_kinds: tuple[str, ...] = ()
     applies_to_capabilities: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
+    execution_spec: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_manifest(
@@ -310,6 +328,7 @@ class ToolDescriptor:
                 str(value) for value in item.get("applies_to_capabilities", [])
             ),
             tags=tuple(str(value) for value in item.get("tags", [])),
+            execution_spec=dict(item.get("execution_spec", {})),
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -334,6 +353,7 @@ class ToolDescriptor:
             "applies_to_node_kinds": list(self.applies_to_node_kinds),
             "applies_to_capabilities": list(self.applies_to_capabilities),
             "tags": list(self.tags),
+            "execution_spec": self.execution_spec,
         }
 
 
@@ -370,6 +390,18 @@ class NativeRuntime:
         return self.plugin.list_tools()
 
     def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+        return self.plugin.invoke(name, arguments, timeout)
+
+    def invoke_with_context(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        execution_context: ProviderExecutionContext,
+    ) -> Any:
+        method = getattr(self.plugin, "invoke_with_context", None)
+        if callable(method):
+            return method(name, arguments, timeout, execution_context)
         return self.plugin.invoke(name, arguments, timeout)
 
 
@@ -495,6 +527,7 @@ class InvocationResult:
     provenance: str = ""
     external_content_trust: ExternalContentTrust = ExternalContentTrust.PLUGIN_TRUSTED
     policy_decision: PolicyDecision | None = None
+    dispatch_state: DispatchState = DispatchState.ACKNOWLEDGED
 
 
 class PostgresPluginStore:
@@ -811,6 +844,7 @@ class PluginManager:
         policy_service: PolicyService | None = None,
         policy_context: PolicyContext | None = None,
         confirmation: Any | None = None,
+        execution_context: ProviderExecutionContext | None = None,
     ) -> InvocationResult:
         started = time.monotonic()
         tool = self.tools.get(tool_id)
@@ -925,7 +959,11 @@ class PluginManager:
                     policy_decision=decision,
                 )
         try:
-            result = plugin.runtime.invoke(tool.name, arguments, tool.timeout)
+            contextual_invoke = getattr(plugin.runtime, "invoke_with_context", None)
+            if execution_context is not None and callable(contextual_invoke):
+                result = contextual_invoke(tool.name, arguments, tool.timeout, execution_context)
+            else:
+                result = plugin.runtime.invoke(tool.name, arguments, tool.timeout)
             if isinstance(result, dict) and result.get("is_error") is True:
                 raise RuntimeError("plugin reported a tool error")
             if tool.output_schema and not isinstance(result, dict):
@@ -945,6 +983,7 @@ class PluginManager:
                     provenance=tool.provenance,
                     external_content_trust=tool.external_content_trust,
                     policy_decision=decision,
+                    dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
                 )
             if result_outcome == "UNKNOWN_RESULT":
                 return InvocationResult(
@@ -958,6 +997,7 @@ class PluginManager:
                     provenance=tool.provenance,
                     external_content_trust=tool.external_content_trust,
                     policy_decision=decision,
+                    dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
                 )
             return InvocationResult(
                 InvocationOutcome.SUCCESS,
@@ -969,6 +1009,7 @@ class PluginManager:
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,
+                dispatch_state=DispatchState.ACKNOWLEDGED,
             )
         except TimeoutError:
             return InvocationResult(
@@ -981,6 +1022,7 @@ class PluginManager:
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,
+                dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
             )
         except PluginValidationError as exc:
             return InvocationResult(
@@ -993,6 +1035,7 @@ class PluginManager:
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,
+                dispatch_state=DispatchState.BEFORE_DISPATCH,
             )
         except Exception as exc:
             return InvocationResult(
@@ -1005,6 +1048,7 @@ class PluginManager:
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,
+                dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
             )
 
 

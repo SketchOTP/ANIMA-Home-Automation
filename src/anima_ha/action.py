@@ -14,7 +14,7 @@ import json
 import threading
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import StrEnum
 from struct import unpack
@@ -26,9 +26,10 @@ from psycopg.rows import dict_row
 
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
-    Idempotency,
+    DispatchState,
     InvocationOutcome,
     InvocationResult,
+    ProviderExecutionContext,
     ToolDescriptor,
 )
 from anima_ha.policy import (
@@ -63,6 +64,40 @@ class VerificationOutcome(StrEnum):
     VERIFIED = "VERIFIED"
     FAILED = "FAILED"
     UNKNOWN = "UNKNOWN"
+
+
+@dataclass(frozen=True, slots=True)
+class ExpectedEffect:
+    truth_key: str
+    expected_value: Any
+    expected_state: str = "KNOWN"
+    effect_id: str = ""
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "effect_id": self.effect_id or self.truth_key,
+            "truth_key": self.truth_key,
+            "expected_state": self.expected_state,
+            "expected_value": self.expected_value,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class EffectEvidence:
+    expectation: ExpectedEffect
+    outcome: VerificationOutcome
+    observed: dict[str, Any] = field(default_factory=dict)
+    source: str = "NOT_OBSERVABLE"
+    detail: str | None = None
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            **self.expectation.to_payload(),
+            "outcome": self.outcome.value,
+            "observed": self.observed,
+            "source": self.source,
+            "detail": self.detail,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,10 +146,22 @@ class VerificationResult:
     outcome: VerificationOutcome
     observed: dict[str, Any] = field(default_factory=dict)
     detail: str | None = None
+    effects: tuple[EffectEvidence, ...] = ()
 
 
 TruthRefresher = Callable[[tuple[UUID, ...]], TruthSnapshot]
 ActionVerifier = Callable[["ActionRequest", InvocationResult, TruthSnapshot], VerificationResult]
+
+
+@dataclass(frozen=True, slots=True)
+class ActionSafetySpec:
+    """Trusted, system-owned execution rules for a consequential tool."""
+
+    profile_id: str
+    scope_resolver: Callable[[dict[str, Any]], tuple[str, ...]]
+    precondition_builder: Callable[[dict[str, Any], TruthSnapshot], tuple[TruthPrecondition, ...]]
+    expected_effect_builder: Callable[[dict[str, Any], TruthSnapshot], tuple[ExpectedEffect, ...]]
+    provider_idempotency_supported: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,6 +180,8 @@ class ActionRequest:
     verifier: ActionVerifier | None = None
     confirmation: ConfirmationChallenge | None = None
     origin: RequestOrigin = RequestOrigin.AUTONOMOUS_AGENT
+    safety_spec: ActionSafetySpec | None = None
+    lock_scopes: tuple[str, ...] = ()
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
@@ -162,6 +211,15 @@ class ActionRequest:
         if isinstance(raw_resources, list | tuple):
             resource_values.extend(UUID(str(value)) for value in raw_resources)
         provided_resources = kwargs.pop("resource_ids", None)
+        safety_spec = kwargs.pop("safety_spec", None) or resolve_action_safety_spec(tool)
+        provided_scopes = kwargs.pop("lock_scopes", None)
+        lock_scopes = tuple(provided_scopes or ())
+        if not lock_scopes and safety_spec is not None:
+            lock_scopes = safety_spec.scope_resolver(dict(arguments))
+        if not lock_scopes:
+            lock_scopes = tuple(
+                f"resource:{item}" for item in sorted(set(provided_resources or resource_values))
+            )
         return cls(
             action_id=UUID(str(kwargs.pop("action_id", uuid4()))),
             idempotency_key=idempotency_key,
@@ -171,6 +229,8 @@ class ActionRequest:
             identity=identity,
             policy_service=policy_service,
             resource_ids=tuple(sorted(set(provided_resources or resource_values))),
+            safety_spec=safety_spec,
+            lock_scopes=lock_scopes,
             **kwargs,
         )
 
@@ -183,10 +243,62 @@ class ActionRequest:
             "arguments": self.arguments,
             "resource_ids": [str(item) for item in self.resource_ids],
             "preconditions": [item.to_payload() for item in self.preconditions],
+            "lock_scopes": list(self.lock_scopes),
+            "safety_profile": self.safety_spec.profile_id if self.safety_spec else None,
         }
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()
         ).hexdigest()
+
+
+def resolve_action_safety_spec(tool: ToolDescriptor) -> ActionSafetySpec | None:
+    """Resolve safety rules from trusted tool metadata, never model arguments."""
+    if tool.read_only:
+        return None
+    metadata = tool.execution_spec
+    profile = str(metadata.get("profile", tool.semantic_action))
+    if profile not in {"set_power", "home_assistant.set_power"}:
+        return None
+
+    def scopes(arguments: dict[str, Any]) -> tuple[str, ...]:
+        resource_values: list[UUID] = []
+        if arguments.get("resource_id") is not None:
+            resource_values.append(UUID(str(arguments["resource_id"])))
+        raw_resources = arguments.get("resource_ids", ())
+        if isinstance(raw_resources, list | tuple):
+            resource_values.extend(UUID(str(value)) for value in raw_resources)
+        scope_values = [f"resource:{item}" for item in sorted(set(resource_values))]
+        if arguments.get("capability_id") is not None and scope_values:
+            capability = UUID(str(arguments["capability_id"]))
+            scope_values.append(f"capability:{scope_values[0].split(':', 1)[1]}:{capability}")
+        return tuple(sorted(set(scope_values)))
+
+    def mandatory_preconditions(
+        arguments: dict[str, Any], snapshot: TruthSnapshot
+    ) -> tuple[TruthPrecondition, ...]:
+        del arguments
+        return tuple(
+            TruthPrecondition(key, expected_state="KNOWN") for key in sorted(snapshot.values)
+        )
+
+    def expected_effects(
+        arguments: dict[str, Any], snapshot: TruthSnapshot
+    ) -> tuple[ExpectedEffect, ...]:
+        if "desired_on" not in arguments:
+            return ()
+        expected = "on" if bool(arguments["desired_on"]) else "off"
+        return tuple(
+            ExpectedEffect(key, expected, effect_id=f"{profile}:{key}")
+            for key in sorted(snapshot.values)
+        )
+
+    return ActionSafetySpec(
+        profile_id=profile,
+        scope_resolver=scopes,
+        precondition_builder=mandatory_preconditions,
+        expected_effect_builder=expected_effects,
+        provider_idempotency_supported=bool(metadata.get("provider_idempotency_supported", False)),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -533,8 +645,9 @@ class ResourceLock(AbstractContextManager[bool]):
         self.acquired = False
 
 
-def _lock_key(resource_id: UUID) -> tuple[int, int]:
-    digest = hashlib.sha256(f"anima.action.resource:{resource_id}".encode()).digest()
+def _lock_key(scope: UUID | str) -> tuple[int, int]:
+    canonical = str(scope) if isinstance(scope, str) else f"resource:{scope}"
+    digest = hashlib.sha256(f"anima.action.scope:{canonical}".encode()).digest()
     return unpack(">ii", digest[:8])
 
 
@@ -545,21 +658,24 @@ class PostgresResourceLocker:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
 
-    def try_acquire(self, resources: tuple[UUID, ...]) -> ResourceLock:
+    def try_acquire(self, resources: tuple[UUID | str, ...]) -> ResourceLock:
         connection = psycopg.connect(self.database_url, connect_timeout=self.connect_timeout)
         connection.autocommit = True
-        return ResourceLock(connection, [_lock_key(item) for item in sorted(set(resources))])
+        return ResourceLock(
+            connection, [_lock_key(item) for item in sorted(set(resources), key=str)]
+        )
 
 
 class InMemoryResourceLock(AbstractContextManager[bool]):
-    def __init__(self, locks: dict[UUID, threading.Lock], resources: tuple[UUID, ...]) -> None:
+    def __init__(self, locks: dict[str, threading.Lock], resources: tuple[UUID | str, ...]) -> None:
         self.locks = locks
-        self.resources = tuple(sorted(set(resources)))
+        self.resources = tuple(sorted({str(resource) for resource in resources}))
         self.held: list[threading.Lock] = []
 
     def __enter__(self) -> bool:
         for resource in self.resources:
-            lock = self.locks.setdefault(resource, threading.Lock())
+            key = resource if ":" in resource else f"resource:{resource}"
+            lock = self.locks.setdefault(key, threading.Lock())
             if not lock.acquire(blocking=False):
                 for held in reversed(self.held):
                     held.release()
@@ -576,10 +692,10 @@ class InMemoryResourceLock(AbstractContextManager[bool]):
 
 class InMemoryResourceLocker:
     def __init__(self) -> None:
-        self._locks: dict[UUID, threading.Lock] = {}
+        self._locks: dict[str, threading.Lock] = {}
         self._guard = threading.Lock()
 
-    def try_acquire(self, resources: tuple[UUID, ...]) -> InMemoryResourceLock:
+    def try_acquire(self, resources: tuple[UUID | str, ...]) -> InMemoryResourceLock:
         with self._guard:
             return InMemoryResourceLock(self._locks, resources)
 
@@ -598,6 +714,7 @@ class ActionGateway(Protocol):
         policy_service: PolicyService,
         policy_context: PolicyContext,
         confirmation: ConfirmationChallenge | None = None,
+        execution_context: ProviderExecutionContext,
     ) -> InvocationResult: ...
 
 
@@ -705,48 +822,67 @@ class ActionExecutionCoordinator:
         request: ActionRequest,
         invocation: InvocationResult,
         snapshot: TruthSnapshot,
+        expected_effects: tuple[ExpectedEffect, ...],
     ) -> VerificationResult:
         if request.verifier is not None:
-            return request.verifier(request, invocation, snapshot)
-        if isinstance(invocation.result, dict):
-            outcome = invocation.result.get("outcome")
-            if outcome == "SUCCESS" and invocation.result.get("observed_state") is not None:
-                return VerificationResult(VerificationOutcome.VERIFIED, dict(invocation.result))
-        return VerificationResult(
-            VerificationOutcome.UNKNOWN,
-            detail="consequential action has no observed post-action verification",
-        )
+            custom = request.verifier(request, invocation, snapshot)
+            if custom.effects or not expected_effects:
+                return custom
+            observed = self._verify_observed(snapshot, expected_effects)
+            return replace(custom, effects=observed.effects)
+        return self._verify_observed(snapshot, expected_effects)
 
     @staticmethod
-    def _effects(result: Any) -> tuple[ActionStatus, str] | None:
-        if not isinstance(result, dict) or not isinstance(result.get("effects"), list):
-            return None
-        outcomes = [str(item.get("outcome", "UNKNOWN")).upper() for item in result["effects"]]
-        if not outcomes:
-            return ActionStatus.FAILED, "empty effect set"
-        known = {"SUCCESS", "SUCCEEDED", "VERIFIED"}
-        failed = {"FAILED", "FAILURE", "ERROR"}
-        unknown = {"UNKNOWN", "TIMEOUT", "TIMED_OUT", "AMBIGUOUS"}
-        if any(item in unknown for item in outcomes) and any(
-            item in known | failed for item in outcomes
-        ):
-            return (
-                ActionStatus.PARTIAL,
-                "multi-effect execution produced mixed known and unknown results",
+    def _verify_observed(
+        snapshot: TruthSnapshot, expected_effects: tuple[ExpectedEffect, ...]
+    ) -> VerificationResult:
+        if not expected_effects:
+            return VerificationResult(
+                VerificationOutcome.UNKNOWN,
+                detail="consequential action has no trusted observable expected effects",
             )
-        if any(item in failed for item in outcomes) and any(item in known for item in outcomes):
-            return (
-                ActionStatus.PARTIAL,
-                "multi-effect execution produced mixed success and failure",
-            )
-        if any(item in unknown for item in outcomes):
-            return (
-                ActionStatus.UNKNOWN_RESULT,
-                "multi-effect execution contains an ambiguous effect",
-            )
-        if all(item in known for item in outcomes):
-            return ActionStatus.SUCCEEDED, "all effects verified by connector result"
-        return ActionStatus.FAILED, "connector returned an unrecognized effect outcome"
+        evidence: list[EffectEvidence] = []
+        for expectation in expected_effects:
+            current = snapshot.values.get(expectation.truth_key)
+            if current is None or str(current.get("state")) != expectation.expected_state:
+                evidence.append(
+                    EffectEvidence(
+                        expectation,
+                        VerificationOutcome.UNKNOWN,
+                        dict(current or {}),
+                        "NOT_OBSERVABLE",
+                        "fresh authoritative observation is unavailable",
+                    )
+                )
+            elif current.get("value") == expectation.expected_value:
+                evidence.append(
+                    EffectEvidence(
+                        expectation,
+                        VerificationOutcome.VERIFIED,
+                        dict(current),
+                        "FRESH_TRUTH",
+                    )
+                )
+            else:
+                evidence.append(
+                    EffectEvidence(
+                        expectation,
+                        VerificationOutcome.FAILED,
+                        dict(current),
+                        "FRESH_TRUTH",
+                        "fresh authoritative observation did not match",
+                    )
+                )
+        outcomes = [item.outcome for item in evidence]
+        if all(item == VerificationOutcome.VERIFIED for item in outcomes):
+            outcome = VerificationOutcome.VERIFIED
+        elif any(item == VerificationOutcome.VERIFIED for item in outcomes):
+            outcome = VerificationOutcome.UNKNOWN
+        elif any(item == VerificationOutcome.FAILED for item in outcomes):
+            outcome = VerificationOutcome.FAILED
+        else:
+            outcome = VerificationOutcome.UNKNOWN
+        return VerificationResult(outcome, snapshot.to_payload(), effects=tuple(evidence))
 
     def execute(self, request: ActionRequest) -> ActionExecutionResult:
         claim = self.store.claim(request)
@@ -760,7 +896,8 @@ class ActionExecutionCoordinator:
             return ActionExecutionResult(claim.record, duplicate=True)
 
         self._audit(request, "action.started", {"tool_id": request.tool.tool_id})
-        with self.locker.try_acquire(request.resource_ids) as acquired:
+        lock_scopes: tuple[UUID | str, ...] = request.lock_scopes or request.resource_ids
+        with self.locker.try_acquire(lock_scopes) as acquired:
             if not acquired:
                 return self._terminal(
                     request,
@@ -782,15 +919,28 @@ class ActionExecutionCoordinator:
                     detail="consequential action requires a provider-backed latest-state refresher",
                     snapshot=snapshot,
                 )
-            if not request.tool.read_only and request.tool.idempotency == Idempotency.NONE:
+            if not request.tool.read_only and request.safety_spec is None:
                 return self._terminal(
                     request,
-                    ActionStatus.FAILED,
-                    detail="consequential connector does not declare idempotent execution",
+                    ActionStatus.PRECONDITION_FAILED,
+                    detail="consequential tool has no trusted action safety specification",
                     snapshot=snapshot,
                 )
+            safety_spec = request.safety_spec
+            mandatory = (
+                safety_spec.precondition_builder(request.arguments, snapshot)
+                if safety_spec is not None
+                else ()
+            )
+            expected_effects = (
+                safety_spec.expected_effect_builder(request.arguments, snapshot)
+                if safety_spec is not None
+                else ()
+            )
             failed = [
-                item.truth_key for item in request.preconditions if not item.matches(snapshot)
+                item.truth_key
+                for item in (*mandatory, *request.preconditions)
+                if not item.matches(snapshot)
             ]
             if failed:
                 return self._terminal(
@@ -823,16 +973,54 @@ class ActionExecutionCoordinator:
                     detail=decision.reason_code,
                     snapshot=snapshot,
                 )
+            if not request.tool.read_only and expected_effects:
+                initial_verification = self._verify(
+                    replace(request, verifier=None),
+                    InvocationResult(
+                        InvocationOutcome.SUCCESS,
+                        request.tool.tool_id,
+                        request.tool.plugin_id,
+                        request.tool.version,
+                        0.0,
+                    ),
+                    snapshot,
+                    expected_effects,
+                )
+                if initial_verification.outcome == VerificationOutcome.VERIFIED:
+                    return self._terminal(
+                        request,
+                        ActionStatus.SUCCEEDED,
+                        detail="requested state already satisfied; no connector dispatch",
+                        snapshot=snapshot,
+                        result={
+                            "executed": False,
+                            "effects": [item.to_payload() for item in initial_verification.effects],
+                            "observed": initial_verification.observed,
+                        },
+                    )
             self.store.update(
                 request.action_id,
                 ActionStatus.EXECUTING,
                 detail="final policy authorized execution",
+                result={
+                    "executed": True,
+                    "expected_effects": [item.to_payload() for item in expected_effects],
+                },
                 latest_truth=snapshot.to_payload(),
             )
             self._audit(
                 request,
                 "action.executing",
                 {"policy_decision_id": str(decision.decision_id)},
+            )
+            execution_context = ProviderExecutionContext(
+                execution_id=request.action_id,
+                anima_idempotency_key=request.idempotency_key,
+                provider_idempotency_key=(
+                    f"anima:{request.action_id}"
+                    if safety_spec is not None and safety_spec.provider_idempotency_supported
+                    else None
+                ),
             )
             try:
                 invocation = self.gateway.invoke(
@@ -850,24 +1038,17 @@ class ActionExecutionCoordinator:
                     policy_service=request.policy_service,
                     policy_context=context,
                     confirmation=request.confirmation,
+                    execution_context=execution_context,
                 )
             except Exception as exc:
-                return self._terminal(
-                    request,
-                    ActionStatus.UNKNOWN_RESULT,
-                    detail=f"connector failed after execution began: {type(exc).__name__}",
-                    snapshot=snapshot,
-                )
-            effect_status = self._effects(invocation.result)
-            if effect_status is not None:
-                status, detail = effect_status
-                return self._terminal(
-                    request,
-                    status,
-                    detail=detail,
-                    snapshot=snapshot,
-                    invocation=invocation,
-                    result=invocation.result if isinstance(invocation.result, dict) else None,
+                invocation = InvocationResult(
+                    InvocationOutcome.PLUGIN_ERROR,
+                    request.tool.tool_id,
+                    request.tool.plugin_id,
+                    request.tool.version,
+                    0.0,
+                    error_class=type(exc).__name__,
+                    dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
                 )
             if invocation.outcome in {
                 InvocationOutcome.REQUIRE_CONFIRMATION,
@@ -887,30 +1068,18 @@ class ActionExecutionCoordinator:
                     invocation=invocation,
                 )
             if invocation.outcome == InvocationOutcome.VERIFICATION_FAILED:
-                return self._terminal(
-                    request,
-                    ActionStatus.VERIFICATION_FAILED,
-                    detail="provider verification failed",
-                    snapshot=snapshot,
-                    invocation=invocation,
+                ambiguous = True
+            else:
+                ambiguous = (
+                    invocation.outcome
+                    in {
+                        InvocationOutcome.UNKNOWN_RESULT,
+                        InvocationOutcome.PLUGIN_TIMEOUT,
+                        InvocationOutcome.PLUGIN_ERROR,
+                    }
+                    or invocation.dispatch_state == DispatchState.POSSIBLY_DISPATCHED
                 )
-            if (
-                invocation.outcome
-                in {
-                    InvocationOutcome.UNKNOWN_RESULT,
-                    InvocationOutcome.PLUGIN_TIMEOUT,
-                    InvocationOutcome.PLUGIN_ERROR,
-                }
-                and not request.tool.read_only
-            ):
-                return self._terminal(
-                    request,
-                    ActionStatus.UNKNOWN_RESULT,
-                    detail=invocation.error_class or "ambiguous connector result",
-                    snapshot=snapshot,
-                    invocation=invocation,
-                )
-            if invocation.outcome != InvocationOutcome.SUCCESS:
+            if invocation.outcome != InvocationOutcome.SUCCESS and not ambiguous:
                 return self._terminal(
                     request,
                     ActionStatus.FAILED,
@@ -931,7 +1100,33 @@ class ActionExecutionCoordinator:
                             snapshot=snapshot,
                             invocation=invocation,
                         )
-                verification = self._verify(request, invocation, verification_snapshot)
+                verification = self._verify(
+                    request, invocation, verification_snapshot, expected_effects
+                )
+                result_payload = {
+                    "executed": True,
+                    "effects": [item.to_payload() for item in verification.effects],
+                    "observed": verification.observed,
+                    "connector_evidence": invocation.result,
+                    "connector_outcome": invocation.outcome.value,
+                    "connector_dispatch_state": invocation.dispatch_state.value,
+                }
+                if ambiguous:
+                    result_payload["connector_ambiguity"] = True
+                effect_outcomes = [item.outcome for item in verification.effects]
+                if verification.outcome == VerificationOutcome.UNKNOWN and any(
+                    item == VerificationOutcome.VERIFIED for item in effect_outcomes
+                ):
+                    return self._terminal(
+                        request,
+                        ActionStatus.PARTIAL,
+                        detail=(
+                            "some trusted expected effects verified while others remain uncertain"
+                        ),
+                        snapshot=verification_snapshot,
+                        invocation=invocation,
+                        result=result_payload,
+                    )
                 if verification.outcome == VerificationOutcome.FAILED:
                     return self._terminal(
                         request,
@@ -939,7 +1134,7 @@ class ActionExecutionCoordinator:
                         detail=verification.detail or "observed state did not match",
                         snapshot=verification_snapshot,
                         invocation=invocation,
-                        result=verification.observed,
+                        result=result_payload,
                     )
                 if verification.outcome == VerificationOutcome.UNKNOWN:
                     return self._terminal(
@@ -948,15 +1143,25 @@ class ActionExecutionCoordinator:
                         detail=verification.detail or "verification was inconclusive",
                         snapshot=verification_snapshot,
                         invocation=invocation,
-                        result=verification.observed,
+                        result=result_payload,
                     )
             return self._terminal(
                 request,
                 ActionStatus.SUCCEEDED,
-                detail="action executed and verified",
+                detail=(
+                    "ambiguous connector result reconciled by fresh observation"
+                    if ambiguous
+                    else "action executed and verified"
+                ),
                 snapshot=verification_snapshot if not request.tool.read_only else snapshot,
                 invocation=invocation,
-                result=invocation.result if isinstance(invocation.result, dict) else None,
+                result=(
+                    result_payload
+                    if not request.tool.read_only
+                    else invocation.result
+                    if isinstance(invocation.result, dict)
+                    else None
+                ),
             )
 
 
