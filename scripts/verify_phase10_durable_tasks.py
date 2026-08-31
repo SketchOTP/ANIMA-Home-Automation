@@ -7,6 +7,7 @@ import threading
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+import httpx
 import psycopg
 
 from anima_ha.action import (
@@ -30,6 +31,7 @@ from anima_ha.agent import (
 from anima_ha.attention import AttentionProfile, AttentionRule, PostgresAttentionService, RuleAction
 from anima_ha.context import ContextBroker
 from anima_ha.db.migrate import migrate
+from anima_ha.external import external_plugin
 from anima_ha.journal import PostgresEventJournal
 from anima_ha.plugins import (
     ExternalContentTrust,
@@ -99,9 +101,37 @@ def run_agent_and_scheduled_cognition(
     trigger_id = uuid4()
     creation_packet_id = uuid4()
     now = datetime.now(UTC).replace(microsecond=0)
+    weather_values: list[int] = []
+
+    def weather_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path != "/v1/forecast":
+            raise AssertionError(f"unexpected external path: {request.url}")
+        value = 17 if not weather_values else 23
+        weather_values.append(value)
+        return httpx.Response(
+            200,
+            json={
+                "timezone": "UTC",
+                "current": {"temperature_2m": value},
+                "current_units": {"temperature_2m": "°C"},
+                "daily": {},
+            },
+            request=request,
+        )
+
     manager = PluginManager(journal=journal)
+    weather_manifest, weather_runtime = external_plugin(
+        "anima.external.weather", transport=httpx.MockTransport(weather_handler)
+    )
+    manager.register(weather_manifest, NativeRuntime(weather_runtime))
+    manager.enable(weather_manifest.plugin_id)
     manager.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
     manager.enable(TASK_MANIFEST.plugin_id)
+    weather_tool = next(
+        item
+        for item in manager.list_tools(plugin_id=weather_manifest.plugin_id)
+        if item.name == "get"
+    )
     policy = PolicyService(AllowEvaluator())
     arguments = {
         "task_type": TaskType.REASONING_DUE.value,
@@ -124,9 +154,19 @@ def run_agent_and_scheduled_cognition(
         policy_context=PolicyContext(principal_role="resident"),
         origin=RequestOrigin.AUTONOMOUS_AGENT,
     )
+    creation_store = InMemoryEpisodeStore()
     creation_runtime = AgentRuntime(
         ScriptedCodexAdapter(
             [
+                CodexTurnResult(
+                    ToolRequestDecision(
+                        weather_tool.tool_id,
+                        {"latitude": 40.0, "longitude": -74.0},
+                    ),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                ),
                 CodexTurnResult(
                     ToolRequestDecision("anima.durable-tasks.schedule", arguments),
                     TokenUsage(),
@@ -142,7 +182,7 @@ def run_agent_and_scheduled_cognition(
             ]
         ),
         manager,
-        InMemoryEpisodeStore(),
+        creation_store,
         journal=journal,
     )
     created = creation_runtime.run(initial_request)
@@ -150,6 +190,7 @@ def run_agent_and_scheduled_cognition(
     task = task_service.list_tasks(household_id)[0]
     assert task.creator_principal_id == principal_id
     assert task.creator_episode_id == created.episode.episode_id
+    assert weather_values == [17]
 
     profile = AttentionProfile(
         f"phase10.integration.{uuid4()}",
@@ -238,6 +279,15 @@ def run_agent_and_scheduled_cognition(
             [
                 CodexTurnResult(
                     ToolRequestDecision(
+                        weather_tool.tool_id,
+                        {"latitude": 40.0, "longitude": -74.0},
+                    ),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                ),
+                CodexTurnResult(
+                    ToolRequestDecision(
                         future_tool.tool_id,
                         {"resource_id": str(uuid4()), "desired_on": True},
                     ),
@@ -273,7 +323,7 @@ def run_agent_and_scheduled_cognition(
             context_packet_id=packet.context_packet_id,
             household_id=household_id,
             context_packet=packet.to_payload(),
-            tools=(future_tool,),
+            tools=(weather_tool, future_tool),
             identity=IdentityContext(household_id, None, Assurance.ANONYMOUS),
             policy_service=policy,
             policy_context=PolicyContext(),
@@ -286,6 +336,7 @@ def run_agent_and_scheduled_cognition(
     assert len(result.episodes) == 1
     assert result.episodes[0].episode.context_packet_id != creation_packet_id
     assert future_gateway.calls == 1
+    assert weather_values == [17, 23]
     future_records = list(future_action_store.records.values())
     assert len(future_records) == 1
     assert future_records[0].status == ActionStatus.SUCCEEDED
@@ -293,6 +344,7 @@ def run_agent_and_scheduled_cognition(
     print("scheduled_cognition_fresh_context=PASS")
     print("scheduled_future_action_phase9=PASS")
     print("creator_provenance_not_future_auth=PASS")
+    print("scheduled_external_read_fresh_value=PASS")
 
 
 def main() -> int:
