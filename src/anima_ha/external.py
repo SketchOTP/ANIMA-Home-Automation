@@ -14,11 +14,13 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 from urllib.parse import quote
 from uuid import UUID, uuid4
 
 import httpx
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2.credentials import Credentials
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.plugins import (
@@ -33,6 +35,7 @@ from anima_ha.plugins import (
 MAX_RESPONSE_BYTES = 1_048_576
 MAX_QUERY_LENGTH = 400
 MAX_RESULT_COUNT = 10
+GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events.owned"
 
 
 class ExternalProviderError(RuntimeError):
@@ -117,6 +120,64 @@ class ExternalAuditJournalSink:
             delivery_class=DeliveryClass.BEST_EFFORT,
         )
         return self.journal.append(event)
+
+
+class GoogleCredentialLike(Protocol):
+    token: str | None
+    valid: bool
+
+    def refresh(self, request: Any) -> None: ...
+
+
+class GoogleCalendarCredentialProvider:
+    """ANIMA-owned refreshable OAuth boundary for Calendar requests."""
+
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        refresh_token: str,
+        *,
+        credentials: GoogleCredentialLike | None = None,
+        request_factory: Callable[[], Any] = GoogleAuthRequest,
+    ) -> None:
+        if not client_id.strip() or not client_secret.strip() or not refresh_token.strip():
+            raise ExternalProviderUnavailable("Google Calendar OAuth configuration is incomplete")
+        self._request_factory = request_factory
+        if credentials is not None:
+            self._credentials = credentials
+        else:
+            self._credentials = cast(
+                GoogleCredentialLike,
+                Credentials(  # type: ignore[no-untyped-call]
+                    token=None,
+                    refresh_token=refresh_token,
+                    token_uri="https://oauth2.googleapis.com/token",
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    scopes=(GOOGLE_CALENDAR_SCOPE,),
+                ),
+            )
+
+    @property
+    def scope(self) -> str:
+        return GOOGLE_CALENDAR_SCOPE
+
+    @property
+    def credentials(self) -> GoogleCredentialLike:
+        """Expose the in-memory credential object only to adapter tests."""
+        return self._credentials
+
+    def access_token(self, *, force_refresh: bool = False) -> str:
+        if force_refresh or not self._credentials.valid:
+            try:
+                self._credentials.refresh(self._request_factory())
+            except Exception as exc:
+                raise ExternalProviderUnavailable("Google Calendar OAuth refresh failed") from exc
+        token = self._credentials.token
+        if not token:
+            raise ExternalProviderUnavailable("Google Calendar OAuth returned no access token")
+        return token
 
 
 class BoundedHttpClient:
@@ -501,14 +562,51 @@ class NtfyProvider:
 
 class GoogleCalendarProvider:
     def __init__(
-        self, client: BoundedHttpClient, access_token: str, calendar_id: str = "primary"
+        self,
+        client: BoundedHttpClient,
+        credential_provider: GoogleCalendarCredentialProvider,
+        calendar_id: str = "primary",
     ) -> None:
-        if not access_token.strip():
-            raise ExternalProviderUnavailable("Google Calendar credential is missing")
-        self.client, self.access_token, self.calendar_id = client, access_token, calendar_id
+        if not calendar_id.strip():
+            raise ValueError("Google Calendar ID is required")
+        self.client, self.credentials, self.calendar_id = client, credential_provider, calendar_id
 
-    def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.access_token}", "Accept": "application/json"}
+    def _headers(self, *, force_refresh: bool = False) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.credentials.access_token(force_refresh=force_refresh)}",
+            "Accept": "application/json",
+        }
+
+    def _request(
+        self,
+        *,
+        operation: str,
+        method: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+        json_body: dict[str, Any] | None = None,
+        retry_auth: bool = True,
+    ) -> tuple[int, dict[str, Any]]:
+        try:
+            return self.client.request(
+                operation=operation,
+                method=method,
+                path=path,
+                params=params,
+                json_body=json_body,
+                headers=self._headers(),
+            )
+        except ExternalProviderError as exc:
+            if retry_auth and "HTTP 401" in str(exc):
+                return self.client.request(
+                    operation=f"{operation}.auth_refresh_retry",
+                    method=method,
+                    path=path,
+                    params=params,
+                    json_body=json_body,
+                    headers=self._headers(force_refresh=True),
+                )
+            raise
 
     @staticmethod
     def _event(value: dict[str, Any]) -> dict[str, Any]:
@@ -534,7 +632,7 @@ class GoogleCalendarProvider:
         del timeout
         base = f"/calendar/v3/calendars/{quote(self.calendar_id, safe='')}/events"
         if name == "list_events":
-            _, payload = self.client.request(
+            _, payload = self._request(
                 operation="calendar.list_events",
                 method="GET",
                 path=base,
@@ -544,7 +642,6 @@ class GoogleCalendarProvider:
                     "maxResults": _count(arguments.get("count", 10)),
                     "singleEvents": "true",
                 },
-                headers=self._headers(),
             )
             return _result(
                 "google-calendar",
@@ -569,11 +666,10 @@ class GoogleCalendarProvider:
             "end": {"dateTime": str(arguments["end"])},
         }
         try:
-            _, existing = self.client.request(
+            _, existing = self._request(
                 operation="calendar.create_event.precheck",
                 method="GET",
                 path=f"{base}/{provider_id}",
-                headers=self._headers(),
             )
             readback = self._event(existing)
             return {
@@ -585,20 +681,18 @@ class GoogleCalendarProvider:
         except ExternalProviderError as exc:
             if "HTTP 404" not in str(exc):
                 raise
-        _, created = self.client.request(
+        _, created = self._request(
             operation="calendar.create_event",
             method="POST",
             path=base,
             params={"conferenceDataVersion": 0},
             json_body=event,
-            headers={**self._headers(), "Content-Type": "application/json"},
         )
         try:
-            _, observed = self.client.request(
+            _, observed = self._request(
                 operation="calendar.create_event.readback",
                 method="GET",
                 path=f"{base}/{provider_id}",
-                headers=self._headers(),
             )
         except (ExternalProviderError, TimeoutError):
             return {"accepted": True, "readback_verified": False, "provider_ack": created}
@@ -804,7 +898,11 @@ def external_manifests() -> tuple[PluginManifest, ...]:
                     "execution_spec": {"profile": "calendar.create_event"},
                 },
             ),
-            required_secrets=("GOOGLE_CALENDAR_ACCESS_TOKEN",),
+            required_secrets=(
+                "GOOGLE_CALENDAR_CLIENT_ID",
+                "GOOGLE_CALENDAR_CLIENT_SECRET",
+                "GOOGLE_CALENDAR_REFRESH_TOKEN",
+            ),
             network_requirements=("www.googleapis.com",),
             source="builtin:anima_ha.external",
         ),
@@ -893,6 +991,7 @@ def external_plugin(
     audit_sink: AuditSink | list[ExternalRequestAudit] | None = None,
     transport: httpx.BaseTransport | None = None,
     calendar_id: str = "primary",
+    calendar_credentials: GoogleCredentialLike | None = None,
 ) -> tuple[PluginManifest, ExternalNativePlugin]:
     """Build one built-in provider plugin without exposing provider credentials."""
     manifest = next(item for item in external_manifests() if item.plugin_id == plugin_id)
@@ -944,9 +1043,14 @@ def external_plugin(
                     "google-calendar",
                     "https://www.googleapis.com",
                     ("www.googleapis.com",),
-                    "GOOGLE_CALENDAR_ACCESS_TOKEN",
+                    "GOOGLE_CALENDAR_REFRESH_TOKEN",
                 ),
-                env["GOOGLE_CALENDAR_ACCESS_TOKEN"],
+                GoogleCalendarCredentialProvider(
+                    env["GOOGLE_CALENDAR_CLIENT_ID"],
+                    env["GOOGLE_CALENDAR_CLIENT_SECRET"],
+                    env["GOOGLE_CALENDAR_REFRESH_TOKEN"],
+                    credentials=calendar_credentials,
+                ),
                 calendar_id,
             ),
         )
@@ -970,10 +1074,22 @@ def external_plugin(
 def external_resource_gates(secrets: dict[str, str]) -> dict[str, str]:
     """Return explicit availability diagnostics without inspecting secret values."""
     return {
-        gate: "AVAILABLE" if name in secrets and bool(secrets[name]) else "EXTERNAL_RESOURCE_GATE"
-        for gate, name in {
-            "EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH": "BRAVE_SEARCH_API_KEY",
-            "EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR": "GOOGLE_CALENDAR_ACCESS_TOKEN",
-            "EXTERNAL_RESOURCE_GATE_NTFY": "NTFY_TOPIC",
-        }.items()
+        "EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH": (
+            "AVAILABLE" if bool(secrets.get("BRAVE_SEARCH_API_KEY")) else "EXTERNAL_RESOURCE_GATE"
+        ),
+        "EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR": (
+            "AVAILABLE"
+            if all(
+                bool(secrets.get(name))
+                for name in (
+                    "GOOGLE_CALENDAR_CLIENT_ID",
+                    "GOOGLE_CALENDAR_CLIENT_SECRET",
+                    "GOOGLE_CALENDAR_REFRESH_TOKEN",
+                )
+            )
+            else "EXTERNAL_RESOURCE_GATE"
+        ),
+        "EXTERNAL_RESOURCE_GATE_NTFY": (
+            "AVAILABLE" if bool(secrets.get("NTFY_TOPIC")) else "EXTERNAL_RESOURCE_GATE"
+        ),
     }

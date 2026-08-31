@@ -37,11 +37,11 @@ implemented in `src/anima_ha/external.py` and `src/anima_ha/action.py`.
 | Weather | Open-Meteo Forecast API | ADOPT / WRAP | No-key prototype endpoint; coordinates and requested fields only; CC BY 4.0 attribution; free endpoint is non-commercial and rate-limited. |
 | Web / places / products | Brave Search API | ADOPT / WRAP, credential-gated | `BRAVE_SEARCH_API_KEY` is brokered outside model input; bounded web and place endpoints; query length and count bounded; provider retention/privacy must be reviewed before deployment. |
 | Recipes | TheMealDB V1 API | ADOPT / WRAP for prototype | Official API/test key `1` is suitable for development; public appstore/production use requires supporter arrangements. |
-| Calendar | Google Calendar REST API | ADOPT / WRAP, credential-gated | Direct REST is foundational; access token is runtime-only; narrow event scopes; deterministic event ID and readback. |
+| Calendar | Google Calendar REST API | ADOPT / WRAP, credential-gated | Direct REST is foundational; ANIMA constructs refreshable `google-auth` credentials from brokered client ID, client secret, and refresh token; the selected owned-calendar scope is `https://www.googleapis.com/auth/calendar.events.owned`; deterministic event ID and readback. |
 | Calendar MCP | Google Workspace Calendar MCP | REFERENCE / DEFER | Official but Developer Preview; unnecessary MCP/OAuth lifecycle coupling while direct REST satisfies the bounded prototype. |
 | Notifications | ntfy HTTP publish API | ADOPT / WRAP | Configured host/topic/token only; synthetic public evidence uses random topic, `Cache: no`, and `Firebase: no`; provider acceptance is not human delivery. |
 | HTTP | `httpx==0.28.1` | ADOPT / WRAP | Stable line; fixed base URL, TLS, no redirects, bounded timeout/body, explicit methods, and audit. |
-| Google auth | `google-auth==2.57.0`, `google-auth-oauthlib==1.4.1` | ADOPT for Calendar commissioning path | Runtime credentials remain outside model, journal, and repository; native ARM64 execution is not yet qualified. |
+| Google auth | `google-auth==2.57.0`, `google-auth-oauthlib==1.4.1` | ADOPT for Calendar runtime/commissioning boundary | ANIMA refreshes ephemeral access tokens internally from brokered OAuth references; runtime credentials remain outside model, journal, and repository; native ARM64 execution is not yet qualified. |
 | Retailer cart / checkout | None | DEFER | No stable, defensible public consumer cart API was adopted; browser automation, private endpoints, cookie reuse, and checkout/payment are prohibited. |
 
 ## Normalized result and egress audit
@@ -65,13 +65,25 @@ headers, and provider query parameters are not model tools.
 
 ## Credential gates and live evidence
 
-Provider availability is independent. Missing Brave or Google credentials are
-reported as `EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH` or
-`EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR`; they do not disable weather, recipes,
-or other providers. The live harness performs synthetic Open-Meteo and
-TheMealDB reads and one synthetic ntfy send when reachable. Brave and Google
-are live only when their ANIMA-owned credentials are configured; otherwise
-contract tests are the highest evidence and no live claim is made.
+Provider availability is independent. Missing Brave credentials are reported as
+`EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH`. Calendar requires all three brokered
+references (`GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, and
+`GOOGLE_CALENDAR_REFRESH_TOKEN`) and otherwise reports
+`EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR`. These gates do not disable weather,
+recipes, or other configured providers. The live harness reports independent
+web/place/product Brave results and Calendar list/create-readback results when
+credentials are present; otherwise it reports only the affected gate.
+
+The actual AgentRuntime uses one broad catalogue across deterministic weather,
+recipe, web research, and place scenarios. External results remain
+`EXTERNAL_UNTRUSTED` through the subsequent cognition turn, and a durable task
+follow-up uses a new context packet and a fresh external read. The deterministic
+fixture is not a claim of live Luna behavior or a credentialed Google account.
+
+Calendar commissioning is intentionally not a new secret-storage subsystem.
+Operator credentials remain supplied through the existing SecretBroker
+boundary; no access or refresh token is printed, persisted in the repository,
+written to Notion, or stored in the Event Journal.
 
 ## Trust and failure behavior
 

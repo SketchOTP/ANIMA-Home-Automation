@@ -8,6 +8,8 @@ from uuid import UUID, uuid4
 from anima_ha.external import (
     BoundedHttpClient,
     BraveProvider,
+    GoogleCalendarCredentialProvider,
+    GoogleCalendarProvider,
     NtfyProvider,
     OpenMeteoProvider,
     TheMealDBProvider,
@@ -77,11 +79,76 @@ def main() -> int:
             ),
             os.environ["BRAVE_SEARCH_API_KEY"],
         )
-        result = brave.invoke("search", {"query": "synthetic Phase 11 qualification"}, 10)
-        assert result["trust"] == "EXTERNAL_UNTRUSTED"
-        print("brave_live_credentialed=PASS")
+        for label, operation, arguments in (
+            (
+                "brave_web_live",
+                "search",
+                {"query": "synthetic Phase 11 public web qualification"},
+            ),
+            (
+                "brave_places_live",
+                "search_places",
+                {"query": "public library Newark NJ", "count": 3},
+            ),
+            (
+                "brave_products_live",
+                "search_products",
+                {"query": "synthetic reusable water bottle product discovery", "count": 3},
+            ),
+        ):
+            result = brave.invoke(operation, arguments, 10)
+            assert result["trust"] == "EXTERNAL_UNTRUSTED"
+            print(f"{label}=PASS class=LIVE_CREDENTIALED")
     else:
-        print("brave_live_credentialed=EXTERNAL_RESOURCE_GATE")
+        for label in ("brave_web_live", "brave_places_live", "brave_products_live"):
+            print(f"{label}=EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH class=EXTERNAL_RESOURCE_GATE")
+
+    google_names = (
+        "GOOGLE_CALENDAR_CLIENT_ID",
+        "GOOGLE_CALENDAR_CLIENT_SECRET",
+        "GOOGLE_CALENDAR_REFRESH_TOKEN",
+    )
+    if all(os.environ.get(name, "").strip() for name in google_names):
+        calendar = GoogleCalendarProvider(
+            BoundedHttpClient(
+                provider="google-calendar",
+                base_url="https://www.googleapis.com",
+                allowed_hosts=("www.googleapis.com",),
+                audit_sink=audits,
+                credential_reference="GOOGLE_CALENDAR_REFRESH_TOKEN",
+            ),
+            GoogleCalendarCredentialProvider(
+                os.environ["GOOGLE_CALENDAR_CLIENT_ID"],
+                os.environ["GOOGLE_CALENDAR_CLIENT_SECRET"],
+                os.environ["GOOGLE_CALENDAR_REFRESH_TOKEN"],
+            ),
+            os.environ.get("GOOGLE_CALENDAR_ID", "primary"),
+        )
+        context = ProviderExecutionContext(UUID(int=3), "anima-phase11-calendar-live")
+        listed = calendar.invoke("list_events", {"count": 5}, 10)
+        assert listed["trust"] == "EXTERNAL_UNTRUSTED"
+        print("google_calendar_list_live=PASS class=LIVE_CREDENTIALED")
+        created = calendar.invoke_with_context(
+            "create_event",
+            {
+                "summary": "ANIMA Phase 11 synthetic qualification",
+                "start": "2026-09-01T10:00:00Z",
+                "end": "2026-09-01T10:05:00Z",
+            },
+            10,
+            context,
+        )
+        assert created["readback_verified"] is True
+        print("google_calendar_create_readback_live=PASS class=LIVE_CREDENTIALED")
+    else:
+        print(
+            "google_calendar_list_live=EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR "
+            "class=EXTERNAL_RESOURCE_GATE"
+        )
+        print(
+            "google_calendar_create_readback_live=EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR "
+            "class=EXTERNAL_RESOURCE_GATE"
+        )
     print(f"external_audit_records={len(audits)}")
     return 0
 

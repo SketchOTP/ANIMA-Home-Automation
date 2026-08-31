@@ -15,11 +15,14 @@ from anima_ha.action import (
 )
 from anima_ha.events import EventEnvelope
 from anima_ha.external import (
+    GOOGLE_CALENDAR_SCOPE,
     BoundedHttpClient,
     BraveProvider,
     ExternalAuditJournalSink,
     ExternalProviderError,
+    ExternalProviderUnavailable,
     ExternalRequestAudit,
+    GoogleCalendarCredentialProvider,
     GoogleCalendarProvider,
     NtfyProvider,
     OpenMeteoProvider,
@@ -223,7 +226,16 @@ def test_calendar_readback_and_notification_receipt_are_explicitly_profiled() ->
             allowed_hosts=("www.googleapis.com",),
             transport=httpx.MockTransport(calendar_handler),
         ),
-        "access-token-not-logged",
+        GoogleCalendarCredentialProvider(
+            "client-id-not-logged",
+            "client-secret-not-logged",
+            "refresh-token-not-logged",
+            credentials=type(
+                "ValidCredentials",
+                (),
+                {"token": "access-token-not-logged", "valid": True},
+            )(),
+        ),
     )
     result = calendar.invoke_with_context(
         "create_event",
@@ -288,9 +300,19 @@ def test_external_write_uses_phase9_and_persists_observation_class() -> None:
         return response({"id": request.url.path.rsplit("/", 1)[-1]}, request)
 
     manifest, runtime = external_plugin(
-        "anima.external.calendar", transport=httpx.MockTransport(calendar_handler)
+        "anima.external.calendar",
+        transport=httpx.MockTransport(calendar_handler),
+        calendar_credentials=FakeGoogleCredentials(token="cached", valid=True),
     )
-    manager = PluginManager(secret_broker=SecretBroker({"GOOGLE_CALENDAR_ACCESS_TOKEN": "x"}))
+    manager = PluginManager(
+        secret_broker=SecretBroker(
+            {
+                "GOOGLE_CALENDAR_CLIENT_ID": "client-id",
+                "GOOGLE_CALENDAR_CLIENT_SECRET": "client-secret",
+                "GOOGLE_CALENDAR_REFRESH_TOKEN": "refresh-token",
+            }
+        )
+    )
     manager.register(manifest, NativeRuntime(runtime))
     manager.enable(manifest.plugin_id)
     tool = next(
@@ -332,9 +354,105 @@ def test_provider_gates_are_independent_and_credentials_are_not_model_inputs() -
     assert gates["EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH"] == "AVAILABLE"
     assert gates["EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR"] == "EXTERNAL_RESOURCE_GATE"
     assert gates["EXTERNAL_RESOURCE_GATE_NTFY"] == "EXTERNAL_RESOURCE_GATE"
+    assert (
+        external_resource_gates(
+            {
+                "GOOGLE_CALENDAR_CLIENT_ID": "client",
+                "GOOGLE_CALENDAR_CLIENT_SECRET": "secret",
+                "GOOGLE_CALENDAR_REFRESH_TOKEN": "refresh",
+            }
+        )["EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR"]
+        == "AVAILABLE"
+    )
     calendar_manifest = next(
         item for item in external_manifests() if item.plugin_id == "anima.external.calendar"
     )
     create = next(item for item in calendar_manifest.tools if item["name"] == "create_event")
     assert "access_token" not in create["input_schema"]["properties"]
     assert "calendar_id" not in create["input_schema"]["properties"]
+
+
+class FakeGoogleCredentials:
+    def __init__(self, *, token: str | None, valid: bool, refreshed_token: str = "fresh") -> None:
+        self.token = token
+        self.valid = valid
+        self.refreshed_token = refreshed_token
+        self.refresh_calls = 0
+        self.refresh_request: object | None = None
+        self.fail = False
+
+    def refresh(self, request: object) -> None:
+        self.refresh_calls += 1
+        self.refresh_request = request
+        if self.fail:
+            raise RuntimeError("revoked refresh credential")
+        self.token = self.refreshed_token
+        self.valid = True
+
+
+def test_google_calendar_refreshable_oauth_cached_expired_restart_and_revoked_paths() -> None:
+    cached = FakeGoogleCredentials(token="cached", valid=True)
+    provider = GoogleCalendarCredentialProvider(
+        "client", "secret", "refresh", credentials=cached, request_factory=lambda: "request"
+    )
+    assert provider.scope == GOOGLE_CALENDAR_SCOPE
+    assert provider.access_token() == "cached"
+    assert cached.refresh_calls == 0
+
+    expired = FakeGoogleCredentials(token=None, valid=False, refreshed_token="refreshed")
+    provider = GoogleCalendarCredentialProvider(
+        "client", "secret", "refresh", credentials=expired, request_factory=lambda: "request"
+    )
+    assert provider.access_token() == "refreshed"
+    assert expired.refresh_calls == 1
+    assert expired.refresh_request == "request"
+
+    # A newly constructed provider can refresh from the same brokered secret
+    # references; no access token is persisted by ANIMA.
+    restarted = FakeGoogleCredentials(token=None, valid=False, refreshed_token="after-restart")
+    restarted_provider = GoogleCalendarCredentialProvider(
+        "client", "secret", "refresh", credentials=restarted
+    )
+    assert restarted_provider.access_token() == "after-restart"
+    assert restarted.refresh_calls == 1
+
+    revoked = FakeGoogleCredentials(token=None, valid=False)
+    revoked.fail = True
+    with pytest.raises(ExternalProviderUnavailable, match="refresh failed"):
+        GoogleCalendarCredentialProvider(
+            "client", "secret", "refresh", credentials=revoked
+        ).access_token()
+
+
+def test_google_calendar_401_refresh_retries_same_request_identity() -> None:
+    calls: list[tuple[str, str, str]] = []
+    credentials = FakeGoogleCredentials(token="expired-at-provider", valid=True)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append((request.method, str(request.url), request.headers["authorization"]))
+        if len(calls) == 1:
+            return httpx.Response(401, json={"error": "expired"}, request=request)
+        return response({"id": "same-event-id"}, request)
+
+    calendar = GoogleCalendarProvider(
+        BoundedHttpClient(
+            provider="google-calendar",
+            base_url="https://www.googleapis.com",
+            allowed_hosts=("www.googleapis.com",),
+            transport=httpx.MockTransport(handler),
+        ),
+        GoogleCalendarCredentialProvider(
+            "client",
+            "secret",
+            "refresh",
+            credentials=credentials,
+            request_factory=lambda: "request",
+        ),
+    )
+    result = calendar.invoke("list_events", {"count": 1}, 1)
+    assert result["trust"] == ExternalContentTrust.EXTERNAL_UNTRUSTED.value
+    assert len(calls) == 2
+    assert calls[0][0:2] == calls[1][0:2]
+    assert calls[0][2] == "Bearer expired-at-provider"
+    assert calls[1][2] == "Bearer fresh"
+    assert credentials.refresh_calls == 1
