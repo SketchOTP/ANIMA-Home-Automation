@@ -71,8 +71,8 @@ and lease recovery.
   the focused test and immediate full rerun passed, with no source correction.
 - The prior governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516`
   is superseded for this correction. Final governed checkpoint
-  `6e31ee3da18fecad3cb46c3cd4671ee20dae7345` passed hosted CI
-  `33428643340`. Phase 10 remains
+  `ae18833e2ddffd30b17b613248d1c2206062b66a` passed hosted CI
+  `33428938215`. Phase 10 remains
   `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
 
 ## Limits
