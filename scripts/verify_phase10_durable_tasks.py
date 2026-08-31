@@ -9,6 +9,13 @@ from uuid import uuid4
 
 import psycopg
 
+from anima_ha.action import (
+    ActionExecutionCoordinator,
+    ActionStatus,
+    InMemoryActionStore,
+    InMemoryResourceLocker,
+    TruthSnapshot,
+)
 from anima_ha.agent import (
     AgentRuntime,
     CodexTurnResult,
@@ -24,7 +31,15 @@ from anima_ha.attention import AttentionProfile, AttentionRule, PostgresAttentio
 from anima_ha.context import ContextBroker
 from anima_ha.db.migrate import migrate
 from anima_ha.journal import PostgresEventJournal
-from anima_ha.plugins import NativeRuntime, PluginManager
+from anima_ha.plugins import (
+    ExternalContentTrust,
+    Idempotency,
+    InvocationOutcome,
+    InvocationResult,
+    NativeRuntime,
+    PluginManager,
+    ToolDescriptor,
+)
 from anima_ha.policy import Assurance, IdentityContext, PolicyContext, PolicyService, RequestOrigin
 from anima_ha.tasks import (
     TASK_MANIFEST,
@@ -166,20 +181,82 @@ def run_agent_and_scheduled_cognition(
             (consumer_name, profile.profile_version, journal_position[0]),
         )
         connection.commit()
+
+    class FutureActionGateway:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def invoke(
+            self, tool_id: str, arguments: dict[str, object], **kwargs: object
+        ) -> InvocationResult:
+            del arguments, kwargs
+            self.calls += 1
+            return InvocationResult(
+                InvocationOutcome.SUCCESS,
+                tool_id,
+                "anima.synthetic-provider",
+                "1.0.0",
+                1.0,
+                result={"acknowledged": True},
+            )
+
+    future_tool = ToolDescriptor(
+        tool_id="anima.synthetic.set_power",
+        plugin_id="anima.synthetic-provider",
+        capability_id="home.control",
+        name="set_power",
+        description="Synthetic future consequential action",
+        input_schema={"type": "object"},
+        output_schema={"type": "object"},
+        risk_class="LOW_RISK_HOME_CONTROL",
+        semantic_action="set_power",
+        read_only=False,
+        idempotency=Idempotency.KEYED,
+        timeout=2.0,
+        verification_requirement="PROVIDER_STATE_MATCH",
+        external_content_trust=ExternalContentTrust.PLUGIN_TRUSTED,
+        availability=True,
+        version="1.0.0",
+        provenance="phase10-synthetic",
+        execution_spec={"profile": "set_power"},
+    )
+    future_gateway = FutureActionGateway()
+    future_action_store = InMemoryActionStore()
+    future_action_executor = ActionExecutionCoordinator(
+        future_gateway,
+        future_action_store,
+        InMemoryResourceLocker(),
+    )
+    future_state = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
     due_runtime = AgentRuntime(
         ScriptedCodexAdapter(
             [
                 CodexTurnResult(
-                    FinalDecision("DONE", False, "", "fresh due-time cognition"),
+                    ToolRequestDecision(
+                        future_tool.tool_id,
+                        {"resource_id": str(uuid4()), "desired_on": True},
+                    ),
                     TokenUsage(),
                     1.0,
                     (),
-                )
+                ),
+                CodexTurnResult(
+                    FinalDecision("DONE", False, "", "fresh due-time cognition and action"),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                ),
             ]
         ),
         manager,
         PostgresEpisodeStore(DATABASE_URL),
         journal=journal,
+        action_executor=future_action_executor,
     )
     bridge = ScheduledCognitionBridge(
         DurableTaskDispatcher(store, journal, worker_id=f"phase10-cognition-{uuid4()}"),
@@ -196,19 +273,25 @@ def run_agent_and_scheduled_cognition(
             context_packet_id=packet.context_packet_id,
             household_id=household_id,
             context_packet=packet.to_payload(),
-            tools=(),
+            tools=(future_tool,),
             identity=IdentityContext(household_id, None, Assurance.ANONYMOUS),
             policy_service=policy,
             policy_context=PolicyContext(),
             origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+            action_refresher=lambda resources: next(future_state),
         ),
         now=now,
     )
     assert result.dispatch.dispatched == 1
     assert len(result.episodes) == 1
     assert result.episodes[0].episode.context_packet_id != creation_packet_id
+    assert future_gateway.calls == 1
+    future_records = list(future_action_store.records.values())
+    assert len(future_records) == 1
+    assert future_records[0].status == ActionStatus.SUCCEEDED
     print("agent_task_schedule=PASS")
     print("scheduled_cognition_fresh_context=PASS")
+    print("scheduled_future_action_phase9=PASS")
     print("creator_provenance_not_future_auth=PASS")
 
 
