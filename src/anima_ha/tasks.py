@@ -32,11 +32,13 @@ from anima_ha.plugins import (
     MANIFEST_VERSION,
     ExternalContentTrust,
     Idempotency,
+    InvocationContext,
     PluginManifest,
     PluginValidationError,
     RuntimeKind,
     TrustClass,
 )
+from anima_ha.policy import RequestOrigin
 
 TASK_NAMESPACE = UUID("a8324d4d-74ad-47d0-87fb-5c3e6de25013")
 TASK_EVENT_NAMESPACE = UUID("86f7cc5e-93cc-4b01-9b48-dbe2e6a3d89e")
@@ -70,6 +72,10 @@ class TaskNotFound(KeyError):
 
 class TaskConflict(RuntimeError):
     """Raised when an idempotency key is reused for different task data."""
+
+
+class TaskClaimLost(TaskConflict):
+    """Raised when a worker no longer owns a live task-run lease."""
 
 
 class TaskType(StrEnum):
@@ -471,7 +477,13 @@ class TaskStore(Protocol):
     ) -> DurableTaskRun: ...
 
     def mark_dispatched(
-        self, run_id: UUID, *, source_event_id: str, outcome: dict[str, Any], now: datetime | None
+        self,
+        run_id: UUID,
+        *,
+        worker_id: str,
+        source_event_id: str,
+        outcome: dict[str, Any],
+        now: datetime | None,
     ) -> DurableTaskRun: ...
 
     def cancel_run(self, run_id: UUID, now: datetime | None) -> DurableTaskRun: ...
@@ -553,8 +565,22 @@ class InMemoryTaskStore:
     def cancel(self, task_id: UUID, now: datetime) -> DurableTask:
         with self._lock:
             task = self.get(task_id)
-            if task.status not in {TaskStatus.COMPLETED, TaskStatus.CANCELLED}:
-                return self._replace_task(task, status=TaskStatus.CANCELLED, now=_utc(now, "now"))
+            at = _utc(now, "now")
+            if task.status in {TaskStatus.ACTIVE, TaskStatus.PAUSED}:
+                task = self._replace_task(task, status=TaskStatus.CANCELLED, now=at)
+                for run_id, run in self.runs.items():
+                    if run.task_id == task_id and run.status in {
+                        TaskRunStatus.PENDING,
+                        TaskRunStatus.CLAIMED,
+                    }:
+                        self.runs[run_id] = replace(
+                            run,
+                            status=TaskRunStatus.CANCELLED,
+                            completed_at=at,
+                            claimed_by=None,
+                            lease_expires_at=None,
+                        )
+                return task
             return task
 
     def pause(self, task_id: UUID, now: datetime) -> DurableTask:
@@ -720,8 +746,13 @@ class InMemoryTaskStore:
         with self._lock:
             run = self.get_run(run_id)
             task = self.get(run.task_id)
-            if run.status not in {TaskRunStatus.CLAIMED, TaskRunStatus.PENDING}:
-                return run
+            if (
+                run.status != TaskRunStatus.CLAIMED
+                or run.claimed_by != worker_id
+                or run.lease_expires_at is None
+                or run.lease_expires_at <= at
+            ):
+                raise TaskClaimLost(f"worker lost claim for task run {run_id}")
             if run.attempt > task.max_attempts:
                 raise TaskConflict("task run exceeded maximum attempts")
             updated = replace(
@@ -736,11 +767,24 @@ class InMemoryTaskStore:
             return updated
 
     def mark_dispatched(
-        self, run_id: UUID, *, source_event_id: str, outcome: dict[str, Any], now: datetime | None
+        self,
+        run_id: UUID,
+        *,
+        worker_id: str,
+        source_event_id: str,
+        outcome: dict[str, Any],
+        now: datetime | None,
     ) -> DurableTaskRun:
         at = _utc(now or datetime.now(UTC), "now")
         with self._lock:
             run = self.get_run(run_id)
+            if (
+                run.status != TaskRunStatus.DISPATCHING
+                or run.claimed_by != worker_id
+                or run.lease_expires_at is None
+                or run.lease_expires_at <= at
+            ):
+                raise TaskClaimLost(f"worker lost dispatch claim for task run {run_id}")
             updated = replace(
                 run,
                 status=TaskRunStatus.COMPLETED,
@@ -756,7 +800,11 @@ class InMemoryTaskStore:
         at = _utc(now or datetime.now(UTC), "now")
         with self._lock:
             run = self.get_run(run_id)
-            if run.status in {TaskRunStatus.CLAIMED, TaskRunStatus.PENDING}:
+            if run.status in {
+                TaskRunStatus.PENDING,
+                TaskRunStatus.CLAIMED,
+                TaskRunStatus.DISPATCHING,
+            }:
                 run = replace(run, status=TaskRunStatus.CANCELLED, completed_at=at)
                 self.runs[run_id] = run
             return run
@@ -902,28 +950,66 @@ class PostgresTaskStore:
         status: TaskStatus,
         now: datetime,
         *,
+        allowed_from: tuple[TaskStatus, ...],
         next_run_at: datetime | None = None,
     ) -> DurableTask:
+        if not allowed_from:
+            raise TaskValidationError("a lifecycle transition requires an allowed source state")
+        placeholders = ",".join("%s" for _ in allowed_from)
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
-                """
+                f"""
                 UPDATE anima_durable_tasks SET status=%s, updated_at=%s,
                     next_run_at=COALESCE(%s, next_run_at)
-                WHERE task_id=%s RETURNING *
+                WHERE task_id=%s AND status IN ({placeholders}) RETURNING *
                 """,
-                (status.value, _utc(now, "now"), next_run_at, task_id),
+                (status.value, _utc(now, "now"), next_run_at, task_id)
+                + tuple(item.value for item in allowed_from),
             )
             row = cursor.fetchone()
+            if row is None:
+                cursor.execute("SELECT * FROM anima_durable_tasks WHERE task_id=%s", (task_id,))
+                row = cursor.fetchone()
             if row is None:
                 raise TaskNotFound(task_id)
             connection.commit()
         return _task_from_row(dict(row))
 
     def cancel(self, task_id: UUID, now: datetime) -> DurableTask:
-        return self._set_status(task_id, TaskStatus.CANCELLED, now)
+        at = _utc(now, "now")
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_durable_tasks SET status='CANCELLED', updated_at=%s
+                WHERE task_id=%s AND status IN ('ACTIVE','PAUSED') RETURNING *
+                """,
+                (at, task_id),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                cursor.execute("SELECT * FROM anima_durable_tasks WHERE task_id=%s", (task_id,))
+                row = cursor.fetchone()
+            if row is None:
+                raise TaskNotFound(task_id)
+            cursor.execute(
+                """
+                UPDATE anima_durable_task_runs
+                SET status='CANCELLED', completed_at=%s, claimed_by=NULL,
+                    claimed_at=NULL, lease_expires_at=NULL
+                WHERE task_id=%s AND status IN ('PENDING','CLAIMED')
+                """,
+                (at, task_id),
+            )
+            connection.commit()
+        return _task_from_row(dict(row))
 
     def pause(self, task_id: UUID, now: datetime) -> DurableTask:
-        return self._set_status(task_id, TaskStatus.PAUSED, now)
+        return self._set_status(
+            task_id,
+            TaskStatus.PAUSED,
+            now,
+            allowed_from=(TaskStatus.ACTIVE,),
+        )
 
     def resume(self, task_id: UUID, now: datetime) -> DurableTask:
         task = self.get(task_id)
@@ -931,7 +1017,13 @@ class PostgresTaskStore:
         next_run = task.next_run_at
         if task.schedule.kind != ScheduleKind.ONCE and next_run <= at:
             next_run = _next_task_run(task, at) or at
-        return self._set_status(task_id, TaskStatus.ACTIVE, at, next_run_at=next_run)
+        return self._set_status(
+            task_id,
+            TaskStatus.ACTIVE,
+            at,
+            allowed_from=(TaskStatus.PAUSED,),
+            next_run_at=next_run,
+        )
 
     def claim_due(
         self, now: datetime | None, worker_id: str, lease_seconds: int, limit: int
@@ -1111,18 +1203,23 @@ class PostgresTaskStore:
         return count
 
     def begin_dispatch(self, run_id: UUID, worker_id: str, now: datetime | None) -> DurableTaskRun:
-        at = _utc(now or datetime.now(UTC), "now")
         with self._connect() as connection, connection.cursor() as cursor:
+            if now is None:
+                cursor.execute("SELECT now() AS database_now")
+                database_now = cursor.fetchone()
+                assert database_now is not None
+                at = _utc(database_now["database_now"], "database_now")
+            else:
+                at = _utc(now, "now")
             cursor.execute(
                 """
                 UPDATE anima_durable_task_runs SET status='DISPATCHING',
-                    claimed_by=COALESCE(claimed_by,%s), claimed_at=COALESCE(claimed_at,%s),
-                    started_at=COALESCE(started_at,%s),
-                    lease_expires_at=COALESCE(lease_expires_at,%s)
-                WHERE run_id=%s AND status IN ('CLAIMED','PENDING')
+                    started_at=%s
+                WHERE run_id=%s AND status='CLAIMED'
+                  AND claimed_by=%s AND lease_expires_at > %s
                 RETURNING *
                 """,
-                (worker_id, at, at, at + timedelta(seconds=60), run_id),
+                (at, run_id, worker_id, at),
             )
             row = cursor.fetchone()
             if row is None:
@@ -1130,26 +1227,60 @@ class PostgresTaskStore:
                 row = cursor.fetchone()
             if row is None:
                 raise TaskNotFound(run_id)
+            if (
+                str(row["status"]) != TaskRunStatus.DISPATCHING.value
+                or str(row["claimed_by"]) != worker_id
+            ):
+                raise TaskClaimLost(f"worker lost claim for task run {run_id}")
             connection.commit()
         return _run_from_row(dict(row))
 
     def mark_dispatched(
-        self, run_id: UUID, *, source_event_id: str, outcome: dict[str, Any], now: datetime | None
+        self,
+        run_id: UUID,
+        *,
+        worker_id: str,
+        source_event_id: str,
+        outcome: dict[str, Any],
+        now: datetime | None,
     ) -> DurableTaskRun:
-        at = _utc(now or datetime.now(UTC), "now")
         with self._connect() as connection, connection.cursor() as cursor:
+            if now is None:
+                cursor.execute("SELECT now() AS database_now")
+                database_now = cursor.fetchone()
+                assert database_now is not None
+                at = _utc(database_now["database_now"], "database_now")
+            else:
+                at = _utc(now, "now")
             cursor.execute(
                 """
                 UPDATE anima_durable_task_runs SET status='COMPLETED',
                     source_event_id=%s, completed_at=%s, outcome=%s::jsonb,
                     lease_expires_at=NULL
-                WHERE run_id=%s RETURNING *
+                WHERE run_id=%s AND status='DISPATCHING'
+                  AND claimed_by=%s AND lease_expires_at > %s
+                RETURNING *
                 """,
-                (source_event_id, at, json.dumps(outcome, sort_keys=True), run_id),
+                (
+                    source_event_id,
+                    at,
+                    json.dumps(outcome, sort_keys=True),
+                    run_id,
+                    worker_id,
+                    at,
+                ),
             )
             row = cursor.fetchone()
             if row is None:
+                cursor.execute("SELECT * FROM anima_durable_task_runs WHERE run_id=%s", (run_id,))
+                row = cursor.fetchone()
+            if row is None:
                 raise TaskNotFound(run_id)
+            if (
+                str(row["status"]) != TaskRunStatus.COMPLETED.value
+                or str(row["claimed_by"]) != worker_id
+            ):
+                raise TaskClaimLost(f"worker lost dispatch claim for task run {run_id}")
             connection.commit()
         return _run_from_row(dict(row))
 
@@ -1159,7 +1290,7 @@ class PostgresTaskStore:
             cursor.execute(
                 """
                 UPDATE anima_durable_task_runs SET status='CANCELLED', completed_at=%s
-                WHERE run_id=%s AND status IN ('PENDING','CLAIMED') RETURNING *
+                WHERE run_id=%s AND status IN ('PENDING','CLAIMED','DISPATCHING') RETURNING *
                 """,
                 (at, run_id),
             )
@@ -1249,6 +1380,7 @@ class DurableTaskDispatcher:
                 self.event_sink.append(event)
                 self.store.mark_dispatched(
                     current.run_id,
+                    worker_id=self.worker_id,
                     source_event_id=event.event_id,
                     outcome={"event_id": event.event_id, "event_type": event.event_type},
                     now=now,
@@ -1313,7 +1445,18 @@ class TaskService:
         stored = self.store.create(task)
         if stored.task_id == task.task_id:
             self._audit(
-                "task.created", stored, {"creation_idempotency_key": creation_idempotency_key}
+                "task.created",
+                stored,
+                {
+                    "creation_idempotency_key": creation_idempotency_key,
+                    "creator_principal_id": (
+                        str(stored.creator_principal_id) if stored.creator_principal_id else None
+                    ),
+                    "creator_episode_id": (
+                        str(stored.creator_episode_id) if stored.creator_episode_id else None
+                    ),
+                    "provenance": stored.provenance,
+                },
             )
         return stored
 
@@ -1329,16 +1472,22 @@ class TaskService:
         return self.store.list_runs(task_id)
 
     def cancel(self, task_id: UUID, *, now: datetime | None = None) -> TaskMutationResult:
+        before = self.store.get(task_id)
         task = self.store.cancel(task_id, _utc(now or datetime.now(UTC), "now"))
-        return TaskMutationResult(task, self._audit("task.cancelled", task, {}))
+        event_id = self._audit("task.cancelled", task, {}) if task != before else None
+        return TaskMutationResult(task, event_id)
 
     def pause(self, task_id: UUID, *, now: datetime | None = None) -> TaskMutationResult:
+        before = self.store.get(task_id)
         task = self.store.pause(task_id, _utc(now or datetime.now(UTC), "now"))
-        return TaskMutationResult(task, self._audit("task.paused", task, {}))
+        event_id = self._audit("task.paused", task, {}) if task != before else None
+        return TaskMutationResult(task, event_id)
 
     def resume(self, task_id: UUID, *, now: datetime | None = None) -> TaskMutationResult:
+        before = self.store.get(task_id)
         task = self.store.resume(task_id, _utc(now or datetime.now(UTC), "now"))
-        return TaskMutationResult(task, self._audit("task.resumed", task, {}))
+        event_id = self._audit("task.resumed", task, {}) if task != before else None
+        return TaskMutationResult(task, event_id)
 
     def _audit(self, event_type: str, task: DurableTask, payload: dict[str, Any]) -> str | None:
         if self.event_sink is None:
@@ -1380,23 +1529,58 @@ class TaskNativePlugin:
     def invoke_for_household(
         self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID
     ) -> Any:
+        legacy_digest = hashlib.sha256(
+            json.dumps(arguments, sort_keys=True, separators=(",", ":"), default=str).encode()
+        ).hexdigest()
+        return self.invoke_with_invocation_context(
+            name,
+            arguments,
+            timeout,
+            InvocationContext(
+                household_id=household_id,
+                principal_id=None,
+                episode_id=None,
+                tool_request_id=uuid4(),
+                ordinal=1,
+                system_idempotency_key=f"legacy-task:{legacy_digest}",
+                origin=RequestOrigin.TESTING,
+            ),
+        )
+
+    def invoke_with_invocation_context(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        invocation_context: InvocationContext,
+    ) -> Any:
         del timeout
+        if any(
+            key in arguments
+            for key in {
+                "creator_principal_id",
+                "creator_episode_id",
+                "creation_idempotency_key",
+            }
+        ):
+            raise PluginValidationError("task provenance and idempotency are system-owned")
         if name == "schedule":
             schedule = TaskSchedule.from_payload(dict(arguments["schedule"]))
             task = self.service.create(
-                household_id=household_id,
+                household_id=invocation_context.household_id,
                 task_type=TaskType(str(arguments["task_type"])),
                 title=str(arguments["title"]),
                 payload=dict(arguments["payload"]),
                 schedule=schedule,
-                creation_idempotency_key=str(arguments["creation_idempotency_key"]),
-                creator_principal_id=UUID(str(arguments["creator_principal_id"]))
-                if arguments.get("creator_principal_id")
-                else None,
-                creator_episode_id=UUID(str(arguments["creator_episode_id"]))
-                if arguments.get("creator_episode_id")
-                else None,
-                provenance={"created_via": "tasks.schedule"},
+                creation_idempotency_key=invocation_context.system_idempotency_key,
+                creator_principal_id=invocation_context.principal_id,
+                creator_episode_id=invocation_context.episode_id,
+                provenance={
+                    "created_via": "tasks.schedule",
+                    "origin": invocation_context.origin.value,
+                    "tool_request_id": str(invocation_context.tool_request_id),
+                    "invocation_ordinal": invocation_context.ordinal,
+                },
             )
             return {"task": task.to_payload()}
         if name == "list":
@@ -1404,17 +1588,19 @@ class TaskNativePlugin:
             return {
                 "tasks": [
                     task.to_payload()
-                    for task in self.service.list_tasks(household_id, status=status)
+                    for task in self.service.list_tasks(
+                        invocation_context.household_id, status=status
+                    )
                 ]
             }
         if name == "get":
             task = self.service.get(UUID(str(arguments["task_id"])))
-            if task.household_id != household_id:
+            if task.household_id != invocation_context.household_id:
                 raise TaskNotFound(arguments["task_id"])
             return {"task": task.to_payload()}
         task_id = UUID(str(arguments["task_id"]))
         task = self.service.get(task_id)
-        if task.household_id != household_id:
+        if task.household_id != invocation_context.household_id:
             raise TaskNotFound(arguments["task_id"])
         mutation = {
             "cancel": self.service.cancel,
@@ -1430,15 +1616,12 @@ def _task_input_schema(name: str) -> dict[str, Any]:
     if name == "schedule":
         return {
             "type": "object",
-            "required": ["task_type", "title", "payload", "schedule", "creation_idempotency_key"],
+            "required": ["task_type", "title", "payload", "schedule"],
             "properties": {
                 "task_type": {"type": "string", "enum": [item.value for item in TaskType]},
                 "title": {"type": "string", "minLength": 1, "maxLength": MAX_TASK_TITLE},
                 "payload": {"type": "object"},
                 "schedule": {"type": "object"},
-                "creation_idempotency_key": {"type": "string", "minLength": 1, "maxLength": 200},
-                "creator_principal_id": {"type": ["string", "null"]},
-                "creator_episode_id": {"type": ["string", "null"]},
             },
             "additionalProperties": False,
         }
@@ -1485,7 +1668,7 @@ TASK_MANIFEST = PluginManifest(
                 "schedule",
                 "Schedule a future cognition opportunity",
                 "schedule_task",
-                "EXTERNAL_SIDE_EFFECT",
+                "LOW_RISK_HOME_CONTROL",
                 False,
             ),
             ("list", "List household durable tasks", "list_tasks", "READ_ONLY", True),
@@ -1494,21 +1677,21 @@ TASK_MANIFEST = PluginManifest(
                 "cancel",
                 "Cancel a household durable task",
                 "cancel_task",
-                "EXTERNAL_SIDE_EFFECT",
+                "LOW_RISK_HOME_CONTROL",
                 False,
             ),
             (
                 "pause",
                 "Pause a household durable task",
                 "pause_task",
-                "EXTERNAL_SIDE_EFFECT",
+                "LOW_RISK_HOME_CONTROL",
                 False,
             ),
             (
                 "resume",
                 "Resume a household durable task",
                 "resume_task",
-                "EXTERNAL_SIDE_EFFECT",
+                "LOW_RISK_HOME_CONTROL",
                 False,
             ),
         )
@@ -1548,9 +1731,14 @@ class ScheduledCognitionBridge:
         tools: list[Any] | None = None,
         now: datetime | None = None,
         limit: int = 100,
+        consumer_name: str = "attention-live",
     ) -> ScheduledCognitionResult:
         dispatch = self.dispatcher.run_once(now=now, limit=limit)
-        attention_result = self.attention.process(profile, limit=limit)
+        attention_result = self.attention.process(
+            profile,
+            consumer_name=consumer_name,
+            limit=limit,
+        )
         episodes: list[Any] = []
         for trigger in self.attention.list_triggers(profile.profile_version):
             if trigger.status.value != "PENDING":

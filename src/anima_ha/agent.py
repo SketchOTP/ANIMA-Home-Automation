@@ -22,7 +22,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, BinaryIO, Protocol
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import psycopg
 from psycopg.rows import dict_row
@@ -37,7 +37,9 @@ from anima_ha.action import (
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
+    ExecutionBoundary,
     ExternalContentTrust,
+    InvocationContext,
     InvocationOutcome,
     InvocationResult,
     ProviderExecutionContext,
@@ -49,6 +51,7 @@ from anima_ha.policy import IdentityContext, PolicyContext, PolicyService, Reque
 MODEL = "gpt-5.6-luna"
 REASONING_EFFORT = "medium"
 DEFAULT_CODEX_VERSION = "unknown"
+TOOL_INVOCATION_NAMESPACE = UUID("d2fb62ec-86c5-4d9e-a1ca-1d7d4c9f1d4f")
 FORBIDDEN_CAPABILITY_EVENTS = {
     "command_execution",
     "file_change",
@@ -306,6 +309,7 @@ class ToolGateway(Protocol):
         policy_service: PolicyService | None = None,
         policy_context: PolicyContext | None = None,
         execution_context: ProviderExecutionContext | None = None,
+        invocation_context: InvocationContext | None = None,
     ) -> InvocationResult: ...
 
 
@@ -1508,7 +1512,26 @@ class AgentRuntime:
                         external_content_trust=tool.external_content_trust,
                     )
                 else:
-                    if not tool.read_only and self.action_executor is None:
+                    argument_digest = digest_json(decision.arguments)
+                    invocation_context = InvocationContext(
+                        household_id=request.household_id,
+                        principal_id=request.identity.principal_id,
+                        episode_id=episode.episode_id,
+                        tool_request_id=uuid5(
+                            TOOL_INVOCATION_NAMESPACE,
+                            f"{request.trigger_id}:{tool_count}:{tool.tool_id}:{argument_digest}",
+                        ),
+                        ordinal=tool_count,
+                        system_idempotency_key=(
+                            f"anima:{request.trigger_id}:{tool_count}:"
+                            f"{tool.tool_id}:{argument_digest}"
+                        ),
+                        origin=request.origin,
+                    )
+                    if (
+                        tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+                        and self.action_executor is None
+                    ):
                         result = InvocationResult(
                             InvocationOutcome.PLUGIN_ERROR,
                             tool.tool_id,
@@ -1519,7 +1542,7 @@ class AgentRuntime:
                             provenance=tool.provenance,
                             external_content_trust=tool.external_content_trust,
                         )
-                    elif not tool.read_only:
+                    elif tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL:
                         action_executor = self.action_executor
                         assert action_executor is not None
                         action_context = request.policy_context or PolicyContext()
@@ -1583,6 +1606,7 @@ class AgentRuntime:
                             origin=request.origin,
                             policy_service=request.policy_service,
                             policy_context=request.policy_context,
+                            invocation_context=invocation_context,
                         )
             sanitized = sanitize_tool_result(result, self.limits.max_tool_result_bytes)
             self.store.record_tool_request(

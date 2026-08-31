@@ -556,6 +556,7 @@ class PostgresAttentionService:
             self._event_time(event),
             profile.profile_version,
             str(event["correlation_id"]) if event.get("correlation_id") else None,
+            metadata={"household_id": self._household_scope(event)},
         )
 
     def _cooldown_active(

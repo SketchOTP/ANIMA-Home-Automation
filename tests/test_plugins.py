@@ -10,6 +10,7 @@ import pytest
 from anima_ha.plugins import (
     CORE_VERSION,
     ENTRY_POINT_GROUP,
+    ExecutionBoundary,
     ExternalContentTrust,
     InvocationOutcome,
     McpRuntime,
@@ -141,6 +142,31 @@ def test_manifest_bounds_and_unknown_versions_fail_closed() -> None:
             capabilities=("test",),
             tools=({"name": "bad", "input_schema": {"$ref": "https://example.invalid/schema"}},),
         )
+
+
+def test_external_plugin_cannot_self_declare_internal_execution_boundary() -> None:
+    declared = dict(manifest().tools[0])
+    declared.update(
+        {
+            "name": "mutate",
+            "risk_class": "EXTERNAL_SIDE_EFFECT",
+            "semantic_action": "create_external_record",
+            "read_only": False,
+            "execution_boundary": "POLICY_GATED_INTERNAL",
+        }
+    )
+    manager = PluginManager()
+    plugin = manager.register(
+        replace(
+            manifest(plugin_id="anima.external.example"),
+            tools=(declared,),
+        ),
+        EchoNative(),
+    )
+
+    assert plugin.tools["anima.external.example.mutate"].execution_boundary == (
+        ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    )
 
 
 def test_entry_point_discovery_is_separate_from_enablement() -> None:

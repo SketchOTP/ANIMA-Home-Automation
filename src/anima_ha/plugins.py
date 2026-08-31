@@ -84,6 +84,14 @@ class DispatchState(StrEnum):
     ACKNOWLEDGED = "ACKNOWLEDGED"
 
 
+class ExecutionBoundary(StrEnum):
+    """ANIMA-owned authority boundary for a normalized tool descriptor."""
+
+    READ_ONLY = "READ_ONLY"
+    POLICY_GATED_INTERNAL = "POLICY_GATED_INTERNAL"
+    COORDINATED_CONSEQUENTIAL = "COORDINATED_CONSEQUENTIAL"
+
+
 @dataclass(frozen=True, slots=True)
 class ProviderExecutionContext:
     """ANIMA-owned execution identity passed only across the provider boundary."""
@@ -93,6 +101,26 @@ class ProviderExecutionContext:
     provider_idempotency_key: str | None = None
     attempt_number: int = 1
     possible_prior_dispatch: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class InvocationContext:
+    """Trusted per-tool provenance generated outside model-controlled arguments."""
+
+    household_id: UUID
+    principal_id: UUID | None
+    episode_id: UUID | None
+    tool_request_id: UUID
+    ordinal: int
+    system_idempotency_key: str
+    origin: RequestOrigin
+
+    def __post_init__(self) -> None:
+        if self.ordinal < 1:
+            raise PluginValidationError("invocation ordinal must be positive")
+        if not self.system_idempotency_key.strip():
+            raise PluginValidationError("system idempotency key is required")
+        object.__setattr__(self, "origin", RequestOrigin(self.origin))
 
 
 class ExternalContentTrust(StrEnum):
@@ -261,6 +289,34 @@ class PluginManifest:
         }
 
 
+_TRUSTED_INTERNAL_TOOL_IDS = frozenset(
+    {
+        "anima.durable-tasks.schedule",
+        "anima.durable-tasks.cancel",
+        "anima.durable-tasks.pause",
+        "anima.durable-tasks.resume",
+    }
+)
+
+
+def _core_execution_boundary(
+    manifest: PluginManifest, name: str, item: dict[str, Any]
+) -> ExecutionBoundary:
+    """Normalize authority in Core; raw plugin metadata cannot lower it."""
+    tool_id = f"{manifest.plugin_id}.{name}"
+    if tool_id in _TRUSTED_INTERNAL_TOOL_IDS:
+        if (
+            manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
+            and manifest.trust_class == TrustClass.TRUSTED_NATIVE
+            and manifest.source == "builtin:anima_ha.tasks"
+        ):
+            return ExecutionBoundary.POLICY_GATED_INTERNAL
+        return ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    if bool(item.get("read_only", False)):
+        return ExecutionBoundary.READ_ONLY
+    return ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+
+
 @dataclass(frozen=True, slots=True)
 class ToolDescriptor:
     tool_id: str
@@ -284,6 +340,17 @@ class ToolDescriptor:
     applies_to_capabilities: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     execution_spec: dict[str, Any] = field(default_factory=dict)
+    execution_boundary: ExecutionBoundary | None = None
+
+    def __post_init__(self) -> None:
+        boundary = self.execution_boundary
+        if boundary is None:
+            boundary = (
+                ExecutionBoundary.READ_ONLY
+                if self.read_only
+                else ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+            )
+        object.__setattr__(self, "execution_boundary", ExecutionBoundary(boundary))
 
     @classmethod
     def from_manifest(
@@ -330,9 +397,12 @@ class ToolDescriptor:
             ),
             tags=tuple(str(value) for value in item.get("tags", [])),
             execution_spec=dict(item.get("execution_spec", {})),
+            execution_boundary=_core_execution_boundary(manifest, name, item),
         )
 
     def to_payload(self) -> dict[str, Any]:
+        boundary = self.execution_boundary
+        assert boundary is not None
         return {
             "tool_id": self.tool_id,
             "plugin_id": self.plugin_id,
@@ -355,6 +425,7 @@ class ToolDescriptor:
             "applies_to_capabilities": list(self.applies_to_capabilities),
             "tags": list(self.tags),
             "execution_spec": self.execution_spec,
+            "execution_boundary": boundary.value,
         }
 
 
@@ -421,6 +492,27 @@ class NativeRuntime:
         if "execution_context" in parameters:
             invoke: Any = self.plugin.invoke
             return invoke(name, arguments, timeout, execution_context=execution_context)
+        return self.plugin.invoke(name, arguments, timeout)
+
+    def invoke_with_invocation_context(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        invocation_context: InvocationContext,
+    ) -> Any:
+        method = getattr(self.plugin, "invoke_with_invocation_context", None)
+        if callable(method):
+            return method(name, arguments, timeout, invocation_context)
+        try:
+            parameters: dict[str, inspect.Parameter] = dict(
+                inspect.signature(self.plugin.invoke).parameters
+            )
+        except (TypeError, ValueError):
+            parameters = {}
+        if "invocation_context" in parameters:
+            invoke: Any = self.plugin.invoke
+            return invoke(name, arguments, timeout, invocation_context=invocation_context)
         return self.plugin.invoke(name, arguments, timeout)
 
 
@@ -864,6 +956,7 @@ class PluginManager:
         policy_context: PolicyContext | None = None,
         confirmation: Any | None = None,
         execution_context: ProviderExecutionContext | None = None,
+        invocation_context: InvocationContext | None = None,
     ) -> InvocationResult:
         started = time.monotonic()
         tool = self.tools.get(tool_id)
@@ -872,6 +965,17 @@ class PluginManager:
                 InvocationOutcome.PLUGIN_UNAVAILABLE, tool_id, "", "", 0, error_class="UnknownTool"
             )
         plugin = self.plugins[tool.plugin_id]
+        if invocation_context is not None and invocation_context.household_id != household_id:
+            return InvocationResult(
+                InvocationOutcome.POLICY_DENIED,
+                tool_id,
+                tool.plugin_id,
+                tool.version,
+                0,
+                error_class="INVOCATION_CONTEXT_HOUSEHOLD_MISMATCH",
+                provenance=tool.provenance,
+                external_content_trust=tool.external_content_trust,
+            )
         try:
             validate_instance(tool.input_schema, arguments)
         except PluginValidationError as exc:
@@ -980,7 +1084,14 @@ class PluginManager:
         try:
             household_invoke = getattr(plugin.runtime, "invoke_for_household", None)
             contextual_invoke = getattr(plugin.runtime, "invoke_with_context", None)
-            if execution_context is not None and callable(contextual_invoke):
+            invocation_contextual_invoke = getattr(
+                plugin.runtime, "invoke_with_invocation_context", None
+            )
+            if invocation_context is not None and callable(invocation_contextual_invoke):
+                result = invocation_contextual_invoke(
+                    tool.name, arguments, tool.timeout, invocation_context
+                )
+            elif execution_context is not None and callable(contextual_invoke):
                 result = contextual_invoke(tool.name, arguments, tool.timeout, execution_context)
             elif callable(household_invoke):
                 result = household_invoke(tool.name, arguments, tool.timeout, household_id)
