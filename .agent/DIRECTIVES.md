@@ -307,7 +307,7 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 ### Completion record
 
 - Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; GitHub Actions `33425928381` passed on that exact SHA.
-- Final governed checkpoint: the subsequent evidence-closure commit; its exact SHA and hosted CI are recorded in the completed task packet and Notion SSOT after publication.
+- Final governed checkpoint: `6e31ee3da18fecad3cb46c3cd4671ee20dae7345`; hosted CI `33428643340` passed on that exact SHA.
 - Evidence: local-filesystem locked validation, 122 tests, OPA 4/4, package build, migration repeat, Phase 1–5 and 7–8 regressions, isolated real HA Phase 6/9, PostgreSQL Phase 10 harness, and public-safety scan passed.
 
 ### 012H correction publication record

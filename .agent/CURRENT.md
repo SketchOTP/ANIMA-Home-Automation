@@ -86,7 +86,7 @@ Close the bounded Phase 10 task-policy integration continuation authorized by Ar
 - PostgreSQL and in-memory lifecycle guards match. Dispatch requires the current worker's live unexpired claim; cancellation cannot leave an in-flight dispatch run orphaned.
 - Due tasks still emit guaranteed deterministic `scheduled_reasoning_due` events, scheduled cognition builds a fresh ContextPacket, and later physical actions remain Phase 9-coordinated.
 - Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; hosted CI `33428295199` passed on that exact SHA.
-- The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for closure purposes by the corrected scheduled-cognition evidence. The final governed evidence closure for this correction is the subsequent documentation checkpoint.
+- The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for closure purposes by the corrected scheduled-cognition evidence. Final governed evidence checkpoint: `6e31ee3da18fecad3cb46c3cd4671ee20dae7345`; hosted CI `33428643340` passed on that exact SHA.
 
 ## Current blockers
 
@@ -126,6 +126,6 @@ Review the Phase 10 task-policy integration checkpoint after fresh evidence and 
 - Earlier implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed.
 - Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; hosted CI `33428295199` passed.
 - Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
-- Corrected final governed SHA and exact CI are recorded after the evidence-closure publication.
+- Final governed evidence checkpoint: `6e31ee3da18fecad3cb46c3cd4671ee20dae7345`; hosted CI `33428643340` passed on that exact SHA.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

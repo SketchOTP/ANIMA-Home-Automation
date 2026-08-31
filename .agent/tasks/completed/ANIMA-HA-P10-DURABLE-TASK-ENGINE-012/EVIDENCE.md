@@ -70,7 +70,9 @@ and lease recovery.
   PASSED. The first rebuilt-venv full run had one transient MCP startup failure;
   the focused test and immediate full rerun passed, with no source correction.
 - The prior governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516`
-  is superseded for this correction. Phase 10 remains
+  is superseded for this correction. Final governed checkpoint
+  `6e31ee3da18fecad3cb46c3cd4671ee20dae7345` passed hosted CI
+  `33428643340`. Phase 10 remains
   `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
 
 ## Limits

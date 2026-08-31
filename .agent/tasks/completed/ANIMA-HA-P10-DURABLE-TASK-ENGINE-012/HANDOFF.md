@@ -20,7 +20,8 @@ Corrected implementation SHA: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`
 scheduled cognition routes a synthetic consequential action through the
 existing Phase 9 coordinator with fresh observation and one dispatch.
 
-The final governed SHA/CI and clean-tree proof are recorded after the evidence
-closure push in this packet and the Notion SSOT. Evidence remains local
+Final governed SHA: `6e31ee3da18fecad3cb46c3cd4671ee20dae7345` (CI
+`33428643340`). The final governed push and clean-tree proof are recorded in
+this packet and the Notion SSOT. Evidence remains local
 x86-64/isolated HA; native ARM64/Pi, physical-home, high-risk, and production
 claims are not made. Phase 11 remains unauthorized.
