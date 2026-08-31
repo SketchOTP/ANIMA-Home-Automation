@@ -4,7 +4,7 @@ Last updated: 2026-08-31
 
 ## Current stage
 
-PHASE 11 IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE
+PHASE 11 GATE CLOSURE IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
@@ -12,7 +12,7 @@ Publish and independently review the bounded Phase 11 external-by-intent capabil
 
 ## Active directive
 
-`ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013` — implement bounded weather, web/place/product discovery, recipes, Calendar, notifications, external trust/egress/audit, and verified external writes. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending review and Phase 12 is unauthorized.
+`ANIMA-HA-P11-EXTERNAL-GATE-CLOSURE-013H` — close refreshable Calendar OAuth, expanded credentialed live gates, and actual AgentRuntime/durable external-follow-up evidence. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending Architect review and Phase 12 is unauthorized.
 
 ## Current verified state
 
@@ -90,7 +90,7 @@ Publish and independently review the bounded Phase 11 external-by-intent capabil
 
 ## Current blockers
 
-- Phase 11 implementation is published at the implementation checkpoint and remains pending independent Architect acceptance; credentialed Brave and Google Calendar evidence is gated by missing runtime credentials.
+- Phase 11 hardening is published at implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on that exact SHA. Phase 11 remains pending independent Architect acceptance; credentialed Brave and Google Calendar evidence is gated by missing runtime credentials.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -119,7 +119,7 @@ Publish and independently review the bounded Phase 11 external-by-intent capabil
 
 ## Next Architect decision point
 
-Review the Phase 11 external-capability implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
+Review the Phase 11 gate-closure implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 
@@ -132,10 +132,11 @@ Review the Phase 11 external-capability implementation and evidence packet after
 ## Phase 11 external capability state
 
 - Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; hosted CI `33429217008` passed.
-- Phase 11 implementation checkpoint `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
+- Phase 11 baseline implementation checkpoint `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
 - Bounded ANIMA-owned adapters now cover Open-Meteo weather, Brave web/place/product discovery, TheMealDB recipes, Google Calendar REST, and ntfy notifications. External content is `EXTERNAL_UNTRUSTED`; fixed-host HTTPS egress and secret-free Event Journal-compatible request audit are implemented.
 - Calendar event creation and notification send use Core-owned Phase 9 profiles. Calendar requires provider readback for verified success; ntfy records provider acceptance only and never claims human delivery/read.
 - Live synthetic Open-Meteo, TheMealDB, and ntfy traffic passed. Brave and Google Calendar are independent `EXTERNAL_RESOURCE_GATE` states without runtime credentials; no credentialed live claim is made.
-- Phase 11 is `COMPLETE IMPLEMENTATION — PENDING ARCHITECT ACCEPTANCE`; the final governed closure SHA and CI are recorded after publication. Phase 12 remains unauthorized.
+- Phase 11 gate-closure implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA. It adds refreshable `google-auth` Calendar credentials using the owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`, same-catalogue AgentRuntime evidence, hostile external-result containment, and durable-task fresh external follow-up evidence.
+- Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the final governed closure SHA and CI are recorded after publication. Phase 12 remains unauthorized.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

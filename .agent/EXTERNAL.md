@@ -319,3 +319,13 @@ Build the canonical `DurableTask`, `TaskSchedule`, and `DurableTaskRun` model an
 ### Recheck triggers
 
 Reconsider a workflow service only after measured Phase 10 scale, long-running multi-step workflow, cross-process orchestration, or operational evidence shows PostgreSQL cannot provide the required delivery/recovery behavior. Requalify `croniter` on version, Python/ARM64 packaging, DST behavior, or recurrence semantics changes.
+
+## ANIMA-HA-P11-EXTERNAL-GATE-CLOSURE-013H — OAuth and live-resource recheck
+
+- Date checked: 2026-08-31
+- Freshness: official Google and Brave documentation rechecked for this bounded continuation.
+- Sources: [Google Calendar OAuth scopes](https://developers.google.com/workspace/calendar/api/auth), [Google installed-app OAuth](https://developers.google.com/identity/protocols/oauth2/native-app), [Google web-server OAuth and refresh](https://developers.google.com/identity/protocols/oauth2/web-server), [Calendar event creation](https://developers.google.com/workspace/calendar/api/guides/create-events), [Brave Web Search API](https://api-dashboard.search.brave.com/api-reference/web/search/get), [Brave Place Search](https://api-dashboard.search.brave.com/api-reference/web/place_search), [Brave API privacy notice](https://api-dashboard.search.brave.com/documentation/resources/privacy-notice), and [Brave API pricing](https://brave.com/search/api/).
+- Decision: retain Google Calendar direct REST and Brave Search API. Google runtime uses refreshable `google-auth` credentials and the owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`; no SearXNG or browser automation is introduced.
+- Evidence: Brave web/place/product and Google Calendar list/create-readback are independently reported by the live harness. Both currently return `EXTERNAL_RESOURCE_GATE` because credentials are absent. Open-Meteo, TheMealDB, and ntfy synthetic evidence remains passing.
+- Privacy/credential boundary: Brave API queries may be retained for up to 90 days according to its privacy notice; query minimization remains required. Google client secret, refresh token, and ephemeral access token remain outside model input, audits, Event Journal, Notion, and Git.
+- Recheck triggers: operator credentials become available; Google scope/installed-app OAuth behavior changes; Brave API endpoint/auth/privacy terms change; or a provider defect requires current external behavior.

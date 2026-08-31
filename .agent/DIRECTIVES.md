@@ -330,6 +330,23 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Phase 12 custom interfaces, UI, voice, shopping checkout/payment, physical-home claim, production-scale claim, automatic compensation, or unbounded external execution.
 - Source: Architect directive in the canonical Notion SSOT, retrieved 2026-08-31.
 
+## ANIMA-HA-P11-EXTERNAL-GATE-CLOSURE-013H — Calendar OAuth and integration gate closure
+
+- Issued: 2026-08-31
+- Status: COMPLETE IMPLEMENTATION / PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`; Phase 11 is not accepted. Phase 12 remains unauthorized.
+- Starting governed checkpoint: `0aaad4a287efaf26d02afac7f1d55d1edbbc0405`; hosted CI `33442786332` passed.
+- Objective: replace the short-lived Calendar access-token dependency with refreshable brokered OAuth, expand Brave/Calendar live gates, and prove actual AgentRuntime shared-catalogue, prompt-injection, and durable fresh-external-follow-up behavior without changing the accepted provider architecture.
+- Corrective architecture: `google-auth` refreshes ephemeral Calendar access tokens from `GOOGLE_CALENDAR_CLIENT_ID`, `GOOGLE_CALENDAR_CLIENT_SECRET`, and `GOOGLE_CALENDAR_REFRESH_TOKEN`; the selected owned-calendar scope is `https://www.googleapis.com/auth/calendar.events.owned`; credentials remain outside model input, journal, Notion, and Git.
+- Evidence additions: cached/expired/restart/revoked OAuth paths and same-request 401 refresh; broad AgentRuntime weather/recipe/web/place catalogue; actual untrusted hostile-result next-turn containment; durable task restart-mode follow-up with a distinct ContextPacket and fresh external read; independent Brave web/place/product and Calendar list/create-readback harness gates.
+- Exclusions: No Phase 12 behavior, provider replacement, browser automation, checkout, new foundational service, or production credential claim.
+- Source: Architect continuation directive recorded in the canonical Notion SSOT, retrieved 2026-08-31.
+
+### Completion record
+
+- Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; GitHub Actions `33445636772` passed on that exact SHA.
+- Final governed checkpoint: recorded after the governance closure push and exact final CI verification.
+
 ### Completion record
 
 - Implementation checkpoint: `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.

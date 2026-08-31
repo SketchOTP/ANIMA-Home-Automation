@@ -573,3 +573,14 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Fresh validation passed: 122 tests; Ruff format/check; strict mypy; OPA 4/4; sdist/wheel; migration initial/repeat; Phase 1–5, 7–10 harnesses; isolated real HA Phase 6 and Phase 9; `git diff --check`; and public-safety scan.
 - The rebuilt authoritative `.venv` produced one transient MCP stdio startup failure during the first full run; the focused test and immediate full rerun passed. No source or test correction was required for that transient environment event.
 - The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for final closure by the corrected evidence. Final governed checkpoint `ae18833e2ddffd30b17b613248d1c2206062b66a` passed CI `33428938215`. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 was not implemented.
+
+## ANIMA-HA-P11-EXTERNAL-GATE-CLOSURE-013H — Calendar OAuth and cognition integration hardening
+
+- Architect disposition: `CONTINUE`; Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Phase 12 remains unauthorized.
+- Starting governed checkpoint: `0aaad4a287efaf26d02afac7f1d55d1edbbc0405`; hosted CI `33442786332` passed.
+- Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA.
+- Replaced the short-lived Calendar access-token dependency with an ANIMA-owned `google-auth` refresh boundary using brokered client ID, client secret, and refresh token references. The adopted owned-calendar scope is `https://www.googleapis.com/auth/calendar.events.owned`; cached, expired, restart, revoked, and 401 refresh paths are covered.
+- Expanded `scripts/verify_phase11_external.py` to report independent Brave web/place/product and Google Calendar list/create-readback results. Current statuses are `EXTERNAL_RESOURCE_GATE` for both credentialed provider families because no operator credentials are present; no live credential claim is made.
+- Added actual AgentRuntime shared-catalogue selection tests for weather, recipes, web research, and places; actual next-turn hostile external-content containment; and a durable-task restart-mode follow-up with a distinct ContextPacket and fresh external read. Existing PostgreSQL Phase 10 harness remains the durable scheduler/lease evidence; the new external comparison fixture is deterministic and in-memory.
+- Fresh validation: full pytest, changed-file Ruff, strict mypy, `uv build --sdist --wheel`, `git diff --check`, live synthetic Open-Meteo/TheMealDB/ntfy, and public-safety scan passed. The GVFS/SFTP workspace could not launch processes; `/srv/ATLAS` was used for reproduction.
+- No Phase 12 behavior was implemented.

@@ -107,6 +107,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/external.py` — ANIMA-owned bounded external result/trust/audit contracts, fixed-host HTTPS transport, Open-Meteo, Brave, TheMealDB, Google Calendar REST, ntfy adapters, provider gates, and native plugin wrappers.
 - `src/anima_ha/action.py` — Core-owned external Calendar/notification safety profiles with provider-evidence verification and Phase 9 coordination.
 - `tests/test_external.py` — bounded egress, hostile-content trust, normalization, audit, provider readback/receipt, Phase 9 external-write, and credential-gate tests.
+- `tests/test_phase11_integration.py` — actual AgentRuntime shared-catalogue selection, hostile external-content containment, and durable-task fresh external follow-up evidence.
 - `scripts/verify_phase11_external.py` — live synthetic no-secret provider harness and independent credential-gate evidence.
 - `docs/PHASE-11-EXTERNAL-CAPABILITIES.md` — external capability architecture, provider/dependency decisions, trust/egress/audit boundary, gates, and evidence limitations.
 
