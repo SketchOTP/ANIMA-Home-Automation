@@ -4,8 +4,8 @@
 
 - Starting governed checkpoint: `0aaad4a287efaf26d02afac7f1d55d1edbbc0405`; hosted CI `33442786332` passed.
 - Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA.
-- Final governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`.
-- Final hosted CI: `33445878287`, success on the exact governed SHA.
+- Evidence amendment checkpoint: `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA.
+- Final governed metadata synchronization is published after this evidence amendment; its exact SHA and hosted CI are recorded below once pushed.
 
 ## Calendar OAuth
 
@@ -19,7 +19,7 @@
 - `tests/test_phase11_integration.py` drives the actual `AgentRuntime` and `PluginManager` through one broad catalogue for weather, recipe, web research, and place selection.
 - The same test proves hostile provider text remains `EXTERNAL_UNTRUSTED` into the next scripted cognition turn and cannot add a tool or capability.
 - The same actual AgentRuntime schedules a declarative durable task through `TaskNativePlugin`; a fresh worker instance dispatches the guaranteed `scheduled_reasoning_due` event; a new AgentRuntime episode receives a distinct ContextPacket ID and performs a fresh external read.
-- Existing Phase 10 PostgreSQL harness remains the authoritative PostgreSQL durable-task/lease/restart evidence. The new external-value comparison fixture is deterministic and in-memory; it does not claim a live external provider or live Luna behavior.
+- The PostgreSQL Phase 10 harness now extends that path: the initial AgentRuntime episode reads synthetic weather value `17`, persists the task through PostgreSQL, restart-mode scheduled cognition reads fresh value `23`, and the future consequential action still traverses Phase 9. The provider remains a deterministic MockTransport fixture, not a live external provider or live Luna behavior.
 
 ## Live-resource harness
 
@@ -40,6 +40,8 @@ harness performs the listed calls and preserves the same evidence classes.
 - Full pytest: PASS, including the new Phase 11 integration tests.
 - Changed-file Ruff format/check: PASS.
 - Strict mypy: `Success: no issues found in 41 source files`.
+- PostgreSQL durable-task harness: PASS, including lifecycle parity, stale-worker rejection, cancellation cleanup, idempotency/replay, lease recovery, fresh ContextPacket, fresh external value, and future Phase 9 action.
+- Repository-wide Ruff format/check remains non-clean only because the pre-existing Phase 5 evidence script `scripts/verify_phase5_plugins.py` has unrelated formatting/import/line-length violations; no unrelated file was changed.
 - `git diff --check`: PASS.
 - Public safety scan: PASS; only deliberate placeholder test strings contain token-like words, and no secret value/runtime artifact was added.
 - Prior Phase 1–10 harnesses and isolated HA evidence remain accepted baseline evidence; no Phase 12 behavior was added.

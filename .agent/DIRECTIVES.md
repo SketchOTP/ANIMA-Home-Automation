@@ -342,6 +342,13 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: No Phase 12 behavior, provider replacement, browser automation, checkout, new foundational service, or production credential claim.
 - Source: Architect continuation directive recorded in the canonical Notion SSOT, retrieved 2026-08-31.
 
+### 013H PostgreSQL evidence amendment
+
+- The Phase 11 gate-closure implementation remains `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; its hosted CI `33445636772` passed.
+- Evidence amendment `f069e5c0d1d42d0a74eba3267f8393f325509429` passed hosted CI `33446725375` and extends `scripts/verify_phase10_durable_tasks.py` with a deterministic external weather provider through the real PostgreSQL durable-task/scheduled-cognition path.
+- The harness proves initial value `17`, PostgreSQL task persistence and restart-mode due dispatch, a distinct due-time ContextPacket, fresh value `23`, and continued Phase 9 routing for the future consequential action.
+- This is evidence hardening only: no provider architecture, Phase 9 semantics, or Phase 12 behavior changed. Final governed metadata synchronization is required before handoff.
+
 ### Completion record
 
 - Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; GitHub Actions `33445636772` passed on that exact SHA.

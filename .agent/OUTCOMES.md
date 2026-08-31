@@ -585,3 +585,10 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Fresh validation: full pytest, changed-file Ruff, strict mypy, `uv build --sdist --wheel`, `git diff --check`, live synthetic Open-Meteo/TheMealDB/ntfy, and public-safety scan passed. The GVFS/SFTP workspace could not launch processes; `/srv/ATLAS` was used for reproduction.
 - Final governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on the exact SHA.
 - No Phase 12 behavior was implemented.
+
+### 013H PostgreSQL fresh-external-follow-up amendment
+
+- Evidence amendment checkpoint `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA.
+- `scripts/verify_phase10_durable_tasks.py` now proves through PostgreSQL persistence/restart and the actual scheduled-cognition bridge: external weather value `17` at task creation, fresh value `23` after the due-time episode, distinct ContextPacket identity, and a future consequential action verified through the existing Phase 9 coordinator.
+- Existing lifecycle parity, stale-worker, cancellation, idempotency, replay, and lease-recovery evidence remains green. The provider is deterministic MockTransport; no live external credential claim is made.
+- Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
