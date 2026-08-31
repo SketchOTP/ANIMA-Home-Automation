@@ -5,7 +5,8 @@
     "user.request",
     "security.alarm",
     "safety.leak",
-    "system.health.critical"
+    "system.health.critical",
+    "scheduled_reasoning_due"
   ],
   "rules": [
     {

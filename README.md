@@ -1,8 +1,8 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the Architect-accepted Phase 0–8 foundations and the Phase 9 action-execution boundary pending Architect review.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains the Architect-accepted Phase 0–9 foundations and the Phase 10 durable-task boundary pending Architect review.
 
-## Implemented Phase 0 through Phase 9 baseline
+## Implemented Phase 0 through Phase 10 baseline
 
 This checkpoint provides:
 
@@ -23,8 +23,9 @@ This checkpoint provides:
 - a deterministic PostgreSQL-backed Attention Layer with guaranteed-event handling, durable cursor/cooldown/rate/aggregation state, immutable decisions, durable reasoning triggers, sparse provenance-rich ContextPackets, ANIMA-owned trust/egress controls, and side-effect-free replay/profile comparison.
 - an ANIMA-owned bounded cognition loop using isolated ephemeral Codex CLI ChatGPT OAuth turns, Luna 5.6 at medium reasoning, schema-only decisions, mandatory Phase 5/4 tool-policy routing, durable episodes, cloud-safe context projection, and explicit failure/budget outcomes;
 - an ANIMA-owned deterministic action-execution coordinator with durable idempotency/effect records, non-blocking PostgreSQL canonical-resource locks, latest-state preconditions, final policy reauthorization, observed post-action verification, partial/unknown outcomes, and restart reconciliation.
+- an ANIMA-owned declarative durable-task engine with one-shot, fixed-interval, and cron schedules, PostgreSQL leases and `SKIP LOCKED` claims, deterministic guaranteed due events, misfire/DST policy, idempotent creation, and restart-safe run history.
 
-No UI, voice behavior, Phase 10 durable future-task runtime, or production external action capability is included. Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 8 live cognition and Phase 9 action coordination are not physical-home evidence.
+No UI, voice behavior, Phase 11 behavior, or production external action capability is included. Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 8 live cognition and Phase 9 action coordination are not physical-home evidence.
 
 ## Supported baseline
 
@@ -61,6 +62,7 @@ For the Phase 6 adapter, discovery, provider mapping, synchronization, reconnect
 For the Phase 7 attention profiles, guaranteed triggers, durable cursor/aggregation, sparse ContextPackets, trust/egress controls, and replay boundary, see [`docs/PHASE-7-ATTENTION-CONTEXT.md`](docs/PHASE-7-ATTENTION-CONTEXT.md).
 For the Phase 8 Codex OAuth boundary, structured cognition loop, durable episodes, policy-gated tools, privacy controls, dependency decision, and evidence limits, see [`docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md`](docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md).
 For the Phase 9 action lifecycle, resource conflicts, idempotency, latest-state preconditions, policy reauthorization, verification, partial/unknown outcomes, restart reconciliation, and evidence limits, see [`docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md`](docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md).
+For the Phase 10 declarative durable-task model, scheduling, misfire/DST policy, leases, deterministic due events, task safety boundary, dependency decisions, and evidence limits, see [`docs/PHASE-10-DURABLE-TASK-ENGINE.md`](docs/PHASE-10-DURABLE-TASK-ENGINE.md).
 
 ## Authority
 

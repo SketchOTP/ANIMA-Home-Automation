@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.metadata
+import inspect
 import json
 import os
 import time
@@ -392,6 +393,15 @@ class NativeRuntime:
     def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
         return self.plugin.invoke(name, arguments, timeout)
 
+    def invoke_for_household(
+        self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID
+    ) -> Any:
+        """Pass ANIMA-owned household scope to trusted native capabilities."""
+        method = getattr(self.plugin, "invoke_for_household", None)
+        if callable(method):
+            return method(name, arguments, timeout, household_id)
+        return self.plugin.invoke(name, arguments, timeout)
+
     def invoke_with_context(
         self,
         name: str,
@@ -402,6 +412,15 @@ class NativeRuntime:
         method = getattr(self.plugin, "invoke_with_context", None)
         if callable(method):
             return method(name, arguments, timeout, execution_context)
+        try:
+            parameters: dict[str, inspect.Parameter] = dict(
+                inspect.signature(self.plugin.invoke).parameters
+            )
+        except (TypeError, ValueError):
+            parameters = {}
+        if "execution_context" in parameters:
+            invoke: Any = self.plugin.invoke
+            return invoke(name, arguments, timeout, execution_context=execution_context)
         return self.plugin.invoke(name, arguments, timeout)
 
 
@@ -959,9 +978,12 @@ class PluginManager:
                     policy_decision=decision,
                 )
         try:
+            household_invoke = getattr(plugin.runtime, "invoke_for_household", None)
             contextual_invoke = getattr(plugin.runtime, "invoke_with_context", None)
             if execution_context is not None and callable(contextual_invoke):
                 result = contextual_invoke(tool.name, arguments, tool.timeout, execution_context)
+            elif callable(household_invoke):
+                result = household_invoke(tool.name, arguments, tool.timeout, household_id)
             else:
                 result = plugin.runtime.invoke(tool.name, arguments, tool.timeout)
             if isinstance(result, dict) and result.get("is_error") is True:

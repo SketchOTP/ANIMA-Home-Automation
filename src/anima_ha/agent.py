@@ -32,6 +32,7 @@ from anima_ha.action import (
     ActionRequest,
     ActionStatus,
     TruthPrecondition,
+    resolve_action_safety_spec,
 )
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
@@ -1522,6 +1523,7 @@ class AgentRuntime:
                         action_executor = self.action_executor
                         assert action_executor is not None
                         action_context = request.policy_context or PolicyContext()
+                        safety_spec = resolve_action_safety_spec(tool)
                         baseline_preconditions = tuple(
                             TruthPrecondition(
                                 item.truth_key,
@@ -1541,6 +1543,7 @@ class AgentRuntime:
                                 policy_service=request.policy_service,
                                 policy_context=action_context,
                                 preconditions=baseline_preconditions,
+                                safety_spec=safety_spec,
                                 refresher=request.action_refresher,
                                 verifier=request.action_verifier,
                                 origin=request.origin,

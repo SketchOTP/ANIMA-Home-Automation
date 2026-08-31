@@ -276,3 +276,30 @@ App Server, Agents SDK, or Responses API.
 - Findings: PostgreSQL session locks persist until explicit unlock/session end, transaction locks release at transaction end, and `pg_try_advisory_lock` returns immediately on contention. Stripe's mature pattern stores the first result for a key and rejects parameter reuse; ANIMA applies the pattern to durable action claims but keeps stricter `UNKNOWN_RESULT` handling after possible external dispatch.
 - Disposition: ADOPT / WRAP PostgreSQL session-level advisory locking; REFERENCE Stripe parameter-bound idempotency; BUILD ANIMA lifecycle, durable records, verification, and recovery semantics; REJECT Redis/Redlock as the foundational fencing mechanism; DEFER Temporal/Hatchet to Phase 10.
 - Recheck trigger: PostgreSQL major-version change, measured lock contention/deadlock need, provider-native idempotency support, physical-home/HA execution qualification, or Phase 10 durable workflow authorization.
+
+## ANIMA-HA-P10-DURABLE-TASK-ENGINE-012 — durable task prior art
+
+- Date checked: 2026-08-31
+- Trigger: Phase 10 requires restart-safe declarative one-shot/recurring future work, and the directive requires current primary-source comparison before implementation.
+- Sources: [Hatchet documentation](https://docs.hatchet.run/v1), [Hatchet embedded/self-hosting documentation](https://docs.hatchet.run/v1/embedded), [hatchet-sdk PyPI metadata](https://pypi.org/pypi/hatchet-sdk/json), [APScheduler PyPI metadata](https://pypi.org/pypi/APScheduler/json), [APScheduler repository](https://github.com/agronholm/apscheduler), [Temporal Python SDK PyPI](https://pypi.org/project/temporalio/1.32.0/), [Temporal Python SDK repository](https://github.com/temporalio/sdk-python), [croniter PyPI](https://pypi.org/project/croniter/), [PostgreSQL SELECT locking](https://www.postgresql.org/docs/18/sql-select.html).
+- Freshness: primary upstream/package sources checked 2026-08-31. Current observed versions: `hatchet-sdk 1.38.1`, `APScheduler 3.11.3` with `4.0.0a6` prerelease history, `temporalio 1.32.0`, and `croniter 6.2.4`.
+
+### Comparison and disposition
+
+| Candidate | License / current evidence | Fit, cost, persistence, portability, replacement path | Decision |
+| --- | --- | --- | --- |
+| Existing PostgreSQL 16 + Psycopg | PostgreSQL License; already qualified in ANIMA | Durable local substrate, transactional uniqueness, JSONB, UTC database time, `FOR UPDATE SKIP LOCKED`; already supports ARM64 image path and existing migration boundary | ADOPT / WRAP |
+| Direct ANIMA task/schedule/run implementation | No new dependency; preserves typed declarative payloads, provenance, policy boundary, and replacement path | Exact Phase 10 ownership; prevents executable payloads and stale-authority replay; small bounded surface | BUILD |
+| `croniter 6.2.4` | MIT; PyPI publishes a `py3-none-any` wheel and Python 3.12 classifier; current release 2026-07-10 | Narrow next-occurrence calculation only; pure Python/ARM64-friendly package shape; cron strings remain data and ANIMA owns persistence/misfire/DST policy | ADOPT / WRAP conditionally |
+| Hatchet `hatchet-sdk 1.38.1` | MIT; official docs describe a durable task/workflow platform, self-hosting, PostgreSQL, retries, queues, and event log | Strong capability and Python SDK, but adds an engine/API/gRPC/sidecar and a second durable state boundary; overlaps ANIMA task/run/event/policy ownership and increases Pi footprint | DEFER |
+| Temporal Python SDK `1.32.0` | MIT; Python 3.10+; SDK uses Rust SDK Core and a separate Temporal server | Strong distributed workflow durability, timers, replay, and activities, but disproportionate service/worker/history architecture for bounded Phase 10 reminders and cognition opportunities | DEFER |
+| APScheduler `3.11.3` | MIT; production/stable; Python 3.12; supports one-off, interval, cron, and persistent jobs | Useful misfire/coalescing/concurrency prior art and in-process integration, but callable/job-oriented persistence is not ANIMA declarative task ownership; 4.x is a prerelease redesign | REFERENCE / DEFER |
+| Direct standard-library recurrence | No dependency | Suitable for ONCE and fixed-duration INTERVAL; implementing cron/DST correctly would duplicate mature parsing and recurrence logic without reducing ANIMA ownership | REFERENCE; use only for non-cron primitives |
+
+### Boundary conclusion
+
+Build the canonical `DurableTask`, `TaskSchedule`, and `DurableTaskRun` model and dispatcher over existing PostgreSQL/Psycopg. Use short `FOR UPDATE SKIP LOCKED` claim transactions and database timestamps; never hold a transaction through cognition or external execution. Wrap `croniter 6.2.4` only behind an ANIMA `RecurrenceCalculator`, with explicit five-field cron validation, persisted IANA timezone, deterministic DST handling, and a replacement path. Scheduled work emits a guaranteed `scheduled_reasoning_due` event and re-enters fresh Context/Policy/Agent boundaries; it never stores or replays future physical tool calls or old authorization.
+
+### Recheck triggers
+
+Reconsider a workflow service only after measured Phase 10 scale, long-running multi-step workflow, cross-process orchestration, or operational evidence shows PostgreSQL cannot provide the required delivery/recovery behavior. Requalify `croniter` on version, Python/ARM64 packaging, DST behavior, or recurrence semantics changes.

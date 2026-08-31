@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "hass-client==1.2.3",
+    "croniter==6.2.4",
     "jsonschema==4.26.0",
     "mcp==2.1.1",
     "psycopg[binary]==3.3.4",
@@ -24,6 +25,7 @@ anima-sim = "anima_ha.simulator:main"
 anima-validate = "anima_ha.validate:main"
 anima-mcp-reference = "anima_ha.mcp_reference:main"
 anima-attention-replay = "anima_ha.phase7_replay:main"
+anima-task-worker = "anima_ha.tasks:main"
 
 [project.entry-points."anima_ha.plugins"]
 simulator = "anima_ha.plugins:native_reference_factory"

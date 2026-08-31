@@ -151,6 +151,7 @@ class AttentionProfile:
         "security.alarm",
         "safety.leak",
         "system.health.critical",
+        "scheduled_reasoning_due",
     )
 
     def __post_init__(self) -> None:
