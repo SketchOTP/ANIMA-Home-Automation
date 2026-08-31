@@ -137,6 +137,6 @@ Review the Phase 11 gate-closure implementation and evidence packet after exact-
 - Calendar event creation and notification send use Core-owned Phase 9 profiles. Calendar requires provider readback for verified success; ntfy records provider acceptance only and never claims human delivery/read.
 - Live synthetic Open-Meteo, TheMealDB, and ntfy traffic passed. Brave and Google Calendar are independent `EXTERNAL_RESOURCE_GATE` states without runtime credentials; no credentialed live claim is made.
 - Phase 11 gate-closure implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA. It adds refreshable `google-auth` Calendar credentials using the owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`, same-catalogue AgentRuntime evidence, hostile external-result containment, and durable-task fresh external follow-up evidence.
-- Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the final governed closure SHA and CI are recorded after publication. Phase 12 remains unauthorized.
+- Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Published governed closure checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on that exact SHA. Phase 12 remains unauthorized.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

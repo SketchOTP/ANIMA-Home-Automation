@@ -4,8 +4,9 @@ Verdict: `IMPLEMENTATION_COMPLETE — EXTERNAL_RESOURCE_GATE`.
 
 Phase 11 remains `CONTINUE`, not accepted. The implementation checkpoint
 `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8` passed hosted CI `33445636772` on
-the exact SHA. The final governed checkpoint and CI are recorded after the
-governance closure push.
+the exact SHA. The final governed checkpoint is
+`439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on
+the exact SHA.
 
 The correction adds refreshable ANIMA-owned Calendar OAuth with the exact
 owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`,

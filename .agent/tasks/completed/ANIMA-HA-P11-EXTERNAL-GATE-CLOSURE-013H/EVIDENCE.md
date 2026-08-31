@@ -4,7 +4,8 @@
 
 - Starting governed checkpoint: `0aaad4a287efaf26d02afac7f1d55d1edbbc0405`; hosted CI `33442786332` passed.
 - Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA.
-- Final governed checkpoint and final hosted CI are recorded after the governance closure push.
+- Final governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`.
+- Final hosted CI: `33445878287`, success on the exact governed SHA.
 
 ## Calendar OAuth
 
