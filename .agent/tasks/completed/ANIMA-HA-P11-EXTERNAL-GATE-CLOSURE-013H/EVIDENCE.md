@@ -5,7 +5,7 @@
 - Starting governed checkpoint: `0aaad4a287efaf26d02afac7f1d55d1edbbc0405`; hosted CI `33442786332` passed.
 - Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA.
 - Evidence amendment checkpoint: `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA.
-- Final governed metadata synchronization is published after this evidence amendment; its exact SHA and hosted CI are recorded below once pushed.
+- Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`; hosted CI `33446946952` passed on the exact SHA.
 
 ## Calendar OAuth
 

@@ -6,8 +6,9 @@ Phase 11 remains `CONTINUE`, not accepted. The implementation checkpoint
 `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8` passed hosted CI `33445636772` on
 the exact SHA. The evidence amendment checkpoint
 `f069e5c0d1d42d0a74eba3267f8393f325509429` passed hosted CI `33446725375` on
-the exact SHA. The final governed metadata synchronization checkpoint and its
-hosted CI are recorded after publication.
+the exact SHA. The final governed evidence checkpoint is
+`abc9bece8b4827828ca759993191a1f20338d442`; hosted CI `33446946952` passed on
+the exact SHA.
 
 The correction adds refreshable ANIMA-owned Calendar OAuth with the exact
 owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`,

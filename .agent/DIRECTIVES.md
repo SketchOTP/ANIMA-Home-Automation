@@ -352,7 +352,8 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 ### Completion record
 
 - Implementation checkpoint: `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; GitHub Actions `33445636772` passed on that exact SHA.
-- Final governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on that exact SHA.
+- Prior governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on that exact SHA.
+- Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`; hosted CI `33446946952` passed on that exact SHA.
 
 ### Completion record
 

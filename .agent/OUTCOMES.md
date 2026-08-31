@@ -583,7 +583,8 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Expanded `scripts/verify_phase11_external.py` to report independent Brave web/place/product and Google Calendar list/create-readback results. Current statuses are `EXTERNAL_RESOURCE_GATE` for both credentialed provider families because no operator credentials are present; no live credential claim is made.
 - Added actual AgentRuntime shared-catalogue selection tests for weather, recipes, web research, and places; actual next-turn hostile external-content containment; and a durable-task restart-mode follow-up with a distinct ContextPacket and fresh external read. Existing PostgreSQL Phase 10 harness remains the durable scheduler/lease evidence; the new external comparison fixture is deterministic and in-memory.
 - Fresh validation: full pytest, changed-file Ruff, strict mypy, `uv build --sdist --wheel`, `git diff --check`, live synthetic Open-Meteo/TheMealDB/ntfy, and public-safety scan passed. The GVFS/SFTP workspace could not launch processes; `/srv/ATLAS` was used for reproduction.
-- Final governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on the exact SHA.
+- Prior governed checkpoint: `439c12a5872b7844f77ad36fa57672f634d0ee52`; hosted CI `33445878287` passed on the exact SHA.
+- Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`; hosted CI `33446946952` passed on the exact SHA.
 - No Phase 12 behavior was implemented.
 
 ### 013H PostgreSQL fresh-external-follow-up amendment
