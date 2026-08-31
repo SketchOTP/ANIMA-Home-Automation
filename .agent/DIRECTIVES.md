@@ -279,3 +279,15 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Governed evidence closure: subsequent metadata-only checkpoint; exact SHA and final CI are recorded in the Notion SSOT after push verification.
 - Limitations: x86-64 local-filesystem reproduction and isolated virtual Home Assistant only; native ARM64/Pi, physical-home, high-risk, and production-provider evidence remain unclaimed.
 - Phase 10 remains unauthorized.
+
+## ANIMA-HA-P10-DURABLE-TASK-ENGINE-012 — Declarative durable task engine
+
+- Issued: 2026-08-31
+- Status: COMPLETE — PENDING ARCHITECT ACCEPTANCE
+- Project stage: PHASE 10 — DURABLE TASKS AND SCHEDULED COGNITION
+- Architect disposition: `CONTINUE` from the accepted Phase 9 checkpoint; Phase 10 is authorized and Phase 11 remains unauthorized.
+- Objective: Build a bounded PostgreSQL-backed declarative task engine for one-shot, fixed-interval, and cron opportunities; support restart-safe claims, leases, idempotent creation, explicit misfire/DST policy, deterministic guaranteed due events, task lifecycle tools, and re-entry through existing Attention/Context/Agent boundaries.
+- Scope boundary: Future intent only. No executable payloads, future physical tool calls, stale authorization, compensation, UI, voice, production connectors, or Phase 11 behavior.
+- Decisions: BUILD ANIMA task/run/coordinator semantics; ADOPT/WRAP PostgreSQL and `croniter==6.2.4`; REFERENCE/DEFER APScheduler; DEFER Hatchet and Temporal; no new broker/service.
+- Required evidence: schedule contract, DST/misfire, idempotency, household isolation, concurrent claims, lease/crash recovery, deterministic journal deduplication, PostgreSQL migration/repeat, Phase 0–9 regressions, static/test/build/CI, and public safety.
+- Source: canonical Notion SSOT active directive `ANIMA-HA-P10-DURABLE-TASK-ENGINE-012`, retrieved 2026-08-31.

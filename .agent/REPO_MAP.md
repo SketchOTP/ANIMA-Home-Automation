@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: PUBLISHED PHASE 9 CHECKPOINT CLOSURE 2026-08-30
+Last verified against: PHASE 10 DURABLE TASK ENGINE CHECKPOINT 2026-08-31
 
 ## Entry points
 
@@ -8,6 +8,7 @@ Last verified against: PUBLISHED PHASE 9 CHECKPOINT CLOSURE 2026-08-30
 - `anima-migrate` — runtime-only ordered SQL migration runner.
 - `anima-sim` — synthetic reality, graph, memory, policy, plugin, HA-normalization, attention, and credential-free agent scenarios; no physical household behavior.
 - `anima-attention-replay` — read-only journal-range attention/ContextPacket replay and profile comparison; no model, tool, HA action, or external side effect.
+- `anima-task-worker` — bounded durable-task due-event dispatcher; one-shot by default, optional local polling loop.
 
 ## Major modules / packages
 
@@ -28,6 +29,7 @@ Last verified against: PUBLISHED PHASE 9 CHECKPOINT CLOSURE 2026-08-30
 - `src/anima_ha/phase7_replay.py` — side-effect-free Phase 7 replay CLI.
 - `src/anima_ha/agent.py` — durable bounded cognition episodes, cloud-safe projection, structured Codex CLI adapter, sequential Phase 5/4 tool loop, budgets, audit, and explicit outcomes.
 - `src/anima_ha/action.py` — deterministic consequential-action lifecycle, canonical-resource locking, freshness/preconditions, final policy reauthorization, idempotency, verification, partial/unknown outcomes, and restart reconciliation.
+- `src/anima_ha/tasks.py` — declarative durable tasks, schedules, cron/DST/misfire policy, PostgreSQL claims/leases, deterministic due events, task lifecycle tools, and scheduled cognition bridge.
 - `src/anima_ha/agent_instructions.py` — versioned provider instructions and authority/evidence boundary.
 - `tests/` — deterministic Phase 0–8 unit tests and isolated provider fixtures.
 
@@ -90,11 +92,15 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `docs/PHASE-7-ATTENTION-CONTEXT.md` — attention/context/replay architecture, dependency decisions, and evidence limits.
 - `src/anima_ha/db/migrations/0009_codex_agent_runtime.sql` — durable agent episodes, turns, and tool requests with duplicate-trigger protection.
 - `src/anima_ha/db/migrations/0010_action_execution.sql` — durable action claims and per-effect outcomes with idempotency/status indexes.
+- `src/anima_ha/db/migrations/0011_durable_tasks.sql` — durable task definitions and occurrence runs with idempotency, leases, status, and replay keys.
 - `scripts/verify_phase8_agent_runtime.py` — OAuth-free PostgreSQL migration/audit/duplicate/restart integration harness.
 - `scripts/verify_phase8_live_oauth.py` — manual local ChatGPT OAuth/Luna synthetic A–I acceptance matrix; excluded from hosted CI.
 - `tests/test_agent.py` — Phase 8 cloud boundary, strict process contract, tool-policy loop, failure, budget, and injection tests.
 - `docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md` — cognition boundary, dependency decisions, durable episode model, privacy/failure behavior, and evidence limits.
 - `docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md` — action lifecycle, advisory locks, idempotency, verification, ambiguity/restart semantics, and evidence limits.
+- `docs/PHASE-10-DURABLE-TASK-ENGINE.md` — declarative task lifecycle, schedule/DST/misfire policy, safety boundary, dependency decisions, and evidence limits.
+- `scripts/verify_phase10_durable_tasks.py` — PostgreSQL migration, idempotent creation, concurrent claim, event deduplication, and lease-recovery evidence.
+- `tests/test_tasks.py` — task contract, DST/misfire, idempotency, concurrency, household scoping, deterministic dispatch, and lease-recovery tests.
 
 ## Known sensitive/high-risk areas
 

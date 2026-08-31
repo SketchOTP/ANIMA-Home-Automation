@@ -480,3 +480,26 @@ Built `ActionExecutionCoordinator` with durable idempotency claims, canonical-re
 - Evidence was reproduced from a local filesystem because the GVFS/SFTP workspace was unreliable for environment execution. HA evidence is isolated virtual/demo HA on x86-64; native ARM64/Pi, physical-home, high-risk/security, and production-provider behavior are not claimed.
 - This outcome does not accept Phase 9. It records a bounded correctness continuation for Architect review. No Phase 10 behavior was implemented.
 - Governed evidence closure is a subsequent metadata-only checkpoint; its exact SHA and final GitHub Actions result are recorded in the Notion SSOT after push verification.
+
+## ANIMA-HA-P10-DURABLE-TASK-ENGINE-012 — Durable task engine
+
+- Completed: 2026-08-31
+- Verdict: COMPLETE — PENDING ARCHITECT ACCEPTANCE
+- Retrieval confidence: ADEQUATE
+- Starting accepted checkpoint: `7f09b52f8773901ea73221f60b40414874809fda` (Phase 9).
+- Implementation checkpoint: to be filled with exact SHA and hosted CI after publication.
+- Final governed checkpoint: to be filled with exact SHA and hosted CI after evidence closure publication.
+
+### Result
+
+Built ANIMA-owned declarative `DurableTask`, `TaskSchedule`, and `DurableTaskRun` contracts with one-shot, fixed-duration interval, and five-field cron schedules; explicit IANA timezone, misfire, expiry, and DST policy; recursive executable-payload rejection; household-scoped task lifecycle; idempotent creation; PostgreSQL persistence; `FOR UPDATE SKIP LOCKED` claims; bounded leases/attempts; deterministic occurrence/event identities; guaranteed `scheduled_reasoning_due` events; a local worker entry point; and a bridge into the existing Attention → Context → AgentRuntime path.
+
+### Evidence
+
+- Phase 10 unit tests cover DST spring/fall behavior, declarative payload safety, creation idempotency/conflict, deterministic due events, concurrent in-memory claims, lease reclaim/replay, misfire/pause/resume/cancel, and household isolation.
+- PostgreSQL evidence is produced by `scripts/verify_phase10_durable_tasks.py`: migration/repeat, idempotent creation, two-worker claim race, journal source-event deduplication, and lease recovery.
+- Full Phase 0–9 regression/static/build/OPA/isolated HA validation and exact-SHA hosted CI are required before Architect closure.
+
+### Limits
+
+Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, production-scale scheduler capacity, Phase 11, and production external connectors are not claimed. No Phase 11 behavior was implemented.

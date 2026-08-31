@@ -1,18 +1,18 @@
 # Current Project State
 
-Last updated: 2026-08-30
+Last updated: 2026-08-31
 
 ## Current stage
 
-PHASE 9 COMPLETE — PENDING ARCHITECT ACCEPTANCE
+PHASE 10 COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Correct the four independently identified Phase 9 execution-safety gaps while preserving the accepted Phase 0–8 architecture. Phase 10 remains unauthorized.
+Implement and validate the bounded declarative durable-task engine authorized by Architect directive `ANIMA-HA-P10-DURABLE-TASK-ENGINE-012`, preserving accepted Phase 0–9 architecture. Phase 11 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P9-EXECUTION-HARDENING-011H` — bounded correctness continuation after independent review found missing system-owned preconditions in the live agent path, missing provider idempotency forwarding, connector-claim success bypass, and missing ambiguous-dispatch reconciliation. Phase 8 is accepted at `7153b127106c8e921185a38b1b4606fa42e5f92b`; published Phase 9 remains `CONTINUE`, not accepted.
+`ANIMA-HA-P10-DURABLE-TASK-ENGINE-012` — bounded durable one-shot/interval/cron task engine and scheduled cognition re-entry. Phase 9 is Architect accepted at `7f09b52f8773901ea73221f60b40414874809fda`; Phase 11 is unauthorized.
 
 ## Current verified state
 
