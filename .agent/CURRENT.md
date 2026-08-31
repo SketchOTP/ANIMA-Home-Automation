@@ -85,8 +85,8 @@ Close the bounded Phase 10 task-policy integration continuation authorized by Ar
 - AgentRuntime generates trusted household, principal, episode, tool-request, ordinal, origin, and system-idempotency context. Creator provenance and creation idempotency are absent from model-visible task schemas.
 - PostgreSQL and in-memory lifecycle guards match. Dispatch requires the current worker's live unexpired claim; cancellation cannot leave an in-flight dispatch run orphaned.
 - Due tasks still emit guaranteed deterministic `scheduled_reasoning_due` events, scheduled cognition builds a fresh ContextPacket, and later physical actions remain Phase 9-coordinated.
-- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed on that exact SHA.
-- Final governed evidence closure is the subsequent documentation checkpoint; its exact SHA and CI are recorded in the completed packet and Notion after publication.
+- Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; hosted CI `33428295199` passed on that exact SHA.
+- The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for closure purposes by the corrected scheduled-cognition evidence. The final governed evidence closure for this correction is the subsequent documentation checkpoint.
 
 ## Current blockers
 
@@ -123,7 +123,9 @@ Review the Phase 10 task-policy integration checkpoint after fresh evidence and 
 ## Phase 10 publication state
 
 - Starting governed checkpoint: `21dde3cddc3ea4aa5af3e59e6a0334b62d37a7a2`; hosted CI `33418246958` passed.
-- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed.
+- Earlier implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed.
+- Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; hosted CI `33428295199` passed.
 - Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
+- Corrected final governed SHA and exact CI are recorded after the evidence-closure publication.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

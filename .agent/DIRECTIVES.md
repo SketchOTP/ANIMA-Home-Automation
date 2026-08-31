@@ -309,3 +309,10 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; GitHub Actions `33425928381` passed on that exact SHA.
 - Final governed checkpoint: the subsequent evidence-closure commit; its exact SHA and hosted CI are recorded in the completed task packet and Notion SSOT after publication.
 - Evidence: local-filesystem locked validation, 122 tests, OPA 4/4, package build, migration repeat, Phase 1–5 and 7–8 regressions, isolated real HA Phase 6/9, PostgreSQL Phase 10 harness, and public-safety scan passed.
+
+### 012H correction publication record
+
+- The scheduled-cognition fixture was strengthened to select a synthetic consequential action at due time and prove it still enters the existing Phase 9 coordinator.
+- Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; GitHub Actions `33428295199` passed on that exact SHA.
+- Fresh local evidence: `scheduled_future_action_phase9=PASS`; full pytest `122 passed`; Ruff, strict mypy, OPA 4/4, package build, migrations, Phase 1–10 harnesses, isolated HA Phase 6/9, diff check, and public-safety scan passed. One rebuilt-venv MCP startup failure was immediately reproduced as passing in isolation and in the subsequent full suite.
+- The previous governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for this correction. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.

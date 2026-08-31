@@ -191,3 +191,9 @@ UI, and voice remain out of scope.
 - Architect disposition: `CONTINUE`; Phase 9 is accepted and Phase 11 remains unauthorized.
 - The Phase 10 scheduler substrate remains valid. The bounded correction hardens the AgentRuntime execution boundary, trusted task provenance/idempotency, PostgreSQL lifecycle parity, worker lease ownership, cancellation cleanup, and fresh scheduled-cognition integration.
 - Implementation checkpoint `27f7c3fb8ce53c4eb988d7de22c63672770998a8` passed hosted CI `33425928381`. Governed evidence closure follows as a separate documentation checkpoint and remains pending Architect acceptance.
+
+## Phase 10 scheduled-action evidence correction — 2026-08-31
+
+- The bounded Phase 10 correction adds an explicit due-time synthetic consequential action to the scheduled-cognition harness. It verifies fresh due-time cognition, Phase 9 routing, fresh pre/post observation, one connector call, and a verified successful action record without changing the scheduler architecture.
+- Corrected implementation checkpoint `945f89c13b67e52a9027d3f42cc3e2bccd5608d2` passed exact hosted CI `33428295199`.
+- The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for this closure. Phase 10 remains pending Architect acceptance and Phase 11 remains unauthorized.

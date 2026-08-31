@@ -55,6 +55,24 @@ and lease recovery.
 - Full local regression and isolated HA evidence: PASSED; exact implementation
   CI is recorded above.
 
+### 012H corrected publication evidence
+
+- Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`;
+  GitHub Actions `33428295199` passed on that exact SHA.
+- The scheduled-cognition fixture now selects a synthetic consequential action
+  at due time. It proves a fresh due-time ContextPacket, AgentRuntime routing
+  into the existing Phase 9 coordinator, fresh pre/post Truth snapshots, one
+  connector dispatch, and a verified `SUCCEEDED` action record:
+  `scheduled_future_action_phase9=PASS`.
+- Fresh full validation: 122 pytest tests, Ruff format/check, strict mypy, OPA
+  4/4, sdist/wheel build, migration initial/repeat, Phase 1–5 and 7–10
+  harnesses, isolated HA Phase 6/9, `git diff --check`, and public-safety scan:
+  PASSED. The first rebuilt-venv full run had one transient MCP startup failure;
+  the focused test and immediate full rerun passed, with no source correction.
+- The prior governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516`
+  is superseded for this correction. Phase 10 remains
+  `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
+
 ## Limits
 
 Evidence is local x86-64 and isolated. No native ARM64/Pi, physical-home,

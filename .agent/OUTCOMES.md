@@ -531,3 +531,11 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 
 - Evidence is local x86-64 and isolated virtual Home Assistant; native ARM64/Pi, physical-home, production-provider, high-risk, and production-scale scheduler behavior are not claimed.
 - Final governed checkpoint and exact final CI are recorded after the evidence-closure push. Phase 10 remains pending Architect acceptance.
+
+### 012H corrected scheduled-action evidence
+
+- The Phase 10 evidence harness now drives a due-time scripted cognition episode into a synthetic consequential home action. The action uses the existing AgentRuntime → Phase 9 coordinator path, fresh pre/post Truth snapshots, and one connector dispatch; it reports `scheduled_future_action_phase9=PASS` with a verified `SUCCEEDED` action record.
+- Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; GitHub Actions `33428295199` passed on that exact SHA.
+- Fresh validation passed: 122 tests; Ruff format/check; strict mypy; OPA 4/4; sdist/wheel; migration initial/repeat; Phase 1–5, 7–10 harnesses; isolated real HA Phase 6 and Phase 9; `git diff --check`; and public-safety scan.
+- The rebuilt authoritative `.venv` produced one transient MCP stdio startup failure during the first full run; the focused test and immediate full rerun passed. No source or test correction was required for that transient environment event.
+- The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for final closure by the corrected evidence. Final governed SHA/CI are recorded after the closure commit. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 was not implemented.

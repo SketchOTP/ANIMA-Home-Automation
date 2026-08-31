@@ -33,3 +33,10 @@ lifecycle parity, stale-worker rejection, cancellation cleanup, real
 AgentRuntime task mutation, and fresh scheduled cognition are evidenced; exact
 implementation and governed checkpoints pass hosted CI; repository and
 Notion remain synchronized; Architect acceptance is still pending.
+
+## 012H corrected evidence
+
+The scheduled-cognition evidence was extended to include a synthetic future
+consequential action. Corrected implementation `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`
+passed hosted CI `33428295199`. Phase 10 remains complete pending Architect
+acceptance; Phase 11 was not implemented.

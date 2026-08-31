@@ -92,6 +92,12 @@ fresh due-time ContextPacket. The exact implementation and governed
 checkpoints and hosted CI runs are recorded in the completed Authority packet
 and Notion SSOT.
 
+The corrected publication checkpoint also extends the deterministic fixture so
+that due-time cognition selects a synthetic consequential action. That action
+enters the existing Phase 9 coordinator, performs fresh pre/post observation,
+and records one verified successful dispatch. This proves the internal task
+boundary does not weaken Phase 9 for later physical/provider actions.
+
 ## Evidence limits
 
 Unit evidence covers schedule validation, DST policy, idempotent creation,
