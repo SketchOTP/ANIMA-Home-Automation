@@ -44,17 +44,30 @@ semantics.
 
 ## Lifecycle and safety
 
-Task creation is household-scoped, policy-gated through the trusted native
-Phase 5 plugin manifest, and idempotent by creation key plus parameter
-fingerprint. Listing and mutation re-check household ownership. Pause, resume,
-cancel, expiry, missed occurrences, leases, attempts, and run outcomes are
-durable and auditable. Scheduled events contain only bounded intent and
-provenance; arbitrary executable payloads are rejected recursively.
+Task creation and lifecycle mutation are household-scoped, policy-gated
+through the Phase 5 gateway, and classified by an ANIMA-owned execution
+boundary as `POLICY_GATED_INTERNAL`. Only the Core allowlist can assign this
+boundary to the built-in task tools; raw plugin metadata cannot create an
+exemption from Phase 9. Listing and reads are `READ_ONLY`; physical/provider
+side effects remain `COORDINATED_CONSEQUENTIAL`.
+
+AgentRuntime injects a trusted invocation context containing the current
+household, principal, episode, tool-request identity, ordinal, origin, and
+system idempotency identity. Creator provenance and creation idempotency are
+not model-controlled task arguments. Creation remains idempotent by that
+system key plus parameter fingerprint. Listing and mutation re-check
+household ownership. Pause, resume, cancel, expiry, missed occurrences,
+leases, attempts, and run outcomes are durable and auditable. PostgreSQL and
+in-memory lifecycle guards agree, and a dispatch transition requires the
+current worker's live unexpired claim. Scheduled events contain only bounded
+intent and provenance; arbitrary executable payloads are rejected recursively.
 
 The task engine creates an opportunity for fresh cognition; it does not create
-a future action. Any later consequential action still passes through the
-Phase 9 coordinator, including latest-state refresh, trusted preconditions,
-policy reauthorization, idempotency, provider execution context, and
+a future action. Due-time cognition uses a new ContextPacket and does not
+reuse creation-time context or creator identity as future authentication. Any
+later consequential action still passes through the Phase 9 coordinator,
+including latest-state refresh, trusted preconditions, policy
+reauthorization, idempotency, provider execution context, and
 observation-first verification.
 
 ## Dependency decision
@@ -67,6 +80,17 @@ bounded task model. APScheduler remains reference-only; its callable/job
 orientation does not replace ANIMA's declarative payload and governance
 boundary. Phase 11 scheduling, UI/voice, compensation, and production
 connectors remain unauthorized.
+
+## Evidence
+
+The `ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H` continuation adds real
+AgentRuntime task scheduling through Phase 5 and policy, ALLOW/DENY/
+confirmation/stronger-auth coverage, trusted provenance/idempotency coverage,
+in-memory/PostgreSQL lifecycle parity, stale-worker lease rejection,
+cancellation cleanup, and a PostgreSQL scheduled-cognition chain proving a
+fresh due-time ContextPacket. The exact implementation and governed
+checkpoints and hosted CI runs are recorded in the completed Authority packet
+and Notion SSOT.
 
 ## Evidence limits
 

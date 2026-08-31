@@ -2,6 +2,9 @@
 
 Status: COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
+Continuation: `ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H`; Architect
+disposition remains `CONTINUE` pending review of the corrected integration.
+
 ## Objective
 
 Implement the bounded Phase 10 declarative durable-task engine authorized by
@@ -25,7 +28,8 @@ stale authorization replay.
 ## Acceptance
 
 Local static/tests/build/OPA and Phase 0–9 regressions pass; PostgreSQL
-migration/repeat, concurrent claims, replay deduplication, and lease recovery
-are evidenced; exact implementation and governed checkpoints pass hosted CI;
-repository and Notion remain synchronized; Architect acceptance is still
-pending.
+migration/repeat, concurrent claims, replay deduplication, lease recovery,
+lifecycle parity, stale-worker rejection, cancellation cleanup, real
+AgentRuntime task mutation, and fresh scheduled cognition are evidenced; exact
+implementation and governed checkpoints pass hosted CI; repository and
+Notion remain synchronized; Architect acceptance is still pending.

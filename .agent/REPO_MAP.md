@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: PHASE 10 DURABLE TASK ENGINE CHECKPOINT 2026-08-31
+Last verified against: PHASE 10 TASK-POLICY INTEGRATION CHECKPOINT 2026-08-31
 
 ## Entry points
 
@@ -29,7 +29,7 @@ Last verified against: PHASE 10 DURABLE TASK ENGINE CHECKPOINT 2026-08-31
 - `src/anima_ha/phase7_replay.py` — side-effect-free Phase 7 replay CLI.
 - `src/anima_ha/agent.py` — durable bounded cognition episodes, cloud-safe projection, structured Codex CLI adapter, sequential Phase 5/4 tool loop, budgets, audit, and explicit outcomes.
 - `src/anima_ha/action.py` — deterministic consequential-action lifecycle, canonical-resource locking, freshness/preconditions, final policy reauthorization, idempotency, verification, partial/unknown outcomes, and restart reconciliation.
-- `src/anima_ha/tasks.py` — declarative durable tasks, schedules, cron/DST/misfire policy, PostgreSQL claims/leases, deterministic due events, task lifecycle tools, and scheduled cognition bridge.
+- `src/anima_ha/tasks.py` — declarative durable tasks, schedules, cron/DST/misfire policy, trusted task provenance/idempotency, PostgreSQL lifecycle/claim ownership, deterministic due events, task lifecycle tools, and scheduled cognition bridge.
 - `src/anima_ha/agent_instructions.py` — versioned provider instructions and authority/evidence boundary.
 - `tests/` — deterministic Phase 0–8 unit tests and isolated provider fixtures.
 
@@ -75,7 +75,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `policy/phase4/` — pinned Rego policy data and `opa test` matrix.
 - `scripts/verify_phase4_policy.py` — synthetic x86-64 PostgreSQL + local OPA integration evidence.
 - `docs/PHASE-4-IDENTITY-POLICY.md` — identity, risk, OPA, confirmation, audit, and fail-closed architecture.
-- `src/anima_ha/plugins.py` — ANIMA-owned plugin manifests, lifecycle, capability/tool registry, native/MCP runtimes, JSON Schema boundary, policy-gated invocation, secrets/config isolation, persistence, and event ingress.
+- `src/anima_ha/plugins.py` — ANIMA-owned plugin manifests, lifecycle, capability/tool registry, ANIMA execution-boundary normalization, trusted invocation context, native/MCP runtimes, JSON Schema boundary, policy-gated invocation, secrets/config isolation, persistence, and event ingress.
 - `src/anima_ha/mcp_reference.py` — synthetic MCP stdio server for bounded Phase 5 integration evidence.
 - `src/anima_ha/db/migrations/0006_plugin_runtime.sql` — plugin and normalized tool persistence.
 - `scripts/verify_phase5_plugins.py` — PostgreSQL/OPA/MCP/native lifecycle and persistence integration harness.
@@ -99,8 +99,8 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `docs/PHASE-8-CODEX-OAUTH-AGENT-RUNTIME.md` — cognition boundary, dependency decisions, durable episode model, privacy/failure behavior, and evidence limits.
 - `docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md` — action lifecycle, advisory locks, idempotency, verification, ambiguity/restart semantics, and evidence limits.
 - `docs/PHASE-10-DURABLE-TASK-ENGINE.md` — declarative task lifecycle, schedule/DST/misfire policy, safety boundary, dependency decisions, and evidence limits.
-- `scripts/verify_phase10_durable_tasks.py` — PostgreSQL migration, idempotent creation, concurrent claim, event deduplication, and lease-recovery evidence.
-- `tests/test_tasks.py` — task contract, DST/misfire, idempotency, concurrency, household scoping, deterministic dispatch, and lease-recovery tests.
+- `scripts/verify_phase10_durable_tasks.py` — PostgreSQL migration, idempotent creation, lifecycle parity, stale-worker/cancellation races, real AgentRuntime task creation, fresh scheduled cognition, event deduplication, and lease-recovery evidence.
+- `tests/test_tasks.py` — task contract, DST/misfire, trusted AgentRuntime routing/provenance, policy outcomes, idempotency, lifecycle parity, concurrency, household scoping, deterministic dispatch, cancellation, and lease-recovery tests.
 
 ## Known sensitive/high-risk areas
 

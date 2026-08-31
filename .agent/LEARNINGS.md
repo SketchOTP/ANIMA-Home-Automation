@@ -126,3 +126,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Latest-state preconditions must be checked after lock acquisition, and consequential verification must use a post-call refresh. Service acknowledgement alone is not success.
 - Idempotency must bind a key to canonical request parameters. Reusing the key with different parameters is a conflict; repeating the same request returns the stored outcome without another connector call.
 - Partial multi-effect outcomes require durable per-effect evidence and explicit non-compensation semantics. Ambiguous timeout/error after dispatch must remain `UNKNOWN_RESULT`.
+
+## ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H — Durable task authority boundary
+
+- An AgentRuntime that routes every non-read-only tool through physical-action coordination makes trusted local task persistence fail closed. A Core-owned execution boundary is required: task mutations remain Phase 5/4 policy-gated internal state changes, while provider side effects remain Phase 9 coordinated.
+- Provenance and creation idempotency are invocation facts, not task content. Deriving them from the current episode/tool-request identity prevents model-selected creator claims and preserves deterministic replay.
+- PostgreSQL lifecycle guards must be expressed as atomic allowed-source predicates, and dispatch must require the same live claimant and lease at both begin and completion. Deterministic event IDs do not authorize stale workers.
+- Cancellation around `CLAIMED -> DISPATCHING` requires an explicit rule: before event append, terminalize the dispatching run without emitting the event; after append, preserve the event and reconcile honestly.

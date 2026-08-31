@@ -503,3 +503,31 @@ Built ANIMA-owned declarative `DurableTask`, `TaskSchedule`, and `DurableTaskRun
 ### Limits
 
 Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, production-scale scheduler capacity, Phase 11, and production external connectors are not claimed. No Phase 11 behavior was implemented.
+
+## ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H — Task integration and ownership hardening
+
+- Completed: 2026-08-31
+- Verdict: COMPLETE — PENDING ARCHITECT ACCEPTANCE; Architect disposition remains `CONTINUE`.
+- Retrieval confidence: ADEQUATE.
+- Starting governed checkpoint: `21dde3cddc3ea4aa5af3e59e6a0334b62d37a7a2`; hosted CI `33418246958` had passed.
+- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed on that exact SHA.
+
+### Corrective result
+
+- ANIMA Core now assigns `READ_ONLY`, `POLICY_GATED_INTERNAL`, or `COORDINATED_CONSEQUENTIAL` execution boundaries. Only the exact trusted built-in durable-task manifest receives the internal boundary; arbitrary plugin metadata cannot self-declare a Phase 9 exemption.
+- AgentRuntime sends all task reads/mutations through the Phase 5 gateway. Task mutation schemas contain only declarative task content and schedule; ANIMA injects current household, principal, episode, origin, tool-request identity, ordinal, and deterministic system idempotency through trusted `InvocationContext`.
+- Task creation replay is idempotent by that system identity and the existing parameter fingerprint. Creator provenance is recorded as historical evidence and is not reused as future authentication.
+- In-memory and PostgreSQL lifecycle guards match. Pause is only `ACTIVE -> PAUSED`, resume is only `PAUSED -> ACTIVE`, cancellation is terminal, and a current unexpired claimant is required for dispatch transitions. A cancelled `DISPATCHING` run can be terminalized before event append, preventing an orphan.
+- Due tasks still emit guaranteed deterministic `scheduled_reasoning_due` events. The integration harness proves a new due-time ContextPacket and re-entry through AgentRuntime; later physical/provider actions remain Phase 9-coordinated.
+
+### Validation and evidence
+
+- `uv sync --locked --dev`, Ruff format/check, strict mypy, 122 pytest tests, OPA 4/4, package sdist/wheel, and migration initial/repeat: PASSED.
+- Phase 1–5, Phase 7–8, isolated real Home Assistant Phase 6, isolated real Home Assistant Phase 9, and fresh PostgreSQL Phase 10 harness: PASSED.
+- Target evidence: real AgentRuntime task schedule and lifecycle mutation, ALLOW/DENY/confirmation/stronger-auth policy outcomes, trusted provenance/idempotency replay, lifecycle parity, stale-worker rejection, cancellation cleanup, deterministic event replay, lease recovery, fresh scheduled cognition, and creator-identity non-authority: PASSED.
+- Public safety and `git diff --check`: PASSED. No secrets, household/private runtime state, or Phase 11 behavior were included.
+
+### Limits and publication
+
+- Evidence is local x86-64 and isolated virtual Home Assistant; native ARM64/Pi, physical-home, production-provider, high-risk, and production-scale scheduler behavior are not claimed.
+- Final governed checkpoint and exact final CI are recorded after the evidence-closure push. Phase 10 remains pending Architect acceptance.

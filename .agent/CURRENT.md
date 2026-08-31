@@ -8,11 +8,11 @@ PHASE 10 COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Implement and validate the bounded declarative durable-task engine authorized by Architect directive `ANIMA-HA-P10-DURABLE-TASK-ENGINE-012`, preserving accepted Phase 0–9 architecture. Phase 11 remains unauthorized.
+Close the bounded Phase 10 task-policy integration continuation authorized by Architect directive `ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H`, preserving the accepted Phase 0–9 architecture. Phase 11 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P10-DURABLE-TASK-ENGINE-012` — bounded durable one-shot/interval/cron task engine and scheduled cognition re-entry. Phase 9 is Architect accepted at `7f09b52f8773901ea73221f60b40414874809fda`; Phase 11 is unauthorized.
+`ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H` — correct the ANIMA-owned task execution boundary, trusted provenance/idempotency injection, PostgreSQL lifecycle/lease ownership, scheduled cognition integration, and Authority synchronization. Phase 9 is Architect accepted at `7f09b52f8773901ea73221f60b40414874809fda`; Phase 10 remains pending review and Phase 11 is unauthorized.
 
 ## Current verified state
 
@@ -78,10 +78,20 @@ Implement and validate the bounded declarative durable-task engine authorized by
 - `ProviderExecutionContext` carries ANIMA execution identity and an optional provider idempotency key outside model-visible schemas. Providers without native idempotency remain executable under local ANIMA deduplication and observation-first recovery.
 - Connector acknowledgements/effect claims are evidence only. Fresh post-dispatch observation and verification derive terminal effect/outcome status, including timeout-success, unknown, definitive-failure, partial, and already-satisfied no-dispatch cases.
 
+## Phase 10 hardening state
+
+- Task mutations are ANIMA-owned `POLICY_GATED_INTERNAL` capabilities; task reads are `READ_ONLY`; physical/provider side effects remain `COORDINATED_CONSEQUENTIAL` and continue through Phase 9.
+- Only Core-approved built-in durable-task tools receive the internal boundary; raw plugin metadata cannot lower an external tool into that boundary.
+- AgentRuntime generates trusted household, principal, episode, tool-request, ordinal, origin, and system-idempotency context. Creator provenance and creation idempotency are absent from model-visible task schemas.
+- PostgreSQL and in-memory lifecycle guards match. Dispatch requires the current worker's live unexpired claim; cancellation cannot leave an in-flight dispatch run orphaned.
+- Due tasks still emit guaranteed deterministic `scheduled_reasoning_due` events, scheduled cognition builds a fresh ContextPacket, and later physical actions remain Phase 9-coordinated.
+- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed on that exact SHA.
+- Final governed evidence closure is the subsequent documentation checkpoint; its exact SHA and CI are recorded in the completed packet and Notion after publication.
+
 ## Current blockers
 
-- Phase 9 hardening is implemented and published, but Architect acceptance remains blocked pending independent review of the corrected checkpoint.
-- Phase 10 durable tasks, external production tools, UI, and voice remain explicitly out of scope and unauthorized.
+- Phase 10 hardening is implemented and published, but Architect acceptance remains pending review of the corrected checkpoint.
+- Phase 11 external production plugins, UI, voice, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
 
@@ -108,13 +118,12 @@ Implement and validate the bounded declarative durable-task engine authorized by
 
 ## Next Architect decision point
 
-Review the Phase 9 hardening checkpoint after fresh evidence and hosted CI. Phase 9 remains `CONTINUE`; Phase 10 is unauthorized.
+Review the Phase 10 task-policy integration checkpoint after fresh evidence and hosted CI. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
 
-## Phase 9 hardening publication state
+## Phase 10 publication state
 
-- Implementation checkpoint: `fd9cd822cc6bb10d5ab49b705a9e365c9fd42160`.
-- Implementation GitHub Actions: `33339779556` passed on that exact SHA.
-- Governed evidence closure is this subsequent metadata checkpoint; its exact SHA and CI are recorded in the Notion SSOT after push verification.
+- Starting governed checkpoint: `21dde3cddc3ea4aa5af3e59e6a0334b62d37a7a2`; hosted CI `33418246958` passed.
+- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; hosted CI `33425928381` passed.
 - Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

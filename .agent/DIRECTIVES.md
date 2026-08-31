@@ -291,3 +291,21 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Decisions: BUILD ANIMA task/run/coordinator semantics; ADOPT/WRAP PostgreSQL and `croniter==6.2.4`; REFERENCE/DEFER APScheduler; DEFER Hatchet and Temporal; no new broker/service.
 - Required evidence: schedule contract, DST/misfire, idempotency, household isolation, concurrent claims, lease/crash recovery, deterministic journal deduplication, PostgreSQL migration/repeat, Phase 0–9 regressions, static/test/build/CI, and public safety.
 - Source: canonical Notion SSOT active directive `ANIMA-HA-P10-DURABLE-TASK-ENGINE-012`, retrieved 2026-08-31.
+
+## ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H — Correct task integration and ownership defects
+
+- Issued: 2026-08-31
+- Status: COMPLETE — PENDING ARCHITECT ACCEPTANCE
+- Project stage: PHASE 10 TASK-POLICY INTEGRATION — PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`; Phase 9 is accepted at `7f09b52f8773901ea73221f60b40414874809fda`; Phase 11 remains unauthorized.
+- Objective: Make the real AgentRuntime task-mutation path policy-gated and functional, inject trusted provenance/idempotency outside model arguments, enforce PostgreSQL lifecycle parity and live worker ownership, and preserve fresh scheduled cognition and Phase 9 routing for later physical actions.
+- Corrections: ANIMA-owned `READ_ONLY` / `POLICY_GATED_INTERNAL` / `COORDINATED_CONSEQUENTIAL` normalization; trusted `InvocationContext`; model-free creator/idempotency fields; guarded PostgreSQL pause/resume/cancel and claim/dispatch transitions; dispatch-cancellation cleanup.
+- Exclusions: No Phase 11 behavior, new service, production connector, UI, voice, compensation, arbitrary executable task payload, or weakening of Phase 9 physical/provider guarantees.
+- Required evidence: real AgentRuntime schedule/lifecycle path, policy matrix, provenance/idempotency replay, memory/PostgreSQL lifecycle parity, stale-worker and cancellation races, fresh scheduled cognition, Phase 1–10 regressions, static/test/build/OPA/CI, and public safety.
+- Source: Architect directive recorded in the canonical Notion SSOT, retrieved 2026-08-31.
+
+### Completion record
+
+- Implementation checkpoint: `27f7c3fb8ce53c4eb988d7de22c63672770998a8`; GitHub Actions `33425928381` passed on that exact SHA.
+- Final governed checkpoint: the subsequent evidence-closure commit; its exact SHA and hosted CI are recorded in the completed task packet and Notion SSOT after publication.
+- Evidence: local-filesystem locked validation, 122 tests, OPA 4/4, package build, migration repeat, Phase 1–5 and 7–8 regressions, isolated real HA Phase 6/9, PostgreSQL Phase 10 harness, and public-safety scan passed.

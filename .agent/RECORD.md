@@ -185,3 +185,9 @@ UI, and voice remain out of scope.
 - Evidence: 10 focused tests, 94-test local-filesystem regression, Ruff, strict mypy, migration repeat, durable PostgreSQL replay, real PostgreSQL advisory-lock conflict, and the isolated HA coordinator harness passed. The live harness executed the real pinned HA 2026.8.2 virtual entity through the coordinator, verified post-action state, demonstrated a contradictory two-principal same-resource conflict, and replayed without a second connector call.
 - Boundary: no transaction spans an external call; stale conflicting requests are not queued; ambiguous effects are not retried; partial effects are not compensated; live HA evidence is isolated virtual/demo x86-64 only; no native Pi or physical-home claim.
 - Consequence: Phase 9 is complete pending independent Architect review; Phase 10 remains unauthorized.
+
+## Phase 10 task-policy integration hardening — 2026-08-31
+
+- Architect disposition: `CONTINUE`; Phase 9 is accepted and Phase 11 remains unauthorized.
+- The Phase 10 scheduler substrate remains valid. The bounded correction hardens the AgentRuntime execution boundary, trusted task provenance/idempotency, PostgreSQL lifecycle parity, worker lease ownership, cancellation cleanup, and fresh scheduled-cognition integration.
+- Implementation checkpoint `27f7c3fb8ce53c4eb988d7de22c63672770998a8` passed hosted CI `33425928381`. Governed evidence closure follows as a separate documentation checkpoint and remains pending Architect acceptance.
