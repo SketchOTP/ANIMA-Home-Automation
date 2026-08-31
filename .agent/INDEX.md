@@ -10,11 +10,11 @@
 
 ## Current pointers
 
-- Current stage: PHASE 10 COMPLETE — PENDING ARCHITECT ACCEPTANCE
-- Active directive: ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H — bounded integration and correctness hardening
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P10-DURABLE-TASK-ENGINE-012/`
-- Last accepted outcome: ANIMA-HA-PHASE-9-EXECUTION-HARDENING (accepted by Architect at `7f09b52f8773901ea73221f60b40414874809fda`)
-- Last completed outcome: Phase 10 task-policy integration hardening; implementation and governed SHAs/CI are recorded in the completed packet and Notion after publication
+- Current stage: PHASE 11 IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE
+- Active directive: ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — bounded external-by-intent capabilities
+- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013/`
+- Last accepted outcome: Phase 10 durable-task integration (Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`)
+- Last completed outcome: Phase 11 bounded external-by-intent capabilities; implementation and governed SHAs/CI are recorded in the completed packet and Notion after publication
 - Last state sync: 2026-08-31
 
 ## Mandatory kernel

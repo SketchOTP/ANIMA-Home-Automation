@@ -133,3 +133,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Provenance and creation idempotency are invocation facts, not task content. Deriving them from the current episode/tool-request identity prevents model-selected creator claims and preserves deterministic replay.
 - PostgreSQL lifecycle guards must be expressed as atomic allowed-source predicates, and dispatch must require the same live claimant and lease at both begin and completion. Deterministic event IDs do not authorize stale workers.
 - Cancellation around `CLAIMED -> DISPATCHING` requires an explicit rule: before event append, terminalize the dispatching run without emitting the event; after append, preserve the event and reconcile honestly.
+
+## ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — External capability boundaries
+
+- External providers must return bounded normalized data with explicit `EXTERNAL_UNTRUSTED` trust, attribution/source references, freshness, and provider metadata; provider text never becomes instructions, policy, identity, or Household Graph authority.
+- Fixed-host HTTPS, no redirects, explicit method/path allowlists, private-IP rejection, response-size limits, and secret-free request audit records provide a small replaceable egress boundary. Audit records can be adapted into the append-only Event Journal without storing authorization headers or secret values.
+- Provider availability is an independent resource gate. Missing Brave or Google Calendar credentials must not disable no-credential weather/recipe capabilities or synthetic notification qualification, and a gate is not evidence of provider success.
+- Consequential external writes require Core-owned Phase 9 profiles. Calendar acknowledgement is insufficient without provider readback; ntfy acknowledgement establishes provider acceptance only, not human delivery or read status. Retailer checkout/cart automation remains outside the bounded prototype.
+- Direct Google Calendar REST is the current bounded integration surface; the official Calendar MCP is reference/deferred while it remains preview. OAuth credential commissioning and native ARM64/Pi qualification remain separate evidence work.

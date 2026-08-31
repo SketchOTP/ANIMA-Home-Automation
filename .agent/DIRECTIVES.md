@@ -316,3 +316,21 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; GitHub Actions `33428295199` passed on that exact SHA.
 - Fresh local evidence: `scheduled_future_action_phase9=PASS`; full pytest `122 passed`; Ruff, strict mypy, OPA 4/4, package build, migrations, Phase 1–10 harnesses, isolated HA Phase 6/9, diff check, and public-safety scan passed. One rebuilt-venv MCP startup failure was immediately reproduced as passing in isolation and in the subsequent full suite.
 - The previous governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for this correction. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
+
+## ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — Bounded external-by-intent capabilities
+
+- Issued: 2026-08-31
+- Status: COMPLETE IMPLEMENTATION / PENDING ARCHITECT ACCEPTANCE
+- Project stage: PHASE 11 — EXTERNAL-BY-INTENT CAPABILITIES
+- Architect authorization: Phase 10 is accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 is authorized for bounded implementation and review. Phase 12 remains unauthorized.
+- Objective: Add bounded weather, web/place/product discovery, recipes, Calendar, notifications, trusted egress/audit, provider gates, and Phase 9-verified external writes without introducing Phase 12 behavior.
+- Architecture: BUILD ANIMA-owned semantic adapters and trust/egress/audit contracts; ADOPT/WRAP Open-Meteo, Brave, TheMealDB, Google Calendar REST, ntfy, httpx, and Google auth dependencies; defer retailer checkout/cart and Google Calendar MCP preview.
+- Safety boundary: external content is `EXTERNAL_UNTRUSTED`; arbitrary URLs, hosts, redirects, credentials, topics, and provider headers are not model inputs. Calendar creation and notification send use exact Core-owned Phase 9 profiles; connector acknowledgement is not authoritative success.
+- Required evidence: local unit/integration/static/build/OPA validation, live synthetic public-provider evidence where no credential is required, explicit Brave/Google credential gates, and publication on exact hosted-CI SHAs.
+- Exclusions: No Phase 12 custom interfaces, UI, voice, shopping checkout/payment, physical-home claim, production-scale claim, automatic compensation, or unbounded external execution.
+- Source: Architect directive in the canonical Notion SSOT, retrieved 2026-08-31.
+
+### Completion record
+
+- Implementation checkpoint: `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
+- Governance/evidence closure checkpoint and final hosted CI are recorded in the completed task packet and Notion after the closure push.

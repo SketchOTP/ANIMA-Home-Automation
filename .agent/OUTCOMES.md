@@ -13,6 +13,40 @@
 
 ---
 
+## ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — Bounded external capability implementation
+
+- Date: 2026-08-31
+- Verdict: COMPLETE IMPLEMENTATION / PENDING ARCHITECT ACCEPTANCE
+- Disposition: Phase 11 authorized after Phase 10 acceptance; Phase 12 remains unauthorized.
+- Starting accepted checkpoint: `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; hosted CI `33429217008` had passed.
+- Implementation checkpoint: `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on that exact SHA.
+
+### Work performed
+
+- Added ANIMA-owned bounded adapters for Open-Meteo weather, Brave web/place/product discovery, TheMealDB recipes, Google Calendar REST, and ntfy notifications.
+- Added `ExternalResult`, explicit `EXTERNAL_UNTRUSTED` trust, source/attribution fields, fixed-host HTTPS egress, no redirects, method/path/host/IP/response-size bounds, and secret-free `ExternalRequestAudit` records with an Event Journal sink.
+- Added independently evaluated provider-resource gates. Weather, recipes, and synthetic ntfy do not require a credential; Brave requires `BRAVE_SEARCH_API_KEY`; Google Calendar requires the runtime-only `GOOGLE_CALENDAR_ACCESS_TOKEN`; a configured ntfy topic is required for normal operation.
+- Added Core-owned Phase 9 profiles for Calendar event creation and notification send. Calendar uses deterministic provider identity plus GET precheck/POST/GET readback; notification success records provider acceptance only. No connector effect claim can establish consequential success without the profile verifier.
+- Added exact bounded tool schemas and retained provider IDs/URLs as external references only. No retailer cart/checkout API was adopted.
+
+### Fresh validation and evidence
+
+- `uv sync --locked --dev`: PASSED; locked environment resolved 67 packages.
+- Full pytest: `130 passed`.
+- Focused external/action suite: `25 passed`.
+- Changed-file Ruff format/check: PASSED; strict mypy: `Success: no issues found in 40 source files`.
+- Package sdist/wheel: PASSED; `git diff --check`: PASSED.
+- Pinned OPA Docker tests: `PASS: 4/4`. The `opa` executable was absent locally; the repository-documented pinned container path passed.
+- Fresh Phase 1–5, 7–10 PostgreSQL/integration harnesses: PASSED. Phase 6 isolated real Home Assistant harness: PASSED. Phase 7/8 restart-aware runs passed after supplying the repository-required local `ANIMA_DB_PASSWORD` environment variable.
+- Live synthetic provider harness: Open-Meteo `PASS`, TheMealDB `PASS`, ntfy no-cache/Firebase-disabled `PASS`; Brave and Google Calendar correctly reported `EXTERNAL_RESOURCE_GATE`; no credentialed Brave/Google live claim is made.
+- Public safety scan: PASSED; no private-key material, token values, runtime database/log state, household secrets, or credentials were added. Build output remains ignored.
+
+### Evidence limits
+
+Evidence is x86-64 Python 3.12 local/CI execution and bounded synthetic/public-provider traffic. It is not native ARM64/Pi qualification, physical-home evidence, production commercial-provider approval, production-scale capacity evidence, Google OAuth commissioning evidence, Brave credentialed live evidence, or human notification delivery/read evidence. Phase 12 behavior was not implemented.
+
+---
+
 ## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Phase 0 runtime baseline complete
 
 - Completed: 2026-08-28/29

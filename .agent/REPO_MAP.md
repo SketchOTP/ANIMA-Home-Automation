@@ -102,8 +102,16 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase10_durable_tasks.py` — PostgreSQL migration, idempotent creation, lifecycle parity, stale-worker/cancellation races, real AgentRuntime task creation, fresh scheduled cognition, due-time Phase 9 consequential-action routing, event deduplication, and lease-recovery evidence.
 - `tests/test_tasks.py` — task contract, DST/misfire, trusted AgentRuntime routing/provenance, policy outcomes, idempotency, lifecycle parity, concurrency, household scoping, deterministic dispatch, cancellation, and lease-recovery tests.
 
+## Phase 11 external capabilities
+
+- `src/anima_ha/external.py` — ANIMA-owned bounded external result/trust/audit contracts, fixed-host HTTPS transport, Open-Meteo, Brave, TheMealDB, Google Calendar REST, ntfy adapters, provider gates, and native plugin wrappers.
+- `src/anima_ha/action.py` — Core-owned external Calendar/notification safety profiles with provider-evidence verification and Phase 9 coordination.
+- `tests/test_external.py` — bounded egress, hostile-content trust, normalization, audit, provider readback/receipt, Phase 9 external-write, and credential-gate tests.
+- `scripts/verify_phase11_external.py` — live synthetic no-secret provider harness and independent credential-gate evidence.
+- `docs/PHASE-11-EXTERNAL-CAPABILITIES.md` — external capability architecture, provider/dependency decisions, trust/egress/audit boundary, gates, and evidence limitations.
+
 ## Known sensitive/high-risk areas
 
-- HA and Codex OAuth credentials remain runtime-owned secrets; neither is persisted or exposed to Luna. HA IDs remain provider references; only bounded low-risk virtual HA actions are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, Phase 10 durable work, external production connectors, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.
+- HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.

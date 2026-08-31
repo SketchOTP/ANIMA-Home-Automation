@@ -197,3 +197,11 @@ UI, and voice remain out of scope.
 - The bounded Phase 10 correction adds an explicit due-time synthetic consequential action to the scheduled-cognition harness. It verifies fresh due-time cognition, Phase 9 routing, fresh pre/post observation, one connector call, and a verified successful action record without changing the scheduler architecture.
 - Corrected implementation checkpoint `945f89c13b67e52a9027d3f42cc3e2bccd5608d2` passed exact hosted CI `33428295199`.
 - The earlier governed checkpoint `17d627b988aebb89b419671de8ee3c5a5525f516` is superseded for this closure. Phase 10 remains pending Architect acceptance and Phase 11 remains unauthorized.
+
+## Phase 11 external-by-intent capabilities — 2026-08-31
+
+- Type: MILESTONE / ARCHITECTURE / EXTERNAL-DISCOVERY
+- Decision: Build bounded ANIMA-owned weather, discovery, recipes, Calendar, notification, trust, egress, audit, and provider-gate contracts. Wrap Open-Meteo, Brave, TheMealDB, Google Calendar REST, ntfy, and httpx; retain Google auth packages for the commissioning boundary; defer Calendar MCP preview and retailer checkout/cart automation.
+- Safety: Provider data is `EXTERNAL_UNTRUSTED`; credentials/configuration/hosts/topics are runtime-owned; Calendar and notification writes use exact Core-owned Phase 9 profiles and observation/receipt verifiers, never connector claims alone.
+- Evidence: implementation `17252304a4f0642bb654ec612cfcb55a01411804`, CI `33442439042`, 130 tests, pinned OPA 4/4, package build, Phase 1–10 harnesses, isolated real HA Phase 6, and live synthetic Open-Meteo/TheMealDB/ntfy traffic passed.
+- Boundary: Brave and Google Calendar are explicit `EXTERNAL_RESOURCE_GATE` without credentials; no production-provider, native ARM64/Pi, physical-home, human-delivery, or Phase 12 claim is made.

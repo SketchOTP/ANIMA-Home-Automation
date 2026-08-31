@@ -277,6 +277,22 @@ App Server, Agents SDK, or Responses API.
 - Disposition: ADOPT / WRAP PostgreSQL session-level advisory locking; REFERENCE Stripe parameter-bound idempotency; BUILD ANIMA lifecycle, durable records, verification, and recovery semantics; REJECT Redis/Redlock as the foundational fencing mechanism; DEFER Temporal/Hatchet to Phase 10.
 - Recheck trigger: PostgreSQL major-version change, measured lock contention/deadlock need, provider-native idempotency support, physical-home/HA execution qualification, or Phase 10 durable workflow authorization.
 
+## ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — External provider and dependency qualification
+
+- Date checked: 2026-08-31
+- Trigger: Phase 11 authorized bounded external-by-intent weather, discovery, recipes, Calendar, notification, trust, egress, and audit capabilities.
+- Sources: [Open-Meteo API docs](https://open-meteo.com/en/docs), [Open-Meteo terms](https://open-meteo.com/en/terms), [Open-Meteo license](https://open-meteo.com/en/license), [Open-Meteo pricing](https://open-meteo.com/en/pricing); [Brave Web Search API](https://api-dashboard.search.brave.com/api-reference/web/search/get), [Brave Place Search](https://api-dashboard.search.brave.com/documentation/services/place-search); [TheMealDB API](https://www.themealdb.com/api.php), [TheMealDB terms](https://themealdb.com/terms_of_use.php); [ntfy publish](https://docs.ntfy.sh/publish/); [Google Calendar events.list](https://developers.google.com/calendar/api/v3/reference/events/list?hl=en), [events.insert](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert), [Calendar OAuth scopes](https://developers.google.com/workspace/calendar/api/auth), [Calendar MCP configuration](https://developers.google.com/workspace/calendar/api/guides/configure-mcp-server?authuser=0); [httpx PyPI](https://pypi.org/project/httpx/), [google-auth PyPI](https://pypi.org/project/google-auth/), [google-auth-oauthlib PyPI](https://pypi.org/project/google-auth-oauthlib/).
+- Freshness: official documentation and package metadata checked 2026-08-31; exact adopted versions are in `pyproject.toml` and `uv.lock`.
+- Disposition: ADOPT / WRAP bounded provider adapters and `httpx==0.28.1`; ADOPT Google auth packages for the runtime commissioning boundary; REFERENCE / DEFER Google Calendar MCP preview; DEFER retailer cart/checkout and browser/private endpoint automation.
+
+### Findings and limits
+
+- Open-Meteo provides the no-key prototype weather surface but its free endpoint is non-commercial, rate-limited, and attribution-bearing; commercial deployment requires a separately qualified plan.
+- Brave provides bounded Web Search and Place Search endpoints, but `BRAVE_SEARCH_API_KEY` is a runtime credential gate and no credentialed live evidence is claimed here. Product discovery remains research data; no purchase or checkout authority is inferred.
+- TheMealDB's official V1 surface and development key support prototype recipe normalization; public appstore/production use requires its supporter arrangement and terms review.
+- ntfy's publish headers disable server cache and Firebase forwarding for synthetic qualification; provider acceptance is intentionally not human delivery/read evidence.
+- Google Calendar direct REST is the bounded GA surface with runtime OAuth bearer credentials and deterministic event identity/readback; the official Calendar MCP is preview/reference and is not adopted.
+
 ## ANIMA-HA-P10-DURABLE-TASK-ENGINE-012 — durable task prior art
 
 - Date checked: 2026-08-31

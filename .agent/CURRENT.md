@@ -4,15 +4,15 @@ Last updated: 2026-08-31
 
 ## Current stage
 
-PHASE 10 COMPLETE — PENDING ARCHITECT ACCEPTANCE
+PHASE 11 IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Close the bounded Phase 10 task-policy integration continuation authorized by Architect directive `ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H`, preserving the accepted Phase 0–9 architecture. Phase 11 remains unauthorized.
+Publish and independently review the bounded Phase 11 external-by-intent capability implementation authorized by Architect directive `ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013`, preserving Architect-accepted Phases 0–10. Phase 12 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P10-TASK-POLICY-INTEGRATION-012H` — correct the ANIMA-owned task execution boundary, trusted provenance/idempotency injection, PostgreSQL lifecycle/lease ownership, scheduled cognition integration, and Authority synchronization. Phase 9 is Architect accepted at `7f09b52f8773901ea73221f60b40414874809fda`; Phase 10 remains pending review and Phase 11 is unauthorized.
+`ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013` — implement bounded weather, web/place/product discovery, recipes, Calendar, notifications, external trust/egress/audit, and verified external writes. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending review and Phase 12 is unauthorized.
 
 ## Current verified state
 
@@ -90,8 +90,9 @@ Close the bounded Phase 10 task-policy integration continuation authorized by Ar
 
 ## Current blockers
 
-- Phase 10 hardening is implemented and published, but Architect acceptance remains pending review of the corrected checkpoint.
-- Phase 11 external production plugins, UI, voice, and other successor behavior remain unauthorized.
+- Phase 11 implementation is published at the implementation checkpoint and remains pending independent Architect acceptance; credentialed Brave and Google Calendar evidence is gated by missing runtime credentials.
+- Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
+- Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
 
@@ -118,7 +119,7 @@ Close the bounded Phase 10 task-policy integration continuation authorized by Ar
 
 ## Next Architect decision point
 
-Review the Phase 10 task-policy integration checkpoint after fresh evidence and hosted CI. Phase 10 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 11 remains unauthorized.
+Review the Phase 11 external-capability implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 
@@ -127,5 +128,14 @@ Review the Phase 10 task-policy integration checkpoint after fresh evidence and 
 - Corrected implementation checkpoint: `945f89c13b67e52a9027d3f42cc3e2bccd5608d2`; hosted CI `33428295199` passed.
 - Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
 - Final governed evidence checkpoint: `ae18833e2ddffd30b17b613248d1c2206062b66a`; hosted CI `33428938215` passed on that exact SHA.
+
+## Phase 11 external capability state
+
+- Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; hosted CI `33429217008` passed.
+- Phase 11 implementation checkpoint `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
+- Bounded ANIMA-owned adapters now cover Open-Meteo weather, Brave web/place/product discovery, TheMealDB recipes, Google Calendar REST, and ntfy notifications. External content is `EXTERNAL_UNTRUSTED`; fixed-host HTTPS egress and secret-free Event Journal-compatible request audit are implemented.
+- Calendar event creation and notification send use Core-owned Phase 9 profiles. Calendar requires provider readback for verified success; ntfy records provider acceptance only and never claims human delivery/read.
+- Live synthetic Open-Meteo, TheMealDB, and ntfy traffic passed. Brave and Google Calendar are independent `EXTERNAL_RESOURCE_GATE` states without runtime credentials; no credentialed live claim is made.
+- Phase 11 is `COMPLETE IMPLEMENTATION — PENDING ARCHITECT ACCEPTANCE`; the final governed closure SHA and CI are recorded after publication. Phase 12 remains unauthorized.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.
