@@ -213,3 +213,11 @@ UI, and voice remain out of scope.
 - Decision: supersede/defer Brave and Google Calendar; adopt/wrap private pinned SearXNG and OpenStreetMap Overpass; build first-party PostgreSQL calendar with migration `0012_local_calendar.sql`.
 - Evidence: 134 tests, Ruff, strict mypy, OPA 4/4, package build, ordered migration initial/repeat, healthy no-Valkey SearXNG web/product JSON, Overpass synthetic POI, and actual AgentRuntime local-calendar path passed in local-filesystem reproduction.
 - Boundary: calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; physical/provider actions remain Phase 9-coordinated; no Phase 12 behavior, native ARM64/Pi, production-scale, physical-home, or human-delivery claim.
+
+## Phase 11 free/local hardening — 2026-09-01
+
+- Architect directive `ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1` remains `CONTINUE`; Phase 11 implementation hardening is complete but the strict product-search live target is `EXTERNAL_RESOURCE_GATE`. Phase 12 remains unauthorized.
+- Decision: retain the existing Phase 4 vocabulary and classify local calendar mutation as `LOW_RISK_HOME_CONTROL` under the Core-owned `POLICY_GATED_INTERNAL` boundary. Do not weaken external/provider or physical Phase 9 semantics.
+- Evidence: real OPA/PostgreSQL calendar target matrix passed authorization, replay/key conflict, lifecycle/version/reconnect/isolation/audit, and no-Phase-9-record checks. SearXNG bang controls, engine failures, image manifest, resource, restart, and strict-target behavior were qualified.
+- Provider finding: DuckDuckGo, Startpage, and Qwant all returned upstream CAPTCHA during local target qualification; no second free general engine was adopted. Wikipedia reference search remained available for a public result, while product search remains blocked by the external resource gate.
+- Implementation checkpoint `c24b8eab5abe9acc31b4f54a321b0270399f3549` passed hosted CI `33462705630` on the exact SHA; governed evidence closure follows.

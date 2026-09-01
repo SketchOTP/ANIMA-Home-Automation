@@ -1,18 +1,18 @@
 # Current Project State
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 FREE LOCAL REALIGNMENT IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
+PHASE 11 FREE LOCAL HARDENING IMPLEMENTED — EXTERNAL RESOURCE GATE
 
 ## Current objective
 
-Publish and independently review the free/local Phase 11 external capability realignment authorized by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`, preserving Architect-accepted Phases 0–10. Phase 12 remains unauthorized.
+Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1` while preserving Architect-accepted Phases 0–10. Phase 11 implementation correction is complete, but strict SearXNG product evidence remains an external-resource gate. Phase 12 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R` — replace the blocked Brave/Google resource gates with private SearXNG, OpenStreetMap Overpass, and an ANIMA-owned PostgreSQL calendar. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending Architect review and Phase 12 is unauthorized.
+`ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1` — correct local-calendar risk classification, qualify PostgreSQL calendar durability and real OPA behavior, and qualify private SearXNG engines/resources/failure/restart behavior. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `CONTINUE` with an external-resource gate and Phase 12 is unauthorized.
 
 ## Current verified state
 
@@ -91,6 +91,8 @@ Publish and independently review the free/local Phase 11 external capability rea
 ## Current blockers
 
 - Phase 11’s prior implementation and gate closure are superseded for current provider selection by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`. The current implementation uses pinned private SearXNG, OpenStreetMap Overpass, and the first-party PostgreSQL calendar; no Brave or Google credentials are required.
+- The Phase 11 hardening correction passes real OPA authorization and the PostgreSQL calendar target matrix. Strict live SearXNG web evidence passed through Wikipedia, but DuckDuckGo returned CAPTCHA and no configured source produced a product candidate; Startpage and Qwant were tested and also returned CAPTCHA. Product-search target evidence is therefore `EXTERNAL_RESOURCE_GATE`, not a pass.
+- Phase 11 implementation checkpoint `c24b8eab5abe9acc31b4f54a321b0270399f3549` passed hosted CI run `33462705630` on the exact SHA. Governance/evidence closure follows as a separate checkpoint.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -119,7 +121,7 @@ Publish and independently review the free/local Phase 11 external capability rea
 
 ## Next Architect decision point
 
-Review the Phase 11 free/local realignment implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
+Review the Phase 11 free/local hardening evidence packet and external-resource gate. Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 

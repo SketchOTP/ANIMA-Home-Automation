@@ -10,7 +10,7 @@ household-scoped and policy-gated.
 | Capability | Implementation | Boundary |
 | --- | --- | --- |
 | Weather | Open-Meteo | Fixed-host HTTPS, bounded public read |
-| Web/product research | Private SearXNG, pinned image, JSON API | Internal service, loopback-only exposure, fixed `duckduckgo`/`wikipedia` engines |
+| Web/product research | Private SearXNG, pinned image, JSON API | Internal service, loopback-only exposure, fixed `duckduckgo`/`wikipedia` engines; product results remain externally gated when upstream engines are blocked |
 | Local-business discovery | OpenStreetMap Overpass | Fixed HTTPS endpoint, ANIMA-owned category/tag mapping, no raw query language |
 | Recipes | TheMealDB | Fixed-host bounded public read |
 | Calendar | ANIMA PostgreSQL calendar | `READ_ONLY` reads and Core-approved `POLICY_GATED_INTERNAL` mutations |
@@ -58,11 +58,17 @@ idempotency, and no Phase 9 physical action record. External search results
 remain `EXTERNAL_UNTRUSTED` through the next cognition turn. Existing durable
 task scheduled-cognition tests continue to prove fresh context construction.
 
-Fresh local-filesystem validation passed: 134 tests, Ruff format/check, strict
-mypy, OPA 4/4, package sdist/wheel, ordered migration initial/repeat, healthy
-SearXNG with no Valkey, live synthetic SearXNG web/product JSON, live synthetic
-Overpass POI lookup, and local calendar integration. Public external traffic is
-synthetic; no production-scale, physical-home, native ARM64/Pi, or human
+Fresh local-filesystem validation passed: the focused calendar/SearXNG tests,
+real OPA + PostgreSQL calendar target matrix, Ruff on changed files, strict
+mypy, package sdist/wheel, ordered migration initial/repeat, live synthetic
+Open-Meteo/TheMealDB/Overpass, and the strict harness's SearXNG web result.
+The strict SearXNG product target is currently an explicit external-resource
+gate: DuckDuckGo returned CAPTCHA and the configured Wikipedia reference engine
+did not provide a product candidate. A fresh full-suite rerun after refreshing
+the locked development environment passed; the first run had one transient,
+pre-existing Phase 5 MCP stdio startup failure and no Phase 5 code was changed.
+Public external traffic is synthetic; no
+production-scale, physical-home, native ARM64/Pi, or human
 notification-delivery claim is made.
 
 ## Operational gates and limits
@@ -72,5 +78,35 @@ configuration is present; service health is still checked by the harness.
 `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED` means the fixed public endpoint
 is selected; outages remain explicit provider failures. The local calendar has
 no external credential gate.
+
+## Hardening qualification — 2026-09-01
+
+Calendar mutations now declare `LOW_RISK_HOME_CONTROL` while remaining
+Core-owned `POLICY_GATED_INTERNAL`. The real pinned OPA bundle allowed an
+authenticated resident with reason `LOW_RISK_HOME_CONTROL_AUTHORIZED` and
+default-denied an anonymous direct request. The PostgreSQL target matrix passed
+create/replay, creation-key conflict, get/list, update, stale-update conflict,
+cancel/repeat-cancel, reconnect persistence, household isolation, bounded audit
+provenance, and zero Phase 9 action rows.
+
+The adopted SearXNG image remains
+`2026.8.29-d226b78bc@sha256:b36af7984b87191b595bc5301418ed6432c047668a4547ab531a7439b816fac3`.
+Its manifest lists `linux/amd64`, `linux/arm64`, and `linux/arm/v7`; this is
+platform metadata, not a native Pi run. On the local x86-64 host the temporary
+qualification container measured approximately 95 MiB idle, 0% CPU at the
+sample, 2.4 seconds startup-to-query, and 3.3 seconds restart-to-query. It
+remained healthy after restart and returned a Wikipedia reference result.
+
+Startpage and Qwant were tested as candidate no-key general engines in the
+same pinned image; both returned CAPTCHA in this environment. They were not
+adopted. The configured set therefore remains the defensible bounded
+`duckduckgo` general engine plus `wikipedia` reference engine, with provider
+engine errors exposed in normalized metadata. SearXNG `!bang` engine/category
+modifiers are rejected by ANIMA before service invocation. Use
+`python scripts/verify_phase11_external.py --require-phase11-targets` for
+strict manual target validation; it returns nonzero when required live search,
+product, or Overpass evidence is unavailable. Phase 11 remains open pending
+Architect review of the product-search resource gate; Phase 12 remains
+unauthorized.
 
 Phase 12 behavior remains unauthorized.

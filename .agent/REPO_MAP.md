@@ -109,7 +109,8 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/db/migrations/0012_local_calendar.sql` — durable local-calendar schema.
 - `tests/test_external.py` — bounded egress, hostile-content trust, SearXNG/Overpass normalization, audit, local-calendar idempotency/versioning, and provider-gate tests.
 - `tests/test_phase11_integration.py` — actual AgentRuntime shared-catalogue selection, hostile external-content containment, and durable-task fresh external follow-up evidence.
-- `scripts/verify_phase11_external.py` — live synthetic no-secret provider harness for weather, recipes, SearXNG, Overpass, and local-calendar evidence.
+- `scripts/verify_phase11_external.py` — live synthetic no-secret provider harness for weather, recipes, SearXNG, Overpass, and local-calendar evidence; `--require-phase11-targets` is strict and returns nonzero for missing required live targets.
+- `scripts/verify_phase11_local_hardening.py` — target-only real OPA plus PostgreSQL calendar policy, CRUD/version/idempotency, audit, isolation, reconnect, and no-Phase-9-record evidence.
 - `infra/searxng/settings.yml` and `compose.yaml` — pinned private SearXNG configuration with fixed engines, no public instance, no image proxy, and no Valkey.
 - `docs/PHASE-11-EXTERNAL-CAPABILITIES.md` — current free/local provider architecture, trust/egress/audit boundary, gates, and evidence limitations.
 

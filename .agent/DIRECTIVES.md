@@ -370,3 +370,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Evidence target: actual AgentRuntime catalogue/policy path, local calendar CRUD/idempotency/versioning/restart persistence, SearXNG/Overpass live synthetic evidence, existing Phase 1–10 regressions, OPA/static/build/public safety, and exact-SHA hosted CI.
 - Exclusions: no Phase 12 behavior, UI, voice, checkout, arbitrary HTTP, browser automation, or production connector claim.
 - Source: Architect directive supplied in the current governed session and retained as the active continuity record.
+
+## ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1 — Local calendar policy and SearXNG qualification
+
+- Issued: 2026-09-01
+- Status: IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE; pending Architect review.
+- Architect disposition: `CONTINUE`; Phase 12 remains unauthorized.
+- Objective: correct first-party calendar risk classification for the real Phase 4 OPA boundary, establish PostgreSQL calendar target evidence, and qualify the pinned private SearXNG engine/failure/resource/restart boundary without changing the provider portfolio.
+- Corrections: calendar mutations use `LOW_RISK_HOME_CONTROL` while remaining Core-owned `POLICY_GATED_INTERNAL`; audit records include bounded trusted provenance; SearXNG rejects model-controlled `!bang` engine/category modifiers and exposes unresponsive-engine metadata; strict target mode fails on missing/empty required live search/product/Overpass evidence.
+- Evidence: real OPA authorized resident and denied anonymous mutation; PostgreSQL calendar create/replay/key-conflict/get/list/update/stale-update/cancel/reconnect/isolation/audit/no-Phase-9 matrix passed. Pinned SearXNG image manifest and x86 resource/restart measurements were captured; Wikipedia web reference passed, while DuckDuckGo/Startpage/Qwant upstream CAPTCHA prevented product target qualification.
+- Exclusions: no Brave, Google Calendar, new policy subsystem, Nominatim, Radicale, Open Food Facts, Phase 12 behavior, or accepted Phase 0–10 guarantee changes.
+- Source: Architect directive supplied in the governed session and recorded here after repository/Notion reconciliation.

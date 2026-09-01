@@ -602,3 +602,16 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Fresh evidence passed: 134 tests; Ruff; strict mypy; OPA 4/4; package sdist/wheel; migration initial/repeat including `0012_local_calendar`; healthy SearXNG live web/product JSON; Overpass live synthetic POI; local calendar AgentRuntime integration; `git diff --check` and public-safety review.
 - Evidence limits: local x86-64 reproduction, synthetic/public provider traffic, no native ARM64/Pi, production scale, physical-home, or human-notification claim. Phase 12 was not implemented.
 - Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. Final governed checkpoint is recorded after the closure publication commit and its exact hosted CI.
+
+## ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1 — Policy and target qualification
+
+- Date: 2026-09-01
+- Verdict: `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`
+- Disposition: `CONTINUE`; Phase 12 remains unauthorized.
+- Starting checkpoint: `179f36e98c5c31595231bee8bbbd17a1ed89dea7`, clean `main` tracking `origin/main`.
+- Calendar correction: local mutations use `LOW_RISK_HOME_CONTROL` while remaining Core-owned `POLICY_GATED_INTERNAL`. Real pinned OPA allowed an authenticated resident with `LOW_RISK_HOME_CONTROL_AUTHORIZED` and default-denied an anonymous direct request.
+- PostgreSQL target evidence: create/replay, creation-key misuse conflict, get/list, update, stale-update conflict, cancel/repeat cancel, reconnect persistence, household isolation, trusted bounded audit provenance, and zero Phase 9 action rows passed.
+- SearXNG target evidence: adopted digest manifest lists amd64, arm64, and arm/v7; local x86-64 qualification measured approximately 95 MiB idle, 2.4 seconds startup-to-query, and 3.3 seconds restart-to-query. Wikipedia returned one source-linked result; DuckDuckGo, Startpage, and Qwant returned CAPTCHA during qualification. No second free general engine was adopted; strict product search remains an external-resource gate.
+- Strict live harness: Open-Meteo, TheMealDB, Overpass, and web reference passed; product target failed honestly with nonzero strict-mode status. Focused tests, changed-file Ruff, strict mypy, package build, migration checks, diff check, and public-safety review passed. Full pytest passed (`136 passed`) after refreshing the locked development environment; the first run had one transient, pre-existing Phase 5 MCP stdio startup failure and no Phase 5 code was changed.
+- Implementation checkpoint: `c24b8eab5abe9acc31b4f54a321b0270399f3549`; hosted CI run `33462705630` passed on the exact SHA. The governed evidence-closure checkpoint follows this implementation checkpoint.
+- No Phase 0–10 architecture or Phase 12 behavior changed.

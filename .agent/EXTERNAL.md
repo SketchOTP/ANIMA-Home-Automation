@@ -350,3 +350,24 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
   `33458814906`; final governed `6343b22e687fa5f2a031cb8c12ef5bf1301436a8` /
   CI `33458890546`; 134 tests, static/build/OPA/migration, healthy no-Valkey
   SearXNG, Overpass, PostgreSQL calendar, and AgentRuntime integration passed.
+
+## Phase 11 bounded qualification — 2026-09-01
+
+- SearXNG documentation for the adopted `2026.8.29+d226b78bc` release confirms
+  JSON search API support, engine `!bang` syntax, and that the limiter requires
+  Valkey. The private deployment keeps `limiter=false`, `public_instance=false`,
+  JSON-only output, and no Valkey. The immutable image digest remains
+  `sha256:b36af7984b87191b595bc5301418ed6432c047668a4547ab531a7439b816fac3`
+  with amd64, arm64, and arm/v7 manifests.
+- Candidate disposition: `REJECT` Startpage and Qwant as additional configured
+  general engines for this qualification. Live tests against the same pinned
+  image returned upstream CAPTCHA responses for both, as did DuckDuckGo at the
+  target time. Preserve the bounded `duckduckgo` plus Wikipedia reference set;
+  expose engine errors and let strict target validation report the product gate.
+- Overpass remains `ADOPT / WRAP` for bounded synthetic POI lookup. The public
+  OSM documentation says the main instance can be used below 10,000 queries/day
+  and 1 GB/day; this prototype remains far below that and sends only bounded
+  category-mapped queries.
+- Trigger for recheck: a new SearXNG release, repeated upstream CAPTCHA/error
+  behavior after target-network qualification, materially different Pi resource
+  measurements, or an Architect-authorized provider decision.
