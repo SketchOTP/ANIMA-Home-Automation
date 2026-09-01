@@ -11,7 +11,8 @@ Date: 2026-09-01
 - No implementation files were changed by this directive.
 - Governance checkpoint: `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e`
   pushed to `origin/main`; hosted CI `33509082116` passed on that exact SHA.
-- Final evidence-closure checkpoint follows this evidence-only update.
+- Final evidence-closure checkpoint: `dd9dc9b758787d41b5757a1e4119083ecd90db44`
+  pushed to `origin/main`; hosted CI `33509236465` passed on that exact SHA.
 
 ## Official source matrix
 

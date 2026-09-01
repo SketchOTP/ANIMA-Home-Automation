@@ -16,7 +16,8 @@ and tool-result persistence. This is the directive's explicit stop condition.
 - Implementation SHA/CI: not applicable; no implementation files changed
 - Governance checkpoint SHA/CI: `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` /
   `33509082116` — success on the exact SHA
-- Final evidence-closure SHA/CI: follows this evidence-only update
+- Final evidence-closure SHA/CI: `dd9dc9b758787d41b5757a1e4119083ecd90db44` /
+  `33509236465` — success on the exact SHA
 - Best Buy live evidence: not run; `BEST_BUY_API_KEY` was not available
 - Walmart: preserved, `DEFER — ENTITLEMENT_CLARIFICATION`, never used as a
   fallback
