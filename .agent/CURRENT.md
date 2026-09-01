@@ -115,10 +115,10 @@ Close the Best Buy product-research gate without violating its published 72-hour
 ## Current blockers
 
 - Best Buy is conditionally implemented, but its live credential is absent: `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. No live Best Buy product claim is made.
-- Implementation checkpoint `b810c853b47470c4395dd1a5731e59da98ae41a5` and hosted CI `33525400264` passed on the exact SHA. The final governed evidence checkpoint and CI will be recorded after the governance closure commit.
+- Implementation checkpoint `b810c853b47470c4395dd1a5731e59da98ae41a5` and hosted CI `33525400264` passed on the exact SHA. Final governed evidence checkpoint `643957e33ead086d17171cf3d48215fc194b9aad` and hosted CI `33525543332` passed on the exact SHA.
 - The 72-hour retention conflict is addressed by Core classification `EPHEMERAL_RESTRICTED`: full bounded provider results exist only in the active process; PostgreSQL episode/tool/turn rows and whole-database JSON export contain only structural projections, hashes, metadata, and explicit retention markers.
 - A restricted result taints the episode. The active caller receives the full live answer, but durable response/decision/argument records are redacted and all later tool requests are blocked with `RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`.
-- Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`; it is not an active fallback. Phase 11 remains `CONTINUE / HARDEN`, pending final publication and Architect review.
+- Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`; it is not an active fallback. Phase 11 remains `CONTINUE / HARDEN`, published and pending Architect review.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 

@@ -16,6 +16,6 @@ request was made because `BEST_BUY_API_KEY` is not configured. Walmart remains
 deferred pending entitlement clarification. Phase 12 was not implemented.
 
 Implementation checkpoint: `b810c853b47470c4395dd1a5731e59da98ae41a5`, hosted
-CI `33525400264` passed on the exact SHA. The final governed SHA and CI are
-recorded after the governance closure commit in this packet and
-`.agent/CURRENT.md`.
+CI `33525400264` passed on the exact SHA. Final governed checkpoint:
+`643957e33ead086d17171cf3d48215fc194b9aad`, hosted CI `33525543332` passed on
+the exact SHA.

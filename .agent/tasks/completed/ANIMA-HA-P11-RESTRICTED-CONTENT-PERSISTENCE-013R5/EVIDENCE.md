@@ -14,8 +14,8 @@ Date: 2026-09-01
 
 - Implementation checkpoint: `b810c853b47470c4395dd1a5731e59da98ae41a5`.
 - Hosted implementation CI: `33525400264` passed on that exact SHA.
-- Governance closure checkpoint and final hosted CI are recorded below after
-  the closure commit and push.
+- Governance closure checkpoint: `643957e33ead086d17171cf3d48215fc194b9aad`.
+- Hosted final governed CI: `33525543332` passed on that exact SHA.
 
 ## Architecture correction
 
