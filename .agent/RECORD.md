@@ -261,3 +261,11 @@ UI, and voice remain out of scope.
 - Decision: adopt/wrap UPCitemdb free Explorer behind the existing semantic `shopping.search_products` action after live qualification. Use fixed `api.upcitemdb.com` HTTPS, no credentials, Core `EPHEMERAL_RESTRICTED` content persistence, and no provider fallback.
 - Evidence: direct live `wireless headphones` and `air fryer` searches returned five distinct EAN-identified products each, with 13 and 19 bounded offers respectively. The live API reported `X-RateLimit-Limit=100`, and the harness observed remaining counts `93` and `92` after the two required calls.
 - Governance result: implementation and live public-synthetic product gate are complete, but this record does not claim Architect acceptance of Phase 11. No Phase 12 behavior was implemented.
+
+## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Local interface implementation
+
+- Date: 2026-09-01
+- Authority: Phase 11 accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`; Phase 12 authorized; Phase 13 unauthorized.
+- Implemented locally: FastAPI/Uvicorn ANIMA API, HA OAuth bootstrap adapter, exact user-to-principal mapping, hashed server sessions and CSRF, semantic household read models, bounded invalidation SSE, React/Vite UI, migration `0013_ui_sessions.sql`, Dockerfile/Compose, and deterministic/browser validation.
+- Not claimed: real HA OAuth, native Pi deployment, or production Core conversation/command composition. The default production service fails closed until the existing Core bridges are injected; test auth's echo response is explicitly test-only.
+- Governance state: pending fresh validation, implementation publication, final governed evidence closure, hosted CI, Notion reconciliation, and Architect review.

@@ -4,15 +4,15 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 UPCITEMDB PRODUCT PROVIDER — IMPLEMENTED, PENDING ARCHITECT ACCEPTANCE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — IMPLEMENTED LOCALLY, PENDING VALIDATION/PUBLICATION
 
 ## Current objective
 
-Close the remaining Phase 11 product-research gate with the no-signup, no-key UPCitemdb Explorer API. UPCitemdb is Core-classified `EPHEMERAL_RESTRICTED`; full provider content remains live-only and durable records retain structural projections/digests. Best Buy is deferred because developer onboarding is operationally unavailable, and Walmart is deferred pending entitlement clarification. Phase 12 is unauthorized.
+Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, HA OAuth bootstrap, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and fail-closed command seams. Phase 11 is Architect accepted; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6` — qualify the free no-key provider, adopt it behind the existing restricted-content boundary, and publish live product evidence. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `REPLAN / CONTINUE` pending Architect acceptance; Phase 12 is unauthorized.
+`ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014` — implement and independently validate the shared local interface without exposing HA internals, raw persistence, credentials, policy internals, or arbitrary tools. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 is pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
@@ -28,7 +28,7 @@ Close the remaining Phase 11 product-research gate with the no-signup, no-key UP
 - ANIMA now exposes `anima.external.shopping.search_products` through a fixed `developer.api.walmart.com` host, ANIMA-generated RSA-SHA256 request signatures, trusted `SecretBroker` references, normalized `ProductCandidate` plus `retail_offer` data, timestamped external price/availability, and `EXTERNAL_UNTRUSTED` results. No cart, checkout, browser automation, scraping, CAPTCHA bypass, or arbitrary host is implemented.
 - Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
 - Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
-- The product provider is implementation-complete and provisioned-resource qualified, but this record does not assert Architect acceptance of Phase 11. Phase 12 behavior remains absent and unauthorized.
+- Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`; Phase 12 is the active authorized phase. The local interface implementation is pending its own publication and acceptance evidence.
 
 ### Current product-provider replan
 
@@ -37,7 +37,7 @@ Close the remaining Phase 11 product-research gate with the no-signup, no-key UP
 - Live public synthetic evidence: `wireless headphones` returned 5 distinct EAN-identified products, 13 bounded offers, and `X-RateLimit-Remaining=93`; `air fryer` returned 5 distinct EAN-identified products, 19 bounded offers, and `X-RateLimit-Remaining=92`. Historical prices and old offer timestamps remain explicitly non-current external observations.
 - Conservative limiter: at most 20 search requests per in-process rolling day and at least 15 seconds between searches; the live harness uses a 16-second margin and records provider rate-limit headers. A 429 honors `Retry-After` without retrying.
 - Terms posture: official terms grant a limited, terminable service-use license, disclaim accuracy/availability, and require the customer not to infringe third-party rights; API documentation states affiliate-bound Amazon/eBay sales information is not redistributed. Product results remain restricted/untrusted and are not persisted as a catalog.
-- Provider resource state: `EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH=AVAILABLE`; no Best Buy/Walmart fallback is active. Phase 11 remains pending Architect acceptance.
+- Provider resource state: `EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH=AVAILABLE`; no Best Buy/Walmart fallback is active. This is historical Phase 11 evidence and does not block the authorized Phase 12 interface work.
 
 ### Current entitlement investigation
 
@@ -123,13 +123,11 @@ Close the remaining Phase 11 product-research gate with the no-signup, no-key UP
 
 ## Current blockers
 
-- UPCitemdb product search is available without credentials; the explicit provider gate is closed for the no-key route. No Best Buy live claim is made and Best Buy is deferred for onboarding availability.
-- Implementation checkpoint `b810c853b47470c4395dd1a5731e59da98ae41a5` and hosted CI `33525400264` passed on the exact SHA. Final governed evidence checkpoint `643957e33ead086d17171cf3d48215fc194b9aad` and hosted CI `33525543332` passed on the exact SHA.
-- Restricted external-content persistence remains addressed by Core classification `EPHEMERAL_RESTRICTED`: full bounded provider results exist only in the active process; PostgreSQL episode/tool/turn rows and whole-database JSON export contain only structural projections, hashes, metadata, and explicit retention markers.
-- A restricted result taints the episode. The active caller receives the full live answer, but durable response/decision/argument records are redacted and all later tool requests are blocked with `RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`.
-- Best Buy remains `DEFER — DEVELOPER_ONBOARDING_UNAVAILABLE`, Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`, and neither is an active fallback. Phase 11 remains `REPLAN / CONTINUE`, published and pending Architect review.
-- Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
-- Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
+- Phase 12 implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce` is committed and pushed; hosted CI `33572829176` passed on that exact SHA.
+- The default production conversation path is intentionally fail-closed until the host injects the existing Phase 7/8 journal→attention→context→AgentRuntime bridge; the test-only echo path is not acceptance evidence.
+- Real HA OAuth, real household data, production TLS, and native ARM64/Pi execution remain unclaimed. Test auth is explicitly isolated behind `ANIMA_UI_TEST_AUTH=1`.
+- Phase 12 governed closure is now being published; final-head hosted CI and Notion readback must still be verified before handoff to the Architect.
+- Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
 
@@ -156,7 +154,15 @@ Close the remaining Phase 11 product-research gate with the no-signup, no-key UP
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6` after exact-SHA publication. The implementation/evidence result is `IMPLEMENTATION_COMPLETE — LIVE_PUBLIC_SYNTHETIC`; UPCitemdb has no credential gate, while Phase 11 remains pending Architect acceptance. Phase 12 remains unauthorized.
+Review `ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014` after the final governed checkpoint. The published evidence is deterministic backend/UI validation plus Playwright desktop/tablet/phone coverage; the production runtime bridge and real HA OAuth remain host-injected/ungrounded. Phase 13 remains unauthorized.
+
+## Phase 12 publication state
+
+- Starting accepted checkpoint: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 CI `33562645002` passed on that exact SHA.
+- Implementation checkpoint: `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA. The prior implementation-only CI `33572285917` failed on a strict-mypy test typing issue; the bounded fix and rerun passed.
+- Implemented: FastAPI/Uvicorn semantic API, HA OAuth bootstrap, exact user mapping, hashed sessions/CSRF, migration `0013_ui_sessions.sql`, responsive React/Vite UI, bounded SSE invalidations, Docker/Compose, deterministic harness, and Playwright browser matrix.
+- Evidence limits: production Core conversation/command composition is an explicit injected seam and defaults fail-closed; real HA OAuth/commissioning, native ARM64/Pi, production TLS, and live household data remain unclaimed.
+- Phase 12 status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` only after governed closure is published. Phase 13 remains unauthorized.
 
 ## Phase 10 publication state
 
@@ -179,15 +185,15 @@ It is superseded for current implementation and gate decisions by
 - Live synthetic Open-Meteo, TheMealDB, and ntfy traffic passed. Brave and Google Calendar are independent `EXTERNAL_RESOURCE_GATE` states without runtime credentials; no credentialed live claim is made.
 - Phase 11 gate-closure implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA. It adds refreshable `google-auth` Calendar credentials using the owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`, same-catalogue AgentRuntime evidence, hostile external-result containment, and durable-task fresh external follow-up evidence.
 - Phase 11 evidence amendment checkpoint `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA. It strengthens the durable follow-up claim with the actual PostgreSQL Phase 10 harness: external value `17` before task creation and fresh value `23` after restart/scheduled cognition, while the future physical action remains Phase 9-coordinated.
-- Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. The prior governed closure `439c12a5872b7844f77ad36fa57672f634d0ee52` with CI `33445878287` remains historical. Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`, CI `33446946952`; the final Authority synchronization commit follows this record. Phase 12 remains unauthorized.
+- Historical Phase 11 entry: it was then `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. It is superseded by the accepted Phase 11 checkpoint recorded at the top of this file; Phase 12 is now authorized.
 
 ## Phase 11 free/local realignment state (historical; superseded by 013R3)
 
-- Architect directive `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R` supersedes the blocked Brave/Google gate-closure path. Brave and Google Calendar are `SUPERSEDED / DEFERRED` for this prototype; Phase 12 remains unauthorized.
+- Historical Phase 11 realignment entry: Brave and Google Calendar remain `SUPERSEDED / DEFERRED` for this prototype. It is superseded by the accepted Phase 11 checkpoint and does not change current Phase 12 authorization.
 - Free/local discovery is implemented with a pinned private SearXNG service (JSON API, loopback-only host exposure, fixed engines `duckduckgo` and `wikipedia`, no public instance, no image proxy, no Valkey) and OpenStreetMap Overpass for category-mapped POI queries. Model input cannot choose hosts, engines, raw Overpass QL, or arbitrary URLs.
 - First-party calendar is implemented in `src/anima_ha/calendar.py` with migration `0012_local_calendar.sql`, household isolation, trusted invocation provenance/idempotency, CRUD, optimistic versioning, and PostgreSQL persistence. Calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; later physical/provider actions remain Phase 9-coordinated.
 - Fresh local-filesystem evidence: 134 tests, Ruff, strict mypy, package sdist/wheel, OPA 4/4, migration initial/repeat, SearXNG healthy/no-Valkey live JSON web/product search, Overpass synthetic POI search, and local calendar AgentRuntime integration passed. SFTP Docker bind mounts remain a known limitation; reproduction used `/tmp`.
 - Historical provider gates were `EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH=CONFIGURED` and `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED`; no Brave or Google credential gate remained active for that superseded path. Native ARM64/Pi, production scale, physical-home, and high-risk external-write behavior remain unclaimed.
-- Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. The governed evidence-closure checkpoint and CI follow after this Authority update.
+- Historical Phase 11 implementation checkpoint `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

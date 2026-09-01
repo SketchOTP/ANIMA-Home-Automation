@@ -1,6 +1,6 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: implementation checkpoint, pending Architect acceptance.
+Status: implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce`, hosted CI `33572829176` passed; governed evidence closure and Architect acceptance pending.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.

@@ -124,6 +124,16 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/external.py` — includes the fixed-host UPCitemdb adapter, conservative rate limiter, Core-restricted product manifest, and explicit no-key provider availability.
 - `scripts/verify_phase11_external.py` — runs the strict no-key UPCitemdb `wireless headphones` and `air fryer` live target with structural counts and rate-limit headers.
 
+## Phase 12 custom local interface
+
+- `src/anima_ha/ui_api.py` — ANIMA-owned FastAPI semantic API, HA OAuth bootstrap, exact identity mapping, hashed sessions/CSRF, bounded SSE invalidations, and fail-closed Core command/conversation seams.
+- `src/anima_ha/db/migrations/0013_ui_sessions.sql` — server-side UI session/CSRF digest schema.
+- `ui/` — React/TypeScript/Vite responsive single-page interface, same-origin browser policy tests, and Playwright desktop/tablet/phone scenarios.
+- `Dockerfile.ui` and `compose.yaml` — reproducible non-root local UI image and loopback-published Compose service.
+- `scripts/verify_phase12_ui.py` and `tests/test_ui_api.py` — deterministic API/auth/view-model/CSRF/SSE evidence.
+- `docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md` — current interface architecture, security boundary, deployment, and evidence limitations.
+- `.agent/tasks/active/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/` — active Phase 12 specification, plan, evidence ledger, and handoff.
+
 ## Known sensitive/high-risk areas
 
 - HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.

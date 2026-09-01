@@ -161,3 +161,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - UPCitemdb returns useful real product identity for ordinary categories, but offer timestamps can be materially old and historical price fields are not current retail offers. Preserve timestamps and never promote them to household Truth.
 - UPCitemdb offer links are provider-returned redirects and should be preserved rather than rewritten; product content remains `EXTERNAL_UNTRUSTED` and Core `EPHEMERAL_RESTRICTED` because the database aggregates third-party sources and its terms disclaim accuracy/availability.
 - Best Buy developer onboarding is deferred as operationally unavailable for this prototype and Walmart remains entitlement-blocked. UPCitemdb is the active no-key product path; no automatic fallback is permitted.
+
+## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014
+
+- Keep the UI as a semantic ANIMA boundary: read models return normalized household summaries and command gateways are the only mutation seam.
+- OAuth access tokens are transient coroutine data; session records retain only hashed cookie/CSRF values and exact mapped household/principal identifiers.
+- A browser UI can be validated independently with deterministic test auth, but that does not prove the host has composed the real journal, attention, context, AgentRuntime, policy, or Phase 9 command bridges.
+- SSE should carry bounded invalidation names only; clients refetch semantic view models rather than receiving raw events or provider payloads.
+- Phase 13 behavior remains unauthorized.

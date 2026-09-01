@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 11 UPCITEMDB PRODUCT PROVIDER — IMPLEMENTED, PENDING ARCHITECT ACCEPTANCE
-- Active directive: ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — no-signup/no-key product-provider qualification and cutover
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6/`
-- Last accepted outcome: Phase 10 durable-task integration (Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`)
-- Last completed outcome: Phase 11 Walmart product provider implementation and live usefulness evidence; entitlement qualification is unresolved and recorded in the current completed packet and Notion
-- Last state sync: 2026-09-01; UPCitemdb implementation/governance checkpoint and hosted CI are recorded in the current completed task packet and Notion after publication.
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — IMPLEMENTED LOCALLY, PENDING VALIDATION/PUBLICATION
+- Active directive: ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — shared local interface, secure session/auth boundary, semantic API, and responsive browser evidence
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
+- Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
+- Last completed outcome: Phase 12 implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA; governed closure remains open
+- Last state sync: 2026-09-01; Phase 12 implementation is published, with final governance closure and Architect acceptance pending.
 
 ## Current qualification result
 
@@ -27,10 +27,10 @@
   with no expiry/purge mechanism. Best Buy therefore cannot be integrated
   under this bounded directive without an Architect-authorized retention
   change.
-- Result: `BLOCKED — BEST_BUY_RETENTION_COMPLIANCE`. No implementation files,
-  secrets, account settings, or live provider calls changed. Walmart remains
-  preserved as `DEFER — ENTITLEMENT_CLARIFICATION`; no fallback is active.
-- Phase 12 remains unauthorized.
+- Result: Phase 11 is Architect accepted. Phase 12 is authorized and currently
+  implemented locally, with deterministic backend/frontend/Playwright evidence.
+  The production conversation runtime bridge remains an explicit injection seam
+  and is not claimed as live AgentRuntime evidence. Phase 13 remains unauthorized.
 
 ## Mandatory kernel
 

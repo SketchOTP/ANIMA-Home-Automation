@@ -405,6 +405,16 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Custom local interface
+
+- Issued: 2026-09-01
+- Architect disposition: `AUTHORIZED`; Phase 11 is accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 13 remains unauthorized.
+- Objective: build one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, Home Assistant OAuth bootstrap, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and fail-closed command seams.
+- Boundaries: no HA internals, raw database rows, policy internals, credentials, arbitrary tools, browser-side durable storage, external assets, Phase 13 voice, or new household-control architecture.
+- Current implementation state: local backend/API, migration, React/Vite UI, Docker/Compose deployment, deterministic verification harness, unit tests, and Playwright coverage exist locally; publication and hosted CI are pending.
+- Known seam: production conversation and command execution require the host composition root to inject the existing Core journal/attention/context/AgentRuntime and Phase 5/4/9 bridges. Test-only auth uses a deterministic echo fallback and is not production cognition evidence.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+
 ## ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4 — Best Buy product-provider qualification
 
 - Issued: 2026-09-01

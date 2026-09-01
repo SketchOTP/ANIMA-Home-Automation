@@ -673,3 +673,24 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Integration: actual deterministic AgentRuntime product selection passes through `shopping.search_products`; restricted results remain external/untrusted, live-only, and taint the episode. Existing PostgreSQL/export sentinel hardening was rerun with UPCitemdb sentinels.
 - Validation: targeted tests, full pytest, strict mypy, Ruff, package build, OPA, Phase 10 regression, restricted PostgreSQL/export scan, live Phase 11 harness, diff-check, and public-safety scan passed. SearXNG remained an explicit unavailable live gate in this environment; this did not affect the UPC strict target.
 - Limitations: offer timestamps show historical/stale observations in the live catalog; no current-price guarantee is made. Native ARM64/Pi and production-scale evidence remain unclaimed. Phase 12 was not implemented.
+
+## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Local implementation checkpoint
+
+- Status: implemented locally; pending validation, publication, and Architect acceptance.
+- Starting governed SHA: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 accepted with CI `33562645002`.
+- Implementation: ANIMA-owned FastAPI API/view models, OAuth/session boundary, `0013_ui_sessions.sql`, React/Vite responsive UI, SSE invalidation, Docker/Compose, deterministic UI harness, and Playwright desktop/tablet/phone evidence.
+- Security posture: HttpOnly SameSite session cookie, server-side SHA-256 session/CSRF digests, exact same-origin mutation checks, CSP/no-store/security headers, no browser localStorage/IndexedDB/service worker/external assets, and no raw HA/DB/policy exposure.
+- Evidence boundary: deterministic TestClient and browser evidence establish the local interface contract. Production conversation/command bridges remain explicit host-injected seams and are not claimed as live Core integration until wired and tested.
+- Phase 13 remains unauthorized.
+
+## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Governed closure
+
+- Starting accepted SHA: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 hosted CI `33562645002` passed on that exact SHA.
+- Implementation SHA: `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA.
+- Fresh local validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest, deterministic UI harness, TypeScript checks, Node unit tests, Vite production build, Playwright 9-test desktop/tablet/phone matrix, package sdist/wheel, Docker UI build, Compose config, `git diff --check`, and public-safety scan passed.
+- API evidence: public health and unauthorized boundaries pass; test OAuth state is single-use; sessions retain only digests; exact HA-user mapping is fail-closed; semantic view models contain no raw table names; CSRF and exact same-origin mutation checks pass; SSE is bounded invalidation-only.
+- UI evidence: same-origin API use, no localStorage/IndexedDB/service worker/external assets, responsive dashboard/navigation/conversation/task/capability views pass in Playwright across desktop, tablet, and phone.
+- Security/evidence limits: real HA OAuth consent, live household commissioning, native ARM64/Pi, production TLS, and host composition of the existing journal→attention→context→AgentRuntime and Phase 5/4/9 command bridges remain unclaimed. The production service fails closed until those bridges are injected; the test echo is not production cognition evidence.
+- CI correction: the first implementation run `33572285917` failed at strict-mypy test typing; the bounded test-typing fix and MCP stdio startup-handshake bound are included in the implementation SHA above. No Phase 13 behavior was added.
+- Final governed checkpoint: this governance closure commit, published after the implementation checkpoint and tracked by the exact Git SHA and hosted CI recorded in the final handoff/Notion readback.
+- Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` at the published Phase 12 evidence boundary; Phase 13 remains unauthorized.
