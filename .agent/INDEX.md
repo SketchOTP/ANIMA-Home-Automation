@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 11 BEST BUY PRODUCT PROVIDER QUALIFICATION — BLOCKED BY RETENTION COMPLIANCE
-- Active directive: ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4 — Best Buy qualification stopped at the durable-content-retention boundary
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4/`
+- Current stage: PHASE 11 UPCITEMDB PRODUCT PROVIDER — IMPLEMENTED, PENDING ARCHITECT ACCEPTANCE
+- Active directive: ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — no-signup/no-key product-provider qualification and cutover
+- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6/`
 - Last accepted outcome: Phase 10 durable-task integration (Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`)
 - Last completed outcome: Phase 11 Walmart product provider implementation and live usefulness evidence; entitlement qualification is unresolved and recorded in the current completed packet and Notion
-- Last state sync: 2026-09-01; governance checkpoint `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e`, CI `33509082116` passed.
+- Last state sync: 2026-09-01; UPCitemdb implementation/governance checkpoint and hosted CI are recorded in the current completed task packet and Notion after publication.
 
 ## Current qualification result
 

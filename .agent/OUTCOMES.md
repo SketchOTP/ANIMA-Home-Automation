@@ -661,3 +661,15 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Evidence: targeted provider/AgentRuntime tests, full pytest, strict mypy, changed-scope Ruff, OPA `4/4`, package build, `git diff --check`, real PostgreSQL database/export sentinel scan, duplicate replay, unrestricted durability, and Phase 10 regression harness passed. Repository-wide Ruff remains non-clean only in pre-existing unrelated Phase 5 evidence script `scripts/verify_phase5_plugins.py`.
 - Limitations: `pg_dump` is not installed, so export safety used an in-process JSON export of every public `anima_*` table; validation used `/srv/ATLAS` because GVFS/SFTP cannot reliably launch Python; native ARM64/Pi and credentialed Best Buy live evidence remain unclaimed.
 - Phase 12 was not implemented.
+
+## ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — Product-provider closure
+
+- Completed: 2026-09-01
+- Verdict: `UPCITEMDB_PRODUCT_PROVIDER_PASS` technically; Phase 11 remains pending Architect acceptance.
+- Starting SHA: `5ddf1eceb1346377d1ab3f857f1cadb9eeb3cf61`, clean `main == origin/main`.
+- Implementation SHA: `2031f0a9ebded7e7a444516ab619f685d519349f`; hosted CI `33562526807` passed on that exact SHA.
+- Qualification: official UPCitemdb free Explorer was live at `https://api.upcitemdb.com/prod/trial/search`; no signup or API key was used. The two live queries returned five distinct EAN-identified products each. `wireless headphones` returned 13 bounded offers and `air fryer` 19; response headers reported a 100 combined-request ceiling and decreasing remaining counts.
+- Provider: added fixed-host `UPCItemDBProductProvider`, Core-restricted manifest, no-secret factory, bounded product/offer normalization, separate historical-price ranges, preserved provider-returned offer links, and a conservative 20-search/day plus 15-second local pacing limiter honoring rate-limit headers and `Retry-After`.
+- Integration: actual deterministic AgentRuntime product selection passes through `shopping.search_products`; restricted results remain external/untrusted, live-only, and taint the episode. Existing PostgreSQL/export sentinel hardening was rerun with UPCitemdb sentinels.
+- Validation: targeted tests, full pytest, strict mypy, Ruff, package build, OPA, Phase 10 regression, restricted PostgreSQL/export scan, live Phase 11 harness, diff-check, and public-safety scan passed. SearXNG remained an explicit unavailable live gate in this environment; this did not affect the UPC strict target.
+- Limitations: offer timestamps show historical/stale observations in the live catalog; no current-price guarantee is made. Native ARM64/Pi and production-scale evidence remain unclaimed. Phase 12 was not implemented.

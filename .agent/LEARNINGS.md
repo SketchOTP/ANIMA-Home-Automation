@@ -154,3 +154,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Restricted content must taint the whole episode. Blocking every later tool, including reads, prevents model-echoed provider content from entering another durable or external sink while preserving the current caller's live answer.
 - Provider identity and trust classification are not enough to enforce retention: the Core must derive `EPHEMERAL_RESTRICTED` from the canonical tool identity and ignore plugin-supplied durability claims.
 - A successful CI/test result does not close a provider gate when credentials are absent. Best Buy deterministic normalization is implemented, but live product usefulness remains an explicit `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`.
+
+## ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — No-key product research
+
+- The UPCitemdb free Explorer is callable without signup or credentials through `/prod/trial/search`, but its public documentation currently disagrees on the free search quota. A conservative ANIMA limiter should assume 20 searches/day, pace searches at least 15 seconds apart, and obey live `X-RateLimit-*` and `Retry-After` headers.
+- UPCitemdb returns useful real product identity for ordinary categories, but offer timestamps can be materially old and historical price fields are not current retail offers. Preserve timestamps and never promote them to household Truth.
+- UPCitemdb offer links are provider-returned redirects and should be preserved rather than rewritten; product content remains `EXTERNAL_UNTRUSTED` and Core `EPHEMERAL_RESTRICTED` because the database aggregates third-party sources and its terms disclaim accuracy/availability.
+- Best Buy developer onboarding is deferred as operationally unavailable for this prototype and Walmart remains entitlement-blocked. UPCitemdb is the active no-key product path; no automatic fallback is permitted.

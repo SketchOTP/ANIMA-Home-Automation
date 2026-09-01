@@ -253,3 +253,11 @@ UI, and voice remain out of scope.
 - Decision: add a fixed-host Best Buy Products API wrapper with SecretBroker-only API-key input and bounded semantic `shopping.search_products`; no Walmart fallback, scraping, Commerce API, or UI was added.
 - Evidence: real PostgreSQL scan across all public `anima_*` text/JSON/JSONB columns and an in-process full-table JSON export found zero synthetic product/price sentinels, while the live response contained them. Duplicate replay did not reconstruct a live response. Full pytest/static/type/build/OPA and Phase 10 regression evidence passed; one known pre-existing unrelated Phase 5 script remains repository-wide Ruff-dirty.
 - Current gate: `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`; no live Best Buy request or credential value was inspected. Phase 11 remains pending Architect review.
+
+## ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — Product-provider replan
+
+- Date: 2026-09-01
+- Architect disposition: `REPLAN / CONTINUE`; Best Buy `DEFER — DEVELOPER_ONBOARDING_UNAVAILABLE`; Walmart `DEFER — ENTITLEMENT_CLARIFICATION`; Phase 12 unauthorized.
+- Decision: adopt/wrap UPCitemdb free Explorer behind the existing semantic `shopping.search_products` action after live qualification. Use fixed `api.upcitemdb.com` HTTPS, no credentials, Core `EPHEMERAL_RESTRICTED` content persistence, and no provider fallback.
+- Evidence: direct live `wireless headphones` and `air fryer` searches returned five distinct EAN-identified products each, with 13 and 19 bounded offers respectively. The live API reported `X-RateLimit-Limit=100`, and the harness observed remaining counts `93` and `92` after the two required calls.
+- Governance result: implementation and live public-synthetic product gate are complete, but this record does not claim Architect acceptance of Phase 11. No Phase 12 behavior was implemented.

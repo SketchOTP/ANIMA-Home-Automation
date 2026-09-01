@@ -115,11 +115,14 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `docs/PHASE-11-EXTERNAL-CAPABILITIES.md` — current free/local provider architecture, trust/egress/audit boundary, gates, and evidence limitations.
 - `src/anima_ha/external.py` — bounded external adapters and manifests; `WalmartProductProvider` wraps LedgerMind's signed, read-only Walmart Product API contract behind fixed host, trusted secrets, and untrusted result normalization.
 - `tests/test_external.py` and `tests/test_phase11_integration.py` — signed-provider normalization, secret/gate behavior, manifest constraints, and actual AgentRuntime product-catalogue selection.
-- `scripts/verify_phase11_external.py` — independent Phase 11 provider harness; `--require-walmart-products` runs two credentialed product usefulness queries and reports explicit resource gates.
+- `scripts/verify_phase11_external.py` — independent Phase 11 provider harness; `--require-upcitemdb-products` runs the two no-key product usefulness queries and reports explicit resource gates.
 - `.agent/tasks/completed/ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3/` — evidence packet for the governance-only Walmart entitlement investigation and clarification blocker.
 - `.agent/tasks/completed/ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4/` — evidence packet for Best Buy qualification; stopped before implementation because the published 72-hour Content-retention rule conflicts with current indefinite PostgreSQL tool-result persistence.
 - `scripts/verify_phase11_restricted_content.py` — real PostgreSQL episode/export sentinel scan proving restricted Best Buy content remains live-only while structural durable evidence survives replay.
 - `.agent/tasks/completed/ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5/` — hardening evidence packet, provider boundary decision, validation, and publication record.
+- `.agent/tasks/completed/ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6/` — no-key provider qualification, live usefulness evidence, restricted-content integration, validation, and publication record.
+- `src/anima_ha/external.py` — includes the fixed-host UPCitemdb adapter, conservative rate limiter, Core-restricted product manifest, and explicit no-key provider availability.
+- `scripts/verify_phase11_external.py` — runs the strict no-key UPCitemdb `wireless headphones` and `air fryer` live target with structural counts and rate-limit headers.
 
 ## Known sensitive/high-risk areas
 

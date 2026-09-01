@@ -4,19 +4,19 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 RESTRICTED EXTERNAL-CONTENT PERSISTENCE HARDENING — IMPLEMENTED, PENDING ARCHITECT REVIEW
+PHASE 11 UPCITEMDB PRODUCT PROVIDER — IMPLEMENTED, PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Close the Best Buy product-research gate without violating its published 72-hour content-retention limit. Best Buy is conditionally integrated behind a Core-owned `EPHEMERAL_RESTRICTED` persistence boundary; full provider content remains live-only and durable records retain structural projections/digests. Walmart remains preserved but deferred pending entitlement clarification. Phase 12 is unauthorized.
+Close the remaining Phase 11 product-research gate with the no-signup, no-key UPCitemdb Explorer API. UPCitemdb is Core-classified `EPHEMERAL_RESTRICTED`; full provider content remains live-only and durable records retain structural projections/digests. Best Buy is deferred because developer onboarding is operationally unavailable, and Walmart is deferred pending entitlement clarification. Phase 12 is unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5` — implement Core-owned restricted external-content persistence, prove database/export safety, and conditionally integrate Best Buy behind the boundary. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `CONTINUE / HARDEN` pending Architect review; Phase 12 is unauthorized.
+`ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6` — qualify the free no-key provider, adopt it behind the existing restricted-content boundary, and publish live product evidence. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `REPLAN / CONTINUE` pending Architect acceptance; Phase 12 is unauthorized.
 
 ## Current verified state
 
-- Phase 11 restricted-content implementation checkpoint: `b810c853b47470c4395dd1a5731e59da98ae41a5`; hosted CI `33525400264` passed on that exact SHA. Best Buy remains conditionally integrated behind the Core-owned retention boundary; its live key is absent.
+- Phase 11 UPCitemdb implementation checkpoint: `2031f0a9ebded7e7a444516ab619f685d519349f`; hosted CI `33562526807` passed on that exact SHA. The provider is no-key and has no credential resource gate. The final live harness passed both required queries with five distinct products each.
 
 - Best Buy qualification checkpoint: governance commit
   `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` is pushed to `origin/main` and
@@ -29,6 +29,15 @@ Close the Best Buy product-research gate without violating its published 72-hour
 - Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
 - Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
 - The product provider is implementation-complete and provisioned-resource qualified, but this record does not assert Architect acceptance of Phase 11. Phase 12 behavior remains absent and unauthorized.
+
+### Current product-provider replan
+
+- Architect disposition: `REPLAN / CONTINUE`; Best Buy is `DEFER — DEVELOPER_ONBOARDING_UNAVAILABLE`; Walmart is `DEFER — ENTITLEMENT_CLARIFICATION`.
+- UPCitemdb is adopted/wrapped behind `shopping.search_products` at fixed `https://api.upcitemdb.com/prod/trial/search`, with no signup, no API key, no paid tier, and Core-owned `EPHEMERAL_RESTRICTED` content persistence.
+- Live public synthetic evidence: `wireless headphones` returned 5 distinct EAN-identified products, 13 bounded offers, and `X-RateLimit-Remaining=93`; `air fryer` returned 5 distinct EAN-identified products, 19 bounded offers, and `X-RateLimit-Remaining=92`. Historical prices and old offer timestamps remain explicitly non-current external observations.
+- Conservative limiter: at most 20 search requests per in-process rolling day and at least 15 seconds between searches; the live harness uses a 16-second margin and records provider rate-limit headers. A 429 honors `Retry-After` without retrying.
+- Terms posture: official terms grant a limited, terminable service-use license, disclaim accuracy/availability, and require the customer not to infringe third-party rights; API documentation states affiliate-bound Amazon/eBay sales information is not redistributed. Product results remain restricted/untrusted and are not persisted as a catalog.
+- Provider resource state: `EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH=AVAILABLE`; no Best Buy/Walmart fallback is active. Phase 11 remains pending Architect acceptance.
 
 ### Current entitlement investigation
 
@@ -114,11 +123,11 @@ Close the Best Buy product-research gate without violating its published 72-hour
 
 ## Current blockers
 
-- Best Buy is conditionally implemented, but its live credential is absent: `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. No live Best Buy product claim is made.
+- UPCitemdb product search is available without credentials; the explicit provider gate is closed for the no-key route. No Best Buy live claim is made and Best Buy is deferred for onboarding availability.
 - Implementation checkpoint `b810c853b47470c4395dd1a5731e59da98ae41a5` and hosted CI `33525400264` passed on the exact SHA. Final governed evidence checkpoint `643957e33ead086d17171cf3d48215fc194b9aad` and hosted CI `33525543332` passed on the exact SHA.
-- The 72-hour retention conflict is addressed by Core classification `EPHEMERAL_RESTRICTED`: full bounded provider results exist only in the active process; PostgreSQL episode/tool/turn rows and whole-database JSON export contain only structural projections, hashes, metadata, and explicit retention markers.
+- Restricted external-content persistence remains addressed by Core classification `EPHEMERAL_RESTRICTED`: full bounded provider results exist only in the active process; PostgreSQL episode/tool/turn rows and whole-database JSON export contain only structural projections, hashes, metadata, and explicit retention markers.
 - A restricted result taints the episode. The active caller receives the full live answer, but durable response/decision/argument records are redacted and all later tool requests are blocked with `RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`.
-- Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`; it is not an active fallback. Phase 11 remains `CONTINUE / HARDEN`, published and pending Architect review.
+- Best Buy remains `DEFER — DEVELOPER_ONBOARDING_UNAVAILABLE`, Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`, and neither is an active fallback. Phase 11 remains `REPLAN / CONTINUE`, published and pending Architect review.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -147,7 +156,7 @@ Close the Best Buy product-research gate without violating its published 72-hour
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5` after exact-SHA publication. The implementation/evidence result is `CONTINUE / HARDEN`; Best Buy live validation remains `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. Phase 12 remains unauthorized.
+Review `ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6` after exact-SHA publication. The implementation/evidence result is `IMPLEMENTATION_COMPLETE — LIVE_PUBLIC_SYNTHETIC`; UPCitemdb has no credential gate, while Phase 11 remains pending Architect acceptance. Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 

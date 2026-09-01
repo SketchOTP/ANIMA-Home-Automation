@@ -423,3 +423,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: no cleanup daemon, arbitrary cache, provider scraping, Walmart activation, account mutation, Phase 12 behavior, or accepted Phase 0–10 architecture change.
 - Required evidence: deterministic provider/AgentRuntime tests, real PostgreSQL durable/export sentinel scan, duplicate replay, unrestricted regression, static/test/build/OPA validation, exact-SHA publication, and explicit Best Buy key resource gate if absent.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+
+## ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — No-key product-provider replan
+
+- Issued: 2026-09-01
+- Architect disposition: `REPLAN / CONTINUE`; Phase 12 remains unauthorized.
+- Starting governed checkpoint: `5ddf1eceb1346377d1ab3f857f1cadb9eeb3cf61`, clean and tracking `origin/main`.
+- Best Buy is deferred for operationally unavailable developer onboarding; Walmart remains deferred for entitlement clarification. No retailer fallback, scraping, browser automation, checkout, or Phase 12 behavior is authorized.
+- Scope: qualify the official UPCitemdb free Explorer, adopt it only if the two live household-product searches pass, preserve the semantic `shopping.search_products` tool, use no credentials, enforce Core `EPHEMERAL_RESTRICTED` persistence, and publish evidence.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.

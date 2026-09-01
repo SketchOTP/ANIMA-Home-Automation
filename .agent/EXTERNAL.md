@@ -399,3 +399,24 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
 - ANIMA compatibility finding: full sanitized external tool results are persisted indefinitely by PostgresEpisodeStore in anima_agent_tool_requests.sanitized_result; no provider-content expiry or purge path exists. This conflicts with the 72-hour rule and triggers the directive's stop condition.
 - Cost/key finding: UNKNOWN; no account/key was created or inspected and no BEST_BUY_API_KEY value was present in the process environment. Public registration instructions alone do not prove zero-cost issuance.
 - Disposition: BLOCKED — BEST_BUY_RETENTION_COMPLIANCE. Do not integrate Best Buy until Architect authorizes a bounded retention/compliance design. Walmart remains DEFER — ENTITLEMENT_CLARIFICATION; no fallback is active. No secrets, account settings, or Phase 12 behavior were touched.
+
+## ANIMA-HA-P11-UPCITEMDB-PRODUCT-PROVIDER-013R6 — Product-provider qualification
+
+- Date checked: 2026-09-01
+- Sources: [UPCitemdb API Explorer](https://upcitemdb.com/api/explorer), [API documentation](https://www.upcitemdb.com/api/), [plan comparison](https://www.upcitemdb.com/wp/docs/main/development/plan/), [rate-limit documentation](https://www.upcitemdb.com/wp/docs/main/development/api-rate-limits/), [terms](https://www.upcitemdb.com/terms), and [privacy policy](https://www.upcitemdb.com/privacy).
+- Problem: replace the Best Buy key gate with a no-signup/no-key household product-search route without scraping or arbitrary network access.
+- Qualification matrix:
+
+  | Need | Evidence | Decision |
+  | --- | --- | --- |
+  | Product discovery | `/prod/trial/search`, live JSON results, product identity and offers | ADOPT / WRAP |
+  | Cost/auth | Free Explorer, no signup, no API key, 100 combined requests/day | ADOPT / WRAP |
+  | Search quota | Public docs disagree on 20 vs 40 free searches/day; plan comparison states 20 | Conservative 20/day |
+  | Burst/pacing | Docs state burst limits; ANIMA adds 15-second minimum interval | ADOPT bounded limiter |
+  | Terms | Limited/terminable service-use license; accuracy/availability disclaimer; customer responsible for third-party rights | ADOPT restricted/untrusted |
+  | Affiliate data | API docs state Amazon/eBay sales data shown on site is not redistributed through API | Do not infer omitted offers |
+  | Product quality | Five distinct EAN-identified products for each required live query; 13/19 offers | PASS target |
+  | Privacy/retention | No ANIMA credential/account; full results are restricted live-only | EPHEMERAL_RESTRICTED |
+  | Best Buy | New key onboarding operationally unavailable | DEFER |
+  | Walmart | Cross-project entitlement unresolved | DEFER |
+- Disposition: `ADOPT / WRAP` UPCitemdb for the active semantic `shopping.search_products` capability. Preserve Best Buy/Walmart source and history, but neither is an active fallback. Recheck provider docs/terms before production or material usage expansion.

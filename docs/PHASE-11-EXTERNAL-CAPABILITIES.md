@@ -67,7 +67,7 @@ The real AgentRuntime calendar path is covered by deterministic integration
 tests: model tool request → Phase 5 gateway → Phase 4 policy → native calendar
 plugin → calendar service. The test proves one event, trusted provenance and
 idempotency, and no Phase 9 physical action record. External search and
-Walmart product results remain `EXTERNAL_UNTRUSTED` through the next cognition
+UPCitemdb product results remain `EXTERNAL_UNTRUSTED` through the next cognition
 turn. Existing durable
 task scheduled-cognition tests continue to prove fresh context construction.
 
@@ -90,11 +90,10 @@ notification-delivery claim is made.
 configuration is present; service health is still checked by the harness.
 `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED` means the fixed public endpoint
 is selected; outages remain explicit provider failures. The local calendar has
-is selected; outages remain explicit provider failures. The local calendar has
-no external credential gate. `EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH`
-is `AVAILABLE` only when all three trusted secret references are supplied;
-otherwise the harness reports `EXTERNAL_RESOURCE_GATE` without attempting an
-unauthenticated or scraped fallback.
+no external credential gate. `EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH`
+is always `AVAILABLE` because the selected free Explorer needs no credential.
+Walmart and Best Buy are deferred candidates only; the harness does not use
+either as an unauthenticated or silent fallback.
 
 ## Hardening qualification — 2026-09-01
 
@@ -122,7 +121,7 @@ engine errors exposed in normalized metadata. SearXNG `!bang` engine/category
 modifiers are rejected by ANIMA before service invocation. Use
 `python scripts/verify_phase11_external.py --require-phase11-targets` for
 strict manual web/places validation and add
-`--require-walmart-products` for the credentialed product gate. The harness
+`--require-upcitemdb-products` for the no-key product gate. The harness
 never uses browser automation, eBay HTML extraction, CAPTCHA bypass, or cart
 automation. Phase 11 product implementation is complete pending Architect
 review; no Phase 12 behavior is authorized.
@@ -214,4 +213,58 @@ adapter uses the fixed `https://api.bestbuy.com/v1/products...` read-only API,
 normalizes bounded product identity and retail observations, preserves Best Buy
 attribution and source links, marks price/availability as external observations,
 and records the future UI branding obligation. Walmart remains deferred for
-entitlement clarification. Phase 12 was not implemented.
+  entitlement clarification. Phase 12 was not implemented.
+
+## UPCitemdb product-provider replan — 2026-09-01
+
+Best Buy is deferred because new developer-key onboarding is operationally
+unavailable for this prototype. Walmart remains deferred because its
+cross-project affiliate entitlement is unresolved. UPCitemdb is the active
+no-signup/no-key product-research provider.
+
+The official [API Explorer](https://upcitemdb.com/api/explorer) and
+[API documentation](https://www.upcitemdb.com/api/) state that the free
+Explorer exposes the full database through JSON REST endpoints without signup
+or an API key, with 100 combined requests per day. The official [plan
+comparison](https://www.upcitemdb.com/wp/docs/main/development/plan/) states a
+conservative 20-search daily limit and a 2-search-per-30-second burst limit,
+while the [rate-limit documentation](https://www.upcitemdb.com/wp/docs/main/development/api-rate-limits/)
+currently describes up to 40 free searches/day and a 6-request/minute burst
+limit. ANIMA adopts the stricter 20-search interpretation and its own
+15-second pacing, and always records/obeys `X-RateLimit-*` and `Retry-After`
+headers.
+
+The adapter uses only fixed HTTPS
+`https://api.upcitemdb.com/prod/trial/search` requests with bounded `s`,
+`match_mode`, and `offset` parameters. It normalizes EAN/UPC/GTIN identity,
+title, brand, model, category, bounded description, dimensions, provider
+source URL, bounded offer observations, and a separate historical-price range.
+Offer links are preserved exactly as returned by UPCitemdb. Missing currency,
+availability, or current offers remain explicit unknowns; historical price is
+never presented as current price. No lookup endpoint, arbitrary path, account,
+credential, scraping, or retailer fallback is added.
+
+The [official terms](https://www.upcitemdb.com/terms) grant a limited,
+terminable service-use license, disclaim accuracy/availability, and require
+the customer to avoid third-party rights violations. The API documentation
+explains that Amazon/eBay affiliate sales information shown on the website is
+not redistributed through the API. ANIMA therefore treats every result as
+`EXTERNAL_UNTRUSTED` and Core-classifies the tool as `EPHEMERAL_RESTRICTED`:
+full content is available only in the active cognition process, while durable
+episodes retain structural projections/digests only.
+
+Fresh live public-synthetic qualification on 2026-09-01 passed both required
+queries. `wireless headphones` returned 5 distinct EAN-identified products,
+13 bounded offers, and `X-RateLimit-Remaining=93`. `air fryer` returned 5
+distinct EAN-identified products, 19 bounded offers, and
+`X-RateLimit-Remaining=92`. The records include real product identity and
+multiple offer observations, but several offer timestamps are old; this is
+evidence of product-catalogue usefulness, not a claim that those offers or
+prices are current.
+
+The actual AgentRuntime path is covered by deterministic integration evidence:
+the broad catalogue exposes `shopping.search_products`, the UPCitemdb plugin
+normalizes the result as external/untrusted, and the existing restricted
+episode taint boundary prevents later tool execution or durable content
+retention. No Best Buy or Walmart fallback is active, no provider credential
+gate remains, and Phase 12 was not implemented.
