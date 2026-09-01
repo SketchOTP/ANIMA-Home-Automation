@@ -329,3 +329,24 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
 - Evidence: Brave web/place/product and Google Calendar list/create-readback are independently reported by the live harness. Both currently return `EXTERNAL_RESOURCE_GATE` because credentials are absent. Open-Meteo, TheMealDB, and ntfy synthetic evidence remains passing.
 - Privacy/credential boundary: Brave API queries may be retained for up to 90 days according to its privacy notice; query minimization remains required. Google client secret, refresh token, and ephemeral access token remain outside model input, audits, Event Journal, Notion, and Git.
 - Recheck triggers: operator credentials become available; Google scope/installed-app OAuth behavior changes; Brave API endpoint/auth/privacy terms change; or a provider defect requires current external behavior.
+
+## ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R — Current provider decision
+
+- Date checked: 2026-09-01.
+- The prior Brave/Google qualification above is historical and superseded for
+  the current prototype path by the Architect’s free/local realignment.
+- Decision: `ADOPT / WRAP` private pinned SearXNG for bounded web/product JSON
+  search; `ADOPT / WRAP` OpenStreetMap Overpass for bounded category-mapped POI
+  reads; `BUILD` the first-party PostgreSQL calendar. Brave Search and Google
+  Calendar are `SUPERSEDED / DEFERRED`.
+- SearXNG is configured as a private local service with fixed engines,
+  loopback-only qualification exposure, no public instance, no image proxy,
+  and no Valkey. Overpass uses a fixed HTTPS host and no raw query tool.
+- The local calendar uses migration `0012_local_calendar.sql`, trusted
+  invocation provenance/idempotency, household isolation, optimistic version
+  checks, and Core-approved policy-gated internal mutations. Future physical
+  actions remain Phase 9-coordinated.
+- Evidence: implementation `558c689cac96f3bddbd636b4d1b9e20d055b221d` / CI
+  `33458814906`; final governed `6343b22e687fa5f2a031cb8c12ef5bf1301436a8` /
+  CI `33458890546`; 134 tests, static/build/OPA/migration, healthy no-Valkey
+  SearXNG, Overpass, PostgreSQL calendar, and AgentRuntime integration passed.
