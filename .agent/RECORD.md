@@ -222,3 +222,10 @@ UI, and voice remain out of scope.
 - Provider finding: DuckDuckGo, Startpage, and Qwant all returned upstream CAPTCHA during local target qualification; no second free general engine was adopted. Wikipedia reference search remained available for a public result, while product search remains blocked by the external resource gate.
 - Implementation checkpoint `c24b8eab5abe9acc31b4f54a321b0270399f3549` passed hosted CI `33462705630` on the exact SHA; governed evidence closure follows.
 - Governed evidence closure checkpoint `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5` passed hosted CI `33462809329` on the exact SHA. Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; Phase 12 remains unauthorized.
+
+## Phase 11 product research provider decision — 2026-09-01
+
+- Architect continuation `ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` remains `CONTINUE` pending acceptance. The remaining shopping blocker was resolved at implementation/evidence level by wrapping the already-provisioned LedgerMind Walmart signed product API path.
+- This is a bounded provider decision: Walmart read-only product search is ANIMA-owned, fixed-host, locally signed, SecretBroker-backed, provenance-preserving, timestamped, and untrusted. General web search remains private SearXNG. No retailer scraping, CAPTCHA bypass, browser automation, cart, checkout, or new service was introduced.
+- Provisioned live evidence met the target with 9 distinct headphone candidates and 10 distinct air-fryer candidates. Absent operator settings remain an explicit Walmart resource gate. The operator's external entitlement terms/cost were not independently requalified in this continuation and remain a stated limitation.
+- Phase 12 remains unauthorized.

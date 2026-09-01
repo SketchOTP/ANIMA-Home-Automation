@@ -113,6 +113,9 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase11_local_hardening.py` — target-only real OPA plus PostgreSQL calendar policy, CRUD/version/idempotency, audit, isolation, reconnect, and no-Phase-9-record evidence.
 - `infra/searxng/settings.yml` and `compose.yaml` — pinned private SearXNG configuration with fixed engines, no public instance, no image proxy, and no Valkey.
 - `docs/PHASE-11-EXTERNAL-CAPABILITIES.md` — current free/local provider architecture, trust/egress/audit boundary, gates, and evidence limitations.
+- `src/anima_ha/external.py` — bounded external adapters and manifests; `WalmartProductProvider` wraps LedgerMind's signed, read-only Walmart Product API contract behind fixed host, trusted secrets, and untrusted result normalization.
+- `tests/test_external.py` and `tests/test_phase11_integration.py` — signed-provider normalization, secret/gate behavior, manifest constraints, and actual AgentRuntime product-catalogue selection.
+- `scripts/verify_phase11_external.py` — independent Phase 11 provider harness; `--require-walmart-products` runs two credentialed product usefulness queries and reports explicit resource gates.
 
 ## Known sensitive/high-risk areas
 

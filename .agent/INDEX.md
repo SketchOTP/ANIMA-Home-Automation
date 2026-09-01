@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 11 IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE
-- Active directive: ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013 — bounded external-by-intent capabilities
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013/`
+- Current stage: PHASE 11 PRODUCT RESEARCH IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
+- Active directive: ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2 — Walmart-backed product research closure
+- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2/`
 - Last accepted outcome: Phase 10 durable-task integration (Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`)
-- Last completed outcome: Phase 11 bounded external-by-intent capabilities; implementation and governed SHAs/CI are recorded in the completed packet and Notion after publication
-- Last state sync: 2026-08-31
+- Last completed outcome: Phase 11 product research provider implementation and provisioned live usefulness evidence; exact publication SHAs/CI are recorded in the completed packet and Notion after publication
+- Last state sync: 2026-09-01
 
 ## Mandatory kernel
 

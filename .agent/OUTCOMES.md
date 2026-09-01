@@ -594,6 +594,18 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Existing lifecycle parity, stale-worker, cancellation, idempotency, replay, and lease-recovery evidence remains green. The provider is deterministic MockTransport; no live external credential claim is made.
 - Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
 
+## ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2 — Walmart-backed product research
+
+- Completed: 2026-09-01
+- Verdict: `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Architect disposition remains `CONTINUE`.
+- Starting governed checkpoint: `23aa71d774c75529d7e8412e3060446d42a9cf4d`.
+- Existing LedgerMind Walmart source was inspected read-only on Atlas. Its status-only smoke test passed signed catalogue/search/store/price probes, with cart push unsupported. ANIMA copied the bounded API contract and normalization approach, not credentials or runtime data.
+- ANIMA now provides `shopping.search_products` through a fixed-host signed Walmart adapter. It preserves product identity separately from retail offers, timestamps price/availability, keeps results `EXTERNAL_UNTRUSTED`, and does not implement cart, checkout, scraping, CAPTCHA bypass, or arbitrary network access.
+- Actual AgentRuntime product-catalogue integration passed. Credentialed Atlas live evidence returned 9 distinct `wireless headphones` candidates and 10 distinct `air fryer` candidates; both passed the three-candidate usefulness threshold.
+- Fresh validation passed: locked environment sync, Ruff, strict mypy, full pytest (`139 passed`), OPA, package build, diff check, and public-safety scan. Local absent-secret execution remains an explicit Walmart resource gate.
+- Limitation: the operator's Walmart entitlement cost/terms were not independently requalified in this bounded continuation; no universal zero-cost claim is made. Phase 12 remains unauthorized.
+- Implementation checkpoint: `fb0a6a02c9a48aaa7254e1eb69ec77c1fcd8469a`; hosted CI `33501513385` passed on the exact SHA. Final governed SHA/CI follow this evidence-only closure commit.
+
 ## ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R — Implementation result
 
 - Verdict: `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Architect disposition remains `CONTINUE` until the published checkpoint is independently reviewed.

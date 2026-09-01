@@ -4,17 +4,24 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 FREE LOCAL HARDENING IMPLEMENTED — EXTERNAL RESOURCE GATE
+PHASE 11 PRODUCT RESEARCH IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1` while preserving Architect-accepted Phases 0–10. Phase 11 implementation correction is complete, but strict SearXNG product evidence remains an external-resource gate. Phase 12 remains unauthorized.
+Close the bounded Phase 11 product-research directive `ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` while preserving Architect-accepted Phases 0–10. The existing LedgerMind Walmart product API path is wrapped behind an ANIMA-owned, fixed-host, signed read-only provider; provisioned Atlas evidence closes the product usefulness gate. Phase 11 remains pending Architect acceptance and Phase 12 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1` — correct local-calendar risk classification, qualify PostgreSQL calendar durability and real OPA behavior, and qualify private SearXNG engines/resources/failure/restart behavior. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `CONTINUE` with an external-resource gate and Phase 12 is unauthorized.
+`ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` — qualify and integrate a terms-compliant product-research path using the existing LedgerMind Walmart API contract. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 implementation is complete pending Architect review, and Phase 12 is unauthorized.
 
 ## Current verified state
+
+- Product-research closure started from governed Phase 11 checkpoint `23aa71d774c75529d7e8412e3060446d42a9cf4d`.
+- LedgerMind at `/home/sketch/Projects/LedgerMind` was inspected read-only on the Atlas laptop. Its status-only Walmart smoke test passed signature, catalogue, stores, and item-price probes; cart push remained unsupported. ANIMA copied the bounded contract, not credentials or runtime data.
+- ANIMA now exposes `anima.external.shopping.search_products` through a fixed `developer.api.walmart.com` host, ANIMA-generated RSA-SHA256 request signatures, trusted `SecretBroker` references, normalized `ProductCandidate` plus `retail_offer` data, timestamped external price/availability, and `EXTERNAL_UNTRUSTED` results. No cart, checkout, browser automation, scraping, CAPTCHA bypass, or arbitrary host is implemented.
+- Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
+- Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
+- The product provider is implementation-complete and provisioned-resource qualified, but this record does not assert Architect acceptance of Phase 11. Phase 12 behavior remains absent and unauthorized.
 
 - The project directory was empty before this bootstrap.
 - Phase 0 now contains only runtime/engineering baseline code; no household intelligence or product behavior is implemented.
@@ -90,10 +97,10 @@ Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOC
 
 ## Current blockers
 
-- Phase 11’s prior implementation and gate closure are superseded for current provider selection by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`. The current implementation uses pinned private SearXNG, OpenStreetMap Overpass, and the first-party PostgreSQL calendar; no Brave or Google credentials are required.
-- The Phase 11 hardening correction passes real OPA authorization and the PostgreSQL calendar target matrix. Strict live SearXNG web evidence passed through Wikipedia, but DuckDuckGo returned CAPTCHA and no configured source produced a product candidate; Startpage and Qwant were tested and also returned CAPTCHA. Product-search target evidence is therefore `EXTERNAL_RESOURCE_GATE`, not a pass.
-- Phase 11 implementation checkpoint `c24b8eab5abe9acc31b4f54a321b0270399f3549` passed hosted CI run `33462705630` on the exact SHA. Governance/evidence closure follows as a separate checkpoint.
-- Governed evidence closure checkpoint `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5` passed hosted CI run `33462809329` on the exact SHA. Phase 11 remains `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; this is not Architect acceptance.
+- Phase 11 product research is implemented with a provisioned Walmart resource path. The product target is `LIVE_CREDENTIALED` in the Atlas operator environment and remains `EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH` when the trusted settings/key are absent or unreadable.
+- The Walmart operator entitlement's commercial/terms details were not independently requalified in this bounded continuation. This is an evidence limitation for Architect review, not a fabricated zero-cost claim.
+- Product implementation checkpoint, governed closure checkpoint, and their exact hosted CI results are recorded below after publication. Phase 11 remains `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`, not accepted.
+- Product implementation checkpoint: `fb0a6a02c9a48aaa7254e1eb69ec77c1fcd8469a`; hosted CI `33501513385` passed on that exact SHA. The final governed checkpoint follows this evidence-only closure commit.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -122,7 +129,7 @@ Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOC
 
 ## Next Architect decision point
 
-Review the Phase 11 free/local hardening evidence packet and external-resource gate. Governed closure `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5` passed CI `33462809329`; Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; Phase 12 remains unauthorized.
+Review `ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` and the Walmart-backed product-research evidence packet. Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 

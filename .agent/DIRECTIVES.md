@@ -381,3 +381,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Evidence: real OPA authorized resident and denied anonymous mutation; PostgreSQL calendar create/replay/key-conflict/get/list/update/stale-update/cancel/reconnect/isolation/audit/no-Phase-9 matrix passed. Pinned SearXNG image manifest and x86 resource/restart measurements were captured; Wikipedia web reference passed, while DuckDuckGo/Startpage/Qwant upstream CAPTCHA prevented product target qualification.
 - Exclusions: no Brave, Google Calendar, new policy subsystem, Nominatim, Radicale, Open Food Facts, Phase 12 behavior, or accepted Phase 0–10 guarantee changes.
 - Source: Architect directive supplied in the governed session and recorded here after repository/Notion reconciliation.
+
+## ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2 — Walmart product research closure
+
+- Issued: 2026-09-01
+- Status: IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`; Phase 12 remains unauthorized.
+- Starting governed checkpoint: `23aa71d774c75529d7e8412e3060446d42a9cf4d`; the product-search target was the remaining Phase 11 gate.
+- Decision: preserve private SearXNG for general web research and wrap the existing LedgerMind Walmart signed Product API path for `shopping.search_products`. Reject eBay HTML scraping, CAPTCHA bypass, arbitrary browser/network access, and speculative provider replacement.
+- Scope: fixed-host read-only product search, trusted operator secret references, ANIMA-owned RSA request signing, honest product/retail-offer normalization, external timestamps/provenance, AgentRuntime catalogue integration, live usefulness evidence, and publication. Cart/checkout and Phase 12 behavior are excluded.
+- Required evidence: two materially different live searches with at least three distinct grounded candidates each, untrusted-result handling, static/test/build/OPA/public-safety validation, and exact-SHA publication.
+- Source: Architect directive recorded in the canonical Notion SSOT and user-authorized LedgerMind provider reuse.
