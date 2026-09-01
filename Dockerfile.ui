@@ -1,0 +1,18 @@
+FROM docker.io/library/node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e AS ui-build
+WORKDIR /build/ui
+COPY ui/package.json ui/package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY ui/ ./
+RUN npm run build
+
+FROM docker.io/library/python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+RUN pip install --no-cache-dir .
+COPY --from=ui-build /build/ui/dist ./ui/dist
+RUN useradd --create-home --uid 10001 anima && chown -R anima:anima /app
+USER anima
+EXPOSE 8090
+ENTRYPOINT ["anima-ui"]

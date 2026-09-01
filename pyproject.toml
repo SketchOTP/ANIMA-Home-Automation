@@ -8,9 +8,11 @@ dependencies = [
     "hass-client==1.2.3",
     "httpx==0.28.1",
     "croniter==6.2.4",
+    "fastapi==0.141.1",
     "jsonschema==4.26.0",
     "mcp==2.1.1",
     "psycopg[binary]==3.3.4",
+    "uvicorn==0.52.4",
 ]
 
 [dependency-groups]
@@ -27,6 +29,7 @@ anima-validate = "anima_ha.validate:main"
 anima-mcp-reference = "anima_ha.mcp_reference:main"
 anima-attention-replay = "anima_ha.phase7_replay:main"
 anima-task-worker = "anima_ha.tasks:main"
+anima-ui = "anima_ha.ui_api:main"
 
 [project.entry-points."anima_ha.plugins"]
 simulator = "anima_ha.plugins:native_reference_factory"

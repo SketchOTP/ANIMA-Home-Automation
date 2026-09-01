@@ -58,5 +58,27 @@ services:
       retries: 12
     restart: unless-stopped
 
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    environment:
+      ANIMA_ENV: ${ANIMA_ENV:-development}
+      ANIMA_DATABASE_URL: postgresql://${ANIMA_DB_USER:-anima}:${ANIMA_DB_PASSWORD:?set ANIMA_DB_PASSWORD in .env}@db:5432/${ANIMA_DB_NAME:-anima}
+      ANIMA_UI_BIND: 0.0.0.0
+      ANIMA_UI_PORT: 8090
+      ANIMA_UI_STATIC_DIR: /app/ui/dist
+    ports:
+      - "127.0.0.1:${ANIMA_UI_PORT:-18090}:8090"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
 volumes:
   anima_ha_postgres_data:

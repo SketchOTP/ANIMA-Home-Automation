@@ -1,0 +1,14 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+ui/node_modules
+ui/dist
+ui/test-results
+*.tsbuildinfo
+.env
+.env.*

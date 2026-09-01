@@ -1,6 +1,6 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains Architect-accepted Phases 0–10 and the bounded Phase 11 external-capability implementation pending Architect review.
+ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains Architect-accepted Phases 0–11 and the Phase 12 custom local-interface implementation pending Architect review.
 
 ## Implemented Phase 0 through Phase 11 baseline
 
@@ -25,8 +25,9 @@ This checkpoint provides:
 - an ANIMA-owned deterministic action-execution coordinator with durable idempotency/effect records, non-blocking PostgreSQL canonical-resource locks, latest-state preconditions, final policy reauthorization, observed post-action verification, partial/unknown outcomes, and restart reconciliation.
 - an ANIMA-owned declarative durable-task engine with one-shot, fixed-interval, and cron schedules, PostgreSQL leases and `SKIP LOCKED` claims, deterministic guaranteed due events, misfire/DST policy, idempotent creation, and restart-safe run history.
 - bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, refreshable brokered Calendar OAuth, credential gates, local request auditing, and Phase 9 verification for external writes.
+- a shared locally hosted Phase 12 interface: React/TypeScript/Vite static assets served by FastAPI/Uvicorn, ANIMA semantic household view models, Home Assistant OAuth bootstrap, hashed server-side sessions, CSRF/origin defenses, bounded SSE invalidations, and fail-closed Core command seams.
 
-No UI, voice behavior, Phase 12 behavior, or production external-provider approval is included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses private SearXNG, OpenStreetMap Overpass, and the first-party local calendar, and no human-delivery claim is made.
+Voice behavior, Phase 13 behavior, and production external-provider approval are not included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses private SearXNG, OpenStreetMap Overpass, and the first-party local calendar, and no human-delivery claim is made.
 
 ## Supported baseline
 
@@ -65,6 +66,7 @@ For the Phase 8 Codex OAuth boundary, structured cognition loop, durable episode
 For the Phase 9 action lifecycle, resource conflicts, idempotency, latest-state preconditions, policy reauthorization, verification, partial/unknown outcomes, restart reconciliation, and evidence limits, see [`docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md`](docs/PHASE-9-ACTION-EXECUTION-CONCURRENCY.md).
 For the Phase 10 declarative durable-task model, scheduling, misfire/DST policy, leases, deterministic due events, task safety boundary, dependency decisions, and evidence limits, see [`docs/PHASE-10-DURABLE-TASK-ENGINE.md`](docs/PHASE-10-DURABLE-TASK-ENGINE.md).
 For the Phase 11 external-by-intent adapters, fixed-host egress, trust/audit boundary, provider gates, Calendar/notification write verification, and evidence limits, see [`docs/PHASE-11-EXTERNAL-CAPABILITIES.md`](docs/PHASE-11-EXTERNAL-CAPABILITIES.md).
+For the Phase 12 custom local interface, OAuth/session boundary, semantic API, SSE invalidation, UI privacy posture, and validation limits, see [`docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md`](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md).
 
 ## Authority
 
