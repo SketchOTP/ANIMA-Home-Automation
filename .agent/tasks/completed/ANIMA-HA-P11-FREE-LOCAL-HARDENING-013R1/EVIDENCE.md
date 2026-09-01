@@ -62,8 +62,11 @@
   stdio startup failure; no Phase 5 source was changed.
 - Implementation checkpoint: `c24b8eab5abe9acc31b4f54a321b0270399f3549`.
 - Hosted CI: run `33462705630` `success` on that exact implementation SHA.
-- Governance/evidence closure checkpoint and final governed publication are
-  recorded after the closure push.
+- Governed evidence closure checkpoint: `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5`.
+- Hosted CI: run `33462809329` `success` on that exact governed SHA.
+- The final Authority synchronization is metadata-only; Phase 11 remains
+  `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE` pending Architect
+  acceptance.
 
 ## Evidence limits
 

@@ -13,7 +13,8 @@ remains `CONTINUE` pending review of the strict product-search gate.
 
 - Starting repository head: `179f36e98c5c31595231bee8bbbd17a1ed89dea7`.
 - Implementation checkpoint: `c24b8eab5abe9acc31b4f54a321b0270399f3549`; hosted CI `33462705630` passed on the exact SHA.
-- Governance/evidence closure checkpoint and final governed publication are recorded after the closure push.
+- Governed evidence closure checkpoint: `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5`; hosted CI `33462809329` passed on the exact SHA.
+- Final Authority synchronization is metadata-only and follows this governed closure; Phase 11 remains `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE` pending Architect acceptance.
 
 ## Scope result
 

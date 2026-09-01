@@ -93,6 +93,7 @@ Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOC
 - Phase 11’s prior implementation and gate closure are superseded for current provider selection by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`. The current implementation uses pinned private SearXNG, OpenStreetMap Overpass, and the first-party PostgreSQL calendar; no Brave or Google credentials are required.
 - The Phase 11 hardening correction passes real OPA authorization and the PostgreSQL calendar target matrix. Strict live SearXNG web evidence passed through Wikipedia, but DuckDuckGo returned CAPTCHA and no configured source produced a product candidate; Startpage and Qwant were tested and also returned CAPTCHA. Product-search target evidence is therefore `EXTERNAL_RESOURCE_GATE`, not a pass.
 - Phase 11 implementation checkpoint `c24b8eab5abe9acc31b4f54a321b0270399f3549` passed hosted CI run `33462705630` on the exact SHA. Governance/evidence closure follows as a separate checkpoint.
+- Governed evidence closure checkpoint `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5` passed hosted CI run `33462809329` on the exact SHA. Phase 11 remains `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; this is not Architect acceptance.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -121,7 +122,7 @@ Close the bounded Phase 11 free/local hardening directive `ANIMA-HA-P11-FREE-LOC
 
 ## Next Architect decision point
 
-Review the Phase 11 free/local hardening evidence packet and external-resource gate. Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; Phase 12 remains unauthorized.
+Review the Phase 11 free/local hardening evidence packet and external-resource gate. Governed closure `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5` passed CI `33462809329`; Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 
