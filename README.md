@@ -26,7 +26,7 @@ This checkpoint provides:
 - an ANIMA-owned declarative durable-task engine with one-shot, fixed-interval, and cron schedules, PostgreSQL leases and `SKIP LOCKED` claims, deterministic guaranteed due events, misfire/DST policy, idempotent creation, and restart-safe run history.
 - bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, refreshable brokered Calendar OAuth, credential gates, local request auditing, and Phase 9 verification for external writes.
 
-No UI, voice behavior, Phase 12 behavior, or production external-provider approval is included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; credentialed Brave and Google live evidence remains an environment-dependent gate, and no human-delivery claim is made.
+No UI, voice behavior, Phase 12 behavior, or production external-provider approval is included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses private SearXNG, OpenStreetMap Overpass, and the first-party local calendar, and no human-delivery claim is made.
 
 ## Supported baseline
 

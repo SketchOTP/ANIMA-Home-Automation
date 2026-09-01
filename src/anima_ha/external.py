@@ -14,13 +14,11 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 from urllib.parse import quote
 from uuid import UUID, uuid4
 
 import httpx
-from google.auth.transport.requests import Request as GoogleAuthRequest
-from google.oauth2.credentials import Credentials
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.plugins import (
@@ -35,7 +33,6 @@ from anima_ha.plugins import (
 MAX_RESPONSE_BYTES = 1_048_576
 MAX_QUERY_LENGTH = 400
 MAX_RESULT_COUNT = 10
-GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events.owned"
 
 
 class ExternalProviderError(RuntimeError):
@@ -122,64 +119,6 @@ class ExternalAuditJournalSink:
         return self.journal.append(event)
 
 
-class GoogleCredentialLike(Protocol):
-    token: str | None
-    valid: bool
-
-    def refresh(self, request: Any) -> None: ...
-
-
-class GoogleCalendarCredentialProvider:
-    """ANIMA-owned refreshable OAuth boundary for Calendar requests."""
-
-    def __init__(
-        self,
-        client_id: str,
-        client_secret: str,
-        refresh_token: str,
-        *,
-        credentials: GoogleCredentialLike | None = None,
-        request_factory: Callable[[], Any] = GoogleAuthRequest,
-    ) -> None:
-        if not client_id.strip() or not client_secret.strip() or not refresh_token.strip():
-            raise ExternalProviderUnavailable("Google Calendar OAuth configuration is incomplete")
-        self._request_factory = request_factory
-        if credentials is not None:
-            self._credentials = credentials
-        else:
-            self._credentials = cast(
-                GoogleCredentialLike,
-                Credentials(  # type: ignore[no-untyped-call]
-                    token=None,
-                    refresh_token=refresh_token,
-                    token_uri="https://oauth2.googleapis.com/token",
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    scopes=(GOOGLE_CALENDAR_SCOPE,),
-                ),
-            )
-
-    @property
-    def scope(self) -> str:
-        return GOOGLE_CALENDAR_SCOPE
-
-    @property
-    def credentials(self) -> GoogleCredentialLike:
-        """Expose the in-memory credential object only to adapter tests."""
-        return self._credentials
-
-    def access_token(self, *, force_refresh: bool = False) -> str:
-        if force_refresh or not self._credentials.valid:
-            try:
-                self._credentials.refresh(self._request_factory())
-            except Exception as exc:
-                raise ExternalProviderUnavailable("Google Calendar OAuth refresh failed") from exc
-        token = self._credentials.token
-        if not token:
-            raise ExternalProviderUnavailable("Google Calendar OAuth returned no access token")
-        return token
-
-
 class BoundedHttpClient:
     """Fixed-host HTTP transport with bounded body, timeout, and audit."""
 
@@ -194,11 +133,15 @@ class BoundedHttpClient:
         timeout: float = 10.0,
         max_response_bytes: int = MAX_RESPONSE_BYTES,
         transport: httpx.BaseTransport | None = None,
+        require_https: bool = True,
+        allow_private: bool = False,
     ) -> None:
         parsed = httpx.URL(base_url)
-        if parsed.scheme != "https" or parsed.host is None:
-            raise ValueError("external providers require an HTTPS base URL")
-        if parsed.host not in allowed_hosts or not self._safe_host(parsed.host):
+        if parsed.host is None or (require_https and parsed.scheme != "https"):
+            raise ValueError("provider base URL has an invalid scheme or host")
+        if parsed.host not in allowed_hosts or (
+            not allow_private and not self._safe_host(parsed.host)
+        ):
             raise ValueError("base URL host is not allowlisted")
         self.provider = provider
         self.base_url = str(parsed).rstrip("/")
@@ -206,6 +149,7 @@ class BoundedHttpClient:
         self.audit_sink = audit_sink
         self.credential_reference = credential_reference
         self.max_response_bytes = max_response_bytes
+        self.allow_private = allow_private
         self.client = httpx.Client(
             base_url=self.base_url,
             follow_redirects=False,
@@ -276,7 +220,9 @@ class BoundedHttpClient:
         if not path.startswith("/") or "?" in path or "//" in path:
             raise ValueError("provider adapters must use a fixed relative path")
         url = httpx.URL(self.base_url + path)
-        if url.host not in self.allowed_hosts or not self._safe_host(url.host):
+        if url.host not in self.allowed_hosts or (
+            not self.allow_private and not self._safe_host(url.host)
+        ):
             raise ValueError("external request host is not allowlisted")
         if method.upper() not in {"GET", "POST"}:
             raise ValueError("external method is not allowed")
@@ -351,6 +297,23 @@ class BoundedHttpClient:
             raise ExternalProviderError("external provider transport failed") from exc
 
 
+class LocalServiceClient(BoundedHttpClient):
+    """Private fixed-host transport for an ANIMA-managed service."""
+
+    def __init__(self, *, provider: str, base_url: str, service_host: str, **kwargs: Any) -> None:
+        parsed = httpx.URL(base_url)
+        if parsed.host != service_host or parsed.path not in {"", "/"}:
+            raise ValueError("local provider URL must match its trusted service host")
+        super().__init__(
+            provider=provider,
+            base_url=base_url,
+            allowed_hosts=(service_host,),
+            require_https=False,
+            allow_private=True,
+            **kwargs,
+        )
+
+
 def _count(value: Any) -> int:
     return max(1, min(int(value), MAX_RESULT_COUNT))
 
@@ -401,68 +364,121 @@ class OpenMeteoProvider:
         )
 
 
-class BraveProvider:
-    def __init__(self, client: BoundedHttpClient, api_key: str) -> None:
-        if not api_key.strip():
-            raise ExternalProviderUnavailable("BRAVE_SEARCH_API_KEY is missing")
+class SearXNGProvider:
+    """Bounded search through the private, operator-configured SearXNG service."""
+
+    def __init__(self, client: BoundedHttpClient) -> None:
         self.client = client
-        self.api_key = api_key
 
     def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
         del timeout
         query = str(arguments["query"]).strip()
         if not query or len(query) > MAX_QUERY_LENGTH:
             raise ValueError("external query is empty or exceeds the 400-character bound")
-        if name == "search" or name == "search_products":
-            operation = "web.search" if name == "search" else "shopping.search_products"
-            _, payload = self.client.request(
-                operation=operation,
-                method="GET",
-                path="/res/v1/web/search",
-                params={"q": query, "count": _count(arguments.get("count", 5)), "country": "US"},
-                headers={"X-Subscription-Token": self.api_key, "Accept": "application/json"},
-            )
-            items = payload.get("web", {}).get("results", [])
-            results = [
-                {
-                    "title": str(item.get("title", "")),
-                    "url": str(item.get("url", "")),
-                    "snippet": str(item.get("description", "")),
-                    "rank": index,
-                }
-                for index, item in enumerate(items[:MAX_RESULT_COUNT], 1)
-                if isinstance(item, dict)
-            ]
-            return _result("brave", operation, {"query": query, "results": results})
-        if name == "search_places":
-            params: dict[str, Any] = {
+        if name not in {"search", "search_products"}:
+            raise ExternalProviderError("unknown discovery operation")
+        operation = "web.search" if name == "search" else "shopping.search_products"
+        _, payload = self.client.request(
+            operation=operation,
+            method="GET",
+            path="/search",
+            params={
                 "q": query,
-                "count": _count(arguments.get("count", 5)),
+                "format": "json",
+                "categories": "general",
+                "pageno": 1,
+            },
+            headers={"Accept": "application/json"},
+        )
+        items = payload.get("results", [])
+        results = [
+            {
+                "title": str(item.get("title", "")),
+                "url": str(item.get("url", "")),
+                "snippet": str(item.get("content", item.get("snippet", ""))),
+                "engines": [str(engine) for engine in item.get("engines", []) if engine],
+                "rank": index,
             }
-            for key in ("latitude", "longitude", "radius"):
-                if key in arguments:
-                    params[key] = arguments[key]
-            _, payload = self.client.request(
-                operation="places.search",
-                method="GET",
-                path="/res/v1/local/place_search",
-                params=params,
-                headers={"X-Subscription-Token": self.api_key, "Accept": "application/json"},
-            )
-            places = payload.get("results", [])
-            results = [
+            for index, item in enumerate(items[: _count(arguments.get("count", 5))], 1)
+            if isinstance(item, dict)
+        ]
+        return _result(
+            "searxng",
+            operation,
+            {"query": query, "results": results},
+            provider_metadata={"configured_engines": ["duckduckgo", "wikipedia"]},
+        )
+
+
+_OVERPASS_TAGS: dict[str, tuple[str, str]] = {
+    "restaurant": ("amenity", "restaurant"),
+    "cafe": ("amenity", "cafe"),
+    "bar": ("amenity", "bar"),
+    "grocery": ("shop", "supermarket|convenience"),
+    "pharmacy": ("amenity", "pharmacy"),
+    "hospital": ("amenity", "hospital"),
+    "hardware_store": ("shop", "hardware"),
+    "gas_station": ("amenity", "fuel"),
+    "hotel": ("tourism", "hotel"),
+}
+
+
+class OverpassProvider:
+    """Read-only POI discovery using a fixed Overpass endpoint and tag mapping."""
+
+    def __init__(self, client: BoundedHttpClient) -> None:
+        self.client = client
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
+        del timeout
+        if name != "search_places":
+            raise ExternalProviderError("unknown Overpass operation")
+        category = str(arguments["category"])
+        if category not in _OVERPASS_TAGS:
+            raise ValueError("unsupported place category")
+        latitude = float(arguments["latitude"])
+        longitude = float(arguments["longitude"])
+        radius = max(1, min(int(arguments.get("radius_m", 2_000)), 20_000))
+        if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+            raise ValueError("coordinates are outside WGS84 bounds")
+        key, value = _OVERPASS_TAGS[category]
+        tag = f'["{key}"="{value}"]' if "|" not in value else f'["{key}"~"{value}"]'
+        query = (
+            f"[out:json][timeout:15];(nwr(around:{radius},{latitude},{longitude}){tag};);"
+            "out center tags;"
+        )
+        _, payload = self.client.request(
+            operation="places.search",
+            method="GET",
+            path="/api/interpreter",
+            params={"data": query},
+            headers={"Accept": "application/json", "User-Agent": "ANIMA-HA/0.1"},
+        )
+        results: list[dict[str, Any]] = []
+        for item in payload.get("elements", [])[: _count(arguments.get("count", 10))]:
+            if not isinstance(item, dict):
+                continue
+            center = item.get("center") or {}
+            tags = item.get("tags") or {}
+            results.append(
                 {
-                    "name": str(item.get("name", "")),
-                    "category": str(item.get("type", "")),
-                    "address": str(item.get("address", "")),
-                    "coordinates": item.get("coordinates"),
-                    "provider_reference": str(item.get("id", "")),
+                    "name": str(tags.get("name", "")),
+                    "category": category,
+                    "address": str(tags.get("addr:street", "")),
+                    "coordinates": {
+                        "latitude": item.get("lat", center.get("lat")),
+                        "longitude": item.get("lon", center.get("lon")),
+                    },
+                    "provider_reference": f"{item.get('type', '')}/{item.get('id', '')}",
+                    "tags": {str(k): str(v) for k, v in tags.items() if k != "name"},
                 }
-                for item in places[:MAX_RESULT_COUNT]
-                if isinstance(item, dict)
-            ]
-            return _result("brave", "places.search", {"query": query, "results": results})
-        raise ExternalProviderError("unknown discovery operation")
+            )
+        return _result(
+            "openstreetmap-overpass",
+            "places.search",
+            {"category": category, "results": results},
+            attribution="© OpenStreetMap contributors",
+        )
 
 
 class TheMealDBProvider:
@@ -560,167 +576,6 @@ class NtfyProvider:
         )
 
 
-class GoogleCalendarProvider:
-    def __init__(
-        self,
-        client: BoundedHttpClient,
-        credential_provider: GoogleCalendarCredentialProvider,
-        calendar_id: str = "primary",
-    ) -> None:
-        if not calendar_id.strip():
-            raise ValueError("Google Calendar ID is required")
-        self.client, self.credentials, self.calendar_id = client, credential_provider, calendar_id
-
-    def _headers(self, *, force_refresh: bool = False) -> dict[str, str]:
-        return {
-            "Authorization": f"Bearer {self.credentials.access_token(force_refresh=force_refresh)}",
-            "Accept": "application/json",
-        }
-
-    def _request(
-        self,
-        *,
-        operation: str,
-        method: str,
-        path: str,
-        params: dict[str, Any] | None = None,
-        json_body: dict[str, Any] | None = None,
-        retry_auth: bool = True,
-    ) -> tuple[int, dict[str, Any]]:
-        try:
-            return self.client.request(
-                operation=operation,
-                method=method,
-                path=path,
-                params=params,
-                json_body=json_body,
-                headers=self._headers(),
-            )
-        except ExternalProviderError as exc:
-            if retry_auth and "HTTP 401" in str(exc):
-                return self.client.request(
-                    operation=f"{operation}.auth_refresh_retry",
-                    method=method,
-                    path=path,
-                    params=params,
-                    json_body=json_body,
-                    headers=self._headers(force_refresh=True),
-                )
-            raise
-
-    @staticmethod
-    def _event(value: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "provider_reference": str(value.get("id", "")),
-            "title": str(value.get("summary", "")),
-            "start": str(
-                value.get("start", {}).get("dateTime", value.get("start", {}).get("date", ""))
-            ),
-            "end": str(value.get("end", {}).get("dateTime", value.get("end", {}).get("date", ""))),
-            "location": str(value.get("location", "")),
-            "status": str(value.get("status", "")),
-            "updated": str(value.get("updated", "")),
-        }
-
-    def invoke_with_context(
-        self,
-        name: str,
-        arguments: dict[str, Any],
-        timeout: float,
-        execution_context: ProviderExecutionContext,
-    ) -> dict[str, Any]:
-        del timeout
-        base = f"/calendar/v3/calendars/{quote(self.calendar_id, safe='')}/events"
-        if name == "list_events":
-            _, payload = self._request(
-                operation="calendar.list_events",
-                method="GET",
-                path=base,
-                params={
-                    "timeMin": arguments.get("start"),
-                    "timeMax": arguments.get("end"),
-                    "maxResults": _count(arguments.get("count", 10)),
-                    "singleEvents": "true",
-                },
-            )
-            return _result(
-                "google-calendar",
-                "calendar.list_events",
-                {
-                    "events": [
-                        self._event(item)
-                        for item in payload.get("items", [])
-                        if isinstance(item, dict)
-                    ]
-                },
-            )
-        if name != "create_event":
-            raise ExternalProviderError("unknown calendar operation")
-        provider_id = hashlib.sha256(execution_context.anima_idempotency_key.encode()).hexdigest()[
-            :32
-        ]
-        event = {
-            "id": provider_id,
-            "summary": str(arguments["summary"]),
-            "start": {"dateTime": str(arguments["start"])},
-            "end": {"dateTime": str(arguments["end"])},
-        }
-        try:
-            _, existing = self._request(
-                operation="calendar.create_event.precheck",
-                method="GET",
-                path=f"{base}/{provider_id}",
-            )
-            readback = self._event(existing)
-            return {
-                "accepted": True,
-                "already_satisfied": True,
-                "readback_verified": self._matches(readback, arguments),
-                "readback": readback,
-            }
-        except ExternalProviderError as exc:
-            if "HTTP 404" not in str(exc):
-                raise
-        _, created = self._request(
-            operation="calendar.create_event",
-            method="POST",
-            path=base,
-            params={"conferenceDataVersion": 0},
-            json_body=event,
-        )
-        try:
-            _, observed = self._request(
-                operation="calendar.create_event.readback",
-                method="GET",
-                path=f"{base}/{provider_id}",
-            )
-        except (ExternalProviderError, TimeoutError):
-            return {"accepted": True, "readback_verified": False, "provider_ack": created}
-        readback = self._event(observed)
-        return {
-            "accepted": True,
-            "readback_verified": self._matches(readback, arguments),
-            "readback": readback,
-            "provider_ack": {"provider_reference": str(created.get("id", provider_id))},
-        }
-
-    @staticmethod
-    def _matches(readback: dict[str, Any], arguments: dict[str, Any]) -> bool:
-        return (
-            readback.get("title") == str(arguments["summary"])
-            and readback.get("start") == str(arguments["start"])
-            and readback.get("end") == str(arguments["end"])
-        )
-
-    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
-        return self.invoke_with_context(
-            name,
-            arguments,
-            timeout,
-            ProviderExecutionContext(UUID(int=0), "standalone"),
-        )
-
-
 def _read_tool(
     name: str, description: str, *, schema: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -749,13 +604,13 @@ def _read_tool(
         "search_places": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "minLength": 1, "maxLength": MAX_QUERY_LENGTH},
+                "category": {"type": "string", "enum": sorted(_OVERPASS_TAGS)},
                 "count": {"type": "integer", "minimum": 1, "maximum": MAX_RESULT_COUNT},
                 "latitude": {"type": "number", "minimum": -90, "maximum": 90},
                 "longitude": {"type": "number", "minimum": -180, "maximum": 180},
-                "radius": {"type": "integer", "minimum": 1, "maximum": 50000},
+                "radius_m": {"type": "integer", "minimum": 1, "maximum": 20000},
             },
-            "required": ["query"],
+            "required": ["category", "latitude", "longitude"],
             "additionalProperties": False,
         },
         "search_products": {
@@ -790,7 +645,9 @@ def _read_tool(
 
 
 def external_manifests() -> tuple[PluginManifest, ...]:
-    """Return the Core-known external manifests; credentials are independently gated."""
+    """Return Core-known providers and the first-party local calendar catalogue."""
+    from anima_ha.calendar import CALENDAR_MANIFEST
+
     return (
         PluginManifest(
             plugin_id="anima.external.weather",
@@ -823,11 +680,11 @@ def external_manifests() -> tuple[PluginManifest, ...]:
         ),
         PluginManifest(
             plugin_id="anima.external.discovery",
-            plugin_version="0.1.0",
             manifest_version=1,
             requires_core="0.1.0",
-            name="Brave discovery",
-            description="Bounded web, place, and product discovery",
+            plugin_version="0.2.0",
+            name="Free local discovery",
+            description="Private SearXNG web/product search and OpenStreetMap POI discovery",
             runtime_kind=RuntimeKind.TRUSTED_NATIVE,
             trust_class=TrustClass.TRUSTED_NATIVE,
             capabilities=("web-research", "places", "shopping-research"),
@@ -836,8 +693,7 @@ def external_manifests() -> tuple[PluginManifest, ...]:
                 _read_tool("search_places", "Find bounded local places"),
                 _read_tool("search_products", "Find bounded product candidates"),
             ),
-            required_secrets=("BRAVE_SEARCH_API_KEY",),
-            network_requirements=("api.search.brave.com",),
+            network_requirements=("searxng:8080", "overpass-api.de"),
             source="builtin:anima_ha.external",
         ),
         PluginManifest(
@@ -865,47 +721,7 @@ def external_manifests() -> tuple[PluginManifest, ...]:
             ),
             source="builtin:anima_ha.external",
         ),
-        PluginManifest(
-            plugin_id="anima.external.calendar",
-            plugin_version="0.1.0",
-            manifest_version=1,
-            requires_core="0.1.0",
-            name="Google Calendar",
-            description="Bounded Calendar reads and verified event creation",
-            runtime_kind=RuntimeKind.TRUSTED_NATIVE,
-            trust_class=TrustClass.TRUSTED_NATIVE,
-            capabilities=("calendar",),
-            tools=(
-                _read_tool("list_events", "List bounded calendar events"),
-                {
-                    "name": "create_event",
-                    "description": "Create a calendar event with provider readback",
-                    "input_schema": {
-                        "type": "object",
-                        "properties": {
-                            "summary": {"type": "string", "minLength": 1, "maxLength": 200},
-                            "start": {"type": "string", "maxLength": 64},
-                            "end": {"type": "string", "maxLength": 64},
-                        },
-                        "required": ["summary", "start", "end"],
-                        "additionalProperties": False,
-                    },
-                    "risk_class": "EXTERNAL_SIDE_EFFECT",
-                    "semantic_action": "calendar.create_event",
-                    "read_only": False,
-                    "idempotency": Idempotency.KEYED.value,
-                    "external_content_trust": ExternalContentTrust.EXTERNAL_UNTRUSTED.value,
-                    "execution_spec": {"profile": "calendar.create_event"},
-                },
-            ),
-            required_secrets=(
-                "GOOGLE_CALENDAR_CLIENT_ID",
-                "GOOGLE_CALENDAR_CLIENT_SECRET",
-                "GOOGLE_CALENDAR_REFRESH_TOKEN",
-            ),
-            network_requirements=("www.googleapis.com",),
-            source="builtin:anima_ha.external",
-        ),
+        CALENDAR_MANIFEST,
         PluginManifest(
             plugin_id="anima.external.notifications",
             plugin_version="0.1.0",
@@ -942,6 +758,19 @@ def external_manifests() -> tuple[PluginManifest, ...]:
             source="builtin:anima_ha.external",
         ),
     )
+
+
+class _DiscoveryProvider:
+    """Compose the fixed web and POI providers behind one catalogue plugin."""
+
+    def __init__(self, search: SearXNGProvider, places: OverpassProvider) -> None:
+        self.search = search
+        self.places = places
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
+        if name == "search_places":
+            return self.places.invoke(name, arguments, timeout)
+        return self.search.invoke(name, arguments, timeout)
 
 
 class ExternalNativePlugin:
@@ -990,8 +819,9 @@ def external_plugin(
     *,
     audit_sink: AuditSink | list[ExternalRequestAudit] | None = None,
     transport: httpx.BaseTransport | None = None,
-    calendar_id: str = "primary",
-    calendar_credentials: GoogleCredentialLike | None = None,
+    searxng_url: str = "http://searxng:8080",
+    searxng_host: str = "searxng",
+    overpass_url: str = "https://overpass-api.de",
 ) -> tuple[PluginManifest, ExternalNativePlugin]:
     """Build one built-in provider plugin without exposing provider credentials."""
     manifest = next(item for item in external_manifests() if item.plugin_id == plugin_id)
@@ -1018,14 +848,23 @@ def external_plugin(
     if plugin_id == "anima.external.discovery":
         return manifest, ExternalNativePlugin(
             manifest,
-            lambda env: BraveProvider(
-                client(
-                    "brave",
-                    "https://api.search.brave.com",
-                    ("api.search.brave.com",),
-                    "BRAVE_SEARCH_API_KEY",
+            lambda env: _DiscoveryProvider(
+                SearXNGProvider(
+                    LocalServiceClient(
+                        provider="searxng",
+                        base_url=searxng_url,
+                        service_host=searxng_host,
+                        audit_sink=audit_sink,
+                        transport=transport,
+                    )
                 ),
-                env["BRAVE_SEARCH_API_KEY"],
+                OverpassProvider(
+                    client(
+                        "overpass",
+                        overpass_url,
+                        (httpx.URL(overpass_url).host or "",),
+                    )
+                ),
             ),
         )
     if plugin_id == "anima.external.recipes":
@@ -1033,25 +872,6 @@ def external_plugin(
             manifest,
             lambda env: TheMealDBProvider(
                 client("themealdb", "https://www.themealdb.com", ("www.themealdb.com",))
-            ),
-        )
-    if plugin_id == "anima.external.calendar":
-        return manifest, ExternalNativePlugin(
-            manifest,
-            lambda env: GoogleCalendarProvider(
-                client(
-                    "google-calendar",
-                    "https://www.googleapis.com",
-                    ("www.googleapis.com",),
-                    "GOOGLE_CALENDAR_REFRESH_TOKEN",
-                ),
-                GoogleCalendarCredentialProvider(
-                    env["GOOGLE_CALENDAR_CLIENT_ID"],
-                    env["GOOGLE_CALENDAR_CLIENT_SECRET"],
-                    env["GOOGLE_CALENDAR_REFRESH_TOKEN"],
-                    credentials=calendar_credentials,
-                ),
-                calendar_id,
             ),
         )
     if plugin_id == "anima.external.notifications":
@@ -1074,21 +894,8 @@ def external_plugin(
 def external_resource_gates(secrets: dict[str, str]) -> dict[str, str]:
     """Return explicit availability diagnostics without inspecting secret values."""
     return {
-        "EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH": (
-            "AVAILABLE" if bool(secrets.get("BRAVE_SEARCH_API_KEY")) else "EXTERNAL_RESOURCE_GATE"
-        ),
-        "EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR": (
-            "AVAILABLE"
-            if all(
-                bool(secrets.get(name))
-                for name in (
-                    "GOOGLE_CALENDAR_CLIENT_ID",
-                    "GOOGLE_CALENDAR_CLIENT_SECRET",
-                    "GOOGLE_CALENDAR_REFRESH_TOKEN",
-                )
-            )
-            else "EXTERNAL_RESOURCE_GATE"
-        ),
+        "EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH": "CONFIGURED",
+        "EXTERNAL_RESOURCE_GATE_OVERPASS": "CONFIGURED",
         "EXTERNAL_RESOURCE_GATE_NTFY": (
             "AVAILABLE" if bool(secrets.get("NTFY_TOPIC")) else "EXTERNAL_RESOURCE_GATE"
         ),

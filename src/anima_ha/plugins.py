@@ -295,6 +295,9 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
         "anima.durable-tasks.cancel",
         "anima.durable-tasks.pause",
         "anima.durable-tasks.resume",
+        "anima.calendar.create_event",
+        "anima.calendar.update_event",
+        "anima.calendar.cancel_event",
     }
 )
 
@@ -308,7 +311,7 @@ def _core_execution_boundary(
         if (
             manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
             and manifest.trust_class == TrustClass.TRUSTED_NATIVE
-            and manifest.source == "builtin:anima_ha.tasks"
+            and manifest.source in {"builtin:anima_ha.tasks", "builtin:anima_ha.calendar"}
         ):
             return ExecutionBoundary.POLICY_GATED_INTERNAL
         return ExecutionBoundary.COORDINATED_CONSEQUENTIAL

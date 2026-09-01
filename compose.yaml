@@ -32,5 +32,31 @@ services:
       retries: 15
     restart: unless-stopped
 
+  searxng:
+    image: docker.io/searxng/searxng:2026.8.29-d226b78bc@sha256:b36af7984b87191b595bc5301418ed6432c047668a4547ab531a7439b816fac3
+    environment:
+      SEARXNG_BIND_ADDRESS: 0.0.0.0
+      SEARXNG_IMAGE_PROXY: "false"
+      SEARXNG_LIMITER: "false"
+      SEARXNG_PORT: 8080
+      SEARXNG_PUBLIC_INSTANCE: "false"
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?set SEARXNG_SECRET in .env}
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:${ANIMA_SEARXNG_PORT:-18888}:8080"
+    volumes:
+      - ./infra/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c 'import urllib.request;
+          urllib.request.urlopen("http://127.0.0.1:8080/search?q=health&format=json", timeout=3)'
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
 volumes:
   anima_ha_postgres_data:

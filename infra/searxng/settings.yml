@@ -1,0 +1,35 @@
+use_default_settings:
+  engines:
+    keep_only:
+      - duckduckgo
+      - wikipedia
+
+general:
+  debug: false
+  instance_name: "ANIMA private search"
+  enable_metrics: false
+
+search:
+  safe_search: 1
+  autocomplete: ""
+  formats:
+    - json
+
+server:
+  bind_address: "0.0.0.0"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  secret_key: "set-via-SEARXNG_SECRET"
+  method: "GET"
+
+valkey:
+  url: false
+
+engines:
+  - name: duckduckgo
+    disabled: false
+    categories: [general, web]
+  - name: wikipedia
+    disabled: false
+    categories: [general, web]

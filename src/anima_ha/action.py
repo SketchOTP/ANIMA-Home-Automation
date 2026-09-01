@@ -262,80 +262,11 @@ def resolve_action_safety_spec(tool: ToolDescriptor) -> ActionSafetySpec | None:
         return None
     metadata = tool.execution_spec
     profile = str(metadata.get("profile", tool.semantic_action))
-    if tool.tool_id not in {
-        "anima.external.calendar.create_event",
-        "anima.external.notifications.send",
-    } and profile not in {"set_power", "home_assistant.set_power"}:
+    if tool.tool_id not in {"anima.external.notifications.send"} and profile not in {
+        "set_power",
+        "home_assistant.set_power",
+    }:
         return None
-    if profile in {"calendar.create_event", "anima.external.calendar.create_event"}:
-
-        def calendar_scopes(arguments: dict[str, Any]) -> tuple[str, ...]:
-            calendar_id = str(arguments.get("calendar_id", "primary"))
-            return (f"external:calendar:{calendar_id}",)
-
-        def calendar_preconditions(
-            arguments: dict[str, Any], snapshot: TruthSnapshot
-        ) -> tuple[TruthPrecondition, ...]:
-            del arguments, snapshot
-            return ()
-
-        def calendar_effects(
-            arguments: dict[str, Any], snapshot: TruthSnapshot
-        ) -> tuple[ExpectedEffect, ...]:
-            del snapshot
-            return (
-                ExpectedEffect(
-                    "provider:calendar:event",
-                    {
-                        "title": str(arguments["summary"]),
-                        "start": str(arguments["start"]),
-                        "end": str(arguments["end"]),
-                    },
-                    effect_id="calendar:event:readback",
-                ),
-            )
-
-        def calendar_verify(
-            request: ActionRequest,
-            invocation: InvocationResult,
-            effects: tuple[ExpectedEffect, ...],
-        ) -> VerificationResult:
-            del request
-            result = invocation.result if isinstance(invocation.result, dict) else {}
-            raw_readback = result.get("readback")
-            readback = dict(raw_readback) if isinstance(raw_readback, dict) else {}
-            expected = effects[0].expected_value if effects else {}
-            matched = bool(result.get("readback_verified")) and all(
-                readback.get(key) == value for key, value in expected.items()
-            )
-            evidence = (
-                EffectEvidence(
-                    effects[0],
-                    VerificationOutcome.VERIFIED if matched else VerificationOutcome.UNKNOWN,
-                    readback,
-                    "PROVIDER_READBACK",
-                    None if matched else "provider readback did not establish the expected event",
-                )
-                if effects
-                else ()
-            )
-            evidence_tuple = (evidence,) if isinstance(evidence, EffectEvidence) else ()
-            return VerificationResult(
-                VerificationOutcome.VERIFIED if matched else VerificationOutcome.UNKNOWN,
-                readback,
-                effects=evidence_tuple,
-            )
-
-        return ActionSafetySpec(
-            profile_id="calendar.create_event",
-            scope_resolver=calendar_scopes,
-            precondition_builder=calendar_preconditions,
-            expected_effect_builder=calendar_effects,
-            provider_idempotency_supported=True,
-            requires_fresh_state=False,
-            provider_verifier=calendar_verify,
-        )
-
     if profile in {"notifications.send", "anima.external.notifications.send"}:
 
         def notification_scopes(arguments: dict[str, Any]) -> tuple[str, ...]:
