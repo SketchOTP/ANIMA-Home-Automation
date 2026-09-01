@@ -44,6 +44,9 @@ WALMART_SECRET_NAMES = (
     "WALMART_KEY_VERSION",
     "WALMART_PRIVATE_KEY_PATH",
 )
+BEST_BUY_API_HOST = "api.bestbuy.com"
+BEST_BUY_API_BASE = f"https://{BEST_BUY_API_HOST}"
+BEST_BUY_SECRET_NAMES = ("BEST_BUY_API_KEY",)
 
 
 class ExternalProviderError(RuntimeError):
@@ -579,6 +582,155 @@ class WalmartProductProvider:
         )
 
 
+class BestBuyProductProvider:
+    """Bounded read-only product research through Best Buy's Products API."""
+
+    _SHOW = ",".join(
+        (
+            "sku",
+            "name",
+            "manufacturer",
+            "modelNumber",
+            "categoryPath",
+            "shortDescription",
+            "salePrice",
+            "regularPrice",
+            "onlineAvailability",
+            "active",
+            "image",
+            "largeImage",
+            "thumbnailImage",
+            "productUrl",
+            "details",
+            "features",
+        )
+    )
+
+    def __init__(self, client: BoundedHttpClient, secret_env: dict[str, str]) -> None:
+        api_key = secret_env.get("BEST_BUY_API_KEY", "").strip()
+        if not api_key:
+            raise ExternalProviderUnavailable("Best Buy API key is not configured")
+        self.client = client
+        self.api_key = api_key
+
+    @staticmethod
+    def _number(value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _specifications(item: dict[str, Any]) -> dict[str, str]:
+        values: dict[str, str] = {}
+        for field_name in ("details", "features"):
+            raw = item.get(field_name)
+            if isinstance(raw, list):
+                for entry in raw[:12]:
+                    if isinstance(entry, dict):
+                        key = str(entry.get("name") or entry.get("feature") or "").strip()
+                        value = str(entry.get("value") or entry.get("feature") or "").strip()
+                        if key and value:
+                            values[key[:80]] = value[:240]
+        return values
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
+        del timeout
+        if name != "search_products":
+            raise ExternalProviderError("unknown Best Buy operation")
+        query = str(arguments["query"]).strip()
+        if not query or len(query) > MAX_QUERY_LENGTH:
+            raise ValueError("product query is empty or exceeds the 400-character bound")
+        count = _count(arguments.get("count", 5))
+        search_expression = "&".join(
+            f"search={quote(term, safe='')}" for term in query.split() if term
+        )
+        _, payload = self.client.request(
+            operation="shopping.search_products",
+            method="GET",
+            path=f"/v1/products({search_expression})",
+            params={
+                "format": "json",
+                "show": self._SHOW,
+                "pageSize": count,
+                "apiKey": self.api_key,
+            },
+            headers={"Accept": "application/json"},
+        )
+        retrieved_at = datetime.now(UTC).isoformat()
+        products: list[dict[str, Any]] = []
+        items = payload.get("products", [])
+        if not isinstance(items, list):
+            raise ExternalProviderError("Best Buy product response has an invalid item list")
+        for item in items[:count]:
+            if not isinstance(item, dict):
+                continue
+            sku = str(item.get("sku") or "").strip()
+            name_value = str(item.get("name") or "").strip()
+            if not sku or not name_value:
+                continue
+            sale = self._number(item.get("salePrice"))
+            regular = self._number(item.get("regularPrice"))
+            effective = sale if sale is not None else regular
+            products.append(
+                {
+                    "provider": "best_buy",
+                    "provider_reference": sku,
+                    "source_url": str(item.get("productUrl") or "").strip(),
+                    "name": name_value,
+                    "brand": str(item.get("manufacturer") or ""),
+                    "model": str(item.get("modelNumber") or ""),
+                    "category": str(item.get("categoryPath") or ""),
+                    "description": str(item.get("shortDescription") or "")[:2_000],
+                    "specifications": self._specifications(item),
+                    "retail_offer": {
+                        "retailer": "Best Buy",
+                        "price": (
+                            {
+                                "amount": effective,
+                                "currency": "USD",
+                                "source": "best_buy_api",
+                                "retrieved_at": retrieved_at,
+                            }
+                            if effective is not None
+                            else None
+                        ),
+                        "regular_price": regular,
+                        "promo_price": sale if sale is not None and sale != regular else None,
+                        "availability": (
+                            "in_stock"
+                            if item.get("onlineAvailability") is True
+                            else "out_of_stock"
+                            if item.get("onlineAvailability") is False
+                            else "unknown"
+                        ),
+                        "retrieved_at": retrieved_at,
+                    },
+                    "image_url": str(
+                        item.get("largeImage")
+                        or item.get("image")
+                        or item.get("thumbnailImage")
+                        or ""
+                    ),
+                }
+            )
+        return _result(
+            "best_buy",
+            "shopping.search_products",
+            {"query": query, "products": products},
+            attribution="Product data provided by Best Buy",
+            provider_metadata={
+                "api": "best_buy_products_v1",
+                "content_persistence": "EPHEMERAL_RESTRICTED",
+                "branding_required": True,
+                "price_authority": "external_observation_only",
+                "result_count": len(products),
+            },
+        )
+
+
 _OVERPASS_TAGS: dict[str, tuple[str, str]] = {
     "restaurant": ("amenity", "restaurant"),
     "cafe": ("amenity", "cafe"),
@@ -890,6 +1042,27 @@ def external_manifests() -> tuple[PluginManifest, ...]:
             source="builtin:anima_ha.external",
         ),
         PluginManifest(
+            plugin_id="anima.external.shopping.bestbuy",
+            manifest_version=1,
+            requires_core="0.1.0",
+            plugin_version="0.1.0",
+            name="Best Buy product research",
+            description="Bounded Best Buy product catalogue and retail observations",
+            runtime_kind=RuntimeKind.TRUSTED_NATIVE,
+            trust_class=TrustClass.TRUSTED_NATIVE,
+            capabilities=("shopping-research",),
+            tools=(
+                _read_tool(
+                    "search_products",
+                    "Search bounded Best Buy product candidates",
+                    semantic_action="shopping.search_products",
+                ),
+            ),
+            required_secrets=BEST_BUY_SECRET_NAMES,
+            network_requirements=(f"{BEST_BUY_API_HOST}:443",),
+            source="builtin:anima_ha.external",
+        ),
+        PluginManifest(
             plugin_id="anima.external.recipes",
             plugin_version="0.1.0",
             manifest_version=1,
@@ -1073,6 +1246,19 @@ def external_plugin(
                 env,
             ),
         )
+    if plugin_id == "anima.external.shopping.bestbuy":
+        return manifest, ExternalNativePlugin(
+            manifest,
+            lambda env: BestBuyProductProvider(
+                client(
+                    "best_buy",
+                    BEST_BUY_API_BASE,
+                    (BEST_BUY_API_HOST,),
+                    "BEST_BUY_API_KEY",
+                ),
+                env,
+            ),
+        )
     if plugin_id == "anima.external.recipes":
         return manifest, ExternalNativePlugin(
             manifest,
@@ -1106,6 +1292,11 @@ def external_resource_gates(secrets: dict[str, str]) -> dict[str, str]:
             "AVAILABLE"
             if all(bool(secrets.get(name, "").strip()) for name in WALMART_SECRET_NAMES)
             and Path(secrets["WALMART_PRIVATE_KEY_PATH"]).expanduser().is_file()
+            else "EXTERNAL_RESOURCE_GATE"
+        ),
+        "EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY": (
+            "AVAILABLE"
+            if bool(secrets.get("BEST_BUY_API_KEY", "").strip())
             else "EXTERNAL_RESOURCE_GATE"
         ),
         "EXTERNAL_RESOURCE_GATE_NTFY": (

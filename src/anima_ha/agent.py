@@ -17,7 +17,7 @@ import tempfile
 import threading
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -37,6 +37,7 @@ from anima_ha.action import (
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
+    ContentPersistence,
     ExecutionBoundary,
     ExternalContentTrust,
     InvocationContext,
@@ -44,6 +45,7 @@ from anima_ha.plugins import (
     InvocationResult,
     ProviderExecutionContext,
     ToolDescriptor,
+    core_content_persistence,
     validate_instance,
 )
 from anima_ha.policy import IdentityContext, PolicyContext, PolicyService, RequestOrigin
@@ -196,6 +198,63 @@ class FinalDecision:
 ModelDecision = ToolRequestDecision | FinalDecision
 
 
+def durable_arguments_projection(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Retain identity evidence without retaining content-derived arguments."""
+    return {"omitted": True, "sha256": digest_json(arguments)}
+
+
+def durable_decision_projection(decision: ModelDecision) -> dict[str, Any]:
+    """Project a post-restricted-content model decision to structure only."""
+    if isinstance(decision, ToolRequestDecision):
+        return {
+            "kind": decision.kind.value,
+            "tool_id": decision.tool_id,
+            "arguments_sha256": digest_json(decision.arguments),
+            "arguments_omitted": True,
+        }
+    return {
+        "kind": decision.kind.value,
+        "stop_reason": decision.stop_reason,
+        "response_needed": decision.response_needed,
+        "response_sha256": hashlib.sha256(decision.response_text.encode()).hexdigest(),
+        "response_omitted": True,
+    }
+
+
+def _result_count(value: Any) -> int | None:
+    if not isinstance(value, dict):
+        return None
+    for key in ("products", "results", "recipes"):
+        items = value.get(key)
+        if isinstance(items, list):
+            return len(items)
+    data = value.get("data")
+    return _result_count(data)
+
+
+def durable_result_projection(
+    result: InvocationResult, runtime_sanitized: dict[str, Any]
+) -> dict[str, Any]:
+    """Persist bounded structural evidence, never restricted provider content."""
+    encoded = canonical_json(runtime_sanitized).encode()
+    return {
+        "outcome": result.outcome.value,
+        "tool_id": result.tool_id,
+        "plugin_id": result.plugin_id,
+        "plugin_version": result.plugin_version,
+        "error_class": result.error_class,
+        "provenance": result.provenance,
+        "external_content_trust": result.external_content_trust.value,
+        "policy": result.policy_decision.to_payload() if result.policy_decision else None,
+        "content_persistence": ContentPersistence.EPHEMERAL_RESTRICTED.value,
+        "content_omitted": True,
+        "reason": "PROVIDER_RETENTION_POLICY",
+        "result_count": _result_count(runtime_sanitized.get("result")),
+        "result_payload_bytes": len(encoded),
+        "result_sha256": hashlib.sha256(encoded).hexdigest(),
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class CodexTurnResult:
     decision: ModelDecision
@@ -275,12 +334,14 @@ class AgentEpisode:
     final_disposition: FinalDisposition | None = None
     response_text: str = ""
     failure_class: str | None = None
+    restricted_content_seen: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class EpisodeRunResult:
     episode: AgentEpisode
     duplicate_claim: bool = False
+    live_response_text: str | None = None
 
 
 class CodexTurnAdapter(Protocol):
@@ -329,7 +390,13 @@ class EpisodeStore(Protocol):
     def get_by_trigger(self, trigger_id: UUID) -> AgentEpisode | None: ...
 
     def record_turn(
-        self, episode_id: UUID, turn_number: int, result: CodexTurnResult | None, error: str | None
+        self,
+        episode_id: UUID,
+        turn_number: int,
+        result: CodexTurnResult | None,
+        error: str | None,
+        *,
+        restricted_content_seen: bool = False,
     ) -> None: ...
 
     def record_tool_request(
@@ -340,7 +407,11 @@ class EpisodeStore(Protocol):
         decision: ToolRequestDecision,
         result: InvocationResult,
         sanitized_result: dict[str, Any],
+        *,
+        restricted_content_seen: bool = False,
     ) -> None: ...
+
+    def mark_restricted_content(self, episode_id: UUID) -> None: ...
 
     def finish(
         self,
@@ -956,10 +1027,26 @@ class InMemoryEpisodeStore:
         return self.episodes.get(episode_id) if episode_id else None
 
     def record_turn(
-        self, episode_id: UUID, turn_number: int, result: CodexTurnResult | None, error: str | None
+        self,
+        episode_id: UUID,
+        turn_number: int,
+        result: CodexTurnResult | None,
+        error: str | None,
+        *,
+        restricted_content_seen: bool = False,
     ) -> None:
         self.turns.append(
-            {"episode_id": episode_id, "turn_number": turn_number, "result": result, "error": error}
+            {
+                "episode_id": episode_id,
+                "turn_number": turn_number,
+                "result": result if not restricted_content_seen else None,
+                "decision_projection": (
+                    durable_decision_projection(result.decision)
+                    if result and restricted_content_seen
+                    else None
+                ),
+                "error": error,
+            }
         )
 
     def record_tool_request(
@@ -970,17 +1057,27 @@ class InMemoryEpisodeStore:
         decision: ToolRequestDecision,
         result: InvocationResult,
         sanitized_result: dict[str, Any],
+        *,
+        restricted_content_seen: bool = False,
     ) -> None:
         self.tool_requests.append(
             {
                 "episode_id": episode_id,
                 "request_number": request_number,
                 "turn_number": turn_number,
-                "decision": decision,
+                "decision": decision if not restricted_content_seen else None,
+                "arguments": (
+                    sanitize_value(decision.arguments)
+                    if not restricted_content_seen
+                    else durable_arguments_projection(decision.arguments)
+                ),
                 "result": result,
                 "sanitized_result": sanitized_result,
             }
         )
+
+    def mark_restricted_content(self, episode_id: UUID) -> None:
+        self.episodes[episode_id] = replace(self.episodes[episode_id], restricted_content_seen=True)
 
     def finish(
         self,
@@ -1016,6 +1113,7 @@ class InMemoryEpisodeStore:
             disposition,
             response_text,
             failure_class,
+            old.restricted_content_seen,
         )
         self.episodes[episode_id] = episode
         return episode
@@ -1058,6 +1156,7 @@ class PostgresEpisodeStore:
             FinalDisposition(str(row["final_disposition"])) if row["final_disposition"] else None,
             str(row["response_text"] or ""),
             str(row["failure_class"]) if row["failure_class"] else None,
+            bool((row.get("metadata") or {}).get("restricted_content_seen", False)),
         )
 
     def claim(
@@ -1111,9 +1210,21 @@ class PostgresEpisodeStore:
         return self._episode(row) if row else None
 
     def record_turn(
-        self, episode_id: UUID, turn_number: int, result: CodexTurnResult | None, error: str | None
+        self,
+        episode_id: UUID,
+        turn_number: int,
+        result: CodexTurnResult | None,
+        error: str | None,
+        *,
+        restricted_content_seen: bool = False,
     ) -> None:
-        decision = result.decision.to_payload() if result else None
+        decision = (
+            durable_decision_projection(result.decision)
+            if result and restricted_content_seen
+            else result.decision.to_payload()
+            if result
+            else None
+        )
         usage = result.usage if result else TokenUsage()
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
@@ -1147,8 +1258,15 @@ class PostgresEpisodeStore:
         decision: ToolRequestDecision,
         result: InvocationResult,
         sanitized_result: dict[str, Any],
+        *,
+        restricted_content_seen: bool = False,
     ) -> None:
         policy_id = result.policy_decision.decision_id if result.policy_decision else None
+        durable_arguments = (
+            durable_arguments_projection(decision.arguments)
+            if restricted_content_seen
+            else sanitize_value(decision.arguments)
+        )
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -1162,13 +1280,25 @@ class PostgresEpisodeStore:
                     request_number,
                     turn_number,
                     decision.tool_id,
-                    canonical_json(sanitize_value(decision.arguments)),
+                    canonical_json(durable_arguments),
                     result.outcome.value,
                     canonical_json(sanitized_result),
                     result.external_content_trust.value,
                     result.elapsed_ms,
                     policy_id,
                 ),
+            )
+            connection.commit()
+
+    def mark_restricted_content(self, episode_id: UUID) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_agent_episodes
+                SET metadata = metadata || '{"restricted_content_seen": true}'::jsonb
+                WHERE episode_id=%s
+                """,
+                (episode_id,),
             )
             connection.commit()
 
@@ -1289,6 +1419,14 @@ class AgentRuntime:
         response_text: str = "",
         failure_class: str | None = None,
     ) -> EpisodeRunResult:
+        durable_response = response_text
+        live_response_text: str | None = None
+        if episode.restricted_content_seen:
+            live_response_text = response_text
+            durable_response = (
+                "[CONTENT_NOT_DURABLY_RETAINED] "
+                f"response_sha256={hashlib.sha256(response_text.encode()).hexdigest()}"
+            )
         finished = self.store.finish(
             episode.episode_id,
             status=status,
@@ -1297,7 +1435,7 @@ class AgentRuntime:
             turn_count=turn_count,
             tool_count=tool_count,
             usage=usage,
-            response_text=response_text,
+            response_text=durable_response,
             failure_class=failure_class,
         )
         self._audit(
@@ -1312,7 +1450,7 @@ class AgentRuntime:
                 "failure_class": failure_class,
             },
         )
-        return EpisodeRunResult(finished)
+        return EpisodeRunResult(finished, live_response_text=live_response_text)
 
     def run(self, request: EpisodeRequest) -> EpisodeRunResult:
         projection = project_context_packet(request.context_packet)
@@ -1359,6 +1497,7 @@ class AgentRuntime:
         tool_by_id = {tool.tool_id: tool for tool in tools}
         schema = decision_schema(tuple(tool_by_id))
         transcript: list[dict[str, Any]] = []
+        restricted_content_seen = False
         usage = TokenUsage()
         turn_count = 0
         tool_count = 0
@@ -1385,9 +1524,21 @@ class AgentRuntime:
                 turn = self.adapter.run_turn(
                     build_prompt(projection, tools, transcript), schema, turn_timeout
                 )
-                self.store.record_turn(episode.episode_id, turn_count, turn, None)
+                self.store.record_turn(
+                    episode.episode_id,
+                    turn_count,
+                    turn,
+                    None,
+                    restricted_content_seen=restricted_content_seen,
+                )
             except CodexTurnTimeout as exc:
-                self.store.record_turn(episode.episode_id, turn_count, None, type(exc).__name__)
+                self.store.record_turn(
+                    episode.episode_id,
+                    turn_count,
+                    None,
+                    type(exc).__name__,
+                    restricted_content_seen=restricted_content_seen,
+                )
                 return self._finish(
                     episode,
                     status=EpisodeStatus.TIMED_OUT,
@@ -1398,7 +1549,13 @@ class AgentRuntime:
                     failure_class=type(exc).__name__,
                 )
             except CodexBoundaryViolation as exc:
-                self.store.record_turn(episode.episode_id, turn_count, None, type(exc).__name__)
+                self.store.record_turn(
+                    episode.episode_id,
+                    turn_count,
+                    None,
+                    type(exc).__name__,
+                    restricted_content_seen=restricted_content_seen,
+                )
                 return self._finish(
                     episode,
                     status=EpisodeStatus.BOUNDARY_VIOLATION,
@@ -1409,7 +1566,13 @@ class AgentRuntime:
                     failure_class="CODEX_RUNTIME_BOUNDARY_VIOLATION",
                 )
             except CodexProviderUnavailable as exc:
-                self.store.record_turn(episode.episode_id, turn_count, None, type(exc).__name__)
+                self.store.record_turn(
+                    episode.episode_id,
+                    turn_count,
+                    None,
+                    type(exc).__name__,
+                    restricted_content_seen=restricted_content_seen,
+                )
                 return self._finish(
                     episode,
                     status=EpisodeStatus.FAILED,
@@ -1420,7 +1583,13 @@ class AgentRuntime:
                     failure_class=type(exc).__name__,
                 )
             except CodexInvalidResult as exc:
-                self.store.record_turn(episode.episode_id, turn_count, None, type(exc).__name__)
+                self.store.record_turn(
+                    episode.episode_id,
+                    turn_count,
+                    None,
+                    type(exc).__name__,
+                    restricted_content_seen=restricted_content_seen,
+                )
                 return self._finish(
                     episode,
                     status=EpisodeStatus.FAILED,
@@ -1496,6 +1665,20 @@ class AgentRuntime:
                     0.0,
                     error_class="TOOL_NOT_IN_EPISODE_CATALOGUE",
                     external_content_trust=ExternalContentTrust.LOCAL_TRUSTED,
+                )
+            elif restricted_content_seen:
+                # A restricted provider result is allowed to inform the live
+                # answer, but cannot be copied into another durable or
+                # external side effect during the same episode.
+                result = InvocationResult(
+                    InvocationOutcome.PLUGIN_ERROR,
+                    tool.tool_id,
+                    tool.plugin_id,
+                    tool.version,
+                    0.0,
+                    error_class="RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED",
+                    provenance=tool.provenance,
+                    external_content_trust=tool.external_content_trust,
                 )
             else:
                 try:
@@ -1609,10 +1792,32 @@ class AgentRuntime:
                             invocation_context=invocation_context,
                         )
             sanitized = sanitize_tool_result(result, self.limits.max_tool_result_bytes)
+            result_is_restricted = (
+                result.outcome == InvocationOutcome.SUCCESS
+                and result.result is not None
+                and result.external_content_trust == ExternalContentTrust.EXTERNAL_UNTRUSTED
+                and core_content_persistence(tool.tool_id)
+                == ContentPersistence.EPHEMERAL_RESTRICTED
+                if tool is not None
+                else False
+            )
+            durable_sanitized = (
+                durable_result_projection(result, sanitized) if result_is_restricted else sanitized
+            )
             self.store.record_tool_request(
-                episode.episode_id, tool_count, turn_count, decision, result, sanitized
+                episode.episode_id,
+                tool_count,
+                turn_count,
+                decision,
+                result,
+                durable_sanitized,
+                restricted_content_seen=restricted_content_seen,
             )
             transcript.append({"tool_result": sanitized})
+            if result_is_restricted:
+                restricted_content_seen = True
+                episode = replace(episode, restricted_content_seen=True)
+                self.store.mark_restricted_content(episode.episode_id)
             if result.outcome == InvocationOutcome.REQUIRE_CONFIRMATION:
                 return self._finish(
                     episode,

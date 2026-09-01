@@ -799,3 +799,116 @@ def test_tool_result_egress_is_secret_free_bounded_and_trust_preserving() -> Non
     assert "secret" not in serialized
     assert sanitized["external_content_trust"] == "EXTERNAL_UNTRUSTED"
     assert sanitized["truncated"] is True
+
+
+def test_restricted_content_is_live_only_and_durable_projection_is_structural() -> None:
+    restricted = tool("anima.external.shopping.bestbuy.search_products")
+    sentinel = "BB_RESTRICTED_SENTINEL_PRODUCT_9F31"
+
+    class RestrictedGateway(Gateway):
+        def invoke(
+            self, tool_id: str, arguments: dict[str, Any], **kwargs: Any
+        ) -> InvocationResult:
+            self.calls.append((tool_id, arguments))
+            return InvocationResult(
+                InvocationOutcome.SUCCESS,
+                tool_id,
+                "anima.external.shopping.bestbuy",
+                "1.0.0",
+                1.0,
+                result={
+                    "products": [{"name": sentinel, "price": "BB_RESTRICTED_SENTINEL_PRICE_2719"}]
+                },
+                provenance="best_buy",
+                external_content_trust=ExternalContentTrust.EXTERNAL_UNTRUSTED,
+            )
+
+    store = InMemoryEpisodeStore()
+    live_text = f"Compare the {sentinel} candidates."
+    adapter = ScriptedCodexAdapter(
+        [
+            CodexTurnResult(
+                ToolRequestDecision(restricted.tool_id, {"query": "headphones"}),
+                TokenUsage(),
+                1.0,
+                (),
+            ),
+            final(response=True, text=live_text),
+        ]
+    )
+    result = AgentRuntime(adapter, RestrictedGateway(), store).run(request((restricted,)))
+
+    assert result.live_response_text == live_text
+    assert result.episode.response_text.startswith("[CONTENT_NOT_DURABLY_RETAINED]")
+    assert sentinel not in result.episode.response_text
+    assert result.episode.restricted_content_seen is True
+    durable = json.dumps(store.tool_requests[0]["sanitized_result"], sort_keys=True)
+    assert sentinel not in durable
+    assert store.tool_requests[0]["sanitized_result"]["content_omitted"] is True
+    assert store.turns[1]["result"] is None
+    assert sentinel not in json.dumps(store.turns[1]["decision_projection"], sort_keys=True)
+
+
+def test_restricted_episode_blocks_side_effect_and_external_follow_up() -> None:
+    restricted = tool("anima.external.shopping.bestbuy.search_products")
+    follow_up = tool("anima.durable-tasks.schedule", risk="EXTERNAL_SIDE_EFFECT")
+    gateway = Gateway()
+    adapter = ScriptedCodexAdapter(
+        [
+            CodexTurnResult(
+                ToolRequestDecision(restricted.tool_id, {"query": "air fryer"}),
+                TokenUsage(),
+                1.0,
+                (),
+            ),
+            CodexTurnResult(
+                ToolRequestDecision(
+                    follow_up.tool_id,
+                    {"query": "BB_RESTRICTED_SENTINEL_PRODUCT_9F31"},
+                ),
+                TokenUsage(),
+                1.0,
+                (),
+            ),
+            final(
+                response=True,
+                text="I can discuss the result, but cannot perform another tool call.",
+            ),
+        ]
+    )
+    store = InMemoryEpisodeStore()
+    result = AgentRuntime(adapter, gateway, store).run(request((restricted, follow_up)))
+
+    assert result.episode.final_disposition == FinalDisposition.TOOL_FAILURE
+    assert [call[0] for call in gateway.calls] == [restricted.tool_id]
+    assert store.tool_requests[1]["result"].error_class == (
+        "RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED"
+    )
+    assert store.tool_requests[1]["decision"] is None
+    assert store.tool_requests[1]["arguments"]["omitted"] is True
+
+
+def test_unrestricted_provider_result_and_turn_remain_durable() -> None:
+    descriptor = tool()
+    store = InMemoryEpisodeStore()
+    gateway = Gateway()
+    agent = AgentRuntime(
+        ScriptedCodexAdapter(
+            [
+                CodexTurnResult(
+                    ToolRequestDecision(descriptor.tool_id, {"query": "weather"}),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                ),
+                final(response=True, text="The bounded result is retained."),
+            ]
+        ),
+        gateway,
+        store,
+    )
+    result = agent.run(request((descriptor,)))
+    assert result.live_response_text is None
+    assert store.turns[0]["result"] is not None
+    assert store.tool_requests[0]["sanitized_result"]["result"]["answer"] == "weather"
+    assert gateway.calls

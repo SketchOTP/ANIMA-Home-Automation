@@ -16,7 +16,9 @@ from anima_ha.calendar import (
 )
 from anima_ha.events import EventEnvelope
 from anima_ha.external import (
+    BEST_BUY_SECRET_NAMES,
     WALMART_SECRET_NAMES,
+    BestBuyProductProvider,
     BoundedHttpClient,
     ExternalAuditJournalSink,
     ExternalProviderError,
@@ -29,7 +31,12 @@ from anima_ha.external import (
     external_manifests,
     external_resource_gates,
 )
-from anima_ha.plugins import ExternalContentTrust, InvocationContext
+from anima_ha.plugins import (
+    ContentPersistence,
+    ExternalContentTrust,
+    InvocationContext,
+    ToolDescriptor,
+)
 from anima_ha.policy import RequestOrigin
 
 HOUSEHOLD = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
@@ -370,3 +377,82 @@ def test_walmart_manifest_keeps_credentials_out_of_model_schema() -> None:
     assert tool["semantic_action"] == "shopping.search_products"
     assert set(tool["input_schema"]["properties"]) == {"query", "count"}
     assert "WALMART_CONSUMER_ID" not in str(tool)
+
+
+def test_best_buy_products_normalize_bounded_external_observations() -> None:
+    audits: list[ExternalRequestAudit] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "api.bestbuy.com"
+        assert request.url.path == "/v1/products(search=wireless&search=headphones)"
+        assert request.url.params["format"] == "json"
+        assert request.url.params["apiKey"] == "key-not-persisted"
+        return response(
+            {
+                "products": [
+                    {
+                        "sku": 1001,
+                        "name": "Synthetic Headphones A",
+                        "manufacturer": "Example A",
+                        "modelNumber": "A-1",
+                        "shortDescription": "Wireless over-ear headphones.",
+                        "salePrice": 79.99,
+                        "regularPrice": 99.99,
+                        "onlineAvailability": True,
+                        "productUrl": "https://www.bestbuy.com/site/1001.p",
+                        "features": [{"feature": "Bluetooth 5"}],
+                    },
+                    {
+                        "sku": 1002,
+                        "name": "Synthetic Headphones B",
+                        "manufacturer": "Example B",
+                        "regularPrice": 49.99,
+                        "onlineAvailability": False,
+                        "productUrl": "https://www.bestbuy.com/site/1002.p",
+                    },
+                ]
+            },
+            request,
+        )
+
+    result = BestBuyProductProvider(
+        BoundedHttpClient(
+            provider="best_buy",
+            base_url="https://api.bestbuy.com",
+            allowed_hosts=("api.bestbuy.com",),
+            audit_sink=audits,
+            credential_reference="BEST_BUY_API_KEY",
+            transport=httpx.MockTransport(handler),
+        ),
+        {"BEST_BUY_API_KEY": "key-not-persisted"},
+    ).invoke("search_products", {"query": "wireless headphones", "count": 3}, 10)
+
+    assert result["trust"] == ExternalContentTrust.EXTERNAL_UNTRUSTED.value
+    assert result["attribution"] == "Product data provided by Best Buy"
+    assert result["provider_metadata"]["branding_required"] is True
+    assert len(result["data"]["products"]) == 2
+    assert result["data"]["products"][0]["retail_offer"]["price"]["source"] == "best_buy_api"
+    assert result["data"]["products"][1]["retail_offer"]["availability"] == "out_of_stock"
+    assert "key-not-persisted" not in str(audits)
+
+
+def test_best_buy_manifest_is_core_restricted_and_secret_free() -> None:
+    manifest = next(
+        item for item in external_manifests() if item.plugin_id == "anima.external.shopping.bestbuy"
+    )
+    assert manifest.required_secrets == BEST_BUY_SECRET_NAMES
+    assert set(manifest.tools[0]["input_schema"]["properties"]) == {"query", "count"}
+    assert "BEST_BUY_API_KEY" not in str(manifest.tools[0])
+    descriptor = ToolDescriptor.from_manifest(manifest, manifest.tools[0], available=True)
+    assert descriptor.content_persistence == ContentPersistence.EPHEMERAL_RESTRICTED
+
+    plugin_claim = dict(manifest.tools[0])
+    plugin_claim["content_persistence"] = ContentPersistence.FULL_DURABLE.value
+    claimed_descriptor = ToolDescriptor.from_manifest(manifest, plugin_claim, available=True)
+    assert claimed_descriptor.content_persistence == ContentPersistence.EPHEMERAL_RESTRICTED
+
+
+def test_best_buy_missing_key_is_an_explicit_resource_gate() -> None:
+    assert external_resource_gates({})["EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY"] == (
+        "EXTERNAL_RESOURCE_GATE"
+    )

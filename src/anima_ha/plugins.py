@@ -92,6 +92,13 @@ class ExecutionBoundary(StrEnum):
     COORDINATED_CONSEQUENTIAL = "COORDINATED_CONSEQUENTIAL"
 
 
+class ContentPersistence(StrEnum):
+    """Core-owned policy for provider-content durability."""
+
+    FULL_DURABLE = "FULL_DURABLE"
+    EPHEMERAL_RESTRICTED = "EPHEMERAL_RESTRICTED"
+
+
 @dataclass(frozen=True, slots=True)
 class ProviderExecutionContext:
     """ANIMA-owned execution identity passed only across the provider boundary."""
@@ -320,6 +327,32 @@ def _core_execution_boundary(
     return ExecutionBoundary.COORDINATED_CONSEQUENTIAL
 
 
+_CORE_RESTRICTED_CONTENT_TOOL_IDS = frozenset(
+    {
+        # Best Buy's terms restrict Content retention.  This mapping is
+        # deliberately Core-owned; plugin metadata cannot opt into durability.
+        "anima.external.shopping.search_products",
+        "anima.external.shopping.bestbuy.search_products",
+    }
+)
+
+
+def _core_content_persistence(manifest: PluginManifest, name: str) -> ContentPersistence:
+    tool_id = f"{manifest.plugin_id}.{name}"
+    if tool_id in _CORE_RESTRICTED_CONTENT_TOOL_IDS:
+        return ContentPersistence.EPHEMERAL_RESTRICTED
+    return ContentPersistence.FULL_DURABLE
+
+
+def core_content_persistence(tool_id: str) -> ContentPersistence:
+    """Resolve durability from ANIMA-owned identity, not plugin declarations."""
+    return (
+        ContentPersistence.EPHEMERAL_RESTRICTED
+        if tool_id in _CORE_RESTRICTED_CONTENT_TOOL_IDS
+        else ContentPersistence.FULL_DURABLE
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ToolDescriptor:
     tool_id: str
@@ -344,6 +377,7 @@ class ToolDescriptor:
     tags: tuple[str, ...] = ()
     execution_spec: dict[str, Any] = field(default_factory=dict)
     execution_boundary: ExecutionBoundary | None = None
+    content_persistence: ContentPersistence = ContentPersistence.FULL_DURABLE
 
     def __post_init__(self) -> None:
         boundary = self.execution_boundary
@@ -401,6 +435,7 @@ class ToolDescriptor:
             tags=tuple(str(value) for value in item.get("tags", [])),
             execution_spec=dict(item.get("execution_spec", {})),
             execution_boundary=_core_execution_boundary(manifest, name, item),
+            content_persistence=core_content_persistence(f"{manifest.plugin_id}.{name}"),
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -429,6 +464,7 @@ class ToolDescriptor:
             "tags": list(self.tags),
             "execution_spec": self.execution_spec,
             "execution_boundary": boundary.value,
+            "content_persistence": self.content_persistence.value,
         }
 
 
