@@ -4,15 +4,15 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 PRODUCT RESEARCH IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
+PHASE 11 WALMART ENTITLEMENT INVESTIGATION — BLOCKED PENDING CLARIFICATION
 
 ## Current objective
 
-Close the bounded Phase 11 product-research directive `ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` while preserving Architect-accepted Phases 0–10. The existing LedgerMind Walmart product API path is wrapped behind an ANIMA-owned, fixed-host, signed read-only provider; provisioned Atlas evidence closes the product usefulness gate. Phase 11 remains pending Architect acceptance and Phase 12 remains unauthorized.
+Resolve whether the existing LedgerMind Walmart affiliate-product entitlement authorizes ANIMA HA's read-only product research use. This is an evidence/entitlement investigation only: preserve the technically qualified Walmart provider, do not inspect or copy secrets, do not mutate any Walmart account, and do not implement Phase 12.
 
 ## Active directive
 
-`ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` — qualify and integrate a terms-compliant product-research path using the existing LedgerMind Walmart API contract. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 implementation is complete pending Architect review, and Phase 12 is unauthorized.
+`ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3` — qualify the existing Walmart.io affiliate Product API entitlement, its application/surface scope, cross-project reuse, private-local-assistant use, data/link/disclosure/freshness obligations, cost, rate limits, and support status. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 implementation is technically qualified but the exit gate is blocked pending clarification, and Phase 12 is unauthorized.
 
 ## Current verified state
 
@@ -22,6 +22,16 @@ Close the bounded Phase 11 product-research directive `ANIMA-HA-P11-PRODUCT-RESE
 - Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
 - Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
 - The product provider is implementation-complete and provisioned-resource qualified, but this record does not assert Architect acceptance of Phase 11. Phase 12 behavior remains absent and unauthorized.
+
+### Current entitlement investigation
+
+- Architect disposition: `INVESTIGATE — PROVIDER ENTITLEMENT QUALIFICATION`.
+- Outcome: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`.
+- LedgerMind records identify the working endpoint as the signed Walmart.io affiliate Product API v2 path at `developer.api.walmart.com`, with consumer ID/key version/private-key credentials and optional Impact publisher ID. LedgerMind documentation does not establish that ANIMA HA is an approved Walmart affiliate surface or that the entitlement is transferable across applications.
+- Current official Walmart Affiliate terms require acceptance, reserve approval of each Affiliate Website, require Qualifying Links rather than unqualified direct links, require clear/conspicuous advertising disclosure for Qualifying Links, restrict redistribution/repurposing of Qualifying Links, limit Walmart IP use to Program purposes, and require product information including price/availability to be updated within 24 hours of an update. These terms do not resolve whether a private local assistant is an approved surface or whether the exact legacy API path has separate data-use terms.
+- Current official Walmart developer documentation found during this investigation is primarily Marketplace/API-license material and does not re-establish the exact affiliate `affil/product/v2` entitlement. The exact account/application metadata was not available through an already-authorized dashboard session. No inference is made from HTTP 200 or prior smoke-test success.
+- Cost is `UNKNOWN` for the specific entitlement: the Affiliate Program FAQ says joining is free, while the current API-license terms allow fees if communicated. Exact affiliate-API rate limits and support/deprecation status are also `UNKNOWN`.
+- Required operator/Walmart clarification: confirm the application's approved surface(s), production entitlement, cross-project reuse by ANIMA HA, private-local-assistant/data-display permission, qualifying-link/publisher-ID requirements, disclosure language, freshness/cache rule, and support status for `affil/product/v2`. Until resolved, Walmart remains a technically qualified but authorization-blocked candidate, not an accepted Phase 11 provider.
 
 - The project directory was empty before this bootstrap.
 - Phase 0 now contains only runtime/engineering baseline code; no household intelligence or product behavior is implemented.
@@ -98,9 +108,9 @@ Close the bounded Phase 11 product-research directive `ANIMA-HA-P11-PRODUCT-RESE
 ## Current blockers
 
 - Phase 11 product research is implemented with a provisioned Walmart resource path. The product target is `LIVE_CREDENTIALED` in the Atlas operator environment and remains `EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH` when the trusted settings/key are absent or unreadable.
-- The Walmart operator entitlement's commercial/terms details were not independently requalified in this bounded continuation. This is an evidence limitation for Architect review, not a fabricated zero-cost claim.
+- The Walmart entitlement/application scope for ANIMA HA is unresolved. Current disposition is `BLOCKED — WALMART_CLARIFICATION_REQUIRED`, not provider acceptance.
 - Product implementation checkpoint, governed closure checkpoint, and their exact hosted CI results are recorded below after publication. Phase 11 remains `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`, not accepted.
-- Product implementation checkpoint: `fb0a6a02c9a48aaa7254e1eb69ec77c1fcd8469a`; hosted CI `33501513385` passed on that exact SHA. The final governed checkpoint follows this evidence-only closure commit.
+- Product implementation checkpoint: `fb0a6a02c9a48aaa7254e1eb69ec77c1fcd8469a`; hosted CI `33501513385` passed on that exact SHA. Final governed implementation/evidence checkpoint: `a1122b32d1e9d6548b5c78bd1256185d60b4d281`; hosted CI `33501648332` passed on that exact SHA. This remains technical evidence, not entitlement acceptance.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -129,7 +139,7 @@ Close the bounded Phase 11 product-research directive `ANIMA-HA-P11-PRODUCT-RESE
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P11-PRODUCT-RESEARCH-CLOSURE-013R2` and the Walmart-backed product-research evidence packet. Phase 11 remains `CONTINUE` / `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
+Review `ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3` and the completed entitlement packet. Phase 11 remains technically qualified but `BLOCKED — WALMART_CLARIFICATION_REQUIRED`; Phase 12 remains unauthorized. No further implementation is justified until the entitlement/application-scope question is resolved.
 
 ## Phase 10 publication state
 
@@ -154,13 +164,13 @@ It is superseded for current implementation and gate decisions by
 - Phase 11 evidence amendment checkpoint `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA. It strengthens the durable follow-up claim with the actual PostgreSQL Phase 10 harness: external value `17` before task creation and fresh value `23` after restart/scheduled cognition, while the future physical action remains Phase 9-coordinated.
 - Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. The prior governed closure `439c12a5872b7844f77ad36fa57672f634d0ee52` with CI `33445878287` remains historical. Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`, CI `33446946952`; the final Authority synchronization commit follows this record. Phase 12 remains unauthorized.
 
-## Phase 11 free/local realignment state
+## Phase 11 free/local realignment state (historical; superseded by 013R3)
 
 - Architect directive `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R` supersedes the blocked Brave/Google gate-closure path. Brave and Google Calendar are `SUPERSEDED / DEFERRED` for this prototype; Phase 12 remains unauthorized.
 - Free/local discovery is implemented with a pinned private SearXNG service (JSON API, loopback-only host exposure, fixed engines `duckduckgo` and `wikipedia`, no public instance, no image proxy, no Valkey) and OpenStreetMap Overpass for category-mapped POI queries. Model input cannot choose hosts, engines, raw Overpass QL, or arbitrary URLs.
 - First-party calendar is implemented in `src/anima_ha/calendar.py` with migration `0012_local_calendar.sql`, household isolation, trusted invocation provenance/idempotency, CRUD, optimistic versioning, and PostgreSQL persistence. Calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; later physical/provider actions remain Phase 9-coordinated.
 - Fresh local-filesystem evidence: 134 tests, Ruff, strict mypy, package sdist/wheel, OPA 4/4, migration initial/repeat, SearXNG healthy/no-Valkey live JSON web/product search, Overpass synthetic POI search, and local calendar AgentRuntime integration passed. SFTP Docker bind mounts remain a known limitation; reproduction used `/tmp`.
-- Current provider gates are `EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH=CONFIGURED` and `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED`; no Brave or Google credential gate remains active. Native ARM64/Pi, production scale, physical-home, and high-risk external-write behavior remain unclaimed.
+- Historical provider gates were `EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH=CONFIGURED` and `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED`; no Brave or Google credential gate remained active for that superseded path. Native ARM64/Pi, production scale, physical-home, and high-risk external-write behavior remain unclaimed.
 - Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. The governed evidence-closure checkpoint and CI follow after this Authority update.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

@@ -615,6 +615,18 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Evidence limits: local x86-64 reproduction, synthetic/public provider traffic, no native ARM64/Pi, production scale, physical-home, or human-notification claim. Phase 12 was not implemented.
 - Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. Final governed checkpoint is recorded after the closure publication commit and its exact hosted CI.
 
+## ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Entitlement investigation
+
+- Completed: 2026-09-01
+- Verdict: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`; Architect disposition `INVESTIGATE — PROVIDER ENTITLEMENT QUALIFICATION`.
+- Starting repository state: clean `main` at `a1122b32d1e9d6548b5c78bd1256185d60b4d281`, matching `origin/main`; no implementation files changed.
+- LedgerMind was inspected read-only on Atlas. Its runbook/source identifies Walmart.io affiliate APIs, the signed `https://developer.api.walmart.com/api-proxy/service/affil/product/v2` family, stage/production application keys, and optional Impact publisher ID. The sanitized prior smoke evidence establishes technical operation only, not permission for ANIMA.
+- Official current sources establish: Walmart Affiliate enrollment is free but subject to acceptance; Walmart may approve each Affiliate Website; qualifying links must be Walmart/Platform-provided and direct to Walmart; qualifying-link displays require clear/conspicuous advertising disclosure; qualifying links may not be redistributed/repurposed; current product price/availability must be maintained within 24 hours of updates; and the license is limited, non-transferable, revocable, and tied to Program purposes. Current Marketplace API-license terms are recorded as contextual only because they do not establish governance of the exact affiliate endpoint.
+- Entitlement result: the existing application name/type, approved site/application surface, production approval, cross-project reuse permission, private-local-assistant permission, exact qualifying-link/publisher-ID rule, exact affiliate API rate limit, and current support/deprecation status could not be established from public sources, LedgerMind records, or an already-authorized dashboard session. HTTP success was not treated as authorization.
+- Cost result: `UNKNOWN` for the specific API entitlement. The affiliate program itself is free to join, but current API-license material allows fees if communicated and no account-specific pricing exhibit was available.
+- No Walmart/Impact login, account change, application registration, agreement acceptance, support request, secret inspection, private-key inspection, credential copy, or implementation change occurred.
+- Phase 12 remains unauthorized. The Walmart provider implementation remains preserved as a candidate pending the exact operator/Walmart clarification.
+
 ## ANIMA-HA-P11-FREE-LOCAL-HARDENING-013R1 — Policy and target qualification
 
 - Date: 2026-09-01

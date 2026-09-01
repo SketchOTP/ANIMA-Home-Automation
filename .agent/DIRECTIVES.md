@@ -392,3 +392,15 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Scope: fixed-host read-only product search, trusted operator secret references, ANIMA-owned RSA request signing, honest product/retail-offer normalization, external timestamps/provenance, AgentRuntime catalogue integration, live usefulness evidence, and publication. Cart/checkout and Phase 12 behavior are excluded.
 - Required evidence: two materially different live searches with at least three distinct grounded candidates each, untrusted-result handling, static/test/build/OPA/public-safety validation, and exact-SHA publication.
 - Source: Architect directive recorded in the canonical Notion SSOT and user-authorized LedgerMind provider reuse.
+
+## ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Walmart entitlement qualification
+
+- Issued: 2026-09-01
+- Status: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`; Phase 11 implementation remains technically qualified but the provider is not accepted for the Phase 11 exit gate. Phase 12 remains unauthorized.
+- Architect disposition: `INVESTIGATE — PROVIDER ENTITLEMENT QUALIFICATION`.
+- Starting governed checkpoint: `a1122b32d1e9d6548b5c78bd1256185d60b4d281`; hosted CI `33501648332` passed on the exact SHA.
+- Scope: evidence and entitlement qualification only. Preserve the Walmart implementation; do not inspect/copy secrets, mutate Walmart/Impact accounts, modify production behavior, implement disclosures/UI, add another provider, or begin Phase 12.
+- Findings: LedgerMind documents the working endpoint as the signed Walmart.io affiliate Product API v2 path with optional Impact publisher ID. Official Walmart Affiliate terms establish approval of Affiliate Websites, Qualifying Links, disclosure, limited Program-purpose licensing, redistribution restrictions, and a 24-hour product-information update obligation, but public evidence and available nonsecret metadata do not establish ANIMA's approved surface, cross-project reuse, private-local-assistant permission, or exact legacy API support/terms.
+- Outcome: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`. If operator dashboard metadata shows ANIMA is a separate unapproved surface, the follow-on classification may become `BLOCKED — WALMART_APPLICATION_APPROVAL`.
+- Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.

@@ -229,3 +229,11 @@ UI, and voice remain out of scope.
 - This is a bounded provider decision: Walmart read-only product search is ANIMA-owned, fixed-host, locally signed, SecretBroker-backed, provenance-preserving, timestamped, and untrusted. General web search remains private SearXNG. No retailer scraping, CAPTCHA bypass, browser automation, cart, checkout, or new service was introduced.
 - Provisioned live evidence met the target with 9 distinct headphone candidates and 10 distinct air-fryer candidates. Absent operator settings remain an explicit Walmart resource gate. The operator's external entitlement terms/cost were not independently requalified in this continuation and remain a stated limitation.
 - Phase 12 remains unauthorized.
+
+## Phase 11 Walmart entitlement qualification — 2026-09-01
+
+- Type: GOVERNANCE / EXTERNAL-DISCOVERY / BLOCKER
+- Directive: `ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3`; Architect disposition `INVESTIGATE — PROVIDER ENTITLEMENT QUALIFICATION`.
+- Technical state is preserved: Walmart-backed product research at governed SHA `a1122b32d1e9d6548b5c78bd1256185d60b4d281` and CI `33501648332` remains technically qualified, with no implementation change.
+- Decision: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`. The current public Affiliate terms require approved affiliate surfaces and qualifying-link/disclosure/data-freshness compliance, while LedgerMind records do not prove that ANIMA HA is an approved or covered surface. The exact legacy affiliate API support and account-specific application scope remain unresolved.
+- Phase 12 remains unauthorized. No account mutation or secret handling was performed.

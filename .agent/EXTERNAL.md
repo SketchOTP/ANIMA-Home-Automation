@@ -380,3 +380,13 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
 - Trigger for recheck: a new SearXNG release, repeated upstream CAPTCHA/error
   behavior after target-network qualification, materially different Pi resource
   measurements, or an Architect-authorized provider decision.
+
+## ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Walmart entitlement
+
+- Date checked: 2026-09-01. Disposition: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`.
+- Primary sources: [Walmart Affiliates FAQ](https://affiliates.walmart.com/faqs), [Walmart Affiliates Operating Agreement](https://affiliates.walmart.com/terms), and [Walmart developer API License Agreement](https://developer.walmart.com/global-marketplace/docs/terms-and-conditions). The FAQ establishes that joining is free but subject to acceptance. The Affiliate Agreement requires approved Affiliate Websites, Walmart/Platform Qualifying Links, clear/conspicuous disclosure, direct linking, restricted redistribution, Program-purpose licensing, and product price/availability updates within 24 hours of updates. The current developer API-license page is contextual only because it does not establish governance of the exact affiliate endpoint.
+- Existing project evidence: LedgerMind at `/home/sketch/Projects/LedgerMind` was inspected read-only on Atlas. Its runbook/source identifies the signed Walmart.io affiliate Product API v2 path at `developer.api.walmart.com/api-proxy/service/affil/product/v2`, stage/production application keys, and optional Impact publisher ID. Prior sanitized smoke evidence proves technical operation, not entitlement scope.
+- Exact endpoint status: `UNKNOWN` as active/legacy/deprecated from current authoritative public documentation. The endpoint's HTTP success and Walmart.io site availability do not prove current support, migration expectations, or license scope.
+- Key unresolved questions: whether ANIMA is an approved application/surface; whether LedgerMind credentials may be reused cross-project; whether private local assistant consumption/display is covered; whether ordinary Walmart item URLs satisfy qualifying-link rules; whether publisher ID is mandatory; exact data retention/cache and AI/automation rules; exact rate limits; and account-specific fees.
+- No dashboard was available through an already-authorized Codex session. No login, application registration, agreement acceptance, support contact, account mutation, credential inspection, or implementation change occurred.
+- Required recheck trigger: operator supplies nonsecret dashboard metadata or Walmart provides written clarification covering ANIMA's application/surface, cross-project reuse, data display, link/disclosure, freshness/cache, cost, and endpoint support obligations.

@@ -141,3 +141,9 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Provider availability is an independent resource gate. Missing Brave or Google Calendar credentials must not disable no-credential weather/recipe capabilities or synthetic notification qualification, and a gate is not evidence of provider success.
 - Consequential external writes require Core-owned Phase 9 profiles. Calendar acknowledgement is insufficient without provider readback; ntfy acknowledgement establishes provider acceptance only, not human delivery or read status. Retailer checkout/cart automation remains outside the bounded prototype.
 - Direct Google Calendar REST is the current bounded integration surface; the official Calendar MCP is reference/deferred while it remains preview. OAuth credential commissioning and native ARM64/Pi qualification remain separate evidence work.
+
+## ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Entitlement evidence
+
+- A successful signed request to a retailer API proves technical reachability, not that the account/application is authorized for a different project or surface.
+- Affiliate terms written around approved websites and qualifying links cannot be silently generalized to a private local assistant. When the exact application scope, link format, data-use rights, or current legacy endpoint terms are unavailable, the correct state is `BLOCKED — WALMART_CLARIFICATION_REQUIRED`.
+- Free program enrollment does not establish zero cost for a specific API entitlement; account-specific fees, rate limits, and support status must remain `UNKNOWN` until verified from the entitlement or a current governing pricing/support record.

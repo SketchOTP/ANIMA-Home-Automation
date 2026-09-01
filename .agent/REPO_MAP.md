@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: PHASE 10 TASK-POLICY INTEGRATION CHECKPOINT 2026-08-31
+Last verified against: PHASE 11 WALMART ENTITLEMENT INVESTIGATION 2026-09-01
 
 ## Entry points
 
@@ -116,6 +116,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/external.py` — bounded external adapters and manifests; `WalmartProductProvider` wraps LedgerMind's signed, read-only Walmart Product API contract behind fixed host, trusted secrets, and untrusted result normalization.
 - `tests/test_external.py` and `tests/test_phase11_integration.py` — signed-provider normalization, secret/gate behavior, manifest constraints, and actual AgentRuntime product-catalogue selection.
 - `scripts/verify_phase11_external.py` — independent Phase 11 provider harness; `--require-walmart-products` runs two credentialed product usefulness queries and reports explicit resource gates.
+- `.agent/tasks/completed/ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3/` — evidence packet for the governance-only Walmart entitlement investigation and clarification blocker.
 
 ## Known sensitive/high-risk areas
 
