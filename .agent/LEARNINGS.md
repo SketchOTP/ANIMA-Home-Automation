@@ -147,3 +147,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - A successful signed request to a retailer API proves technical reachability, not that the account/application is authorized for a different project or surface.
 - Affiliate terms written around approved websites and qualifying links cannot be silently generalized to a private local assistant. When the exact application scope, link format, data-use rights, or current legacy endpoint terms are unavailable, the correct state is `BLOCKED — WALMART_CLARIFICATION_REQUIRED`.
 - Free program enrollment does not establish zero cost for a specific API entitlement; account-specific fees, rate limits, and support status must remain `UNKNOWN` until verified from the entitlement or a current governing pricing/support record.
+
+## ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5 — Retention boundary
+
+- A provider retention restriction is best enforced at the Core persistence boundary: keep the full bounded result in the active process, persist structural evidence and digests, and avoid a cleanup daemon whose backup/export races could preserve stale content.
+- Restricted content must taint the whole episode. Blocking every later tool, including reads, prevents model-echoed provider content from entering another durable or external sink while preserving the current caller's live answer.
+- Provider identity and trust classification are not enough to enforce retention: the Core must derive `EPHEMERAL_RESTRICTED` from the canonical tool identity and ignore plugin-supplied durability claims.
+- A successful CI/test result does not close a provider gate when credentials are absent. Best Buy deterministic normalization is implemented, but live product usefulness remains an explicit `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`.

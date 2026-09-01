@@ -244,3 +244,12 @@ UI, and voice remain out of scope.
 - Best Buy was requalified as the proposed replacement for Walmart. Official sources support an active Products API with ordinary key registration, bounded search, 50,000/day and 5/sec limits, and separate invite-only Commerce API. Terms require attribution, preserved links, branding where content appears, and Content storage/cache no longer than 72 hours.
 - Direct repository evidence shows current PostgreSQL agent tool-request persistence stores full sanitized external results indefinitely. Because this violates the Best Buy retention rule and the directive requires a stop before changing accepted evidence semantics, no provider code was added.
 - Result: BLOCKED — BEST_BUY_RETENTION_COMPLIANCE. Walmart is preserved but deferred; Phase 12 remains unauthorized.
+
+## Phase 11 restricted external-content persistence — 2026-09-01
+
+- Architect directive `ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5`; disposition `CONTINUE / HARDEN`; Phase 12 unauthorized.
+- Starting repository head was `67b72bf52e1f45e33b9c35a1c0c89e87cf47f7ee` with hosted CI `33509333301` passed. The directive authorized a bounded retention correction and conditional Best Buy integration, not a Phase 12 expansion.
+- Decision: Core maps Best Buy tool identities to `EPHEMERAL_RESTRICTED`. The active process may answer from full bounded provider content, but durable episode/tool/turn/database-export paths receive structural metadata, hashes, provenance, trust, policy, and explicit redaction markers. Tainted episodes block all later tools.
+- Decision: add a fixed-host Best Buy Products API wrapper with SecretBroker-only API-key input and bounded semantic `shopping.search_products`; no Walmart fallback, scraping, Commerce API, or UI was added.
+- Evidence: real PostgreSQL scan across all public `anima_*` text/JSON/JSONB columns and an in-process full-table JSON export found zero synthetic product/price sentinels, while the live response contained them. Duplicate replay did not reconstruct a live response. Full pytest/static/type/build/OPA and Phase 10 regression evidence passed; one known pre-existing unrelated Phase 5 script remains repository-wide Ruff-dirty.
+- Current gate: `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`; no live Best Buy request or credential value was inspected. Phase 11 remains pending Architect review.

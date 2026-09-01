@@ -118,6 +118,8 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase11_external.py` — independent Phase 11 provider harness; `--require-walmart-products` runs two credentialed product usefulness queries and reports explicit resource gates.
 - `.agent/tasks/completed/ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3/` — evidence packet for the governance-only Walmart entitlement investigation and clarification blocker.
 - `.agent/tasks/completed/ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4/` — evidence packet for Best Buy qualification; stopped before implementation because the published 72-hour Content-retention rule conflicts with current indefinite PostgreSQL tool-result persistence.
+- `scripts/verify_phase11_restricted_content.py` — real PostgreSQL episode/export sentinel scan proving restricted Best Buy content remains live-only while structural durable evidence survives replay.
+- `.agent/tasks/completed/ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5/` — hardening evidence packet, provider boundary decision, validation, and publication record.
 
 ## Known sensitive/high-risk areas
 

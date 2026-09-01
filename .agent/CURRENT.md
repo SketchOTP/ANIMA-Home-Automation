@@ -4,17 +4,19 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 BEST BUY PRODUCT PROVIDER QUALIFICATION — BLOCKED BY RETENTION COMPLIANCE
+PHASE 11 RESTRICTED EXTERNAL-CONTENT PERSISTENCE HARDENING — IMPLEMENTED, PENDING ARCHITECT REVIEW
 
 ## Current objective
 
-Qualify a sanctioned product-research provider for Phase 11 without paid search, prohibited scraping, ambiguous affiliate entitlement, or a conflict with ANIMA's durable evidence model. Best Buy is the current candidate; the provider is not integrated because its published 72-hour content-retention limit conflicts with current indefinite PostgreSQL episode/tool-result persistence. Walmart remains preserved but deferred pending entitlement clarification. Phase 12 is unauthorized.
+Close the Best Buy product-research gate without violating its published 72-hour content-retention limit. Best Buy is conditionally integrated behind a Core-owned `EPHEMERAL_RESTRICTED` persistence boundary; full provider content remains live-only and durable records retain structural projections/digests. Walmart remains preserved but deferred pending entitlement clarification. Phase 12 is unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4` — qualify and, only if compatible with ANIMA retention semantics, integrate the standard Best Buy Products API. Qualification stopped before implementation when current PostgreSQL AgentEpisode/tool-request persistence was confirmed to retain full sanitized provider results indefinitely, while Best Buy's current terms limit content storage/cache to 72 hours. No provider code was changed. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains open; Phase 12 is unauthorized.
+`ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5` — implement Core-owned restricted external-content persistence, prove database/export safety, and conditionally integrate Best Buy behind the boundary. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains `CONTINUE / HARDEN` pending Architect review; Phase 12 is unauthorized.
 
 ## Current verified state
+
+- Phase 11 restricted-content implementation checkpoint: `b810c853b47470c4395dd1a5731e59da98ae41a5`; hosted CI `33525400264` passed on that exact SHA. Best Buy remains conditionally integrated behind the Core-owned retention boundary; its live key is absent.
 
 - Best Buy qualification checkpoint: governance commit
   `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` is pushed to `origin/main` and
@@ -112,10 +114,11 @@ Qualify a sanctioned product-research provider for Phase 11 without paid search,
 
 ## Current blockers
 
-- Phase 11 product research is implemented with a provisioned Walmart resource path. The product target is `LIVE_CREDENTIALED` in the Atlas operator environment and remains `EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH` when the trusted settings/key are absent or unreadable.
-- The Walmart entitlement/application scope for ANIMA HA is unresolved. Current disposition is `BLOCKED — WALMART_CLARIFICATION_REQUIRED`, not provider acceptance.
-- Product implementation checkpoint, governed closure checkpoint, and their exact hosted CI results are recorded below after publication. Phase 11 remains `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`, not accepted.
-- Product implementation checkpoint: `fb0a6a02c9a48aaa7254e1eb69ec77c1fcd8469a`; hosted CI `33501513385` passed on that exact SHA. Final governed implementation/evidence checkpoint: `a1122b32d1e9d6548b5c78bd1256185d60b4d281`; hosted CI `33501648332` passed on that exact SHA. This remains technical evidence, not entitlement acceptance.
+- Best Buy is conditionally implemented, but its live credential is absent: `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. No live Best Buy product claim is made.
+- Implementation checkpoint `b810c853b47470c4395dd1a5731e59da98ae41a5` and hosted CI `33525400264` passed on the exact SHA. The final governed evidence checkpoint and CI will be recorded after the governance closure commit.
+- The 72-hour retention conflict is addressed by Core classification `EPHEMERAL_RESTRICTED`: full bounded provider results exist only in the active process; PostgreSQL episode/tool/turn rows and whole-database JSON export contain only structural projections, hashes, metadata, and explicit retention markers.
+- A restricted result taints the episode. The active caller receives the full live answer, but durable response/decision/argument records are redacted and all later tool requests are blocked with `RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`.
+- Walmart remains `DEFER — ENTITLEMENT_CLARIFICATION`; it is not an active fallback. Phase 11 remains `CONTINUE / HARDEN`, pending final publication and Architect review.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -144,7 +147,7 @@ Qualify a sanctioned product-research provider for Phase 11 without paid search,
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3` and the completed entitlement packet. Phase 11 remains technically qualified but `BLOCKED — WALMART_CLARIFICATION_REQUIRED`; Phase 12 remains unauthorized. No further implementation is justified until the entitlement/application-scope question is resolved.
+Review `ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5` after exact-SHA publication. The implementation/evidence result is `CONTINUE / HARDEN`; Best Buy live validation remains `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 

@@ -179,3 +179,39 @@ audit and expiring content storage). Cost remains `UNKNOWN` from public
 documentation because no developer account was created; the documentation
 shows ordinary email key registration but does not itself prove a zero-cost
 account issuance path.
+
+## Restricted external-content persistence — 2026-09-01
+
+Architect continuation `ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5`
+authorizes a bounded retention correction and conditional Best Buy integration.
+Best Buy is Core-classified `EPHEMERAL_RESTRICTED`; plugin metadata cannot lower
+or raise this classification. The model-facing semantic action remains
+`shopping.search_products`, with only bounded `query` and `count` inputs. The
+API key is a SecretBroker/runtime concern and is never model-visible.
+
+The runtime keeps the normalized provider result in memory for the active answer
+only. On the first successful `EXTERNAL_UNTRUSTED` restricted result, the
+episode is tainted. PostgreSQL stores no provider catalog payload, later
+content-derived arguments, later raw model decisions, or final content-bearing
+response. It stores structural outcome/provenance/trust/policy metadata, result
+counts, payload/result digests, and a
+`[CONTENT_NOT_DURABLY_RETAINED]` response marker. The active caller receives the
+unredacted live response through the non-durable run result. Any subsequent tool
+request in the tainted episode is rejected with
+`RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`, including read-only tools, so
+restricted content cannot be copied into another durable or external sink.
+
+The real PostgreSQL verifier scans every text/JSON/JSONB column in every public
+`anima_*` table and performs an in-process JSON export scan. Synthetic product
+and price sentinels were present in the live answer, absent from the database
+and export, while structural durable examples remained available. No cleanup
+daemon or indefinite provider-content cache was added. The existing unrestricted
+provider persistence path remains unchanged and is covered by regression tests.
+
+Best Buy implementation is now conditional on `BEST_BUY_API_KEY`; absent
+credentials remain the explicit `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`. The
+adapter uses the fixed `https://api.bestbuy.com/v1/products...` read-only API,
+normalizes bounded product identity and retail observations, preserves Best Buy
+attribution and source links, marks price/availability as external observations,
+and records the future UI branding obligation. Walmart remains deferred for
+entitlement clarification. Phase 12 was not implemented.

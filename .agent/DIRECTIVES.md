@@ -412,3 +412,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Scope: requalify the official Best Buy Products API, its ordinary key/cost path, fixed-host query boundary, product normalization, attribution/link/branding obligations, 72-hour content-retention rule, and compatibility with ANIMA persistence; integrate only if qualification passes.
 - Stop condition: if current AgentEpisode/tool-result persistence keeps Best Buy Content beyond 72 hours, return to Architect before changing accepted evidence-retention architecture.
 - Result: qualification stopped at that condition. No provider implementation, secret configuration, live request, account action, or Phase 12 work was performed.
+
+## ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5 — Restricted content hardening
+
+- Issued: 2026-09-01
+- Status: `CONTINUE / HARDEN`; Phase 12 remains unauthorized.
+- Starting governed checkpoint: `67b72bf52e1f45e33b9c35a1c0c89e87cf47f7ee`, clean and tracking `origin/main`; hosted CI `33509333301` passed on that exact SHA.
+- Objective: add a Core-owned restricted external-content persistence boundary and conditionally integrate Best Buy without retaining provider Content beyond its 72-hour rule.
+- Scope: full restricted results may serve the active in-memory answer only; durable records retain structural projections/digests/metadata; tainted episodes block every later tool; unrestricted persistence remains unchanged; Best Buy uses fixed-host bounded REST and SecretBroker key input.
+- Exclusions: no cleanup daemon, arbitrary cache, provider scraping, Walmart activation, account mutation, Phase 12 behavior, or accepted Phase 0–10 architecture change.
+- Required evidence: deterministic provider/AgentRuntime tests, real PostgreSQL durable/export sentinel scan, duplicate replay, unrestricted regression, static/test/build/OPA validation, exact-SHA publication, and explicit Best Buy key resource gate if absent.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.

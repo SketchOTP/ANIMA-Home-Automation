@@ -649,3 +649,15 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Current ANIMA persistence evidence is decisive: sanitize_tool_result() retains full bounded provider result data, and PostgresEpisodeStore.record_tool_request() stores it indefinitely in anima_agent_tool_requests.sanitized_result; no expiry or purge path exists.
 - Result: BLOCKED — BEST_BUY_RETENTION_COMPLIANCE. Best Buy was not integrated, no key or live request was used, no production behavior changed, and no commit was required. Walmart remains preserved but deferred, not an active fallback.
 - Required next action is Architect authorization for a bounded retention/compliance design; provider implementation and Phase 12 remain blocked.
+
+## ANIMA-HA-P11-RESTRICTED-CONTENT-PERSISTENCE-013R5 — Restricted content hardening
+
+- Completed: 2026-09-01
+- Verdict: `CONTINUE / HARDEN` — implementation/evidence complete for Architect review; live provider gate remains `EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY`.
+- Starting SHA: `67b72bf52e1f45e33b9c35a1c0c89e87cf47f7ee`, clean `main == origin/main`; prior CI `33509333301` passed exact.
+- Core correction: Best Buy is `EPHEMERAL_RESTRICTED` by ANIMA-owned tool identity. Full content remains in the active process only; durable episode/tool/turn/export paths store structural projections, hashes, provenance, trust, policy, counts, and explicit redaction markers.
+- Taint rule: after a successful restricted result, the active caller receives the full live answer, while final durable response content is replaced by `[CONTENT_NOT_DURABLY_RETAINED]` and all later tool requests are rejected with `RESTRICTED_EXTERNAL_CONTENT_SIDE_EFFECT_BLOCKED`.
+- Provider: bounded Best Buy Products API adapter and manifest were added behind fixed `api.bestbuy.com` HTTPS and model-visible `query`/`count` only. Attribution, source links, external price provenance, and future branding metadata are preserved. The key is absent; no live Best Buy evidence is claimed.
+- Evidence: targeted provider/AgentRuntime tests, full pytest, strict mypy, changed-scope Ruff, OPA `4/4`, package build, `git diff --check`, real PostgreSQL database/export sentinel scan, duplicate replay, unrestricted durability, and Phase 10 regression harness passed. Repository-wide Ruff remains non-clean only in pre-existing unrelated Phase 5 evidence script `scripts/verify_phase5_plugins.py`.
+- Limitations: `pg_dump` is not installed, so export safety used an in-process JSON export of every public `anima_*` table; validation used `/srv/ATLAS` because GVFS/SFTP cannot reliably launch Python; native ARM64/Pi and credentialed Best Buy live evidence remain unclaimed.
+- Phase 12 was not implemented.
