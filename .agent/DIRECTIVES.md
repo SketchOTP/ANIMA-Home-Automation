@@ -359,3 +359,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 
 - Implementation checkpoint: `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
 - Governance/evidence closure checkpoint and final hosted CI are recorded in the completed task packet and Notion after the closure push.
+
+## ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R — Free/local provider realignment
+
+- Issued: 2026-08-31
+- Status: IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
+- Architect disposition: `CONTINUE`; Phase 12 remains unauthorized.
+- Decision: supersede/defer Brave Search and Google Calendar; adopt/wrap private pinned SearXNG for web/product research, OpenStreetMap Overpass for bounded POI discovery, and build a first-party PostgreSQL calendar.
+- Boundaries: SearXNG is private and loopback-only with fixed JSON configuration and no Valkey; Overpass uses an ANIMA-owned category/tag map and no raw query tool; calendar mutations are Core-approved `POLICY_GATED_INTERNAL` with trusted invocation provenance/idempotency; physical/provider actions remain Phase 9-coordinated.
+- Evidence target: actual AgentRuntime catalogue/policy path, local calendar CRUD/idempotency/versioning/restart persistence, SearXNG/Overpass live synthetic evidence, existing Phase 1–10 regressions, OPA/static/build/public safety, and exact-SHA hosted CI.
+- Exclusions: no Phase 12 behavior, UI, voice, checkout, arbitrary HTTP, browser automation, or production connector claim.
+- Source: Architect directive supplied in the current governed session and retained as the active continuity record.

@@ -593,3 +593,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - `scripts/verify_phase10_durable_tasks.py` now proves through PostgreSQL persistence/restart and the actual scheduled-cognition bridge: external weather value `17` at task creation, fresh value `23` after the due-time episode, distinct ContextPacket identity, and a future consequential action verified through the existing Phase 9 coordinator.
 - Existing lifecycle parity, stale-worker, cancellation, idempotency, replay, and lease-recovery evidence remains green. The provider is deterministic MockTransport; no live external credential claim is made.
 - Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
+
+## ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R — Implementation result
+
+- Verdict: `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Architect disposition remains `CONTINUE` until the published checkpoint is independently reviewed.
+- Brave Search and Google Calendar are superseded/deferred for this prototype. Private pinned SearXNG supplies bounded web/product JSON search; OpenStreetMap Overpass supplies category-mapped POI reads; the first-party PostgreSQL calendar supplies household-scoped event CRUD.
+- SearXNG is loopback-only/private, uses fixed `duckduckgo` and `wikipedia` engines, and runs without Valkey. Local calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; model-controlled host, engine, raw query, provenance, and idempotency inputs are rejected or absent.
+- Fresh evidence passed: 134 tests; Ruff; strict mypy; OPA 4/4; package sdist/wheel; migration initial/repeat including `0012_local_calendar`; healthy SearXNG live web/product JSON; Overpass live synthetic POI; local calendar AgentRuntime integration; `git diff --check` and public-safety review.
+- Evidence limits: local x86-64 reproduction, synthetic/public provider traffic, no native ARM64/Pi, production scale, physical-home, or human-notification claim. Phase 12 was not implemented.
+- Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. Final governed checkpoint is recorded after the closure publication commit and its exact hosted CI.

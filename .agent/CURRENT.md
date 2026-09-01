@@ -4,15 +4,15 @@ Last updated: 2026-08-31
 
 ## Current stage
 
-PHASE 11 GATE CLOSURE IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
+PHASE 11 FREE LOCAL REALIGNMENT IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Publish and independently review the bounded Phase 11 external-by-intent capability implementation authorized by Architect directive `ANIMA-HA-P11-EXTERNAL-CAPABILITIES-013`, preserving Architect-accepted Phases 0–10. Phase 12 remains unauthorized.
+Publish and independently review the free/local Phase 11 external capability realignment authorized by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`, preserving Architect-accepted Phases 0–10. Phase 12 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-EXTERNAL-GATE-CLOSURE-013H` — close refreshable Calendar OAuth, expanded credentialed live gates, and actual AgentRuntime/durable external-follow-up evidence. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending Architect review and Phase 12 is unauthorized.
+`ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R` — replace the blocked Brave/Google resource gates with private SearXNG, OpenStreetMap Overpass, and an ANIMA-owned PostgreSQL calendar. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains pending Architect review and Phase 12 is unauthorized.
 
 ## Current verified state
 
@@ -90,7 +90,7 @@ Publish and independently review the bounded Phase 11 external-by-intent capabil
 
 ## Current blockers
 
-- Phase 11 hardening is published at implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on that exact SHA. Evidence amendment `f069e5c0d1d42d0a74eba3267f8393f325509429` with hosted CI `33446725375` adds PostgreSQL-backed fresh external follow-up proof. Phase 11 remains pending independent Architect acceptance; credentialed Brave and Google Calendar evidence is gated by missing runtime credentials.
+- Phase 11’s prior implementation and gate closure are superseded for current provider selection by `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`. The current implementation uses pinned private SearXNG, OpenStreetMap Overpass, and the first-party PostgreSQL calendar; no Brave or Google credentials are required.
 - Native ARM64/Pi, physical-home, production-scale, commercial-provider, human-notification-delivery, and high-risk external-write evidence remain unclaimed.
 - Phase 12 custom interfaces, UI, voice, checkout, compensation, and other successor behavior remain unauthorized.
 
@@ -119,7 +119,7 @@ Publish and independently review the bounded Phase 11 external-by-intent capabil
 
 ## Next Architect decision point
 
-Review the Phase 11 gate-closure implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
+Review the Phase 11 free/local realignment implementation and evidence packet after exact-SHA hosted CI. Phase 11 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 12 remains unauthorized.
 
 ## Phase 10 publication state
 
@@ -129,7 +129,11 @@ Review the Phase 11 gate-closure implementation and evidence packet after exact-
 - Status remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; this is not an Architect acceptance claim.
 - Final governed evidence checkpoint: `ae18833e2ddffd30b17b613248d1c2206062b66a`; hosted CI `33428938215` passed on that exact SHA.
 
-## Phase 11 external capability state
+## Phase 11 external capability state (superseded historical record)
+
+The earlier Brave/Google provider record below is retained for audit history only.
+It is superseded for current implementation and gate decisions by
+`ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`.
 
 - Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; hosted CI `33429217008` passed.
 - Phase 11 baseline implementation checkpoint `17252304a4f0642bb654ec612cfcb55a01411804`; hosted CI `33442439042` passed on the exact SHA.
@@ -139,5 +143,14 @@ Review the Phase 11 gate-closure implementation and evidence packet after exact-
 - Phase 11 gate-closure implementation checkpoint `dde3e2bc42fc5004ddf06690ddbd9dc9941999f8`; hosted CI `33445636772` passed on the exact SHA. It adds refreshable `google-auth` Calendar credentials using the owned-calendar scope `https://www.googleapis.com/auth/calendar.events.owned`, same-catalogue AgentRuntime evidence, hostile external-result containment, and durable-task fresh external follow-up evidence.
 - Phase 11 evidence amendment checkpoint `f069e5c0d1d42d0a74eba3267f8393f325509429`; hosted CI `33446725375` passed on the exact SHA. It strengthens the durable follow-up claim with the actual PostgreSQL Phase 10 harness: external value `17` before task creation and fresh value `23` after restart/scheduled cognition, while the future physical action remains Phase 9-coordinated.
 - Phase 11 is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. The prior governed closure `439c12a5872b7844f77ad36fa57672f634d0ee52` with CI `33445878287` remains historical. Final governed evidence checkpoint: `abc9bece8b4827828ca759993191a1f20338d442`, CI `33446946952`; the final Authority synchronization commit follows this record. Phase 12 remains unauthorized.
+
+## Phase 11 free/local realignment state
+
+- Architect directive `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R` supersedes the blocked Brave/Google gate-closure path. Brave and Google Calendar are `SUPERSEDED / DEFERRED` for this prototype; Phase 12 remains unauthorized.
+- Free/local discovery is implemented with a pinned private SearXNG service (JSON API, loopback-only host exposure, fixed engines `duckduckgo` and `wikipedia`, no public instance, no image proxy, no Valkey) and OpenStreetMap Overpass for category-mapped POI queries. Model input cannot choose hosts, engines, raw Overpass QL, or arbitrary URLs.
+- First-party calendar is implemented in `src/anima_ha/calendar.py` with migration `0012_local_calendar.sql`, household isolation, trusted invocation provenance/idempotency, CRUD, optimistic versioning, and PostgreSQL persistence. Calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; later physical/provider actions remain Phase 9-coordinated.
+- Fresh local-filesystem evidence: 134 tests, Ruff, strict mypy, package sdist/wheel, OPA 4/4, migration initial/repeat, SearXNG healthy/no-Valkey live JSON web/product search, Overpass synthetic POI search, and local calendar AgentRuntime integration passed. SFTP Docker bind mounts remain a known limitation; reproduction used `/tmp`.
+- Current provider gates are `EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH=CONFIGURED` and `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED`; no Brave or Google credential gate remains active. Native ARM64/Pi, production scale, physical-home, and high-risk external-write behavior remain unclaimed.
+- Implementation checkpoint: `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA. The governed evidence-closure checkpoint and CI follow after this Authority update.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.

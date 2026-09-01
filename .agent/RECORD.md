@@ -205,3 +205,11 @@ UI, and voice remain out of scope.
 - Safety: Provider data is `EXTERNAL_UNTRUSTED`; credentials/configuration/hosts/topics are runtime-owned; Calendar and notification writes use exact Core-owned Phase 9 profiles and observation/receipt verifiers, never connector claims alone.
 - Evidence: implementation `17252304a4f0642bb654ec612cfcb55a01411804`, CI `33442439042`, 130 tests, pinned OPA 4/4, package build, Phase 1–10 harnesses, isolated real HA Phase 6, and live synthetic Open-Meteo/TheMealDB/ntfy traffic passed.
 - Boundary: Brave and Google Calendar are explicit `EXTERNAL_RESOURCE_GATE` without credentials; no production-provider, native ARM64/Pi, physical-home, human-delivery, or Phase 12 claim is made.
+
+## Phase 11 free/local realignment — 2026-08-31
+
+- Type: MILESTONE / ARCHITECTURE / VALIDATION
+- Directive: `ANIMA-HA-P11-FREE-LOCAL-REALIGNMENT-013R`; Architect disposition `CONTINUE`; Phase 12 unauthorized.
+- Decision: supersede/defer Brave and Google Calendar; adopt/wrap private pinned SearXNG and OpenStreetMap Overpass; build first-party PostgreSQL calendar with migration `0012_local_calendar.sql`.
+- Evidence: 134 tests, Ruff, strict mypy, OPA 4/4, package build, ordered migration initial/repeat, healthy no-Valkey SearXNG web/product JSON, Overpass synthetic POI, and actual AgentRuntime local-calendar path passed in local-filesystem reproduction.
+- Boundary: calendar mutations are Core-approved `POLICY_GATED_INTERNAL`; physical/provider actions remain Phase 9-coordinated; no Phase 12 behavior, native ARM64/Pi, production-scale, physical-home, or human-delivery claim.
