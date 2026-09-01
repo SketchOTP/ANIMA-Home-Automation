@@ -106,13 +106,45 @@ def _provider_handler(request: httpx.Request) -> httpx.Response:
             },
             request,
         )
+    if request.url.path == "/prod/trial/search":
+        return _response(
+            {
+                "code": "OK",
+                "total": 3,
+                "offset": 0,
+                "items": [
+                    {
+                        "ean": "000000000101",
+                        "title": "Synthetic UPC product one",
+                        "brand": "Example A",
+                        "model": "A-1",
+                    },
+                    {
+                        "ean": "000000000102",
+                        "title": "Synthetic UPC product two",
+                        "brand": "Example B",
+                        "model": "B-2",
+                    },
+                    {
+                        "ean": "000000000103",
+                        "title": "Synthetic UPC product three",
+                        "brand": "Example C",
+                        "model": "C-3",
+                    },
+                ],
+            },
+            request,
+        )
     if request.url.path.startswith("/api/json/"):
         return _response({"meals": [{"idMeal": "1", "strMeal": "Synthetic pasta"}]}, request)
     raise AssertionError(f"unexpected provider path: {request.url}")
 
 
 def _catalogue_manager(
-    *, task_service: TaskService | None = None, walmart_secrets: dict[str, str] | None = None
+    *,
+    task_service: TaskService | None = None,
+    walmart_secrets: dict[str, str] | None = None,
+    include_upcitemdb: bool = False,
 ) -> PluginManager:
     manager = PluginManager(secret_broker=SecretBroker(walmart_secrets or {}))
     for plugin_id in (
@@ -128,6 +160,12 @@ def _catalogue_manager(
     if walmart_secrets is not None:
         manifest, runtime = external_plugin(
             "anima.external.shopping", transport=httpx.MockTransport(_provider_handler)
+        )
+        manager.register(manifest, NativeRuntime(runtime))
+        manager.enable(manifest.plugin_id)
+    if include_upcitemdb:
+        manifest, runtime = external_plugin(
+            "anima.external.shopping.upcitemdb", transport=httpx.MockTransport(_provider_handler)
         )
         manager.register(manifest, NativeRuntime(runtime))
         manager.enable(manifest.plugin_id)
@@ -304,6 +342,36 @@ def test_actual_agent_runtime_uses_walmart_product_catalogue(tmp_path: Path) -> 
     assert episode_store.tool_requests[0]["decision"].tool_id == (
         "anima.external.shopping.search_products"
     )
+
+
+def test_actual_agent_runtime_uses_upcitemdb_product_catalogue() -> None:
+    manager = _catalogue_manager(include_upcitemdb=True)
+    episode_store = InMemoryEpisodeStore()
+    tool_id = "anima.external.shopping.upcitemdb.search_products"
+    adapter = ScriptedCodexAdapter(
+        [_tool_turn(tool_id, {"query": "wireless headphones", "count": 3}), _final_turn()]
+    )
+    result = AgentRuntime(
+        adapter,
+        manager,
+        episode_store,
+    ).run(
+        _request(
+            manager,
+            trigger_id=uuid4(),
+            packet_id=uuid4(),
+            text="Find product candidates",
+        )
+    )
+
+    assert result.episode.status == EpisodeStatus.COMPLETED
+    assert result.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
+    assert result.episode.restricted_content_seen is True
+    assert episode_store.tool_requests[0]["result"].external_content_trust == (
+        ExternalContentTrust.EXTERNAL_UNTRUSTED
+    )
+    assert episode_store.tool_requests[0]["result"].result["provider"] == "upcitemdb"
+    assert tool_id in adapter.schemas[0]["properties"]["tool_id"]["enum"]
 
 
 def test_hostile_external_result_stays_untrusted_through_actual_agent_next_turn() -> None:

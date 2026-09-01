@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import argparse
 import os
+import time
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from anima_ha.calendar import CalendarService, InMemoryCalendarStore
 from anima_ha.external import (
-    WALMART_SECRET_NAMES,
+    UPCITEMDB_API_HOST,
     BoundedHttpClient,
     LocalServiceClient,
     OpenMeteoProvider,
@@ -43,9 +44,9 @@ def main() -> int:
         help="fail if required live SearXNG or Overpass target evidence is unavailable",
     )
     parser.add_argument(
-        "--require-walmart-products",
+        "--require-upcitemdb-products",
         action="store_true",
-        help="fail if credentialed Walmart product evidence is unavailable",
+        help="fail if live UPCitemdb product evidence is unavailable",
     )
     args = parser.parse_args()
     failures: list[str] = []
@@ -123,33 +124,34 @@ def main() -> int:
         if args.require_phase11_targets:
             failures.append(f"SearXNG service: {type(exc).__name__}")
 
-    walmart_env = {name: os.environ[name] for name in WALMART_SECRET_NAMES if os.environ.get(name)}
-    if all(walmart_env.get(name, "").strip() for name in WALMART_SECRET_NAMES):
-        walmart_runtime = None
-        try:
-            _, walmart_runtime = external_plugin("anima.external.shopping", audit_sink=audits)
-            walmart_runtime.start(walmart_env)
-            for query in ("wireless headphones", "air fryer"):
-                result = walmart_runtime.invoke(
-                    "search_products", {"query": query, "count": 10}, 10
-                )
-                assert result["trust"] == "EXTERNAL_UNTRUSTED"
-                products = result["data"]["products"]
-                references = {item["provider_reference"] for item in products}
-                assert len(products) >= 3 and len(references) == len(products)
-                print(f"walmart_products_live_query={query!r} results={len(products)}")
-            print("walmart_products_live=PASS class=LIVE_CREDENTIALED")
-        except Exception as exc:
-            print(f"walmart_products_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
-            if args.require_walmart_products:
-                failures.append(f"walmart_products_live: {type(exc).__name__}")
-        finally:
-            if walmart_runtime is not None:
-                walmart_runtime.stop()
-    else:
-        print("walmart_products_live=EXTERNAL_RESOURCE_GATE detail=credentials_missing")
-        if args.require_walmart_products:
-            failures.append("walmart_products_live: credentials_missing")
+    upc_runtime = None
+    try:
+        _, upc_runtime = external_plugin("anima.external.shopping.upcitemdb", audit_sink=audits)
+        upc_runtime.start({})
+        for index, query in enumerate(("wireless headphones", "air fryer")):
+            if index:
+                # Leave a margin above the documented two-search/30-second
+                # burst limit; the provider limiter remains authoritative.
+                time.sleep(31)
+            result = upc_runtime.invoke("search_products", {"query": query, "count": 10}, 10)
+            assert result["trust"] == "EXTERNAL_UNTRUSTED"
+            products = result["data"]["products"]
+            references = {item["provider_reference"] for item in products}
+            assert len(products) >= 3 and len(references) == len(products)
+            offer_count = sum(len(item["retail_offers"]) for item in products)
+            print(
+                f"upcitemdb_products_live_query={query!r} results={len(products)} "
+                f"unique_ids={len(references)} offers={offer_count} "
+                f"rate_limit={result['provider_metadata']['rate_limit']}"
+            )
+        print("upcitemdb_products_live=PASS class=LIVE_PUBLIC_SYNTHETIC")
+    except Exception as exc:
+        print(f"upcitemdb_products_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+        if args.require_upcitemdb_products:
+            failures.append(f"upcitemdb_products_live: {type(exc).__name__}")
+    finally:
+        if upc_runtime is not None:
+            upc_runtime.stop()
 
     try:
         overpass = OverpassProvider(
@@ -181,8 +183,9 @@ def main() -> int:
     print(f"EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH={gates['EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH']}")
     print(f"EXTERNAL_RESOURCE_GATE_OVERPASS={gates['EXTERNAL_RESOURCE_GATE_OVERPASS']}")
     print(
-        f"EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH={gates['EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH']}"
+        f"EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH={gates['EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH']}"
     )
+    print(f"EXTERNAL_RESOURCE_GATE_UPCITEMDB_HOST={UPCITEMDB_API_HOST}")
     print(f"external_audit_records={len(audits)}")
     if failures:
         for failure in failures:

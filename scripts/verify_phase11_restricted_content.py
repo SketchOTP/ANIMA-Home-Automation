@@ -38,8 +38,8 @@ DATABASE_URL = os.environ.get(
     "ANIMA_DATABASE_URL", "postgresql://anima:anima_dev_only@localhost:55432/anima"
 )
 HOUSEHOLD_ID = UUID("ecbd0d84-6f5f-40f8-928f-1d5dfe758dd7")
-SENTINEL = "BB_RESTRICTED_SENTINEL_PRODUCT_9F31"
-PRICE_SENTINEL = "BB_RESTRICTED_SENTINEL_PRICE_2719"
+SENTINEL = "UPC_RESTRICTED_SENTINEL_PRODUCT_9F31"
+PRICE_SENTINEL = "UPC_RESTRICTED_SENTINEL_PRICE_2719"
 
 
 class AllowEvaluator:
@@ -54,11 +54,11 @@ class RestrictedGateway:
         return InvocationResult(
             InvocationOutcome.SUCCESS,
             tool_id,
-            "anima.external.shopping.bestbuy",
+            "anima.external.shopping.upcitemdb",
             "0.1.0",
             1.0,
             result={"products": [{"name": SENTINEL, "price": PRICE_SENTINEL}]},
-            provenance="best_buy",
+            provenance="upcitemdb",
             external_content_trust=ExternalContentTrust.EXTERNAL_UNTRUSTED,
         )
 
@@ -166,7 +166,9 @@ def _fixture() -> EpisodeRequest:
         )
         connection.commit()
     manifest = next(
-        item for item in external_manifests() if item.plugin_id == "anima.external.shopping.bestbuy"
+        item
+        for item in external_manifests()
+        if item.plugin_id == "anima.external.shopping.upcitemdb"
     )
     descriptor = ToolDescriptor.from_manifest(manifest, manifest.tools[0], available=True)
     return EpisodeRequest(

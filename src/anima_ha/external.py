@@ -13,6 +13,7 @@ import ipaddress
 import json
 import subprocess
 import time
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -47,6 +48,8 @@ WALMART_SECRET_NAMES = (
 BEST_BUY_API_HOST = "api.bestbuy.com"
 BEST_BUY_API_BASE = f"https://{BEST_BUY_API_HOST}"
 BEST_BUY_SECRET_NAMES = ("BEST_BUY_API_KEY",)
+UPCITEMDB_API_HOST = "api.upcitemdb.com"
+UPCITEMDB_API_BASE = f"https://{UPCITEMDB_API_HOST}"
 
 
 class ExternalProviderError(RuntimeError):
@@ -55,6 +58,14 @@ class ExternalProviderError(RuntimeError):
 
 class ExternalProviderUnavailable(ExternalProviderError):
     """A provider cannot run because a credential or configuration is absent."""
+
+
+class ExternalProviderRateLimited(ExternalProviderError):
+    """A provider or ANIMA-owned limiter requires the caller to wait."""
+
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,6 +175,8 @@ class BoundedHttpClient:
         self.credential_reference = credential_reference
         self.max_response_bytes = max_response_bytes
         self.allow_private = allow_private
+        self.last_response_headers: dict[str, str] = {}
+        self.last_response_status: int | None = None
         self.client = httpx.Client(
             base_url=self.base_url,
             follow_redirects=False,
@@ -245,10 +258,16 @@ class BoundedHttpClient:
         started = time.monotonic()
         response: httpx.Response | None = None
         response_bytes = 0
+        self.last_response_headers = {}
+        self.last_response_status = None
         try:
             response = self.client.request(
                 method.upper(), path, params=params, json=json_body, headers=headers
             )
+            self.last_response_status = response.status_code
+            self.last_response_headers = {
+                str(key): str(value) for key, value in response.headers.items()
+            }
             chunks: list[bytes] = []
             for chunk in response.iter_bytes():
                 response_bytes += len(chunk)
@@ -578,6 +597,250 @@ class WalmartProductProvider:
                 "checkout_supported": False,
                 "price_authority": "external_observation_only",
                 "result_count": len(products),
+            },
+        )
+
+
+class UPCItemDBRateLimiter:
+    """Conservative in-process guard for the anonymous UPCitemdb tier."""
+
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], float] = time.monotonic,
+        wall_clock: Callable[[], float] = time.time,
+        max_searches: int = 20,
+        min_interval_seconds: float = 15.0,
+    ) -> None:
+        self._clock = clock
+        self._wall_clock = wall_clock
+        self._max_searches = max_searches
+        self._min_interval_seconds = min_interval_seconds
+        self._search_times: deque[float] = deque()
+        self._blocked_until = 0.0
+
+    def reserve_search(self) -> None:
+        now = self._clock()
+        while self._search_times and now - self._search_times[0] >= 86_400:
+            self._search_times.popleft()
+        if self._blocked_until > now:
+            raise ExternalProviderRateLimited(
+                "UPCitemdb rate limit requires waiting",
+                self._blocked_until - now,
+            )
+        if self._search_times and now - self._search_times[-1] < self._min_interval_seconds:
+            raise ExternalProviderRateLimited(
+                "UPCitemdb local pacing limit requires waiting",
+                self._min_interval_seconds - (now - self._search_times[-1]),
+            )
+        if len(self._search_times) >= self._max_searches:
+            retry_after = 86_400 - (now - self._search_times[0])
+            raise ExternalProviderRateLimited(
+                "UPCitemdb conservative daily search limit reached", retry_after
+            )
+        self._search_times.append(now)
+
+    def observe_headers(self, headers: dict[str, str]) -> None:
+        normalized = {key.lower(): value.strip() for key, value in headers.items()}
+        remaining = _nonnegative_int(normalized.get("x-ratelimit-remaining"))
+        reset = _nonnegative_int(normalized.get("x-ratelimit-reset"))
+        if remaining == 0 and reset is not None:
+            delay = max(0.0, float(reset) - self._wall_clock())
+            self._blocked_until = max(self._blocked_until, self._clock() + delay)
+
+    def block_for(self, seconds: float | None) -> None:
+        if seconds is not None and seconds > 0:
+            self._blocked_until = max(self._blocked_until, self._clock() + seconds)
+
+
+def _nonnegative_int(value: str | None) -> int | None:
+    if value is None:
+        return None
+    try:
+        return max(0, int(value))
+    except ValueError:
+        return None
+
+
+def _retry_after(headers: dict[str, str]) -> float | None:
+    value = next((item for key, item in headers.items() if key.lower() == "retry-after"), None)
+    if value is None:
+        return None
+    try:
+        return max(0.0, float(value.strip()))
+    except ValueError:
+        return None
+
+
+class UPCItemDBProductProvider:
+    """Bounded, no-key UPCitemdb product research."""
+
+    def __init__(
+        self,
+        client: BoundedHttpClient,
+        *,
+        limiter: UPCItemDBRateLimiter | None = None,
+    ) -> None:
+        self.client = client
+        self.limiter = limiter or UPCItemDBRateLimiter()
+
+    @staticmethod
+    def _number(value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _timestamp(value: Any) -> str | None:
+        try:
+            return datetime.fromtimestamp(float(value), UTC).isoformat()
+        except (TypeError, ValueError, OverflowError):
+            return None
+
+    @staticmethod
+    def _identifier(item: dict[str, Any]) -> str:
+        return str(
+            item.get("ean") or item.get("upc") or item.get("gtin") or item.get("elid") or ""
+        ).strip()
+
+    @classmethod
+    def _offer(cls, offer: dict[str, Any], retrieved_at: str) -> dict[str, Any]:
+        updated_at = cls._timestamp(offer.get("updated_t"))
+        amount = cls._number(offer.get("price"))
+        list_price = cls._number(offer.get("list_price"))
+        currency = str(offer.get("currency") or "UNKNOWN").strip()
+        return {
+            "merchant": str(offer.get("merchant") or "").strip(),
+            "domain": str(offer.get("domain") or "").strip(),
+            "title": str(offer.get("title") or "").strip()[:240],
+            "price": (
+                {
+                    "amount": amount,
+                    "currency": currency,
+                    "source": "upcitemdb_api",
+                    "retrieved_at": retrieved_at,
+                    "offer_updated_at": updated_at,
+                }
+                if amount is not None
+                else None
+            ),
+            "list_price": list_price,
+            "shipping": str(offer.get("shipping") or "").strip()[:160],
+            "condition": str(offer.get("condition") or "unknown").strip()[:80],
+            "availability": str(offer.get("availability") or "unknown").strip()[:80],
+            "offer_url": str(offer.get("link") or "").strip(),
+            "updated_at": updated_at,
+        }
+
+    @classmethod
+    def _product(cls, item: dict[str, Any], retrieved_at: str) -> dict[str, Any] | None:
+        reference = cls._identifier(item)
+        title = str(item.get("title") or "").strip()
+        if not reference or not title:
+            return None
+        offers = item.get("offers")
+        normalized_offers = (
+            [cls._offer(offer, retrieved_at) for offer in offers[:5] if isinstance(offer, dict)]
+            if isinstance(offers, list)
+            else []
+        )
+        dimensions = {
+            key: str(item[key]).strip()[:120]
+            for key in ("dimension", "weight", "size", "color")
+            if item.get(key) not in (None, "")
+        }
+        historical_low = cls._number(item.get("lowest_recorded_price"))
+        historical_high = cls._number(item.get("highest_recorded_price"))
+        return {
+            "provider": "upcitemdb",
+            "provider_reference": reference,
+            "source_url": f"https://www.upcitemdb.com/upc/{reference}",
+            "name": title[:240],
+            "brand": str(item.get("brand") or "").strip()[:160],
+            "model": str(item.get("model") or "").strip()[:160],
+            "category": str(item.get("category") or "").strip()[:240],
+            "description": str(item.get("description") or "").strip()[:2_000],
+            "specifications": dimensions,
+            "historical_price_range": (
+                {"low": historical_low, "high": historical_high, "currency": "UNKNOWN"}
+                if historical_low is not None or historical_high is not None
+                else None
+            ),
+            "retail_offers": normalized_offers,
+            "image_url": str((item.get("images") or [""])[0] if item.get("images") else ""),
+        }
+
+    def _rate_limit_metadata(self) -> dict[str, Any]:
+        headers = {key.lower(): value for key, value in self.client.last_response_headers.items()}
+        return {
+            key: headers[key]
+            for key in (
+                "x-ratelimit-limit",
+                "x-ratelimit-remaining",
+                "x-ratelimit-reset",
+                "retry-after",
+            )
+            if key in headers
+        }
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
+        del timeout
+        if name != "search_products":
+            raise ExternalProviderError("unknown UPCitemdb operation")
+        query = str(arguments["query"]).strip()
+        if not query or len(query) > MAX_QUERY_LENGTH:
+            raise ValueError("product query is empty or exceeds the 400-character bound")
+        count = _count(arguments.get("count", 5))
+        self.limiter.reserve_search()
+        try:
+            _, payload = self.client.request(
+                operation="shopping.search_products",
+                method="GET",
+                path="/prod/trial/search",
+                params={"s": query, "match_mode": 0, "offset": 0},
+                headers={"Accept": "application/json"},
+            )
+        except ExternalProviderError as exc:
+            self.limiter.observe_headers(self.client.last_response_headers)
+            if self.client.last_response_status == 429:
+                retry_after = _retry_after(self.client.last_response_headers)
+                self.limiter.block_for(retry_after)
+                raise ExternalProviderRateLimited(
+                    "UPCitemdb rejected the request due to rate limiting", retry_after
+                ) from exc
+            raise
+        self.limiter.observe_headers(self.client.last_response_headers)
+        retrieved_at = datetime.now(UTC).isoformat()
+        items = payload.get("items", [])
+        if not isinstance(items, list):
+            raise ExternalProviderError("UPCitemdb response has an invalid item list")
+        products: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            product = self._product(item, retrieved_at)
+            if product is None or product["provider_reference"] in seen:
+                continue
+            seen.add(product["provider_reference"])
+            products.append(product)
+            if len(products) >= count:
+                break
+        return _result(
+            "upcitemdb",
+            "shopping.search_products",
+            {"query": query, "products": products},
+            attribution="Product data provided by UPCitemdb",
+            provider_metadata={
+                "api": "upcitemdb_free_explorer_v1.0.3",
+                "content_persistence": "EPHEMERAL_RESTRICTED",
+                "offer_links": "provider_returned_upcitemdb_redirects",
+                "price_authority": "external_observation_only",
+                "result_count": len(products),
+                "rate_limit": self._rate_limit_metadata(),
             },
         )
 
@@ -1063,6 +1326,26 @@ def external_manifests() -> tuple[PluginManifest, ...]:
             source="builtin:anima_ha.external",
         ),
         PluginManifest(
+            plugin_id="anima.external.shopping.upcitemdb",
+            manifest_version=1,
+            requires_core="0.1.0",
+            plugin_version="0.1.0",
+            name="UPCitemdb product research",
+            description="Bounded no-key UPCitemdb product catalogue and offer observations",
+            runtime_kind=RuntimeKind.TRUSTED_NATIVE,
+            trust_class=TrustClass.TRUSTED_NATIVE,
+            capabilities=("shopping-research",),
+            tools=(
+                _read_tool(
+                    "search_products",
+                    "Search bounded UPCitemdb product candidates",
+                    semantic_action="shopping.search_products",
+                ),
+            ),
+            network_requirements=(f"{UPCITEMDB_API_HOST}:443",),
+            source="builtin:anima_ha.external",
+        ),
+        PluginManifest(
             plugin_id="anima.external.recipes",
             plugin_version="0.1.0",
             manifest_version=1,
@@ -1259,6 +1542,17 @@ def external_plugin(
                 env,
             ),
         )
+    if plugin_id == "anima.external.shopping.upcitemdb":
+        return manifest, ExternalNativePlugin(
+            manifest,
+            lambda env: UPCItemDBProductProvider(
+                client(
+                    "upcitemdb",
+                    UPCITEMDB_API_BASE,
+                    (UPCITEMDB_API_HOST,),
+                )
+            ),
+        )
     if plugin_id == "anima.external.recipes":
         return manifest, ExternalNativePlugin(
             manifest,
@@ -1299,6 +1593,7 @@ def external_resource_gates(secrets: dict[str, str]) -> dict[str, str]:
             if bool(secrets.get("BEST_BUY_API_KEY", "").strip())
             else "EXTERNAL_RESOURCE_GATE"
         ),
+        "EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH": "AVAILABLE",
         "EXTERNAL_RESOURCE_GATE_NTFY": (
             "AVAILABLE" if bool(secrets.get("NTFY_TOPIC")) else "EXTERNAL_RESOURCE_GATE"
         ),

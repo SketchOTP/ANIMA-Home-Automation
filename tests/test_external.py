@@ -17,16 +17,20 @@ from anima_ha.calendar import (
 from anima_ha.events import EventEnvelope
 from anima_ha.external import (
     BEST_BUY_SECRET_NAMES,
+    UPCITEMDB_API_HOST,
     WALMART_SECRET_NAMES,
     BestBuyProductProvider,
     BoundedHttpClient,
     ExternalAuditJournalSink,
     ExternalProviderError,
+    ExternalProviderRateLimited,
     ExternalRequestAudit,
     LocalServiceClient,
     OpenMeteoProvider,
     OverpassProvider,
     SearXNGProvider,
+    UPCItemDBProductProvider,
+    UPCItemDBRateLimiter,
     WalmartProductProvider,
     external_manifests,
     external_resource_gates,
@@ -456,3 +460,155 @@ def test_best_buy_missing_key_is_an_explicit_resource_gate() -> None:
     assert external_resource_gates({})["EXTERNAL_RESOURCE_GATE_BEST_BUY_KEY"] == (
         "EXTERNAL_RESOURCE_GATE"
     )
+
+
+def test_upcitemdb_products_normalize_untrusted_products_and_offers() -> None:
+    audits: list[ExternalRequestAudit] = []
+    clock = [100.0]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == UPCITEMDB_API_HOST
+        assert request.url.path == "/prod/trial/search"
+        assert request.url.params["s"] == "wireless headphones"
+        assert request.url.params["offset"] == "0"
+        return httpx.Response(
+            200,
+            json={
+                "code": "OK",
+                "total": 3,
+                "offset": 0,
+                "items": [
+                    {
+                        "ean": "000000000001",
+                        "title": "Synthetic Headphones A",
+                        "brand": "Example A",
+                        "model": "A-1",
+                        "category": "Audio",
+                        "description": "Bounded product description.",
+                        "dimension": "10 x 5 x 3",
+                        "offers": [
+                            {
+                                "merchant": "Example Shop",
+                                "domain": "example.test",
+                                "price": 79.99,
+                                "currency": "USD",
+                                "availability": "In Stock",
+                                "condition": "New",
+                                "link": "https://www.upcitemdb.com/norob/alink/?id=synthetic",
+                                "updated_t": 1788297425,
+                            }
+                        ],
+                        "lowest_recorded_price": 49.99,
+                        "highest_recorded_price": 129.99,
+                    },
+                    {
+                        "ean": "000000000002",
+                        "title": "Synthetic Headphones B",
+                        "brand": "Example B",
+                        "model": "B-2",
+                        "offers": [],
+                    },
+                    {"ean": "000000000001", "title": "Duplicate identity"},
+                ],
+            },
+            headers={
+                "X-RateLimit-Limit": "100",
+                "X-RateLimit-Remaining": "97",
+                "X-RateLimit-Reset": "1788383747",
+            },
+            request=request,
+        )
+
+    provider = UPCItemDBProductProvider(
+        BoundedHttpClient(
+            provider="upcitemdb",
+            base_url="https://api.upcitemdb.com",
+            allowed_hosts=(UPCITEMDB_API_HOST,),
+            audit_sink=audits,
+            transport=httpx.MockTransport(handler),
+        ),
+        limiter=UPCItemDBRateLimiter(clock=lambda: clock[0]),
+    )
+    result = provider.invoke("search_products", {"query": "wireless headphones", "count": 10}, 10)
+
+    products = result["data"]["products"]
+    assert result["provider"] == "upcitemdb"
+    assert result["trust"] == ExternalContentTrust.EXTERNAL_UNTRUSTED.value
+    assert result["attribution"] == "Product data provided by UPCitemdb"
+    assert result["provider_metadata"]["content_persistence"] == "EPHEMERAL_RESTRICTED"
+    assert result["provider_metadata"]["rate_limit"]["x-ratelimit-remaining"] == "97"
+    assert len(products) == 2
+    assert products[0]["provider_reference"] == "000000000001"
+    assert products[0]["retail_offers"][0]["price"]["source"] == "upcitemdb_api"
+    assert products[0]["retail_offers"][0]["offer_url"].startswith("https://www.upcitemdb.com/")
+    assert products[0]["historical_price_range"]["low"] == 49.99
+    assert products[1]["retail_offers"] == []
+    assert "synthetic" not in str(audits)
+
+
+def test_upcitemdb_conservative_pacing_and_no_key_gate() -> None:
+    clock = [100.0]
+    limiter = UPCItemDBRateLimiter(clock=lambda: clock[0])
+    limiter.reserve_search()
+    with pytest.raises(ExternalProviderRateLimited, match="pacing limit"):
+        limiter.reserve_search()
+    clock[0] = 115.0
+    limiter.reserve_search()
+    assert external_resource_gates({})["EXTERNAL_RESOURCE_GATE_UPCITEMDB_PRODUCT_SEARCH"] == (
+        "AVAILABLE"
+    )
+
+
+def test_upcitemdb_honors_provider_retry_after_without_retrying() -> None:
+    clock = [100.0]
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(
+            429,
+            json={"code": "EXCEED_LIMIT"},
+            headers={"Retry-After": "42"},
+            request=request,
+        )
+
+    provider = UPCItemDBProductProvider(
+        BoundedHttpClient(
+            provider="upcitemdb",
+            base_url="https://api.upcitemdb.com",
+            allowed_hosts=(UPCITEMDB_API_HOST,),
+            transport=httpx.MockTransport(handler),
+        ),
+        limiter=UPCItemDBRateLimiter(clock=lambda: clock[0]),
+    )
+    with pytest.raises(ExternalProviderRateLimited) as error:
+        provider.invoke("search_products", {"query": "air fryer"}, 10)
+    assert calls == 1
+    assert error.value.retry_after == 42
+    with pytest.raises(ExternalProviderRateLimited, match="rate limit"):
+        provider.invoke("search_products", {"query": "air fryer"}, 10)
+    assert calls == 1
+
+
+def test_upcitemdb_header_reset_is_converted_to_monotonic_delay() -> None:
+    clock = [100.0]
+    wall_clock = [1_000.0]
+    limiter = UPCItemDBRateLimiter(clock=lambda: clock[0], wall_clock=lambda: wall_clock[0])
+    limiter.observe_headers({"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "1_042"})
+    with pytest.raises(ExternalProviderRateLimited, match="rate limit"):
+        limiter.reserve_search()
+    clock[0] = 142.0
+    limiter.reserve_search()
+
+
+def test_upcitemdb_manifest_is_core_restricted_and_secret_free() -> None:
+    manifest = next(
+        item
+        for item in external_manifests()
+        if item.plugin_id == "anima.external.shopping.upcitemdb"
+    )
+    assert manifest.required_secrets == ()
+    assert set(manifest.tools[0]["input_schema"]["properties"]) == {"query", "count"}
+    descriptor = ToolDescriptor.from_manifest(manifest, manifest.tools[0], available=True)
+    assert descriptor.content_persistence == ContentPersistence.EPHEMERAL_RESTRICTED

@@ -333,6 +333,7 @@ _CORE_RESTRICTED_CONTENT_TOOL_IDS = frozenset(
         # deliberately Core-owned; plugin metadata cannot opt into durability.
         "anima.external.shopping.search_products",
         "anima.external.shopping.bestbuy.search_products",
+        "anima.external.shopping.upcitemdb.search_products",
     }
 )
 
