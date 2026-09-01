@@ -33,6 +33,7 @@ from anima_ha.plugins import (
 MAX_RESPONSE_BYTES = 1_048_576
 MAX_QUERY_LENGTH = 400
 MAX_RESULT_COUNT = 10
+SEARXNG_CONFIGURED_ENGINES = ("duckduckgo", "wikipedia")
 
 
 class ExternalProviderError(RuntimeError):
@@ -375,6 +376,12 @@ class SearXNGProvider:
         query = str(arguments["query"]).strip()
         if not query or len(query) > MAX_QUERY_LENGTH:
             raise ValueError("external query is empty or exceeds the 400-character bound")
+        # SearXNG supports !bang modifiers that can select engines/categories.
+        # Engine authority belongs to the private service configuration, not
+        # to model-controlled search text, so reject modifiers at ANIMA's
+        # boundary instead of forwarding an engine-selection instruction.
+        if any(token.startswith("!") for token in query.split()):
+            raise ValueError("search engine/category modifiers are not permitted")
         if name not in {"search", "search_products"}:
             raise ExternalProviderError("unknown discovery operation")
         operation = "web.search" if name == "search" else "shopping.search_products"
@@ -406,7 +413,11 @@ class SearXNGProvider:
             "searxng",
             operation,
             {"query": query, "results": results},
-            provider_metadata={"configured_engines": ["duckduckgo", "wikipedia"]},
+            provider_metadata={
+                "configured_engines": list(SEARXNG_CONFIGURED_ENGINES),
+                "unresponsive_engines": payload.get("unresponsive_engines", []),
+                "result_count": len(results),
+            },
         )
 
 

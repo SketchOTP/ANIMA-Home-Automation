@@ -137,6 +137,25 @@ def test_searxng_normalizes_untrusted_web_and_product_results() -> None:
     assert "IGNORE YOUR SYSTEM" in result["data"]["results"][0]["snippet"]
 
 
+def test_calendar_mutations_use_internal_low_risk_policy_and_reject_bangs() -> None:
+    mutation_tools = {
+        tool["name"]: tool for tool in CALENDAR_MANIFEST.tools if not tool["read_only"]
+    }
+    assert {tool["risk_class"] for tool in mutation_tools.values()} == {"LOW_RISK_HOME_CONTROL"}
+    assert all(tool["read_only"] is False for tool in mutation_tools.values())
+
+    provider = SearXNGProvider(
+        LocalServiceClient(
+            provider="searxng",
+            base_url="http://searxng:8080",
+            service_host="searxng",
+            transport=httpx.MockTransport(lambda request: response({}, request)),
+        )
+    )
+    with pytest.raises(ValueError, match="modifiers"):
+        provider.invoke("search", {"query": "!wikipedia private test"}, 1)
+
+
 def test_overpass_uses_system_owned_category_mapping_and_normalization() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         query = request.url.params["data"]
@@ -226,6 +245,36 @@ def test_local_calendar_is_household_scoped_idempotent_and_versioned() -> None:
     assert next(
         item for item in external_manifests() if item.plugin_id == CALENDAR_MANIFEST.plugin_id
     )
+
+
+def test_calendar_audit_contains_bounded_trusted_provenance() -> None:
+    events: list[EventEnvelope] = []
+    service = CalendarService(InMemoryCalendarStore(), events)
+    start = datetime(2026, 9, 1, 10, tzinfo=UTC)
+    event = service.create(
+        context=context("audit-create"),
+        arguments={
+            "title": "Audited event",
+            "start_at": start.isoformat(),
+            "end_at": (start + timedelta(minutes=30)).isoformat(),
+            "timezone": "UTC",
+        },
+    )
+    service.update(
+        context=context("audit-update"),
+        event_id=event.event_id,
+        expected_version=1,
+        changes={"title": "Audited event v2"},
+    )
+    service.cancel(context=context("audit-cancel"), event_id=event.event_id, expected_version=2)
+    assert [item.event_type for item in events] == [
+        "calendar.event_created",
+        "calendar.event_updated",
+        "calendar.event_cancelled",
+    ]
+    assert events[1].payload["changed_fields"] == ["title"]
+    assert events[1].payload["principal_id"] == str(context().principal_id)
+    assert events[1].payload["version"] == 2
 
 
 def test_external_resource_gates_no_longer_require_retired_credentials() -> None:

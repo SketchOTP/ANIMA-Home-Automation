@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
@@ -33,6 +34,14 @@ def _context(key: str) -> InvocationContext:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--require-phase11-targets",
+        action="store_true",
+        help="fail if required live SearXNG or Overpass target evidence is unavailable",
+    )
+    args = parser.parse_args()
+    failures: list[str] = []
     audits = []
     weather = OpenMeteoProvider(
         BoundedHttpClient(
@@ -85,15 +94,32 @@ def main() -> int:
         )
         search = SearXNGProvider(search_client)
         for label, operation, query in (
-            ("searxng_web_live", "search", "synthetic public web qualification"),
+            ("searxng_web_live", "search", "Python"),
             ("searxng_products_live", "search_products", "synthetic reusable bottle product"),
         ):
-            result = search.invoke(operation, {"query": query, "count": 3}, 10)
-            assert result["trust"] == "EXTERNAL_UNTRUSTED"
-            print(f"{label}=PASS class=LIVE_PUBLIC_SYNTHETIC")
+            try:
+                result = search.invoke(operation, {"query": query, "count": 3}, 10)
+                assert result["trust"] == "EXTERNAL_UNTRUSTED"
+                results = result["data"]["results"]
+                if not results:
+                    raise AssertionError(f"{label} returned no results")
+                if not all(item.get("title") and item.get("url") for item in results):
+                    raise AssertionError(f"{label} returned an incomplete source record")
+                print(
+                    f"{label}_results={len(results)} "
+                    f"engines={result['provider_metadata']['configured_engines']} "
+                    f"unresponsive={result['provider_metadata']['unresponsive_engines']}"
+                )
+                print(f"{label}=PASS class=LIVE_PUBLIC_SYNTHETIC")
+            except Exception as exc:
+                print(f"{label}=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+                if args.require_phase11_targets:
+                    failures.append(f"{label}: {type(exc).__name__}")
     except Exception as exc:
         print(f"searxng_web_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
         print(f"searxng_products_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+        if args.require_phase11_targets:
+            failures.append(f"SearXNG service: {type(exc).__name__}")
 
     try:
         overpass = OverpassProvider(
@@ -119,10 +145,16 @@ def main() -> int:
         print("overpass_places_live=PASS class=LIVE_PUBLIC_SYNTHETIC")
     except Exception as exc:
         print(f"overpass_places_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+        if args.require_phase11_targets:
+            failures.append(f"Overpass target evidence: {type(exc).__name__}")
 
     print(f"EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH={gates['EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH']}")
     print(f"EXTERNAL_RESOURCE_GATE_OVERPASS={gates['EXTERNAL_RESOURCE_GATE_OVERPASS']}")
     print(f"external_audit_records={len(audits)}")
+    if failures:
+        for failure in failures:
+            print(f"STRICT_TARGET_FAILURE={failure}")
+        return 2
     return 0
 
 

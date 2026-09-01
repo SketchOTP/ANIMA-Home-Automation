@@ -511,7 +511,12 @@ class CalendarService:
         )
         stored = self.store.create(event)
         if stored.event_id == event.event_id:
-            self._audit("calendar.event_created", stored, {"origin": context.origin.value})
+            self._audit(
+                "calendar.event_created",
+                stored,
+                context=context,
+                payload={"changed_fields": ["event"]},
+            )
         return stored
 
     def get(self, *, household_id: UUID, event_id: UUID) -> CalendarEvent:
@@ -545,7 +550,12 @@ class CalendarService:
             changes,
             datetime.now(UTC),
         )
-        self._audit("calendar.event_updated", event, {"changed_fields": sorted(changes)})
+        self._audit(
+            "calendar.event_updated",
+            event,
+            context=context,
+            payload={"changed_fields": sorted(changes)},
+        )
         return event
 
     def cancel(
@@ -559,10 +569,22 @@ class CalendarService:
             context.household_id, event_id, expected_version, datetime.now(UTC)
         )
         if event.status == CalendarStatus.CANCELLED and event.version == expected_version + 1:
-            self._audit("calendar.event_cancelled", event, {})
+            self._audit(
+                "calendar.event_cancelled",
+                event,
+                context=context,
+                payload={"changed_fields": ["status"]},
+            )
         return event
 
-    def _audit(self, event_type: str, event: CalendarEvent, payload: dict[str, Any]) -> None:
+    def _audit(
+        self,
+        event_type: str,
+        event: CalendarEvent,
+        *,
+        context: InvocationContext,
+        payload: dict[str, Any],
+    ) -> None:
         if self.event_sink is None:
             return
         self.event_sink.append(
@@ -572,7 +594,16 @@ class CalendarService:
                 source="anima:calendar",
                 subject_key=f"calendar/{event.event_id}",
                 occurred_at=event.updated_at,
-                payload={"event_id": str(event.event_id), **payload},
+                payload={
+                    "event_id": str(event.event_id),
+                    "principal_id": str(context.principal_id) if context.principal_id else None,
+                    "episode_id": str(context.episode_id),
+                    "origin": context.origin.value,
+                    "tool_request_id": str(context.tool_request_id),
+                    "system_idempotency_key": context.system_idempotency_key,
+                    "version": event.version,
+                    **payload,
+                },
                 importance=EventImportance.IMPORTANT,
                 delivery_class=DeliveryClass.GUARANTEED,
                 metadata={"household_id": str(event.household_id), "version": event.version},
@@ -587,10 +618,11 @@ def _tool(
         "name": name,
         "description": description,
         "input_schema": schema,
-        # Policy's existing risk vocabulary treats local durable mutations as
-        # consequential; the ANIMA-owned execution boundary decides whether
-        # Phase 9 coordination is required.
-        "risk_class": "READ_ONLY" if read_only else "EXTERNAL_SIDE_EFFECT",
+        # Local calendar persistence is a trusted, policy-gated internal
+        # mutation, not an external-provider write.  Core still controls the
+        # execution boundary; this risk class only selects the existing Phase
+        # 4 low-risk authorization semantics.
+        "risk_class": "READ_ONLY" if read_only else "LOW_RISK_HOME_CONTROL",
         "semantic_action": f"calendar.{name}",
         "read_only": read_only,
         "idempotency": Idempotency.IDEMPOTENT.value if read_only else Idempotency.KEYED.value,
