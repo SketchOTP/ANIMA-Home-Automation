@@ -16,6 +16,11 @@ Qualify a sanctioned product-research provider for Phase 11 without paid search,
 
 ## Current verified state
 
+- Best Buy qualification checkpoint: governance commit
+  `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` is pushed to `origin/main` and
+  hosted CI `33509082116` passed on that exact SHA. The final evidence-closure
+  commit records the same outcome and its CI below.
+
 - Product-research closure started from governed Phase 11 checkpoint `23aa71d774c75529d7e8412e3060446d42a9cf4d`.
 - LedgerMind at `/home/sketch/Projects/LedgerMind` was inspected read-only on the Atlas laptop. Its status-only Walmart smoke test passed signature, catalogue, stores, and item-price probes; cart push remained unsupported. ANIMA copied the bounded contract, not credentials or runtime data.
 - ANIMA now exposes `anima.external.shopping.search_products` through a fixed `developer.api.walmart.com` host, ANIMA-generated RSA-SHA256 request signatures, trusted `SecretBroker` references, normalized `ProductCandidate` plus `retail_offer` data, timestamped external price/availability, and `EXTERNAL_UNTRUSTED` results. No cart, checkout, browser automation, scraping, CAPTCHA bypass, or arbitrary host is implemented.

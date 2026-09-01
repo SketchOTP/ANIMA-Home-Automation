@@ -9,6 +9,9 @@ Date: 2026-09-01
 - Starting SHA: `b5635d07505de2ceba071f984fd7189c8ba18cd9`
 - Starting tree: clean; `main == origin/main`
 - No implementation files were changed by this directive.
+- Governance checkpoint: `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e`
+  pushed to `origin/main`; hosted CI `33509082116` passed on that exact SHA.
+- Final evidence-closure checkpoint follows this evidence-only update.
 
 ## Official source matrix
 

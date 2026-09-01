@@ -13,8 +13,10 @@ and tool-result persistence. This is the directive's explicit stop condition.
 - Starting/final repository SHA: `b5635d07505de2ceba071f984fd7189c8ba18cd9`
 - Tree: clean; `main == origin/main`
 - Code changes: none
-- Implementation SHA/CI: not applicable
-- Governed SHA/CI: not applicable; no commit was created
+- Implementation SHA/CI: not applicable; no implementation files changed
+- Governance checkpoint SHA/CI: `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` /
+  `33509082116` — success on the exact SHA
+- Final evidence-closure SHA/CI: follows this evidence-only update
 - Best Buy live evidence: not run; `BEST_BUY_API_KEY` was not available
 - Walmart: preserved, `DEFER — ENTITLEMENT_CLARIFICATION`, never used as a
   fallback
