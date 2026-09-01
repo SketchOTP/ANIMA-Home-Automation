@@ -640,3 +640,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Implementation checkpoint: `c24b8eab5abe9acc31b4f54a321b0270399f3549`; hosted CI run `33462705630` passed on the exact SHA. The governed evidence-closure checkpoint follows this implementation checkpoint.
 - Governed evidence closure checkpoint: `bf62877bcddd4683e4e7c046c2cb0233ef84f0b5`; hosted CI run `33462809329` passed on the exact SHA. Phase 11 remains `IMPLEMENTATION COMPLETE — EXTERNAL_RESOURCE_GATE`, pending Architect acceptance.
 - No Phase 0–10 architecture or Phase 12 behavior changed.
+
+## Phase 11 Best Buy product-provider qualification — 2026-09-01
+
+- Directive: ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4; Architect disposition REPLAN; Phase 12 remains unauthorized.
+- Starting SHA: b5635d07505de2ceba071f984fd7189c8ba18cd9; starting tree clean and tracking origin/main.
+- Official Best Buy sources confirm the active Products API, ordinary API-key registration, fixed REST host, product search syntax, product catalog fields, 50,000/day and 5/sec rate limits, Commerce API separation, attribution/link/branding obligations, and a maximum 72-hour Content storage/cache period.
+- Current ANIMA persistence evidence is decisive: sanitize_tool_result() retains full bounded provider result data, and PostgresEpisodeStore.record_tool_request() stores it indefinitely in anima_agent_tool_requests.sanitized_result; no expiry or purge path exists.
+- Result: BLOCKED — BEST_BUY_RETENTION_COMPLIANCE. Best Buy was not integrated, no key or live request was used, no production behavior changed, and no commit was required. Walmart remains preserved but deferred, not an active fallback.
+- Required next action is Architect authorization for a bounded retention/compliance design; provider implementation and Phase 12 remain blocked.

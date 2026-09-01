@@ -10,12 +10,27 @@
 
 ## Current pointers
 
-- Current stage: PHASE 11 WALMART ENTITLEMENT INVESTIGATION — BLOCKED PENDING CLARIFICATION
-- Active directive: ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Walmart entitlement/application-scope qualification
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3/`
+- Current stage: PHASE 11 BEST BUY PRODUCT PROVIDER QUALIFICATION — BLOCKED BY RETENTION COMPLIANCE
+- Active directive: ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4 — Best Buy qualification stopped at the durable-content-retention boundary
+- Active task packet: `.agent/tasks/completed/ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4/`
 - Last accepted outcome: Phase 10 durable-task integration (Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`)
 - Last completed outcome: Phase 11 Walmart product provider implementation and live usefulness evidence; entitlement qualification is unresolved and recorded in the current completed packet and Notion
 - Last state sync: 2026-09-01
+
+## Current qualification result
+
+- Best Buy's official Products API and terms were rechecked. Products API is
+  active, requires an ordinary API key, documents `50,000/day` and `5/sec`,
+  and keeps Commerce API invite-only and out of scope.
+- Best Buy terms limit Content storage/cache to 72 hours. ANIMA's current
+  PostgreSQL agent tool-request table durably stores the full sanitized result
+  with no expiry/purge mechanism. Best Buy therefore cannot be integrated
+  under this bounded directive without an Architect-authorized retention
+  change.
+- Result: `BLOCKED — BEST_BUY_RETENTION_COMPLIANCE`. No implementation files,
+  secrets, account settings, or live provider calls changed. Walmart remains
+  preserved as `DEFER — ENTITLEMENT_CLARIFICATION`; no fallback is active.
+- Phase 12 remains unauthorized.
 
 ## Mandatory kernel
 

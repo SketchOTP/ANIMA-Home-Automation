@@ -404,3 +404,11 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Outcome: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`. If operator dashboard metadata shows ANIMA is a separate unapproved surface, the follow-on classification may become `BLOCKED — WALMART_APPLICATION_APPROVAL`.
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+
+## ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4 — Best Buy product-provider qualification
+
+- Issued: 2026-09-01
+- Architect disposition: REPLAN; Walmart is DEFER — ENTITLEMENT_CLARIFICATION and Best Buy is the bounded replacement candidate. Phase 12 remains unauthorized.
+- Scope: requalify the official Best Buy Products API, its ordinary key/cost path, fixed-host query boundary, product normalization, attribution/link/branding obligations, 72-hour content-retention rule, and compatibility with ANIMA persistence; integrate only if qualification passes.
+- Stop condition: if current AgentEpisode/tool-result persistence keeps Best Buy Content beyond 72 hours, return to Architect before changing accepted evidence-retention architecture.
+- Result: qualification stopped at that condition. No provider implementation, secret configuration, live request, account action, or Phase 12 work was performed.

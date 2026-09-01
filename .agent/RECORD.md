@@ -237,3 +237,10 @@ UI, and voice remain out of scope.
 - Technical state is preserved: Walmart-backed product research at governed SHA `a1122b32d1e9d6548b5c78bd1256185d60b4d281` and CI `33501648332` remains technically qualified, with no implementation change.
 - Decision: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`. The current public Affiliate terms require approved affiliate surfaces and qualifying-link/disclosure/data-freshness compliance, while LedgerMind records do not prove that ANIMA HA is an approved or covered surface. The exact legacy affiliate API support and account-specific application scope remain unresolved.
 - Phase 12 remains unauthorized. No account mutation or secret handling was performed.
+
+## Phase 11 Best Buy provider qualification — 2026-09-01
+
+- Type: EXTERNAL-DISCOVERY / GOVERNANCE / BLOCKER
+- Best Buy was requalified as the proposed replacement for Walmart. Official sources support an active Products API with ordinary key registration, bounded search, 50,000/day and 5/sec limits, and separate invite-only Commerce API. Terms require attribution, preserved links, branding where content appears, and Content storage/cache no longer than 72 hours.
+- Direct repository evidence shows current PostgreSQL agent tool-request persistence stores full sanitized external results indefinitely. Because this violates the Best Buy retention rule and the directive requires a stop before changing accepted evidence semantics, no provider code was added.
+- Result: BLOCKED — BEST_BUY_RETENTION_COMPLIANCE. Walmart is preserved but deferred; Phase 12 remains unauthorized.

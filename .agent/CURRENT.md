@@ -4,15 +4,15 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 11 WALMART ENTITLEMENT INVESTIGATION — BLOCKED PENDING CLARIFICATION
+PHASE 11 BEST BUY PRODUCT PROVIDER QUALIFICATION — BLOCKED BY RETENTION COMPLIANCE
 
 ## Current objective
 
-Resolve whether the existing LedgerMind Walmart affiliate-product entitlement authorizes ANIMA HA's read-only product research use. This is an evidence/entitlement investigation only: preserve the technically qualified Walmart provider, do not inspect or copy secrets, do not mutate any Walmart account, and do not implement Phase 12.
+Qualify a sanctioned product-research provider for Phase 11 without paid search, prohibited scraping, ambiguous affiliate entitlement, or a conflict with ANIMA's durable evidence model. Best Buy is the current candidate; the provider is not integrated because its published 72-hour content-retention limit conflicts with current indefinite PostgreSQL episode/tool-result persistence. Walmart remains preserved but deferred pending entitlement clarification. Phase 12 is unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3` — qualify the existing Walmart.io affiliate Product API entitlement, its application/surface scope, cross-project reuse, private-local-assistant use, data/link/disclosure/freshness obligations, cost, rate limits, and support status. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 implementation is technically qualified but the exit gate is blocked pending clarification, and Phase 12 is unauthorized.
+`ANIMA-HA-P11-BEST-BUY-PRODUCT-PROVIDER-013R4` — qualify and, only if compatible with ANIMA retention semantics, integrate the standard Best Buy Products API. Qualification stopped before implementation when current PostgreSQL AgentEpisode/tool-request persistence was confirmed to retain full sanitized provider results indefinitely, while Best Buy's current terms limit content storage/cache to 72 hours. No provider code was changed. Phase 10 is Architect accepted at `2c8f88f62c27a728b2bf0861dabaf7a3a3d03e56`; Phase 11 remains open; Phase 12 is unauthorized.
 
 ## Current verified state
 

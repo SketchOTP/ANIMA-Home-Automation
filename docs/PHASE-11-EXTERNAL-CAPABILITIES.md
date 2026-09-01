@@ -11,7 +11,7 @@ household-scoped and policy-gated.
 | --- | --- | --- |
 | Weather | Open-Meteo | Fixed-host HTTPS, bounded public read |
 | Web research | Private SearXNG, pinned image, JSON API | Internal service, loopback-only exposure, fixed `duckduckgo`/`wikipedia` engines |
-| Product research | Walmart.io affiliate Product API, ANIMA wrapper | Fixed `developer.api.walmart.com` host, signed read-only catalogue requests, timestamped external retail observations; cart/checkout is not supported |
+| Product research | Best Buy Products API candidate; not integrated | Qualification stopped at the current 72-hour Content-retention conflict with durable episode/tool-result persistence; Walmart remains preserved but deferred |
 | Local-business discovery | OpenStreetMap Overpass | Fixed HTTPS endpoint, ANIMA-owned category/tag mapping, no raw query language |
 | Recipes | TheMealDB | Fixed-host bounded public read |
 | Calendar | ANIMA PostgreSQL calendar | `READ_ONLY` reads and Core-approved `POLICY_GATED_INTERNAL` mutations |
@@ -50,16 +50,16 @@ may receive the internal policy-gated boundary. Arbitrary plugins remain
 coordinated consequential tools and cannot self-declare an exemption. Future
 physical/provider actions remain on the accepted Phase 9 coordinator path.
 
-Product research is a separate provider boundary. ANIMA wraps the existing
-LedgerMind Walmart.io product-v2 contract without copying its `.env`, consumer
-identifiers, or private key. The adapter signs each request with
-`WM_SEC.AUTH_SIGNATURE` (RSA-SHA256), calls only the fixed `/search` endpoint,
-and normalizes product identity separately from the retail offer. Product
-descriptions, prices, availability, and images remain `EXTERNAL_UNTRUSTED`;
-price and availability carry retrieval timestamps and are never promoted to
-household Truth. The three ANIMA secret references are resolved only by the
-trusted `SecretBroker`: `WALMART_CONSUMER_ID`, `WALMART_KEY_VERSION`, and
-`WALMART_PRIVATE_KEY_PATH`.
+Product research is a separate provider boundary. The technically qualified
+LedgerMind Walmart.io product-v2 wrapper remains preserved for historical
+evidence, but is no longer the active/default provider because its affiliate
+entitlement is unresolved. Best Buy was investigated as the replacement
+candidate. Its official Products API is active and bounded, but its terms
+prohibit storing/caching Content beyond 72 hours. ANIMA's current PostgreSQL
+agent tool-request persistence durably stores full sanitized external results
+without expiry, so Best Buy was not integrated and no live Best Buy claim is
+made. An Architect-authorized retention/compliance decision is required before
+provider implementation.
 
 ## Evidence
 
@@ -147,3 +147,35 @@ the provisioned operator environment and remains explicit when those secrets
 are absent.
 
 Phase 12 behavior remains unauthorized.
+
+## Best Buy product-provider qualification — 2026-09-01
+
+The official [Best Buy API catalog](https://developer.bestbuy.com/apis) still
+describes an active Products API for current and historical products,
+including pricing, availability, specifications, descriptions, and images.
+The official [API documentation](https://bestbuyapis.github.io/api-documentation/)
+requires an API key obtained through ordinary developer registration, uses the
+fixed `https://api.bestbuy.com/v1/products...` REST boundary, supports bounded
+`search` queries and `show` field selection, and documents the product fields
+needed for normalized candidates and offers. The official [Terms and
+Conditions](https://developer.bestbuy.com/legal) document 50,000 calls/day and
+5 calls/second, distinguish the invite-only Commerce API, require source
+attribution and preserved links, and require Best Buy branding where API
+content appears in an Application.
+
+The same terms prohibit storing or caching Content except temporarily for no
+more than 72 hours. `PostgresEpisodeStore.record_tool_request()` currently
+persists the full sanitized tool result in
+`anima_agent_tool_requests.sanitized_result`; the schema has no provider-content
+expiry and the repository has no purge path. This means an integrated Best Buy
+result would remain durably available beyond the permitted retention window.
+The directive's mandatory stop condition therefore applies. No Best Buy code,
+secret, account, live request, or Phase 12 UI was added.
+
+Qualification result: `BLOCKED — BEST_BUY_RETENTION_COMPLIANCE` pending an
+Architect decision on whether and how the accepted evidence model may retain
+external catalog content within 72 hours (or replace it with metadata-only
+audit and expiring content storage). Cost remains `UNKNOWN` from public
+documentation because no developer account was created; the documentation
+shows ordinary email key registration but does not itself prove a zero-cost
+account issuance path.
