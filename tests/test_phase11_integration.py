@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -110,8 +111,10 @@ def _provider_handler(request: httpx.Request) -> httpx.Response:
     raise AssertionError(f"unexpected provider path: {request.url}")
 
 
-def _catalogue_manager(*, task_service: TaskService | None = None) -> PluginManager:
-    manager = PluginManager(secret_broker=SecretBroker({}))
+def _catalogue_manager(
+    *, task_service: TaskService | None = None, walmart_secrets: dict[str, str] | None = None
+) -> PluginManager:
+    manager = PluginManager(secret_broker=SecretBroker(walmart_secrets or {}))
     for plugin_id in (
         "anima.external.weather",
         "anima.external.discovery",
@@ -122,6 +125,12 @@ def _catalogue_manager(*, task_service: TaskService | None = None) -> PluginMana
         )
         manager.register(manifest, NativeRuntime(runtime))
         manager.enable(plugin_id)
+    if walmart_secrets is not None:
+        manifest, runtime = external_plugin(
+            "anima.external.shopping", transport=httpx.MockTransport(_provider_handler)
+        )
+        manager.register(manifest, NativeRuntime(runtime))
+        manager.enable(manifest.plugin_id)
     if task_service is not None:
         from anima_ha.tasks import TASK_MANIFEST
 
@@ -218,6 +227,83 @@ def test_actual_agent_runtime_uses_one_broad_external_catalogue_for_contextual_c
             "anima.external.discovery.search",
             "anima.external.discovery.search_places",
         }
+
+
+def test_actual_agent_runtime_uses_walmart_product_catalogue(tmp_path: Path) -> None:
+    import subprocess
+
+    key_path = tmp_path / "walmart.pem"
+    subprocess.run(
+        ["openssl", "genrsa", "-out", str(key_path), "512"], check=True, capture_output=True
+    )
+
+    def walmart_handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "developer.api.walmart.com"
+        assert request.url.path.endswith("/api-proxy/service/affil/product/v2/search")
+        assert request.headers["WM_SEC.AUTH_SIGNATURE"]
+        return _response(
+            {
+                "items": [
+                    {"itemId": "201", "name": "Synthetic product one", "salePrice": 10.0},
+                    {"itemId": "202", "name": "Synthetic product two", "salePrice": 12.0},
+                    {"itemId": "203", "name": "Synthetic product three", "salePrice": 14.0},
+                ]
+            },
+            request,
+        )
+
+    secrets = {
+        "WALMART_CONSUMER_ID": "consumer-test",
+        "WALMART_KEY_VERSION": "1",
+        "WALMART_PRIVATE_KEY_PATH": str(key_path),
+    }
+    manager = PluginManager(secret_broker=SecretBroker(secrets))
+    for plugin_id in (
+        "anima.external.weather",
+        "anima.external.discovery",
+        "anima.external.recipes",
+    ):
+        manifest, runtime = external_plugin(
+            plugin_id, transport=httpx.MockTransport(_provider_handler)
+        )
+        manager.register(manifest, NativeRuntime(runtime))
+        manager.enable(plugin_id)
+    manifest, runtime = external_plugin(
+        "anima.external.shopping", transport=httpx.MockTransport(walmart_handler)
+    )
+    manager.register(manifest, NativeRuntime(runtime))
+    manager.enable(manifest.plugin_id)
+
+    episode_store = InMemoryEpisodeStore()
+    result = AgentRuntime(
+        ScriptedCodexAdapter(
+            [
+                _tool_turn(
+                    "anima.external.shopping.search_products",
+                    {"query": "wireless headphones", "count": 3},
+                ),
+                _final_turn(),
+            ]
+        ),
+        manager,
+        episode_store,
+    ).run(
+        _request(
+            manager,
+            trigger_id=uuid4(),
+            packet_id=uuid4(),
+            text="Find current wireless headphone candidates",
+        )
+    )
+    assert result.episode.status == EpisodeStatus.COMPLETED
+    assert result.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
+    assert (
+        episode_store.tool_requests[0]["result"].external_content_trust
+        == ExternalContentTrust.EXTERNAL_UNTRUSTED
+    )
+    assert episode_store.tool_requests[0]["decision"].tool_id == (
+        "anima.external.shopping.search_products"
+    )
 
 
 def test_hostile_external_result_stays_untrusted_through_actual_agent_next_turn() -> None:

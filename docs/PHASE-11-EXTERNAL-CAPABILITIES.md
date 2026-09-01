@@ -10,7 +10,8 @@ household-scoped and policy-gated.
 | Capability | Implementation | Boundary |
 | --- | --- | --- |
 | Weather | Open-Meteo | Fixed-host HTTPS, bounded public read |
-| Web/product research | Private SearXNG, pinned image, JSON API | Internal service, loopback-only exposure, fixed `duckduckgo`/`wikipedia` engines; product results remain externally gated when upstream engines are blocked |
+| Web research | Private SearXNG, pinned image, JSON API | Internal service, loopback-only exposure, fixed `duckduckgo`/`wikipedia` engines |
+| Product research | Walmart.io affiliate Product API, ANIMA wrapper | Fixed `developer.api.walmart.com` host, signed read-only catalogue requests, timestamped external retail observations; cart/checkout is not supported |
 | Local-business discovery | OpenStreetMap Overpass | Fixed HTTPS endpoint, ANIMA-owned category/tag mapping, no raw query language |
 | Recipes | TheMealDB | Fixed-host bounded public read |
 | Calendar | ANIMA PostgreSQL calendar | `READ_ONLY` reads and Core-approved `POLICY_GATED_INTERNAL` mutations |
@@ -49,22 +50,34 @@ may receive the internal policy-gated boundary. Arbitrary plugins remain
 coordinated consequential tools and cannot self-declare an exemption. Future
 physical/provider actions remain on the accepted Phase 9 coordinator path.
 
+Product research is a separate provider boundary. ANIMA wraps the existing
+LedgerMind Walmart.io product-v2 contract without copying its `.env`, consumer
+identifiers, or private key. The adapter signs each request with
+`WM_SEC.AUTH_SIGNATURE` (RSA-SHA256), calls only the fixed `/search` endpoint,
+and normalizes product identity separately from the retail offer. Product
+descriptions, prices, availability, and images remain `EXTERNAL_UNTRUSTED`;
+price and availability carry retrieval timestamps and are never promoted to
+household Truth. The three ANIMA secret references are resolved only by the
+trusted `SecretBroker`: `WALMART_CONSUMER_ID`, `WALMART_KEY_VERSION`, and
+`WALMART_PRIVATE_KEY_PATH`.
+
 ## Evidence
 
 The real AgentRuntime calendar path is covered by deterministic integration
 tests: model tool request → Phase 5 gateway → Phase 4 policy → native calendar
 plugin → calendar service. The test proves one event, trusted provenance and
-idempotency, and no Phase 9 physical action record. External search results
-remain `EXTERNAL_UNTRUSTED` through the next cognition turn. Existing durable
+idempotency, and no Phase 9 physical action record. External search and
+Walmart product results remain `EXTERNAL_UNTRUSTED` through the next cognition
+turn. Existing durable
 task scheduled-cognition tests continue to prove fresh context construction.
 
 Fresh local-filesystem validation passed: the focused calendar/SearXNG tests,
 real OPA + PostgreSQL calendar target matrix, Ruff on changed files, strict
 mypy, package sdist/wheel, ordered migration initial/repeat, live synthetic
 Open-Meteo/TheMealDB/Overpass, and the strict harness's SearXNG web result.
-The strict SearXNG product target is currently an explicit external-resource
-gate: DuckDuckGo returned CAPTCHA and the configured Wikipedia reference engine
-did not provide a product candidate. A fresh full-suite rerun after refreshing
+Credentialed Atlas validation of the Walmart target returned 9 distinct
+candidates for `wireless headphones` and 10 for `air fryer`, satisfying the
+two-query product usefulness threshold. The initial full-suite rerun after refreshing
 the locked development environment passed; the first run had one transient,
 pre-existing Phase 5 MCP stdio startup failure and no Phase 5 code was changed.
 Public external traffic is synthetic; no
@@ -77,7 +90,11 @@ notification-delivery claim is made.
 configuration is present; service health is still checked by the harness.
 `EXTERNAL_RESOURCE_GATE_OVERPASS=CONFIGURED` means the fixed public endpoint
 is selected; outages remain explicit provider failures. The local calendar has
-no external credential gate.
+is selected; outages remain explicit provider failures. The local calendar has
+no external credential gate. `EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH`
+is `AVAILABLE` only when all three trusted secret references are supplied;
+otherwise the harness reports `EXTERNAL_RESOURCE_GATE` without attempting an
+unauthenticated or scraped fallback.
 
 ## Hardening qualification — 2026-09-01
 
@@ -104,9 +121,29 @@ adopted. The configured set therefore remains the defensible bounded
 engine errors exposed in normalized metadata. SearXNG `!bang` engine/category
 modifiers are rejected by ANIMA before service invocation. Use
 `python scripts/verify_phase11_external.py --require-phase11-targets` for
-strict manual target validation; it returns nonzero when required live search,
-product, or Overpass evidence is unavailable. Phase 11 remains open pending
-Architect review of the product-search resource gate; Phase 12 remains
-unauthorized.
+strict manual web/places validation and add
+`--require-walmart-products` for the credentialed product gate. The harness
+never uses browser automation, eBay HTML extraction, CAPTCHA bypass, or cart
+automation. Phase 11 product implementation is complete pending Architect
+review; no Phase 12 behavior is authorized.
+
+## Walmart qualification — 2026-09-01
+
+LedgerMind's existing operator environment was inspected on the Atlas laptop
+at `/home/sketch/Projects/LedgerMind`. Its production Walmart smoke test passed
+with status-only output for signature generation, taxonomy, stores, keyword
+search, ZIP-scoped item pricing, and store-scoped item pricing. Walmart cart
+push remained explicitly unsupported. ANIMA copied the provider contract and
+normalization boundary, not credentials or runtime data.
+
+The ANIMA live harness was run with the three secret names mapped from the
+LedgerMind production environment through the trusted boundary. `wireless
+headphones` returned 9 distinct product references and `air fryer` returned 10;
+both results included Walmart source references and externally timestamped
+price/availability observations. This is `LIVE_CREDENTIALED` provider evidence
+on the Atlas x86-64 host, not a claim of purchase, checkout, physical-home, or
+production-scale behavior. The product resource gate is therefore closed in
+the provisioned operator environment and remains explicit when those secrets
+are absent.
 
 Phase 12 behavior remains unauthorized.

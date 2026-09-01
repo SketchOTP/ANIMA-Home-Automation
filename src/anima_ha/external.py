@@ -7,13 +7,16 @@ can select a host, credential, topic, or arbitrary HTTP operation.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import ipaddress
 import json
+import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import quote
 from uuid import UUID, uuid4
@@ -34,6 +37,13 @@ MAX_RESPONSE_BYTES = 1_048_576
 MAX_QUERY_LENGTH = 400
 MAX_RESULT_COUNT = 10
 SEARXNG_CONFIGURED_ENGINES = ("duckduckgo", "wikipedia")
+WALMART_API_HOST = "developer.api.walmart.com"
+WALMART_PRODUCT_API_BASE = f"https://{WALMART_API_HOST}/api-proxy/service/affil/product/v2"
+WALMART_SECRET_NAMES = (
+    "WALMART_CONSUMER_ID",
+    "WALMART_KEY_VERSION",
+    "WALMART_PRIVATE_KEY_PATH",
+)
 
 
 class ExternalProviderError(RuntimeError):
@@ -421,6 +431,154 @@ class SearXNGProvider:
         )
 
 
+class WalmartProductProvider:
+    """Bounded product research through LedgerMind's signed Walmart API path.
+
+    The provider uses the existing Walmart.io affiliate product API contract:
+    RSA-SHA256 ``WM_SEC.AUTH_SIGNATURE`` headers, fixed catalogue endpoints,
+    and read-only product data. ANIMA owns the secret boundary and never
+    exposes credentials, key paths, or signing material to the model.
+    """
+
+    def __init__(self, client: BoundedHttpClient, secret_env: dict[str, str]) -> None:
+        missing = [name for name in WALMART_SECRET_NAMES if not secret_env.get(name, "").strip()]
+        if missing:
+            raise ExternalProviderUnavailable("Walmart signing credentials are not configured")
+        self.client = client
+        self.consumer_id = secret_env["WALMART_CONSUMER_ID"].strip()
+        self.key_version = secret_env["WALMART_KEY_VERSION"].strip() or "1"
+        self.private_key_path = Path(secret_env["WALMART_PRIVATE_KEY_PATH"]).expanduser()
+        if not self.private_key_path.is_file():
+            raise ExternalProviderUnavailable("Walmart signing key is unavailable")
+
+    def _headers(self) -> dict[str, str]:
+        timestamp = str(int(time.time() * 1000))
+        message = f"{self.consumer_id}\n{timestamp}\n{self.key_version}\n"
+        try:
+            signed = subprocess.run(
+                ["openssl", "dgst", "-sha256", "-sign", str(self.private_key_path)],
+                input=message.encode("utf-8"),
+                capture_output=True,
+                check=False,
+            )
+        except OSError as exc:
+            raise ExternalProviderUnavailable("Walmart signing tool is unavailable") from exc
+        if signed.returncode != 0 or not signed.stdout:
+            raise ExternalProviderUnavailable("Walmart request signing failed")
+        return {
+            "WM_SEC.AUTH_SIGNATURE": base64.b64encode(signed.stdout).decode("ascii"),
+            "WM_CONSUMER.INTIMESTAMP": timestamp,
+            "WM_CONSUMER.ID": self.consumer_id,
+            "WM_SEC.KEY_VERSION": self.key_version,
+            "Accept": "application/json",
+        }
+
+    @staticmethod
+    def _number(value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _product_url(item_id: str, item: dict[str, Any]) -> str:
+        explicit = str(item.get("productUrl") or "").strip()
+        return explicit or f"https://www.walmart.com/ip/{item_id}"
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> dict[str, Any]:
+        del timeout
+        if name != "search_products":
+            raise ExternalProviderError("unknown Walmart operation")
+        query = str(arguments["query"]).strip()
+        if not query or len(query) > MAX_QUERY_LENGTH:
+            raise ValueError("product query is empty or exceeds the 400-character bound")
+        count = _count(arguments.get("count", 5))
+        _, payload = self.client.request(
+            operation="shopping.search_products",
+            method="GET",
+            path="/search",
+            params={"query": query, "numItems": min(count, 25)},
+            headers=self._headers(),
+        )
+        retrieved_at = datetime.now(UTC).isoformat()
+        products: list[dict[str, Any]] = []
+        items = payload.get("items", [])
+        if not isinstance(items, list):
+            raise ExternalProviderError("Walmart product response has an invalid item list")
+        for item in items[:count]:
+            if not isinstance(item, dict):
+                continue
+            item_id = str(item.get("itemId") or "").strip()
+            name_value = str(item.get("name") or "").strip()
+            if not item_id or not name_value:
+                continue
+            sale = self._number(item.get("salePrice"))
+            regular = self._number(item.get("msrp"))
+            effective = sale if sale is not None else regular
+            attributes = item.get("attributes")
+            if not isinstance(attributes, dict):
+                attributes = {}
+            products.append(
+                {
+                    "provider": "walmart",
+                    "provider_reference": item_id,
+                    "source_url": self._product_url(item_id, item),
+                    "name": name_value,
+                    "brand": str(item.get("brandName") or ""),
+                    "model": str(item.get("modelNumber") or ""),
+                    "size": str(item.get("size") or ""),
+                    "category": str(item.get("categoryPath") or ""),
+                    "description": str(item.get("shortDescription") or "")[:2_000],
+                    "specifications": {
+                        str(key): str(value)
+                        for key, value in attributes.items()
+                        if value is not None
+                    },
+                    "retail_offer": {
+                        "retailer": "Walmart",
+                        "price": (
+                            {
+                                "amount": effective,
+                                "currency": "USD",
+                                "source": "walmart_api",
+                                "retrieved_at": retrieved_at,
+                            }
+                            if effective is not None
+                            else None
+                        ),
+                        "regular_price": regular,
+                        "promo_price": sale if sale is not None and sale != regular else None,
+                        "availability": (
+                            "in_stock"
+                            if item.get("availableOnline") is True
+                            else "out_of_stock"
+                            if item.get("availableOnline") is False
+                            else "unknown"
+                        ),
+                        "retrieved_at": retrieved_at,
+                    },
+                    "image_url": str(item.get("mediumImage") or item.get("thumbnailImage") or ""),
+                    "rating": str(item.get("customerRating") or ""),
+                    "review_count": item.get("numReviews"),
+                }
+            )
+        return _result(
+            "walmart",
+            "shopping.search_products",
+            {"query": query, "products": products},
+            attribution="Product catalogue and retail observations provided by Walmart API",
+            provider_metadata={
+                "api": "walmart_io_affiliate_product_v2",
+                "cart_add_supported": False,
+                "checkout_supported": False,
+                "price_authority": "external_observation_only",
+                "result_count": len(products),
+            },
+        )
+
+
 _OVERPASS_TAGS: dict[str, tuple[str, str]] = {
     "restaurant": ("amenity", "restaurant"),
     "cafe": ("amenity", "cafe"),
@@ -588,7 +746,11 @@ class NtfyProvider:
 
 
 def _read_tool(
-    name: str, description: str, *, schema: dict[str, Any] | None = None
+    name: str,
+    description: str,
+    *,
+    schema: dict[str, Any] | None = None,
+    semantic_action: str | None = None,
 ) -> dict[str, Any]:
     schemas: dict[str, dict[str, Any]] = {
         "get": {
@@ -648,7 +810,7 @@ def _read_tool(
         "description": description,
         "input_schema": schema or schemas.get(name, {"type": "object"}),
         "risk_class": "READ_ONLY",
-        "semantic_action": name,
+        "semantic_action": semantic_action or name,
         "read_only": True,
         "idempotency": Idempotency.IDEMPOTENT.value,
         "external_content_trust": ExternalContentTrust.EXTERNAL_UNTRUSTED.value,
@@ -695,16 +857,36 @@ def external_manifests() -> tuple[PluginManifest, ...]:
             requires_core="0.1.0",
             plugin_version="0.2.0",
             name="Free local discovery",
-            description="Private SearXNG web/product search and OpenStreetMap POI discovery",
+            description="Private SearXNG web search and OpenStreetMap POI discovery",
             runtime_kind=RuntimeKind.TRUSTED_NATIVE,
             trust_class=TrustClass.TRUSTED_NATIVE,
-            capabilities=("web-research", "places", "shopping-research"),
+            capabilities=("web-research", "places"),
             tools=(
                 _read_tool("search", "Search bounded web results"),
                 _read_tool("search_places", "Find bounded local places"),
-                _read_tool("search_products", "Find bounded product candidates"),
             ),
             network_requirements=("searxng:8080", "overpass-api.de"),
+            source="builtin:anima_ha.external",
+        ),
+        PluginManifest(
+            plugin_id="anima.external.shopping",
+            manifest_version=1,
+            requires_core="0.1.0",
+            plugin_version="0.1.0",
+            name="Walmart product research",
+            description="Bounded Walmart product catalogue and retail observations",
+            runtime_kind=RuntimeKind.TRUSTED_NATIVE,
+            trust_class=TrustClass.TRUSTED_NATIVE,
+            capabilities=("shopping-research",),
+            tools=(
+                _read_tool(
+                    "search_products",
+                    "Search bounded Walmart product candidates",
+                    semantic_action="shopping.search_products",
+                ),
+            ),
+            required_secrets=WALMART_SECRET_NAMES,
+            network_requirements=(f"{WALMART_API_HOST}:443",),
             source="builtin:anima_ha.external",
         ),
         PluginManifest(
@@ -878,6 +1060,19 @@ def external_plugin(
                 ),
             ),
         )
+    if plugin_id == "anima.external.shopping":
+        return manifest, ExternalNativePlugin(
+            manifest,
+            lambda env: WalmartProductProvider(
+                client(
+                    "walmart",
+                    WALMART_PRODUCT_API_BASE,
+                    (WALMART_API_HOST,),
+                    "WALMART_PRIVATE_KEY_PATH",
+                ),
+                env,
+            ),
+        )
     if plugin_id == "anima.external.recipes":
         return manifest, ExternalNativePlugin(
             manifest,
@@ -907,6 +1102,12 @@ def external_resource_gates(secrets: dict[str, str]) -> dict[str, str]:
     return {
         "EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH": "CONFIGURED",
         "EXTERNAL_RESOURCE_GATE_OVERPASS": "CONFIGURED",
+        "EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH": (
+            "AVAILABLE"
+            if all(bool(secrets.get(name, "").strip()) for name in WALMART_SECRET_NAMES)
+            and Path(secrets["WALMART_PRIVATE_KEY_PATH"]).expanduser().is_file()
+            else "EXTERNAL_RESOURCE_GATE"
+        ),
         "EXTERNAL_RESOURCE_GATE_NTFY": (
             "AVAILABLE" if bool(secrets.get("NTFY_TOPIC")) else "EXTERNAL_RESOURCE_GATE"
         ),

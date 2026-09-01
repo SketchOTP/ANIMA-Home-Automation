@@ -9,12 +9,14 @@ from uuid import UUID, uuid4
 
 from anima_ha.calendar import CalendarService, InMemoryCalendarStore
 from anima_ha.external import (
+    WALMART_SECRET_NAMES,
     BoundedHttpClient,
     LocalServiceClient,
     OpenMeteoProvider,
     OverpassProvider,
     SearXNGProvider,
     TheMealDBProvider,
+    external_plugin,
     external_resource_gates,
 )
 from anima_ha.plugins import InvocationContext
@@ -39,6 +41,11 @@ def main() -> int:
         "--require-phase11-targets",
         action="store_true",
         help="fail if required live SearXNG or Overpass target evidence is unavailable",
+    )
+    parser.add_argument(
+        "--require-walmart-products",
+        action="store_true",
+        help="fail if credentialed Walmart product evidence is unavailable",
     )
     args = parser.parse_args()
     failures: list[str] = []
@@ -93,33 +100,56 @@ def main() -> int:
             audit_sink=audits,
         )
         search = SearXNGProvider(search_client)
-        for label, operation, query in (
-            ("searxng_web_live", "search", "Python"),
-            ("searxng_products_live", "search_products", "synthetic reusable bottle product"),
-        ):
-            try:
-                result = search.invoke(operation, {"query": query, "count": 3}, 10)
-                assert result["trust"] == "EXTERNAL_UNTRUSTED"
-                results = result["data"]["results"]
-                if not results:
-                    raise AssertionError(f"{label} returned no results")
-                if not all(item.get("title") and item.get("url") for item in results):
-                    raise AssertionError(f"{label} returned an incomplete source record")
-                print(
-                    f"{label}_results={len(results)} "
-                    f"engines={result['provider_metadata']['configured_engines']} "
-                    f"unresponsive={result['provider_metadata']['unresponsive_engines']}"
-                )
-                print(f"{label}=PASS class=LIVE_PUBLIC_SYNTHETIC")
-            except Exception as exc:
-                print(f"{label}=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
-                if args.require_phase11_targets:
-                    failures.append(f"{label}: {type(exc).__name__}")
+        try:
+            result = search.invoke("search", {"query": "Python", "count": 3}, 10)
+            assert result["trust"] == "EXTERNAL_UNTRUSTED"
+            results = result["data"]["results"]
+            if not results:
+                raise AssertionError("searxng_web_live returned no results")
+            if not all(item.get("title") and item.get("url") for item in results):
+                raise AssertionError("searxng_web_live returned an incomplete source record")
+            print(
+                f"searxng_web_live_results={len(results)} "
+                f"engines={result['provider_metadata']['configured_engines']} "
+                f"unresponsive={result['provider_metadata']['unresponsive_engines']}"
+            )
+            print("searxng_web_live=PASS class=LIVE_PUBLIC_SYNTHETIC")
+        except Exception as exc:
+            print(f"searxng_web_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+            if args.require_phase11_targets:
+                failures.append(f"searxng_web_live: {type(exc).__name__}")
     except Exception as exc:
         print(f"searxng_web_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
-        print(f"searxng_products_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
         if args.require_phase11_targets:
             failures.append(f"SearXNG service: {type(exc).__name__}")
+
+    walmart_env = {name: os.environ[name] for name in WALMART_SECRET_NAMES if os.environ.get(name)}
+    if all(walmart_env.get(name, "").strip() for name in WALMART_SECRET_NAMES):
+        walmart_runtime = None
+        try:
+            _, walmart_runtime = external_plugin("anima.external.shopping", audit_sink=audits)
+            walmart_runtime.start(walmart_env)
+            for query in ("wireless headphones", "air fryer"):
+                result = walmart_runtime.invoke(
+                    "search_products", {"query": query, "count": 10}, 10
+                )
+                assert result["trust"] == "EXTERNAL_UNTRUSTED"
+                products = result["data"]["products"]
+                references = {item["provider_reference"] for item in products}
+                assert len(products) >= 3 and len(references) == len(products)
+                print(f"walmart_products_live_query={query!r} results={len(products)}")
+            print("walmart_products_live=PASS class=LIVE_CREDENTIALED")
+        except Exception as exc:
+            print(f"walmart_products_live=EXTERNAL_RESOURCE_GATE detail={type(exc).__name__}")
+            if args.require_walmart_products:
+                failures.append(f"walmart_products_live: {type(exc).__name__}")
+        finally:
+            if walmart_runtime is not None:
+                walmart_runtime.stop()
+    else:
+        print("walmart_products_live=EXTERNAL_RESOURCE_GATE detail=credentials_missing")
+        if args.require_walmart_products:
+            failures.append("walmart_products_live: credentials_missing")
 
     try:
         overpass = OverpassProvider(
@@ -150,6 +180,9 @@ def main() -> int:
 
     print(f"EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH={gates['EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH']}")
     print(f"EXTERNAL_RESOURCE_GATE_OVERPASS={gates['EXTERNAL_RESOURCE_GATE_OVERPASS']}")
+    print(
+        f"EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH={gates['EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH']}"
+    )
     print(f"external_audit_records={len(audits)}")
     if failures:
         for failure in failures:

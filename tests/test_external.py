@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from uuid import UUID, uuid4
 
 import httpx
@@ -15,6 +16,7 @@ from anima_ha.calendar import (
 )
 from anima_ha.events import EventEnvelope
 from anima_ha.external import (
+    WALMART_SECRET_NAMES,
     BoundedHttpClient,
     ExternalAuditJournalSink,
     ExternalProviderError,
@@ -23,6 +25,7 @@ from anima_ha.external import (
     OpenMeteoProvider,
     OverpassProvider,
     SearXNGProvider,
+    WalmartProductProvider,
     external_manifests,
     external_resource_gates,
 )
@@ -281,5 +284,89 @@ def test_external_resource_gates_no_longer_require_retired_credentials() -> None
     gates = external_resource_gates({})
     assert gates["EXTERNAL_RESOURCE_GATE_SEARXNG_SEARCH"] == "CONFIGURED"
     assert gates["EXTERNAL_RESOURCE_GATE_OVERPASS"] == "CONFIGURED"
+    assert gates["EXTERNAL_RESOURCE_GATE_WALMART_PRODUCT_SEARCH"] == "EXTERNAL_RESOURCE_GATE"
     assert "EXTERNAL_RESOURCE_GATE_BRAVE_SEARCH" not in gates
     assert "EXTERNAL_RESOURCE_GATE_GOOGLE_CALENDAR" not in gates
+
+
+def test_walmart_product_provider_normalizes_signed_read_only_observations(tmp_path: Path) -> None:
+    import subprocess
+
+    key_path = tmp_path / "walmart.pem"
+    subprocess.run(
+        ["openssl", "genrsa", "-out", str(key_path), "512"], check=True, capture_output=True
+    )
+    audits: list[ExternalRequestAudit] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "developer.api.walmart.com"
+        assert request.url.path.endswith("/api-proxy/service/affil/product/v2/search")
+        assert request.url.params["query"] == "wireless headphones"
+        assert request.url.params["numItems"] == "3"
+        assert request.headers["WM_CONSUMER.ID"] == "consumer-test"
+        assert request.headers["WM_SEC.AUTH_SIGNATURE"]
+        return response(
+            {
+                "items": [
+                    {
+                        "itemId": "101",
+                        "name": "Synthetic Headphones A",
+                        "brandName": "Example A",
+                        "modelNumber": "A1",
+                        "salePrice": 29.99,
+                        "msrp": 39.99,
+                        "availableOnline": True,
+                        "attributes": {"battery": "30 hours"},
+                        "shortDescription": "A bounded synthetic product record.",
+                    },
+                    {
+                        "itemId": "102",
+                        "name": "Synthetic Headphones B",
+                        "brandName": "Example B",
+                        "msrp": 49.99,
+                        "availableOnline": False,
+                    },
+                ]
+            },
+            request,
+        )
+
+    client = BoundedHttpClient(
+        provider="walmart",
+        base_url="https://developer.api.walmart.com/api-proxy/service/affil/product/v2",
+        allowed_hosts=("developer.api.walmart.com",),
+        audit_sink=audits,
+        credential_reference="WALMART_PRIVATE_KEY_PATH",
+        transport=httpx.MockTransport(handler),
+    )
+    provider = WalmartProductProvider(
+        client,
+        {
+            "WALMART_CONSUMER_ID": "consumer-test",
+            "WALMART_KEY_VERSION": "1",
+            "WALMART_PRIVATE_KEY_PATH": str(key_path),
+        },
+    )
+    result = provider.invoke("search_products", {"query": "wireless headphones", "count": 3}, 10)
+    products = result["data"]["products"]
+    assert result["trust"] == "EXTERNAL_UNTRUSTED"
+    assert result["operation"] == "shopping.search_products"
+    assert len(products) == 2
+    assert products[0]["provider_reference"] == "101"
+    assert products[0]["retail_offer"]["price"]["amount"] == 29.99
+    assert products[0]["retail_offer"]["price"]["source"] == "walmart_api"
+    assert products[1]["retail_offer"]["availability"] == "out_of_stock"
+    assert all(item["source_url"].startswith("https://www.walmart.com/ip/") for item in products)
+    assert all(name in WALMART_SECRET_NAMES for name in WALMART_SECRET_NAMES)
+    assert "consumer-test" not in str(audits)
+
+
+def test_walmart_manifest_keeps_credentials_out_of_model_schema() -> None:
+    manifest = next(
+        item for item in external_manifests() if item.plugin_id == "anima.external.shopping"
+    )
+    tool = manifest.tools[0]
+    assert manifest.required_secrets == WALMART_SECRET_NAMES
+    assert tool["semantic_action"] == "shopping.search_products"
+    assert set(tool["input_schema"]["properties"]) == {"query", "count"}
+    assert "WALMART_CONSUMER_ID" not in str(tool)
