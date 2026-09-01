@@ -565,7 +565,7 @@ class McpRuntime:
         args: list[str] | None = None,
         url: str | None = None,
         cwd: str | None = None,
-        startup_timeout: float = 5.0,
+        startup_timeout: float = 15.0,
     ) -> None:
         self.kind, self.command, self.args, self.url, self.cwd, self.startup_timeout = (
             kind,
@@ -641,7 +641,15 @@ class McpRuntime:
     def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
         if not self._running:
             raise RuntimeError("MCP runtime is stopped")
-        return asyncio.run(asyncio.wait_for(self._invoke_async(name, arguments, timeout), timeout))
+        # Each stdio call starts a fresh server process, so the bounded startup
+        # allowance must also cover the transport handshake before the tool's
+        # own timeout can be meaningfully enforced.
+        effective_timeout = max(timeout, self.startup_timeout)
+        return asyncio.run(
+            asyncio.wait_for(
+                self._invoke_async(name, arguments, effective_timeout), effective_timeout
+            )
+        )
 
 
 class SecretBroker:

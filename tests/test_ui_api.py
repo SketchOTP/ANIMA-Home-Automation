@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from anima_ha.ui_api import (
     DEFAULT_HOUSEHOLD_ID,
     DEFAULT_PRINCIPAL_ID,
+    JournalConversationIngress,
     UIConfig,
     UIEventBroadcaster,
     UIService,
@@ -65,7 +66,8 @@ def test_home_is_anima_view_model_and_mutations_require_csrf_and_origin() -> Non
 
 def test_production_conversation_requires_the_real_runtime_bridge() -> None:
     client, _, service = authenticated_client()
-    service.conversation.fallback_enabled = False  # type: ignore[attr-defined]
+    assert isinstance(service.conversation, JournalConversationIngress)
+    service.conversation.fallback_enabled = False
     bootstrap = client.get("/api/v1/bootstrap").json()
     response = client.post(
         "/api/v1/conversation",
