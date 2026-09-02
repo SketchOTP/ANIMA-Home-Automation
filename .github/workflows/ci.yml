@@ -20,6 +20,23 @@ jobs:
         run: python -m pip install --disable-pip-version-check "uv==0.12.7"
       - name: Run deterministic validation
         run: ./scripts/validate.sh
+      - name: Start Core services for integrated UI validation
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
+          ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
+        run: |
+          docker compose up -d db opa
+          for attempt in {1..30}; do
+            if docker compose exec -T db pg_isready -U anima -d anima >/dev/null 2>&1 \
+              && curl --fail --silent http://127.0.0.1:18181/health >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          docker compose exec -T db pg_isready -U anima -d anima
+          curl --fail --silent http://127.0.0.1:18181/health >/dev/null
+          uv run --locked --group dev anima-migrate
       - uses: actions/setup-node@v5
         with:
           node-version: "24.20.0"
@@ -34,3 +51,9 @@ jobs:
           npm run build
           npx playwright install --with-deps chromium webkit
           npm run e2e -- --reporter=line
+      - name: Stop Core services
+        if: always()
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
+        run: docker compose down --remove-orphans
