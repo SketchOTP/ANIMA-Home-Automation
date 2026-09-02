@@ -73,6 +73,7 @@ class UIConfig:
     ha_base_url: str | None = None
     ha_client_id: str | None = None
     ha_redirect_uri: str | None = None
+    opa_url: str = "http://127.0.0.1:8181"
     test_auth_enabled: bool = False
     session_absolute_ttl: timedelta = SESSION_ABSOLUTE_TTL
     session_idle_ttl: timedelta = SESSION_IDLE_TTL
@@ -94,6 +95,7 @@ class UIConfig:
             ha_base_url=source.get("ANIMA_HA_BASE_URL") or None,
             ha_client_id=source.get("ANIMA_HA_OAUTH_CLIENT_ID") or None,
             ha_redirect_uri=source.get("ANIMA_HA_OAUTH_REDIRECT_URI") or None,
+            opa_url=source.get("ANIMA_OPA_URL", "http://127.0.0.1:8181").rstrip("/"),
             test_auth_enabled=source.get("ANIMA_UI_TEST_AUTH", "0") == "1",
         )
 
@@ -602,7 +604,12 @@ class JournalConversationIngress:
             payload={"text": text, "origin": RequestOrigin.DIRECT_USER.value},
             importance=EventImportance.IMPORTANT,
             delivery_class=DeliveryClass.GUARANTEED,
-            metadata={"principal_id": str(identity.principal_id), "ui_version": UI_VERSION},
+            correlation_id=request_id,
+            metadata={
+                "household_id": str(identity.household_id),
+                "principal_id": str(identity.principal_id),
+                "ui_version": UI_VERSION,
+            },
         )
         self.events_seen.append(event)
         if self.event_sink is not None:
@@ -718,16 +725,26 @@ class UIService:
         read_model: HouseholdReadModel | None = None,
         commands: UICommandGateway | None = None,
         conversation: ConversationIngress | None = None,
+        core_runtime: Any | None = None,
         ha_user_map: dict[str, tuple[UUID, UUID]] | None = None,
     ) -> None:
         self.config = config or UIConfig()
         self.sessions = sessions or InMemorySessionStore()
         self.events = UIEventBroadcaster()
         self.read_model = read_model or DemoHouseholdReadModel()
-        self.commands = commands or UnavailableCommandGateway()
-        self.conversation = conversation or JournalConversationIngress(
-            events=self.events, fallback_enabled=self.config.test_auth_enabled
-        )
+        if core_runtime is not None:
+            self.commands = commands or core_runtime.commands(self.events)
+            self.conversation = conversation or JournalConversationIngress(
+                event_sink=core_runtime.journal,
+                events=self.events,
+                pipeline=core_runtime.conversation(self.events),
+                fallback_enabled=False,
+            )
+        else:
+            self.commands = commands or UnavailableCommandGateway()
+            self.conversation = conversation or JournalConversationIngress(
+                events=self.events, fallback_enabled=self.config.test_auth_enabled
+            )
         self.ha_user_map = ha_user_map or {
             "test-ha-user": (DEFAULT_HOUSEHOLD_ID, DEFAULT_PRINCIPAL_ID)
         }
@@ -846,7 +863,17 @@ def create_app(service: UIService | None = None) -> FastAPI:
         read_model: HouseholdReadModel | None = (
             PostgresHouseholdReadModel(database_url) if database_url else None
         )
-        svc = UIService(config=config, sessions=sessions, read_model=read_model)
+        core_runtime = None
+        if database_url:
+            from anima_ha.ui_runtime import build_postgres_core
+
+            core_runtime = build_postgres_core(database_url, opa_url=config.opa_url)
+        svc = UIService(
+            config=config,
+            sessions=sessions,
+            read_model=read_model,
+            core_runtime=core_runtime,
+        )
     else:
         svc = service
     app = FastAPI(title="ANIMA local interface", version=UI_VERSION, docs_url=None, redoc_url=None)

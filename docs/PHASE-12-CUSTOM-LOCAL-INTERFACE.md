@@ -1,6 +1,6 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce`, hosted CI `33572829176` passed; governed evidence closure and Architect acceptance pending.
+Status: integrated implementation is under Architect review; final governed checkpoint and hosted CI are recorded in the Authority handoff.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.
@@ -17,7 +17,9 @@ flowchart LR
     P --> O[Phase 4 policy]
     P --> X[Phase 9 coordinator for consequential actions]
     A --> J[Normalized UI request event]
-    J --> C[Phase 7 context and Phase 8 AgentRuntime]
+    J --> A2[Attention]
+    A2 --> C[Phase 7 Context Broker]
+    C --> R[Phase 8 AgentRuntime]
     A --> E[Bounded SSE invalidations]
 ```
 
@@ -25,9 +27,13 @@ The browser receives only API view models. It does not receive Home Assistant
 credentials, database connections, OPA details, provider keys, raw journal
 payloads, raw ContextPackets, or arbitrary tool invocation access. Browser
 mutations require a server session, a session-bound CSRF token, and a matching
-Origin. Production command handling is fail-closed until the host injects the
-existing Core gateway; the UI layer never calls TaskService, CalendarService,
-Home Assistant, or SQL as a policy bypass.
+Origin. The normal configured service composes the existing Core journal,
+Attention, Context Broker, AgentRuntime, PluginManager, policy client, task
+service, and calendar service through `src/anima_ha/ui_runtime.py`. The UI
+layer never calls TaskService, CalendarService, Home Assistant, or SQL as a
+policy bypass. A missing configured dependency produces an explicit
+unavailable capability; the test-only echo remains behind
+`ANIMA_UI_TEST_AUTH=1`.
 
 ## Stack qualification
 
@@ -80,7 +86,7 @@ maps the fixed test user. An unmapped HA user fails closed with
 | `POST /api/v1/calendar` | calendar mutation | session + CSRF + Core gateway |
 | `GET /api/v1/activity` | bounded sanitized activity | session |
 | `GET /api/v1/capabilities` | availability/health projection | session |
-| `POST /api/v1/conversation` | normalized direct-user request ingress | session + CSRF + injected journal/attention/context/AgentRuntime bridge |
+| `POST /api/v1/conversation` | normalized direct-user request ingress | session + CSRF + journal → attention → context → AgentRuntime |
 | `POST /api/v1/controls/{id}` | semantic low-risk control ingress | session + CSRF + Phase 5/4/9 bridge |
 | `GET /api/v1/events` | invalidation-only SSE | session |
 
@@ -110,10 +116,10 @@ is present.
 
 Deterministic backend tests cover health/auth, single-use OAuth state, exact
 principal mapping, hashed sessions, expiry/revocation, CSRF/Origin, semantic
-view-model projection, journaled request provenance, and fail-closed commands.
-The default production service refuses conversation execution until the host
-injects the existing Core conversation bridge; the echo response is test-only
-and is not evidence that a model episode ran.
+view-model projection, journaled request provenance, and Core-routed commands.
+The integrated composition test exercises the real AgentRuntime from an event
+trigger; the echo response is test-only and is not used by the normal
+configured path.
 Frontend checks cover TypeScript, no client persistence/remote dependencies,
 and production Vite output. Playwright covers login, dashboard, conversation,
 desktop/tablet/phone viewports, same-origin network posture, and reload.
@@ -121,3 +127,12 @@ desktop/tablet/phone viewports, same-origin network posture, and reload.
 Evidence remains local/x86 unless separately marked: no native Raspberry Pi
 run, public deployment, production TLS, real household data, or Phase 13 voice
 qualification is claimed.
+
+## Visual evidence
+
+The responsive interface was captured from the running application with the
+explicit synthetic test-auth flag and non-sensitive demo data:
+
+- `docs/assets/anima-home-desktop.png`
+- `docs/assets/anima-home-tablet.png`
+- `docs/assets/anima-home-phone.png`

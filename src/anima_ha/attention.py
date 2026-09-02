@@ -405,6 +405,24 @@ class PostgresAttentionService:
                 raise AttentionValidationError("profile version cannot be reused with new content")
             connection.commit()
 
+    def prime_consumer_before(
+        self, profile: AttentionProfile, consumer_name: str, journal_position: int
+    ) -> None:
+        """Create an isolated cursor immediately before a known event."""
+        if journal_position < 0:
+            raise AttentionValidationError("journal position must not be negative")
+        self.register_profile(profile, active=False)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_attention_cursors (consumer_name, profile_version, last_position)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (consumer_name) DO NOTHING
+                """,
+                (consumer_name, profile.profile_version, journal_position),
+            )
+            connection.commit()
+
     def load_profile(self, profile_version: str) -> AttentionProfile:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(

@@ -61,6 +61,21 @@ class PostgresEventJournal:
             connection.commit()
             return result
 
+    def position(self, event_id: str) -> int | None:
+        """Return the canonical journal position for one appended event."""
+        with (
+            psycopg.connect(
+                self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+            ) as connection,
+            connection.cursor() as cursor,
+        ):
+            cursor.execute(
+                "SELECT journal_position FROM anima_event_journal WHERE event_id=%s",
+                (event_id,),
+            )
+            row = cursor.fetchone()
+        return int(row["journal_position"]) if row else None
+
     def append_in_connection(
         self, connection: psycopg.Connection[Any], event: EventEnvelope
     ) -> AppendResult:
