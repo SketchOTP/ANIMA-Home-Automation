@@ -116,6 +116,29 @@ def _safe_result(result: InvocationResult) -> dict[str, Any]:
     return response
 
 
+def _safe_action_result(execution: Any, operation: str) -> dict[str, Any]:
+    """Project the coordinator's terminal record into the UI contract.
+
+    Connector acknowledgement is retained as bounded evidence only.  The
+    coordinator record is authoritative because it includes fresh prechecks,
+    policy reauthorization, and post-action verification.
+    """
+    status = execution.record.status
+    response: dict[str, Any] = {
+        "status": status.value,
+        "operation": operation,
+        "detail": execution.record.detail,
+    }
+    if execution.record.result is not None:
+        response["result"] = execution.record.result
+    if execution.invocation is not None:
+        response["evidence"] = {
+            "connector_outcome": execution.invocation.outcome.value,
+            "dispatch_state": execution.invocation.dispatch_state.value,
+        }
+    return response
+
+
 @dataclass(slots=True)
 class CoreUICommandGateway:
     """Route UI mutations through the existing PluginManager and coordinator."""
@@ -127,6 +150,7 @@ class CoreUICommandGateway:
     action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
     policy_role_resolver: Callable[[UUID], str | None] | None = None
+    control_capability_resolver: Callable[[UUID], UUID | None] | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -221,7 +245,13 @@ class CoreUICommandGateway:
         tool = self._tool("anima.provider.home-assistant", "set_power")
         if tool is None or not tool.availability:
             raise UICommandError("CORE_TOOL_UNAVAILABLE:anima.provider.home-assistant.set_power")
-        arguments = {"resource_id": str(resource_id), **payload}
+        # The canonical resource is server-owned; the browser supplies only
+        # the semantic desired state required by the commissioned tool.
+        arguments = {**payload, "resource_id": str(resource_id)}
+        if self.control_capability_resolver is not None:
+            capability_id = self.control_capability_resolver(resource_id)
+            if capability_id is not None:
+                arguments["capability_id"] = str(capability_id)
         request = ActionRequest.create(
             idempotency_key=f"ui-control:{identity.household_id}:{uuid4()}",
             household_id=identity.household_id,
@@ -238,20 +268,7 @@ class CoreUICommandGateway:
         execution = self.action_executor.execute(request)
         if self.events:
             self.events.publish("home.invalidated")
-        if execution.invocation is not None:
-            return _safe_result(execution.invocation)
-        return {
-            "status": {
-                "POLICY_DENIED": "DENIED",
-                "REQUIRE_CONFIRMATION": "REQUIRE_CONFIRMATION",
-                "REQUIRE_STRONGER_AUTH": "REQUIRE_STRONGER_AUTH",
-                "SUCCEEDED": "SUCCEEDED",
-                "VERIFICATION_FAILED": "FAILED",
-                "UNKNOWN_RESULT": "UNKNOWN_RESULT",
-            }.get(execution.record.status.value, execution.record.status.value),
-            "operation": tool.tool_id,
-            "detail": execution.record.detail,
-        }
+        return _safe_action_result(execution, tool.tool_id)
 
 
 class CoreConversationPipeline:
@@ -386,6 +403,13 @@ class CoreRuntime:
         )
 
     def commands(self, events: UIEventBroadcaster) -> CoreUICommandGateway:
+        def resolve_power_capability(resource_id: UUID) -> UUID | None:
+            for capability in self.graph.resource_capabilities(resource_id):
+                capability_type = str(capability.metadata.get("capability_type", ""))
+                if capability_type.startswith("power."):
+                    return capability.canonical_id
+            return None
+
         return CoreUICommandGateway(
             self.plugins,
             self.policy_service,
@@ -394,6 +418,7 @@ class CoreRuntime:
             action_refresher=self.action_refresher,
             action_verifier=self.action_verifier,
             policy_role_resolver=self.identity_resolver.resolve_role,
+            control_capability_resolver=resolve_power_capability,
         )
 
 
@@ -567,7 +592,15 @@ def build_postgres_core(
             return TruthSnapshot()
         values: dict[str, dict[str, Any]] = {}
         for resource_id in resources:
-            state = ha_adapter.read_state(resource_id)
+            capability_id = next(
+                (
+                    capability.canonical_id
+                    for capability in graph.resource_capabilities(resource_id)
+                    if str(capability.metadata.get("capability_type", "")).startswith("power.")
+                ),
+                None,
+            )
+            state = ha_adapter.read_state(resource_id, capability_id)
             values[str(state["truth_key"])] = {
                 "state": "KNOWN",
                 "value": state.get("state"),

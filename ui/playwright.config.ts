@@ -3,10 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
+  workers: 1,
   reporter: [["list"]],
   use: { baseURL: "http://127.0.0.1:18090", trace: "retain-on-failure" },
   webServer: {
-    command: "cd .. && ANIMA_UI_TEST_AUTH=1 ANIMA_UI_PORT=18090 ANIMA_UI_STATIC_DIR=ui/dist uv run anima-ui",
+    command: "cd .. && ANIMA_DATABASE_URL=postgresql://anima:anima_dev_only@127.0.0.1:55432/anima ANIMA_OPA_URL=http://127.0.0.1:18181 ANIMA_UI_PORT=18090 ANIMA_UI_STATIC_DIR=ui/dist uv run python scripts/serve_phase12_h4.py",
     url: "http://127.0.0.1:18090/healthz",
     reuseExistingServer: false,
     timeout: 30_000,

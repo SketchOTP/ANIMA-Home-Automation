@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
+from anima_ha.action import ActionStatus
 from anima_ha.agent import (
     AgentRuntime,
     CodexTurnResult,
@@ -14,7 +15,16 @@ from anima_ha.agent import (
 )
 from anima_ha.attention import AttentionProfile, ReasoningTrigger, TriggerStatus
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
-from anima_ha.plugins import NativeRuntime, PluginManager
+from anima_ha.plugins import (
+    DispatchState,
+    ExternalContentTrust,
+    Idempotency,
+    InvocationOutcome,
+    InvocationResult,
+    NativeRuntime,
+    PluginManager,
+    ToolDescriptor,
+)
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, PolicyService
 from anima_ha.tasks import (
     TASK_MANIFEST,
@@ -244,3 +254,117 @@ def test_ui_mutation_policy_role_is_resolved_from_trusted_runtime_context() -> N
     )
     assert result["status"] == "SUCCEEDED"
     assert evaluator.documents[-1]["policy"]["role"] == "guest"  # type: ignore[index]
+
+
+class _ActionManager:
+    def __init__(self, tool: ToolDescriptor) -> None:
+        self.tool = tool
+        self.arguments: dict[str, object] | None = None
+
+    def list_tools(self) -> list[ToolDescriptor]:
+        return [self.tool]
+
+
+class _ActionExecutor:
+    def __init__(self, status: ActionStatus) -> None:
+        self.status = status
+        self.request: object | None = None
+
+    def execute(self, request: object) -> SimpleNamespace:
+        self.request = request
+        invocation = InvocationResult(
+            InvocationOutcome.SUCCESS,
+            "anima.provider.home-assistant.set_power",
+            "anima.provider.home-assistant",
+            "1.0.0",
+            0.1,
+            result={"acknowledged": True},
+            dispatch_state=DispatchState.ACKNOWLEDGED,
+            external_content_trust=ExternalContentTrust.PLUGIN_TRUSTED,
+        )
+        record = SimpleNamespace(
+            status=self.status,
+            detail="post-action observation did not match",
+            result={"executed": True},
+        )
+        return SimpleNamespace(record=record, invocation=invocation)
+
+
+def _ui_control_identity() -> UIIdentity:
+    household_id = UUID("00000000-0000-0000-0000-000000000012")
+    principal_id = UUID("00000000-0000-0000-0000-000000000013")
+    now = datetime.now(UTC)
+    return UIIdentity(
+        household_id,
+        principal_id,
+        "test-ha-user",
+        IdentityEvidence(
+            uuid4(),
+            household_id,
+            principal_id,
+            EvidenceType.AUTHENTICATED_SESSION,
+            "test",
+            now,
+            now,
+            now + timedelta(hours=1),
+            Assurance.AUTHENTICATED,
+            70,
+            "ui-test",
+        ),
+    )
+
+
+def _home_tool() -> ToolDescriptor:
+    return ToolDescriptor(
+        tool_id="anima.provider.home-assistant.set_power",
+        plugin_id="anima.provider.home-assistant",
+        capability_id="home.control",
+        name="set_power",
+        description="set power",
+        input_schema={"type": "object", "required": ["resource_id", "desired_on"]},
+        output_schema={"type": "object"},
+        risk_class="LOW_RISK_HOME_CONTROL",
+        semantic_action="set_power",
+        read_only=False,
+        idempotency=Idempotency.KEYED,
+        timeout=2.0,
+        verification_requirement="PROVIDER_STATE_MATCH",
+        external_content_trust=ExternalContentTrust.PLUGIN_TRUSTED,
+        availability=True,
+        version="1.0.0",
+        provenance="test",
+        execution_spec={"profile": "set_power"},
+    )
+
+
+def test_ui_control_projects_phase9_verification_status_and_canonical_arguments() -> None:
+    manager = _ActionManager(_home_tool())
+    executor = _ActionExecutor(ActionStatus.VERIFICATION_FAILED)
+    gateway = CoreUICommandGateway(
+        manager,
+        PolicyService(AllowEvaluator()),
+        action_executor=executor,  # type: ignore[arg-type]
+    )
+
+    result = gateway.control(_ui_control_identity(), str(uuid4()), {"desired_on": True})
+
+    assert result["status"] == "VERIFICATION_FAILED"
+    assert result["status"] != "SUCCEEDED"
+    assert result["evidence"] == {"connector_outcome": "SUCCESS", "dispatch_state": "ACKNOWLEDGED"}
+    assert executor.request is not None
+    assert executor.request.arguments["desired_on"] is True
+    assert "state" not in executor.request.arguments
+
+
+def test_ui_control_projects_unknown_post_dispatch_state() -> None:
+    manager = _ActionManager(_home_tool())
+    executor = _ActionExecutor(ActionStatus.UNKNOWN_RESULT)
+    gateway = CoreUICommandGateway(
+        manager,
+        PolicyService(AllowEvaluator()),
+        action_executor=executor,  # type: ignore[arg-type]
+    )
+
+    result = gateway.control(_ui_control_identity(), str(uuid4()), {"desired_on": False})
+
+    assert result["status"] == "UNKNOWN_RESULT"
