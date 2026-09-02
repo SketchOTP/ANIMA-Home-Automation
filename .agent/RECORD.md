@@ -270,6 +270,13 @@ UI, and voice remain out of scope.
 - Not claimed: real HA OAuth, native Pi deployment, or production Core conversation/command composition. The default production service fails closed until the existing Core bridges are injected; test auth's echo response is explicitly test-only.
 - Governance state: pending fresh validation, implementation publication, final governed evidence closure, hosted CI, Notion reconciliation, and Architect review.
 
+## 2026-09-02 — H5 browser acceptance evidence continuation
+
+- Architect disposition remains `CONTINUE`; Phase 12 is not accepted.
+- H5 current published head is `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA and artifact `9872060277` was published.
+- The head includes bounded display-mode behavior, deterministic H5 Core/API evidence, and CI fixes for the runtime policy bundle and Compose service lifetime. Missing browser-level denial, provider recovery, restricted-content reload/storage, same-session restart/SSE, and browser-visible isolated-HA evidence remain open.
+- Phase 13 remains unauthorized.
+
 ## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Implementation publication
 
 - Date: 2026-09-02

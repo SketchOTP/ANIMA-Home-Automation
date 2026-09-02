@@ -4,26 +4,32 @@ Last updated: 2026-09-02
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — VERIFIED UX/E2E CLOSURE; PENDING ARCHITECT ACCEPTANCE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5 BROWSER ACCEPTANCE EVIDENCE CLOSURE; CONTINUE
 
 ## Current objective
 
-Close the H4 browser-to-Core contract: semantic Home Assistant controls, authoritative Phase 9 terminal outcomes, visible mutation feedback, applied presentation preferences, real PostgreSQL/OPA/Core browser journeys, and truthful portfolio/governance records. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 remains unauthorized.
+Close the remaining H5 browser acceptance evidence gaps: measurable display modes, browser-visible policy denial, deterministic provider degradation/recovery, restricted-content storage/reload, original-session process restart/SSE recovery, and exact hosted evidence. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4` — close the remaining browser/Core action-result contracts and decisive end-to-end evidence. Starting checkpoint: `a059898be1c9e85291cf73fd7bde912ad6c3c7c2` with hosted CI `33672285860` passed. Implementation head is `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI `33686351783` passed on that exact SHA. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5` — close only the remaining browser behavior/evidence gaps without changing accepted Phase 0–11 architecture. Starting checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14` with hosted CI `33686702038` passed. Current implementation/evidence head is `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Phase 12 remains CONTINUE and pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
 - The H4 implementation delta is limited to Phase 12: Home controls send the qualified `desired_on` field, UI action results project the Phase 9 terminal record, mutation outcomes are surfaced after the corresponding refetch, calendar edits use optimistic versions, and all persisted presentation settings drive the rendered UI.
 - The real H4 Core target composes PostgreSQL graph/Truth/journal/Attention/Context Broker/AgentRuntime/PluginManager/OPA/task/calendar/action dependencies with only a scripted model adapter. It proves a real journal/context/episode trace, task lifecycle, calendar edit/stale-version/cancel, settings persistence across restart, and `fallback_enabled=false`.
 - The isolated HA target reuses the Phase 6 harness and proves UI HTTP → CoreUICommandGateway → Phase 5 → OPA → Phase 9 → Home Assistant → observed verification: `SUCCEEDED` for the commissioned virtual control and `VERIFICATION_FAILED` for a deliberate mismatch. Connector acknowledgement is retained as evidence and cannot override the terminal record.
-- Local frontend evidence passed desktop functional journeys plus tablet/phone responsive smoke; the hosted matrix initially exposed and then reproduced a refetch synchronization race, fixed by publishing the semantic mutation outcome after refresh. Browser-specific denial, degraded-provider, restricted-content reload, and backend-restart journeys remain evidence limitations rather than unrun claims.
+- Local/frontend evidence passed the current deterministic Core conversation, task lifecycle, calendar versioning/cancel, settings, display geometry/order, responsive storage inventory, same-origin, and keyboard smoke. Hosted CI passed 11 tests with 10 responsive/functional skips. Browser-specific denial, degraded-provider recovery, restricted-content reload/storage, original-session process restart/SSE, and browser-visible isolated-HA outcome journeys remain evidence limitations rather than completed claims.
 - Normal configured `create_app()` composes PostgreSQL graph/Truth/journal/Attention/Context Broker/AgentRuntime/PluginManager/OPA/task/calendar/action dependencies. Only the model adapter is scripted in the deterministic target; `UnavailableCommandGateway` and the echo fallback are not selected in configured runtime.
 - `scripts/verify_phase12_final_ux.py` passed with `fallback_enabled=false`, a real Journal → Attention → ContextPacket → AgentRuntime trace, policy-gated task success, persisted settings, and explicit `EXTERNAL_RESOURCE_GATE_HA_COMMISSIONING` status.
-- Fresh validation passed: `uv sync --locked --dev`, `scripts/validate.sh` (166 Python tests, Ruff, strict mypy, OPA 7/7), package sdist/wheel, frontend unit tests, TypeScript/Vite build, Playwright 9-test desktop/tablet/phone matrix, migration repeat, commissioned-runtime target, final-UX target, `git diff --check`, and public-safety review.
+- Fresh validation passed: `uv sync --locked --dev`, `scripts/validate.sh` (168 Python tests, Ruff, strict mypy, OPA 7/7), package sdist/wheel, frontend unit tests, TypeScript/Vite build, Playwright (11 passed/10 skipped across desktop/tablet/phone), migration repeat, H4/H5 Core targets, isolated-HA target, restricted-content target, `git diff --check`, public-safety review, and hosted Docker UI health.
 - Phase 11 active providers remain Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy. Walmart and Best Buy remain deferred historical candidates; no provider gate is silently substituted.
+
+### H5 evidence and publication state
+
+- H5 implementation/evidence sequence: `2bc175852afc4003176f9be910f70618d8a1b827`, `aa0f24e12577dc536fb6cecf331aae6544ea3c94`, `e6ab72618ee5fdf2aebaaadaf83a9ebbb4adb485`, `5882d9e0047b8d07d7f5d45b5081a59d3340fbf3`, and `800d8cf4a183ce0e7548545182ed09f0687ad98f`. Hosted CI `33696481738` passed on the exact current head and published artifact `phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`, artifact ID `9872060277`, ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
+- H5 deterministic Core evidence proves real `create_app()` PostgreSQL/OPA/Graph/Truth/Journal/Attention/Context/AgentRuntime composition, original session reuse across reconstruction, post-restart task mutation, external audit digest redaction, deterministic provider degraded/recovery states, restricted live response with zero PostgreSQL sentinel occurrences, and the reused isolated-HA API path. Display-mode CSS now produces measured wall/tablet/phone/desktop geometry differences.
+- H5 is not complete: hosted browser coverage remains the pre-existing functional/smoke matrix and does not independently run browser-visible denial, provider recovery, restricted-content reload/storage, process restart/SSE with the same browser session, or browser-visible isolated-HA outcomes. These are explicit `NOT RUN`/`UNSUPPORTED BY CURRENT TARGET` evidence limits. Status remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`.
 
 ### H4 evidence and publication state
 

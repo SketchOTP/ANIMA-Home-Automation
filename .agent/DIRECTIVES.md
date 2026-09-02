@@ -405,6 +405,13 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5
+
+- Architect disposition: `CONTINUE — H4 IMPLEMENTATION RETAINED; PHASE 12 NOT ACCEPTED`.
+- Starting checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14`; current published H5 implementation/evidence head: `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact head.
+- Scope: make display mode measurable and close browser/recovery evidence gaps without changing Phase 0–11 architecture or implementing Phase 13.
+- Current status: implementation checkpoint published; H5 evidence remains partial because the required browser-visible denial, provider degradation/recovery, restricted-content reload/storage, same-browser process restart/SSE, and browser-visible isolated-HA journeys remain unrun.
+
 ## ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3 — Final UX and authority convergence
 
 - Issued: 2026-09-02

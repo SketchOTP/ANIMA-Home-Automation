@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — COMMISSIONED RUNTIME TRUTH CLOSURE
-- Active directive: ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — graph-derived identity, Core provider composition, and non-demo production read models
-- Active task packet: `.agent/tasks/completed/ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2/`; prior interface packet: `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5 BROWSER ACCEPTANCE EVIDENCE CLOSURE; CONTINUE
+- Active directive: ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5 — display behavior and decisive browser/recovery evidence
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/`; prior H4 packet: `.agent/tasks/completed/ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4/`
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
-- Last completed outcome: Phase 12 commissioned-runtime implementation checkpoint `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
-- Last state sync: 2026-09-02; commissioned-runtime implementation is published, with governed closure and Architect acceptance still pending.
+- Last completed outcome: H5 implementation/evidence checkpoint `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA and published artifact `9872060277`.
+- Last state sync: 2026-09-02; H5 implementation is published and partially evidenced, with browser acceptance gaps still open and Architect acceptance pending.
 
 ## Current qualification result
 

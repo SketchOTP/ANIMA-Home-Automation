@@ -1,6 +1,20 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; H4 verified UX/E2E closure is published for independent review.
+Status: `CONTINUE — H5 EVIDENCE CLOSURE INCOMPLETE; PENDING ARCHITECT ACCEPTANCE`.
+
+H5 current checkpoint: `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI
+`33696481738` passed on that exact SHA. The hosted job published artifact
+`9872060277` (`phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`)
+with ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
+
+H5 adds measurable display-mode layout behavior, deterministic PostgreSQL/OPA/Core
+external audit and health evidence, restricted-content PostgreSQL scanning, and
+same-session reconstruction at the API/Core level. The current hosted Playwright
+matrix passes 11 tests and skips 10 responsive/functional cases. Browser-visible
+OPA denial, provider degradation/recovery, restricted-content reload/storage,
+same-browser process restart/SSE recovery, and browser-visible isolated-HA
+outcomes remain `NOT RUN` acceptance evidence. Phase 12 remains `CONTINUE`; this
+document does not promote it to Architect accepted.
 
 H4 implementation head: `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI
 `33686351783` passed on that exact SHA. The later governance checkpoint is

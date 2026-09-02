@@ -735,3 +735,10 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Hosted CI history required bounded corrections: strict test-double typing, CI PostgreSQL/OPA provisioning, and browser mutation synchronization. The exact current implementation CI and subsequent governed CI are recorded in the final handoff/Notion readback.
 - Limitations: the current Playwright matrix does not independently execute browser denial, degraded-provider recovery, restricted-content reload, backend restart/session/SSE recovery, or an isolated-HA browser target. These remain unpromoted evidence limits.
 - Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 13 was not implemented.
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5 — H5 continuation
+
+- Starting governed checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14`; current published implementation/evidence head: `800d8cf4a183ce0e7548545182ed09f0687ad98f`.
+- Hosted CI `33696481738` passed on the exact current head. It passed H4/H5 Core targets, isolated-HA API verification, restricted-content PostgreSQL scanning, Docker UI health, frontend checks, and Playwright with 11 passed and 10 skipped tests across desktop/tablet/phone.
+- H5 added measurable display-mode CSS behavior and deterministic Core/API evidence for external audit redaction, provider degraded/recovery projection, restricted live-only content, and same-session reconstruction. Artifact `9872060277` (`phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`) has ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
+- H5 remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`: browser-visible denial, provider recovery, restricted-content reload/storage, same-browser restart/SSE, and browser-visible isolated-HA journeys remain not run. Phase 13 was not implemented.

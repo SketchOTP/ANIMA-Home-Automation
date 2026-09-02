@@ -146,6 +146,14 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `ui/tests/ui.spec.ts` and `ui/playwright.config.ts` — serialized H4 browser matrix with desktop functional journeys and tablet/phone responsive smoke.
 - `.agent/tasks/completed/ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4/` — H4 directive, evidence ledger, and handoff.
 
+### Phase 12 H5 browser acceptance evidence
+
+- `scripts/verify_phase12_h5_core.py` — deterministic PostgreSQL/OPA/Core target for external audit redaction, provider degraded/recovery projection, restricted-content durable scanning, and original-session reconstruction.
+- `Dockerfile.ui` — reproducible UI image including the installed-runtime Phase 4 policy bundle required by the normal `create_app()` composition.
+- `.github/workflows/ci.yml` — hosted H5 Core, restricted-content, isolated-HA API, Docker health, frontend, Playwright, build, diff-check, safety, and artifact-upload targets; live public-provider calls are intentionally excluded from H5 hosted CI in favor of deterministic fixtures.
+- `ui/src/styles.css` and `ui/tests/ui.spec.ts` — measurable display-mode layout behavior and computed-geometry/order assertions.
+- `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/` — active H5 directive, evidence, and handoff; it remains active because decisive browser journeys are not yet complete.
+
 ## Known sensitive/high-risk areas
 
 - HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.

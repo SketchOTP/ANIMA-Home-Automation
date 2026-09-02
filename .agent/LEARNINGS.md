@@ -197,3 +197,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - For coordinated actions, connector acknowledgement is only evidence. The UI gateway must project the Phase 9 terminal action record, and the browser should publish the semantic outcome after refetch so visible state and feedback converge.
 - A real configured browser composition requires CI to provision the same PostgreSQL/OPA prerequisites as local Core validation; otherwise a test-only acceptance server fails before the UI starts.
 - Passing Core/API and isolated-provider harnesses does not equal browser E2E. Dedicated browser journeys must be distinguished from supporting API/harness evidence, especially for denial, degraded providers, restricted content, and restart recovery.
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5
+
+- A hosted UI container can fail before health because installed package resources are absent from the image; the Phase 4 policy bundle must be copied into the runtime image when `PolicyBundle.from_repository()` resolves relative to the installed Python prefix.
+- Compose cleanup in an intermediate CI step must not tear down shared PostgreSQL/OPA services needed by a later browser acceptance step. Stop only the temporary UI container and leave final cleanup to the job-level teardown.
+- H5 hosted acceptance must use deterministic external fixtures; live public-provider responses are environment-dependent and are not a valid substitute for browser/Core provider degradation and audit evidence.
+- Passing a deterministic Core/API target plus a green Playwright smoke matrix does not establish browser-visible denial, restricted-content reload/storage, same-session process restart/SSE, or browser-visible provider recovery. Those evidence classes remain explicit until dedicated journeys run.
