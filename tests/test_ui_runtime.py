@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from anima_ha.action import ActionStatus
@@ -268,9 +269,9 @@ class _ActionManager:
 class _ActionExecutor:
     def __init__(self, status: ActionStatus) -> None:
         self.status = status
-        self.request: object | None = None
+        self.request: Any = None
 
-    def execute(self, request: object) -> SimpleNamespace:
+    def execute(self, request: Any) -> SimpleNamespace:
         self.request = request
         invocation = InvocationResult(
             InvocationOutcome.SUCCESS,
@@ -341,9 +342,9 @@ def test_ui_control_projects_phase9_verification_status_and_canonical_arguments(
     manager = _ActionManager(_home_tool())
     executor = _ActionExecutor(ActionStatus.VERIFICATION_FAILED)
     gateway = CoreUICommandGateway(
-        manager,
+        cast(PluginManager, manager),
         PolicyService(AllowEvaluator()),
-        action_executor=executor,  # type: ignore[arg-type]
+        action_executor=cast(Any, executor),
     )
 
     result = gateway.control(_ui_control_identity(), str(uuid4()), {"desired_on": True})
@@ -360,9 +361,9 @@ def test_ui_control_projects_unknown_post_dispatch_state() -> None:
     manager = _ActionManager(_home_tool())
     executor = _ActionExecutor(ActionStatus.UNKNOWN_RESULT)
     gateway = CoreUICommandGateway(
-        manager,
+        cast(PluginManager, manager),
         PolicyService(AllowEvaluator()),
-        action_executor=executor,  # type: ignore[arg-type]
+        action_executor=cast(Any, executor),
     )
 
     result = gateway.control(_ui_control_identity(), str(uuid4()), {"desired_on": False})
