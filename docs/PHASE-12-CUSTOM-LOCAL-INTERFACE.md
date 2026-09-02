@@ -1,11 +1,37 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; final UX/authority convergence is published for independent review.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; H4 verified UX/E2E closure is published for independent review.
+
+H4 implementation head: `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI
+`33686351783` passed on that exact SHA. The later governance checkpoint is
+recorded in the final Authority/Notion readback.
 
 Prior commissioned-runtime implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
 Prior governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA.
 
 Final UX/authority implementation checkpoint: `37116b03c65bfac54a5261f30160e9030aa6011c`; hosted CI `33671817841` passed on that exact SHA. The final governed checkpoint is the commit containing this closure record; its exact SHA and CI are recorded in the final Notion readback.
+
+## H4 verified UX/E2E closure
+
+Home controls now send the qualified `desired_on` semantic field while Core
+adds the canonical resource reference. `CoreUICommandGateway` returns the
+Phase 9 terminal action record, not connector acknowledgement; the browser
+publishes normalized success, failure, unknown, denial, confirmation, and
+strong-auth outcomes after the matching Core refetch. Calendar edits carry
+the projected optimistic version, and the browser applies appearance, layout,
+widget visibility/order, density, text scale, accent, and reduced-motion
+preferences.
+
+The H4 Core target uses real PostgreSQL, OPA, graph/Truth, journal, Attention,
+Context Broker, AgentRuntime, PluginManager, task, calendar, and action
+composition with only the model adapter scripted. The reused Phase 6 harness
+also proves the UI-originated control path through Phase 5, OPA, Phase 9, and
+isolated Home Assistant, including a deliberate post-action verification
+mismatch. The browser matrix passes the real conversation, task lifecycle,
+calendar edit/cancel, settings persistence, and responsive smoke paths. The
+current evidence packet explicitly identifies browser-specific denial,
+degraded-provider, restricted-content reload, restart/SSE, and isolated-HA
+browser journeys that were not independently run.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.

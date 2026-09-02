@@ -140,6 +140,11 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/` — historical Phase 12 specification, evidence ledger, and handoff.
 - `.agent/tasks/completed/ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3/` — final UX/authority convergence evidence and governance packet.
 - `docs/assets/anima-home-desktop.png`, `anima-home-tablet.png`, `anima-home-phone.png` — responsive screenshots captured from the tested UI with synthetic data.
+- `scripts/serve_phase12_h4.py` — explicit acceptance-only server that composes real PostgreSQL/OPA/Core with a scripted model and test auth.
+- `scripts/verify_phase12_h4_core.py` — real `create_app()` conversation, task, calendar-version, settings-restart, and no-echo evidence target.
+- `scripts/verify_phase12_h4_isolated_ha.py` — reused Phase 6 isolated Home Assistant evidence through UI HTTP, Core gateway, Phase 5/OPA, Phase 9, and observed verification.
+- `ui/tests/ui.spec.ts` and `ui/playwright.config.ts` — serialized H4 browser matrix with desktop functional journeys and tablet/phone responsive smoke.
+- `.agent/tasks/completed/ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4/` — H4 directive, evidence ledger, and handoff.
 
 ## Known sensitive/high-risk areas
 

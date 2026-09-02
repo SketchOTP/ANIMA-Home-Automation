@@ -435,6 +435,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Evidence result: real AgentRuntime journal-trigger integration, policy-gated task mutation, configured-app composition smoke test, Python/OPA/package/frontend/Playwright/container validation, and actual synthetic responsive screenshots passed locally.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4 — Verified UX/E2E closure
+
+- Issued: 2026-09-02
+- Architect disposition: `CONTINUE`; Phase 12 remains pending Architect acceptance and Phase 13 remains unauthorized.
+- Starting governed checkpoint: `a059898be1c9e85291cf73fd7bde912ad6c3c7c2`; H4 implementation/fix head: `22c1af9a01d7db02abfdc4ef788222f9783c8c53`.
+- Scope: correct the browser/Core semantic control and result contracts, apply all bounded persisted UI preferences, add meaningful calendar editing, and prove the real Core/OPA/Phase 9/isolated-HA paths without changing accepted architecture.
+- Evidence boundary: H4 Core and isolated-HA targets plus local frontend and responsive evidence pass. Dedicated browser denial, degraded-provider recovery, restricted-content reload, restart/session/SSE, and isolated-HA browser journeys remain explicitly limited in the evidence packet.
+
 ## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Custom local interface
 
 - Issued: 2026-09-01

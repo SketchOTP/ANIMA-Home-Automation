@@ -190,3 +190,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Capability health is a projection, not a static manifest label: plugin enablement, latest provider error, and external audit evidence must distinguish available from degraded and unavailable.
 - Calendar UI mutation needs the server-projected optimistic-concurrency version; otherwise a later update can unknowingly reuse a stale expected version.
 - Persistent PostgreSQL evidence targets must be rerunnable against existing fixtures. Synthetic commissioning IDs/scopes must not collide across separate targets, or the production resolver correctly fails closed on ambiguous mappings.
+
+## ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4
+
+- Browser controls must adapt to the qualified semantic schema (`desired_on`); accommodating a browser alias in the HA manifest would weaken the Core contract.
+- For coordinated actions, connector acknowledgement is only evidence. The UI gateway must project the Phase 9 terminal action record, and the browser should publish the semantic outcome after refetch so visible state and feedback converge.
+- A real configured browser composition requires CI to provision the same PostgreSQL/OPA prerequisites as local Core validation; otherwise a test-only acceptance server fails before the UI starts.
+- Passing Core/API and isolated-provider harnesses does not equal browser E2E. Dedicated browser journeys must be distinguished from supporting API/harness evidence, especially for denial, degraded providers, restricted content, and restart recovery.

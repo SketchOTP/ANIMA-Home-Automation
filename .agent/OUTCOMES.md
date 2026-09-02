@@ -726,3 +726,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Evidence: `scripts/validate.sh` passed 166 Python tests, Ruff, strict mypy, and OPA 7/7; frontend unit tests, TypeScript/Vite build, Playwright 9-test responsive matrix, package build, repeat migrations, commissioned-runtime target, final-UX target, screenshot capture/MIME checks, diff-check, and public-safety review passed.
 - Final governed checkpoint: this governance closure commit, pushed after the implementation checkpoint and exact implementation CI. Its exact SHA and hosted CI are recorded in the final Notion readback; the closure files avoid a self-referential hash claim.
 - Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Evidence limits remain live HA commissioning, physical-home behavior, live Luna credentials, native ARM64/Pi execution, production TLS, and real household data. Phase 13 was not implemented.
+
+## ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4 — H4 verified UX/E2E closure
+
+- Starting governed SHA: `a059898be1c9e85291cf73fd7bde912ad6c3c7c2`; starting CI `33672285860` passed.
+- Implementation sequence: `02a958590f8c1c1dab38b1143af12c9fea6033cc`, `a4b0c40b084f9dfbd127b43bd80e84c45977ab0d`, `94f665fd6a4bbc2246124bb5df06d81bdb2fb987`, `22c1af9a01d7db02abfdc4ef788222f9783c8c53`, and `9e12f6e295b52ec382c1952a21a1a95287100740`; implementation CI `33686351783` passed on the exact final implementation head.
+- Result: browser Home controls use `desired_on`; Core projects Phase 9 terminal status; mutation notices wait for refetch; task/calendar/settings UI behavior is real and versioned; the normal Core cognition trace and reused isolated-HA UI-to-Phase9 path pass.
+- Hosted CI history required bounded corrections: strict test-double typing, CI PostgreSQL/OPA provisioning, and browser mutation synchronization. The exact current implementation CI and subsequent governed CI are recorded in the final handoff/Notion readback.
+- Limitations: the current Playwright matrix does not independently execute browser denial, degraded-provider recovery, restricted-content reload, backend restart/session/SSE recovery, or an isolated-HA browser target. These remain unpromoted evidence limits.
+- Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 13 was not implemented.

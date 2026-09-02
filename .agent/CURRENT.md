@@ -4,23 +4,32 @@ Last updated: 2026-09-02
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — FINAL UX/AUTHORITY CONVERGENCE; PENDING ARCHITECT ACCEPTANCE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — VERIFIED UX/E2E CLOSURE; PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, commissioned HA identity mapping, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and production wiring to the accepted cognition/action stack. Phase 11 is Architect accepted; Phase 12 is complete pending Architect acceptance; Phase 13 remains unauthorized.
+Close the H4 browser-to-Core contract: semantic Home Assistant controls, authoritative Phase 9 terminal outcomes, visible mutation feedback, applied presentation preferences, real PostgreSQL/OPA/Core browser journeys, and truthful portfolio/governance records. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3` — complete the bounded final Phase 12 UX, authority, runtime-composition, evidence, and portfolio closure. Starting checkpoint: `7524cd67daee305e8e4bc4446623fa022fee0cd2` with hosted CI `33655737686` passed. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4` — close the remaining browser/Core action-result contracts and decisive end-to-end evidence. Starting checkpoint: `a059898be1c9e85291cf73fd7bde912ad6c3c7c2` with hosted CI `33672285860` passed. Implementation head is `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI `33686351783` passed on that exact SHA. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
-- The H3 implementation delta is local and limited to Phase 12: Core-owned role resolution, browser-bound OAuth nonce state, truthful capability health, PostgreSQL UI preferences, calendar version projections, real task/calendar/control UI paths, the decisive `create_app()` target, and refreshed responsive screenshots.
+- The H4 implementation delta is limited to Phase 12: Home controls send the qualified `desired_on` field, UI action results project the Phase 9 terminal record, mutation outcomes are surfaced after the corresponding refetch, calendar edits use optimistic versions, and all persisted presentation settings drive the rendered UI.
+- The real H4 Core target composes PostgreSQL graph/Truth/journal/Attention/Context Broker/AgentRuntime/PluginManager/OPA/task/calendar/action dependencies with only a scripted model adapter. It proves a real journal/context/episode trace, task lifecycle, calendar edit/stale-version/cancel, settings persistence across restart, and `fallback_enabled=false`.
+- The isolated HA target reuses the Phase 6 harness and proves UI HTTP → CoreUICommandGateway → Phase 5 → OPA → Phase 9 → Home Assistant → observed verification: `SUCCEEDED` for the commissioned virtual control and `VERIFICATION_FAILED` for a deliberate mismatch. Connector acknowledgement is retained as evidence and cannot override the terminal record.
+- Local frontend evidence passed desktop functional journeys plus tablet/phone responsive smoke; the hosted matrix initially exposed and then reproduced a refetch synchronization race, fixed by publishing the semantic mutation outcome after refresh. Browser-specific denial, degraded-provider, restricted-content reload, and backend-restart journeys remain evidence limitations rather than unrun claims.
 - Normal configured `create_app()` composes PostgreSQL graph/Truth/journal/Attention/Context Broker/AgentRuntime/PluginManager/OPA/task/calendar/action dependencies. Only the model adapter is scripted in the deterministic target; `UnavailableCommandGateway` and the echo fallback are not selected in configured runtime.
 - `scripts/verify_phase12_final_ux.py` passed with `fallback_enabled=false`, a real Journal → Attention → ContextPacket → AgentRuntime trace, policy-gated task success, persisted settings, and explicit `EXTERNAL_RESOURCE_GATE_HA_COMMISSIONING` status.
 - Fresh validation passed: `uv sync --locked --dev`, `scripts/validate.sh` (166 Python tests, Ruff, strict mypy, OPA 7/7), package sdist/wheel, frontend unit tests, TypeScript/Vite build, Playwright 9-test desktop/tablet/phone matrix, migration repeat, commissioned-runtime target, final-UX target, `git diff --check`, and public-safety review.
 - Phase 11 active providers remain Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy. Walmart and Best Buy remain deferred historical candidates; no provider gate is silently substituted.
+
+### H4 evidence and publication state
+
+- Implementation commits: `02a958590f8c1c1dab38b1143af12c9fea6033cc` (H4 contract implementation), `a4b0c40b084f9dfbd127b43bd80e84c45977ab0d` (strict-mypy test-double correction), `94f665fd6a4bbc2246124bb5df06d81bdb2fb987` (CI PostgreSQL/OPA bootstrap), `22c1af9a01d7db02abfdc4ef788222f9783c8c53` (post-refetch outcome publication), and `9e12f6e295b52ec382c1952a21a1a95287100740` (overlapping refresh-generation protection). Hosted CI `33686351783` passed on the exact implementation head.
+- Local validation: `anima-validate` passed 168 tests with Ruff and strict mypy; TypeScript, frontend unit tests, Vite build, package build, OPA, Phase 6 isolated HA, Phase 11 restricted-content, and H4 Core targets passed. Full hosted CI for the current head remains the publication gate.
+- Status is `IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE`; this record does not promote Phase 12 to accepted and does not authorize Phase 13.
 
 ### Current product-provider replan
 
