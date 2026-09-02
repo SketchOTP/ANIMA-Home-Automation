@@ -34,6 +34,15 @@ class AllowEvaluator:
         return {"decision": "ALLOW", "reason_code": "TEST_ALLOW", "policy_version": "test"}
 
 
+class CapturingEvaluator(AllowEvaluator):
+    def __init__(self) -> None:
+        self.documents: list[dict[str, object]] = []
+
+    def evaluate(self, document: dict[str, object]) -> dict[str, object]:
+        self.documents.append(document)
+        return super().evaluate(document)
+
+
 class StubAttention:
     def __init__(self, trigger: ReasoningTrigger) -> None:
         self.trigger = trigger
@@ -189,3 +198,49 @@ def test_ui_task_mutation_uses_core_plugin_and_policy_gateway() -> None:
 
     assert result["status"] == "SUCCEEDED"
     assert len(task_service.list_tasks(household_id)) == 1
+
+
+def test_ui_mutation_policy_role_is_resolved_from_trusted_runtime_context() -> None:
+    household_id = UUID("00000000-0000-0000-0000-000000000012")
+    principal_id = UUID("00000000-0000-0000-0000-000000000013")
+    now = datetime.now(UTC)
+    evidence = IdentityEvidence(
+        uuid4(),
+        household_id,
+        principal_id,
+        EvidenceType.AUTHENTICATED_SESSION,
+        "test",
+        now,
+        now,
+        now + timedelta(hours=1),
+        Assurance.AUTHENTICATED,
+        70,
+        "ui-test",
+    )
+    identity = UIIdentity(household_id, principal_id, "test-ha-user", evidence)
+    evaluator = CapturingEvaluator()
+    task_service = TaskService(InMemoryTaskStore())
+    manager = PluginManager()
+    manager.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
+    manager.enable(TASK_MANIFEST.plugin_id)
+    gateway = CoreUICommandGateway(
+        manager,
+        PolicyService(evaluator),
+        policy_role_resolver=lambda principal: "guest" if principal == principal_id else None,
+    )
+    result = gateway.task_mutation(
+        identity,
+        "schedule",
+        {
+            "task_type": TaskType.REASONING_DUE.value,
+            "title": "trusted role",
+            "payload": {"objective": "test"},
+            "schedule": {
+                "kind": ScheduleKind.ONCE.value,
+                "timezone": "UTC",
+                "run_at": (now + timedelta(hours=1)).isoformat(),
+            },
+        },
+    )
+    assert result["status"] == "SUCCEEDED"
+    assert evaluator.documents[-1]["policy"]["role"] == "guest"  # type: ignore[index]

@@ -41,7 +41,7 @@ from anima_ha.calendar import (
 )
 from anima_ha.context import ContextBroker
 from anima_ha.events import EventEnvelope
-from anima_ha.external import external_plugin
+from anima_ha.external import ExternalAuditJournalSink, external_plugin
 from anima_ha.graph import NodeKind, PostgresHouseholdGraph
 from anima_ha.home_assistant import (
     HAInstanceConfig,
@@ -126,6 +126,15 @@ class CoreUICommandGateway:
     action_executor: ActionExecutionCoordinator | None = None
     action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
+    policy_role_resolver: Callable[[UUID], str | None] | None = None
+
+    def _policy_context(self, identity: UIIdentity) -> PolicyContext:
+        role = (
+            self.policy_role_resolver(identity.principal_id)
+            if self.policy_role_resolver is not None
+            else None
+        )
+        return PolicyContext(principal_role=role)
 
     def _tool(self, plugin_prefix: str, name: str) -> Any:
         return next(
@@ -143,6 +152,7 @@ class CoreUICommandGateway:
         tool = self._tool(plugin_prefix, name)
         if tool is None or not tool.availability:
             raise UICommandError(f"CORE_TOOL_UNAVAILABLE:{plugin_prefix}.{name}")
+        payload = self._normalize_ui_payload(plugin_prefix, name, payload)
         policy_identity = _identity(identity)
         invocation_context = InvocationContext(
             household_id=identity.household_id,
@@ -160,7 +170,7 @@ class CoreUICommandGateway:
             identity=policy_identity,
             origin=RequestOrigin.DIRECT_USER,
             policy_service=self.policy_service,
-            policy_context=PolicyContext(principal_role="resident"),
+            policy_context=self._policy_context(identity),
             invocation_context=invocation_context,
         )
         if self.events:
@@ -168,6 +178,26 @@ class CoreUICommandGateway:
                 "tasks.changed" if plugin_prefix == "anima.durable-tasks" else "calendar.changed"
             )
         return _safe_result(result)
+
+    @staticmethod
+    def _normalize_ui_payload(
+        plugin_prefix: str, name: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if plugin_prefix == "anima.durable-tasks" and name == "schedule":
+            if "when" in payload:
+                when = str(payload["when"])
+                if not when.endswith(("Z", "+00:00")):
+                    when = when + "Z"
+                return {
+                    "task_type": "REASONING_DUE",
+                    "title": str(payload.get("title", "Anima reminder")),
+                    "payload": {
+                        "objective": str(payload.get("note") or payload.get("title", "")),
+                        "subject_refs": [],
+                    },
+                    "schedule": {"kind": "ONCE", "timezone": "UTC", "run_at": when},
+                }
+        return dict(payload)
 
     def task_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
@@ -199,7 +229,7 @@ class CoreUICommandGateway:
             arguments=arguments,
             identity=_identity(identity),
             policy_service=self.policy_service,
-            policy_context=PolicyContext(principal_role="resident"),
+            policy_context=self._policy_context(identity),
             refresher=self.action_refresher,
             verifier=self.action_verifier,
             origin=RequestOrigin.DIRECT_USER,
@@ -240,6 +270,7 @@ class CoreConversationPipeline:
         consumer_name: str = "ui-conversation",
         action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None,
         action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None,
+        policy_role_resolver: Callable[[UUID], str | None] | None = None,
     ) -> None:
         self.attention = attention
         self.context = context
@@ -251,6 +282,7 @@ class CoreConversationPipeline:
         self.consumer_name = consumer_name
         self.action_refresher = action_refresher
         self.action_verifier = action_verifier
+        self.policy_role_resolver = policy_role_resolver
 
     def _trigger(self, event: EventEnvelope) -> Any:
         candidates = [
@@ -290,7 +322,13 @@ class CoreConversationPipeline:
                 tools=tuple(self.tools()),
                 identity=_identity(identity),
                 policy_service=self.policy_service,
-                policy_context=PolicyContext(principal_role="resident"),
+                policy_context=PolicyContext(
+                    principal_role=(
+                        self.policy_role_resolver(identity.principal_id)
+                        if self.policy_role_resolver is not None
+                        else None
+                    )
+                ),
                 origin=RequestOrigin.DIRECT_USER,
                 action_refresher=self.action_refresher,
                 action_verifier=self.action_verifier,
@@ -344,6 +382,7 @@ class CoreRuntime:
             journal=self.journal,
             action_refresher=self.action_refresher,
             action_verifier=self.action_verifier,
+            policy_role_resolver=self.identity_resolver.resolve_role,
         )
 
     def commands(self, events: UIEventBroadcaster) -> CoreUICommandGateway:
@@ -354,6 +393,7 @@ class CoreRuntime:
             action_executor=self.action_executor,
             action_refresher=self.action_refresher,
             action_verifier=self.action_verifier,
+            policy_role_resolver=self.identity_resolver.resolve_role,
         )
 
 
@@ -406,6 +446,13 @@ class PostgresCommissionedIdentityResolver(CommissionedIdentityResolver):
             references[0].external_id if references else None,
         )
 
+    def resolve_role(self, principal_id: UUID) -> str | None:
+        person = self.graph.get_node(principal_id)
+        if person is None or person.kind != NodeKind.PERSON:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        role = person.metadata.get("semantic_role")
+        return role.strip() if isinstance(role, str) and role.strip() else None
+
 
 def _environment_secrets() -> dict[str, str]:
     """Read declared secret references into the in-process broker only."""
@@ -451,6 +498,7 @@ def build_postgres_core(
     ):
         manifest, plugin_runtime = external_plugin(
             plugin_id,
+            audit_sink=ExternalAuditJournalSink(journal),
             searxng_url=os.environ.get("ANIMA_SEARXNG_URL", "http://searxng:8080"),
             searxng_host=os.environ.get("ANIMA_SEARXNG_HOST", "searxng"),
             overpass_url=os.environ.get("ANIMA_OVERPASS_URL", "https://overpass-api.de"),
@@ -458,7 +506,9 @@ def build_postgres_core(
         plugins.register(manifest, NativeRuntime(plugin_runtime))
         plugins.enable(plugin_id)
     if secrets.get("NTFY_TOPIC"):
-        manifest, plugin_runtime = external_plugin("anima.external.notifications")
+        manifest, plugin_runtime = external_plugin(
+            "anima.external.notifications", audit_sink=ExternalAuditJournalSink(journal)
+        )
         plugins.register(manifest, NativeRuntime(plugin_runtime))
         plugins.enable(manifest.plugin_id)
 

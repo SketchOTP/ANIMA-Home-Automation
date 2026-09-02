@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections import deque
+from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
 from anima_ha.ui_api import (
     DEFAULT_HOUSEHOLD_ID,
     DEFAULT_PRINCIPAL_ID,
+    UI_OAUTH_NONCE_COOKIE,
     JournalConversationIngress,
     UIConfig,
     UIEventBroadcaster,
@@ -42,6 +44,45 @@ def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:
     assert record.secret_hash != client.cookies.get("anima_session").split(".", 1)[1]  # type: ignore[union-attr]
     assert csrf != refreshed_csrf
     assert client.get("/auth/callback?code=anima-test-code&state=used").status_code == 400
+
+
+def test_oauth_state_requires_the_browser_bound_nonce_and_is_single_use() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True))
+    state = service.create_oauth_state()
+    nonce = service.oauth_nonce(state)
+    assert nonce is not None
+    assert service.consume_oauth_state(state, "wrong") is False
+    assert service.consume_oauth_state(state, nonce) is False
+
+    expired = service.create_oauth_state()
+    expired_nonce = service.oauth_nonce(expired)
+    assert expired_nonce is not None
+    service._oauth_states[expired] = (
+        expired_nonce,
+        datetime.now(UTC) - timedelta(seconds=1),
+    )
+    assert service.consume_oauth_state(expired, expired_nonce) is False
+
+
+def test_ui_preferences_are_bounded_and_persist_through_the_api() -> None:
+    client, csrf, _ = authenticated_client()
+    assert client.get("/api/v1/settings").json()["settings"]["appearance"] == "night"
+    response = client.put(
+        "/api/v1/settings",
+        json={"payload": {"appearance": "light", "accent": "sage", "reduced_motion": True}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["settings"]["accent"] == "sage"
+    assert client.get("/api/v1/settings").json()["settings"]["reduced_motion"] is True
+
+    rejected = client.put(
+        "/api/v1/settings",
+        json={"payload": {"appearance": "execute-shell"}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert rejected.status_code == 400
+    assert UI_OAUTH_NONCE_COOKIE not in client.cookies
 
 
 def test_home_is_anima_view_model_and_mutations_require_csrf_and_origin() -> None:

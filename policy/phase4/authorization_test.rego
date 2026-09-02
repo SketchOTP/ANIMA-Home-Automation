@@ -33,3 +33,18 @@ test_admin_is_always_denied if {
     result := authorization.decision with input as base with input.action_intent as {"risk_class": "ADMIN_SYSTEM_PROHIBITED"}
     result.decision == "DENY"
 }
+
+test_guest_can_use_low_risk_control if {
+    result := authorization.decision with input as base with input.policy.role as "guest" with input.action_intent as {"risk_class": "LOW_RISK_HOME_CONTROL"}
+    result.decision == "ALLOW"
+}
+
+test_guest_cannot_use_secure_action if {
+    result := authorization.decision with input as base with input.policy.role as "guest" with input.identity as {"assurance": "AUTHENTICATED", "principal_id": "person-1"} with input.action_intent as {"risk_class": "SECURITY_SECURE_ACTION"}
+    result.decision == "DENY"
+}
+
+test_restricted_cannot_mutate if {
+    result := authorization.decision with input as base with input.policy.role as "restricted" with input.action_intent as {"risk_class": "LOW_RISK_HOME_CONTROL"}
+    result.decision == "DENY"
+}

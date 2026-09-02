@@ -34,10 +34,12 @@ from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOr
 
 UI_VERSION = "0.1.0"
 UI_SESSION_COOKIE = "anima_session"
+UI_OAUTH_NONCE_COOKIE = "anima_oauth_nonce"
 SESSION_ABSOLUTE_TTL = timedelta(hours=8)
 SESSION_IDLE_TTL = timedelta(minutes=30)
 MAX_CONVERSATION_CHARS = 4_000
 MAX_SSE_BUFFER = 64
+OAUTH_STATE_TTL = timedelta(minutes=10)
 DEFAULT_HOUSEHOLD_ID = UUID("00000000-0000-0000-0000-000000000012")
 DEFAULT_PRINCIPAL_ID = UUID("00000000-0000-0000-0000-000000000013")
 
@@ -252,6 +254,71 @@ class CommissionedIdentityResolver(Protocol):
 
     def resolve_principal(self, principal_id: UUID) -> tuple[UUID, UUID, str | None]: ...
 
+    def resolve_role(self, principal_id: UUID) -> str | None: ...
+
+
+DEFAULT_UI_PREFERENCES: dict[str, Any] = {
+    "version": 1,
+    "appearance": "night",
+    "accent": "ember",
+    "density": "comfortable",
+    "reduced_motion": False,
+    "text_scale": "normal",
+    "display_mode": "desktop",
+    "visible_widgets": [
+        "status",
+        "presence",
+        "weather",
+        "agenda",
+        "tasks",
+        "controls",
+        "conversation",
+        "activity",
+    ],
+    "widget_order": [
+        "status",
+        "presence",
+        "weather",
+        "agenda",
+        "tasks",
+        "controls",
+        "conversation",
+        "activity",
+    ],
+}
+UI_WIDGETS = frozenset(DEFAULT_UI_PREFERENCES["visible_widgets"])
+
+
+def validate_ui_preferences(value: dict[str, Any]) -> dict[str, Any]:
+    """Validate presentation-only settings; values cannot express authority."""
+    if set(value) - set(DEFAULT_UI_PREFERENCES):
+        raise ValueError("unknown UI preference")
+    result = dict(DEFAULT_UI_PREFERENCES)
+    result.update(value)
+    if result["appearance"] not in {"system", "light", "night"}:
+        raise ValueError("appearance is not supported")
+    if result["accent"] not in {"ember", "sage", "sky"}:
+        raise ValueError("accent is not supported")
+    if result["density"] not in {"comfortable", "compact"}:
+        raise ValueError("density is not supported")
+    if result["text_scale"] not in {"small", "normal", "large"}:
+        raise ValueError("text_scale is not supported")
+    if result["display_mode"] not in {"wall", "tablet", "phone", "desktop"}:
+        raise ValueError("display_mode is not supported")
+    if not isinstance(result["reduced_motion"], bool):
+        raise ValueError("reduced_motion must be boolean")
+    for key in ("visible_widgets", "widget_order"):
+        items = result[key]
+        if (
+            not isinstance(items, list)
+            or len(items) > len(UI_WIDGETS)
+            or len(set(items)) != len(items)
+            or not all(isinstance(item, str) and item in UI_WIDGETS for item in items)
+        ):
+            raise ValueError(f"{key} contains an unsupported widget")
+    result["version"] = 1
+    return result
+
 
 class HouseholdReadModel(Protocol):
     def bootstrap(self, identity: UIIdentity) -> dict[str, Any]: ...
@@ -265,6 +332,10 @@ class HouseholdReadModel(Protocol):
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
     def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
+    def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
+
+    def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
 
 
 class UICommandGateway(Protocol):
@@ -355,6 +426,7 @@ class DemoHouseholdReadModel:
     """Safe deterministic fallback used by the local prototype and tests."""
 
     def __init__(self) -> None:
+        self._settings = validate_ui_preferences({})
         self._tasks = [
             {"task_id": "task-demo", "title": "Review Anima updates", "status": "ACTIVE"}
         ]
@@ -365,31 +437,21 @@ class DemoHouseholdReadModel:
                 "start_at": "2026-09-02T18:00:00+00:00",
                 "end_at": "2026-09-02T18:30:00+00:00",
                 "status": "ACTIVE",
+                "version": 1,
             }
         ]
 
     def bootstrap(self, identity: UIIdentity) -> dict[str, Any]:
+        settings = self.settings(identity)
         return {
             "identity": identity.to_payload(),
             "household": {"name": "Anima Home", "mode": "prototype"},
             "theme": {
-                "appearance": "night",
-                "accent": "ember",
-                "density": "comfortable",
-                "reduced_motion": False,
-                "text_scale": "normal",
+                key: settings[key]
+                for key in ("appearance", "accent", "density", "reduced_motion", "text_scale")
             },
             "layout": {
-                "display_mode": "desktop",
-                "visible_widgets": [
-                    "status",
-                    "presence",
-                    "weather",
-                    "agenda",
-                    "tasks",
-                    "conversation",
-                    "activity",
-                ],
+                key: settings[key] for key in ("display_mode", "visible_widgets", "widget_order")
             },
             "capabilities": [
                 "home.status",
@@ -452,6 +514,15 @@ class DemoHouseholdReadModel:
                 "detail": "Phase 13",
             },
         ]
+
+    def settings(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return dict(self._settings)
+
+    def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]:
+        del identity
+        self._settings = validate_ui_preferences(value)
+        return dict(self._settings)
 
 
 class UnavailableHouseholdReadModel:
@@ -516,6 +587,14 @@ class UnavailableHouseholdReadModel:
             },
         ]
 
+    def settings(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return validate_ui_preferences({})
+
+    def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]:
+        del identity, value
+        raise UICommandError("CORE_PREFERENCES_UNAVAILABLE")
+
 
 class PostgresHouseholdReadModel:
     """Normalized read façade over existing Core persistence tables."""
@@ -543,6 +622,7 @@ class PostgresHouseholdReadModel:
     def bootstrap(self, identity: UIIdentity) -> dict[str, Any]:
         household = self.graph.get_node(identity.household_id) if self.graph else None
         capabilities = self.capabilities(identity)
+        settings = self.settings(identity)
         return {
             "identity": identity.to_payload(),
             "household": {
@@ -550,23 +630,11 @@ class PostgresHouseholdReadModel:
                 "mode": "commissioned" if household else "unavailable",
             },
             "theme": {
-                "appearance": "night",
-                "accent": "ember",
-                "density": "comfortable",
-                "reduced_motion": False,
-                "text_scale": "normal",
+                key: settings[key]
+                for key in ("appearance", "accent", "density", "reduced_motion", "text_scale")
             },
             "layout": {
-                "display_mode": "desktop",
-                "visible_widgets": [
-                    "status",
-                    "presence",
-                    "weather",
-                    "agenda",
-                    "tasks",
-                    "conversation",
-                    "activity",
-                ],
+                key: settings[key] for key in ("display_mode", "visible_widgets", "widget_order")
             },
             "capabilities": [str(item["id"]) for item in capabilities],
             "server_version": UI_VERSION,
@@ -600,7 +668,7 @@ class PostgresHouseholdReadModel:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT event_id, title, start_at, end_at, status
+                SELECT event_id, title, start_at, end_at, status, version
                 FROM anima_calendar_events
                 WHERE household_id=%s
                 ORDER BY start_at, event_id
@@ -616,6 +684,7 @@ class PostgresHouseholdReadModel:
                 "start_at": row["start_at"].isoformat(),
                 "end_at": row["end_at"].isoformat(),
                 "status": str(row["status"]),
+                "version": int(row["version"]),
             }
             for row in rows
         ]
@@ -653,11 +722,28 @@ class PostgresHouseholdReadModel:
                     None,
                 )
                 if power is not None and resource.kind == NodeKind.RESOURCE:
+                    state = "UNKNOWN"
+                    if self.truth is not None:
+                        for binding, resolution in self.graph.truth_for_node(
+                            resource.canonical_id, self.truth
+                        ):
+                            if not str(binding.semantic_attribute).startswith("power"):
+                                continue
+                            if resolution.status == TruthStatus.CURRENT_KNOWN:
+                                value = resolution.value
+                                state = (
+                                    "ON"
+                                    if value is True or str(value).lower() in {"on", "true"}
+                                    else "OFF"
+                                    if value is False or str(value).lower() in {"off", "false"}
+                                    else "UNKNOWN"
+                                )
+                            break
                     controls.append(
                         {
                             "control_id": str(resource.canonical_id),
                             "label": resource.name,
-                            "state": "UNKNOWN",
+                            "state": state,
                             "capability": power.metadata.get("capability_type"),
                         }
                     )
@@ -681,7 +767,7 @@ class PostgresHouseholdReadModel:
                 "people": people,
             },
             "attention": [],
-            "weather": {"status": "UNAVAILABLE", "summary": "Weather provider not connected"},
+            "weather": self.weather(identity),
             "calendar": self.calendar(identity)[:5],
             "tasks": self.tasks(identity)[:5],
             "controls": controls,
@@ -714,19 +800,35 @@ class PostgresHouseholdReadModel:
         ]
 
     def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]:
-        del identity
         result = [{"id": "home.status", "label": "Home status", "state": "available"}]
         if self.plugins is not None:
             for plugin in self.plugins.list_plugins():
                 state = "available" if plugin.enabled else "unavailable"
+                detail = plugin.last_error
+                plugin_id = str(getattr(plugin.manifest, "plugin_id", ""))
+                provider_names = {
+                    "anima.external.weather": ("open-meteo",),
+                    "anima.external.discovery": ("searxng",),
+                    "anima.external.shopping.upcitemdb": ("upcitemdb",),
+                    "anima.external.recipes": ("themealdb",),
+                    "anima.external.notifications": ("ntfy",),
+                }
                 for capability in plugin.manifest.capabilities:
+                    capability_state = state
+                    if plugin.enabled and plugin_id.startswith("anima.external"):
+                        providers = provider_names.get(plugin_id, ())
+                        if plugin_id == "anima.external.discovery":
+                            providers = ("overpass",) if capability == "places" else ("searxng",)
+                        health = self._latest_external_health(providers)
+                        if health is not None:
+                            capability_state, detail = health
                     entry: dict[str, Any] = {
                         "id": capability,
                         "label": plugin.manifest.name,
-                        "state": state,
+                        "state": capability_state,
                     }
-                    if plugin.last_error and not plugin.enabled:
-                        entry["detail"] = plugin.last_error
+                    if detail:
+                        entry["detail"] = detail
                     result.append(entry)
         result.append(
             {
@@ -744,6 +846,81 @@ class PostgresHouseholdReadModel:
             }
         )
         return result
+
+    def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
+        if not providers:
+            return None
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT payload FROM anima_event_journal
+                WHERE event_type='external.request.audit'
+                  AND payload->>'provider' = ANY(%s)
+                ORDER BY journal_position DESC LIMIT 1
+                """,
+                (list(providers),),
+            )
+            row = cursor.fetchone()
+        if not row:
+            return None
+        payload = dict(row["payload"] or {})
+        result_class = str(payload.get("result_class", ""))
+        if result_class in {"SUCCESS", "RESPONSE_SUCCESS"}:
+            return "available", None
+        if result_class in {"HTTP_ERROR", "TIMEOUT", "TRANSPORT_ERROR", "PROVIDER_ERROR"}:
+            return "degraded", result_class
+        return None
+
+    def weather(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT sanitized_result, created_at FROM anima_agent_tool_requests
+                WHERE tool_id='anima.external.weather.get' AND outcome='SUCCESS'
+                ORDER BY created_at DESC LIMIT 1
+                """
+            )
+            row = cursor.fetchone()
+        if not row:
+            return {"status": "UNKNOWN", "summary": "No retained weather observation yet."}
+        result = dict(row["sanitized_result"] or {})
+        payload = result.get("result") if isinstance(result.get("result"), dict) else result
+        data = payload.get("data", {}) if isinstance(payload, dict) else {}
+        current = data.get("current", {}) if isinstance(data, dict) else {}
+        temperature = current.get("temperature_2m") if isinstance(current, dict) else None
+        retrieved = payload.get("retrieved_at") if isinstance(payload, dict) else None
+        if temperature is None:
+            return {"status": "UNKNOWN", "summary": "Latest weather observation is incomplete."}
+        age = _now() - row["created_at"]
+        state = "CURRENT" if age <= timedelta(hours=6) else "STALE"
+        suffix = f" · observed {retrieved}" if retrieved else ""
+        return {"status": state, "summary": f"{temperature}° · Open-Meteo observation{suffix}"}
+
+    def settings(self, identity: UIIdentity) -> dict[str, Any]:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT preferences FROM anima_ui_preferences "
+                "WHERE household_id=%s AND principal_id=%s",
+                (identity.household_id, identity.principal_id),
+            )
+            row = cursor.fetchone()
+        return validate_ui_preferences(dict(row["preferences"]) if row else {})
+
+    def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]:
+        preferences = validate_ui_preferences(value)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_ui_preferences (household_id, principal_id, preferences)
+                VALUES (%s,%s,%s::jsonb)
+                ON CONFLICT (household_id, principal_id) DO UPDATE
+                SET preferences=EXCLUDED.preferences, updated_at=now()
+                """,
+                (identity.household_id, identity.principal_id, json.dumps(preferences)),
+            )
+            connection.commit()
+        return preferences
 
 
 class DemoCommandGateway:
@@ -963,17 +1140,26 @@ class UIService:
             else {}
         )
         self.oauth = HomeAssistantOAuth(self.config)
-        self._oauth_states: set[str] = set()
+        self._oauth_states: dict[str, tuple[str, datetime]] = {}
 
     def create_oauth_state(self) -> str:
         state = secrets.token_urlsafe(24)
-        self._oauth_states.add(state)
+        self._oauth_states[state] = (secrets.token_urlsafe(32), _now() + OAUTH_STATE_TTL)
         return state
 
-    def consume_oauth_state(self, state: str) -> bool:
-        if state not in self._oauth_states:
+    def oauth_nonce(self, state: str) -> str | None:
+        record = self._oauth_states.get(state)
+        return record[0] if record and record[1] > _now() else None
+
+    def consume_oauth_state(self, state: str, nonce: str | None = None) -> bool:
+        record = self._oauth_states.pop(state, None)
+        if (
+            record is None
+            or record[1] <= _now()
+            or not nonce
+            or not hmac.compare_digest(record[0], nonce)
+        ):
             return False
-        self._oauth_states.remove(state)
         return True
 
     def map_ha_user(self, ha_user_id: str) -> UIIdentity:
@@ -1092,7 +1278,7 @@ class MutationRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
-def create_app(service: UIService | None = None) -> FastAPI:
+def create_app(service: UIService | None = None, *, codex: Any | None = None) -> FastAPI:
     if service is None:
         config = UIConfig.from_environment()
         database_url = os.environ.get("ANIMA_DATABASE_URL", "").strip()
@@ -1104,7 +1290,7 @@ def create_app(service: UIService | None = None) -> FastAPI:
         if database_url:
             from anima_ha.ui_runtime import build_postgres_core
 
-            core_runtime = build_postgres_core(database_url, opa_url=config.opa_url)
+            core_runtime = build_postgres_core(database_url, opa_url=config.opa_url, codex=codex)
             read_model = PostgresHouseholdReadModel(
                 database_url,
                 graph=core_runtime.graph,
@@ -1171,16 +1357,39 @@ def create_app(service: UIService | None = None) -> FastAPI:
     @app.get("/auth/login")
     async def login() -> Response:
         state = svc.create_oauth_state()
+        nonce = svc.oauth_nonce(state)
         if svc.config.test_auth_enabled:
-            return RedirectResponse(f"/auth/callback?code=anima-test-code&state={state}")
+            response = RedirectResponse(f"/auth/callback?code=anima-test-code&state={state}")
+            if nonce:
+                response.set_cookie(
+                    UI_OAUTH_NONCE_COOKIE,
+                    nonce,
+                    httponly=True,
+                    samesite="strict",
+                    secure=False,
+                    max_age=int(OAUTH_STATE_TTL.total_seconds()),
+                    path="/",
+                )
+            return response
         try:
-            return RedirectResponse(svc.oauth.authorization_url(state))
+            response = RedirectResponse(svc.oauth.authorization_url(state))
+            if nonce:
+                response.set_cookie(
+                    UI_OAUTH_NONCE_COOKIE,
+                    nonce,
+                    httponly=True,
+                    samesite="strict",
+                    secure=False,
+                    max_age=int(OAUTH_STATE_TTL.total_seconds()),
+                    path="/",
+                )
+            return response
         except UIAuthError as exc:
             raise HTTPException(status_code=503, detail="HOME_ASSISTANT_OAUTH_UNAVAILABLE") from exc
 
     @app.get("/auth/callback")
-    async def callback(code: str, state: str) -> Response:
-        if not svc.consume_oauth_state(state):
+    async def callback(request: Request, code: str, state: str) -> Response:
+        if not svc.consume_oauth_state(state, request.cookies.get(UI_OAUTH_NONCE_COOKIE)):
             raise HTTPException(status_code=400, detail="OAUTH_STATE_REJECTED")
         if svc.config.test_auth_enabled and code == "anima-test-code":
             identity = svc.map_ha_user("test-ha-user")
@@ -1189,6 +1398,7 @@ def create_app(service: UIService | None = None) -> FastAPI:
             response.set_cookie(
                 UI_SESSION_COOKIE, cookie, httponly=True, samesite="strict", secure=False, path="/"
             )
+            response.delete_cookie(UI_OAUTH_NONCE_COOKIE, path="/")
             response.headers["X-Anima-CSRF"] = csrf
             return response
         try:
@@ -1201,6 +1411,7 @@ def create_app(service: UIService | None = None) -> FastAPI:
         response.set_cookie(
             UI_SESSION_COOKIE, cookie, httponly=True, samesite="strict", secure=False, path="/"
         )
+        response.delete_cookie(UI_OAUTH_NONCE_COOKIE, path="/")
         response.headers["X-Anima-CSRF"] = csrf
         return response
 
@@ -1275,10 +1486,33 @@ def create_app(service: UIService | None = None) -> FastAPI:
         require_mutation(request, x_anima_csrf, session)
         try:
             return svc.commands.task_mutation(
-                svc.identity_from_session(session), operation, {"task_id": task_id, **body.payload}
+                svc.identity_from_session(session), operation, {**body.payload, "task_id": task_id}
             )
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/api/v1/settings")
+    async def settings(request: Request) -> dict[str, Any]:
+        return {"settings": svc.read_model.settings(current_identity(request))}
+
+    @app.put("/api/v1/settings")
+    async def update_settings(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return {
+                "settings": svc.read_model.update_settings(
+                    svc.identity_from_session(session), body.payload
+                )
+            }
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_UI_PREFERENCES") from exc
 
     @app.get("/api/v1/calendar")
     async def calendar(request: Request) -> dict[str, Any]:
@@ -1294,7 +1528,27 @@ def create_app(service: UIService | None = None) -> FastAPI:
         require_mutation(request, x_anima_csrf, session)
         try:
             return svc.commands.calendar_mutation(
-                svc.identity_from_session(session), "create", body.payload
+                svc.identity_from_session(session), "create_event", body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.post("/api/v1/calendar/{event_id}/{operation}")
+    async def mutate_calendar(
+        event_id: str,
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"update", "cancel"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_CALENDAR_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            payload = {**body.payload, "event_id": event_id}
+            return svc.commands.calendar_mutation(
+                svc.identity_from_session(session), f"{operation}_event", payload
             )
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc

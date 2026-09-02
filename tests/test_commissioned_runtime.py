@@ -7,6 +7,7 @@ import pytest
 
 from anima_ha.graph import CanonicalNode, NodeKind
 from anima_ha.ui_api import (
+    DEFAULT_UI_PREFERENCES,
     DemoHouseholdReadModel,
     PostgresHouseholdReadModel,
     PrincipalMappingConflict,
@@ -135,6 +136,8 @@ def test_postgres_read_model_uses_graph_and_registry_not_demo(
     monkeypatch.setattr(model, "tasks", lambda identity: [])
     monkeypatch.setattr(model, "calendar", lambda identity: [])
     monkeypatch.setattr(model, "activity", lambda identity: [])
+    monkeypatch.setattr(model, "settings", lambda identity: dict(DEFAULT_UI_PREFERENCES))
+    monkeypatch.setattr(model, "weather", lambda identity: {"status": "UNKNOWN"})
     identity = UIIdentity(HOUSEHOLD, PERSON, "ha-user", SimpleNamespace())  # type: ignore[arg-type]
 
     assert model.bootstrap(identity)["household"] == {
