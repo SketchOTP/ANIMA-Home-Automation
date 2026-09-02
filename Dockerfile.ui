@@ -11,6 +11,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 RUN pip install --no-cache-dir .
+COPY policy/phase4 /usr/local/lib/python3.12/policy/phase4
 COPY --from=ui-build /build/ui/dist ./ui/dist
 RUN useradd --create-home --uid 10001 anima && chown -R anima:anima /app
 USER anima
