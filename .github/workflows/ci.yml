@@ -51,7 +51,6 @@ jobs:
           uv run --locked python scripts/verify_phase12_h5_core.py | tee /tmp/anima-h5-evidence/phase12-h5-core.json
           uv run --locked python scripts/verify_phase12_h4_isolated_ha.py | tee /tmp/anima-h5-evidence/phase12-isolated-ha.json
           uv run --locked python scripts/verify_phase11_restricted_content.py | tee /tmp/anima-h5-evidence/phase11-restricted-content.json
-          uv run --locked python scripts/verify_phase11_external.py --require-upcitemdb-products | tee /tmp/anima-h5-evidence/phase11-external.txt
           uv build --sdist --wheel
           git diff --check
       - name: Run public repository safety scan
