@@ -212,7 +212,16 @@ def main() -> int:
     )
 
     restarted = _app()
-    restarted_client, restarted_headers, restarted_service = _session(restarted)
+    # Reconstruct the application while retaining the original browser cookie.
+    # Only the CSRF token is rotated by the normal bootstrap response; issuing a
+    # replacement session would not prove process-restart continuity.
+    restarted_client = TestClient(restarted)
+    original_cookie = client.cookies.get(UI_SESSION_COOKIE)
+    assert original_cookie is not None
+    restarted_client.cookies.set(UI_SESSION_COOKIE, original_cookie)
+    restarted_bootstrap = restarted_client.get("/api/v1/bootstrap")
+    assert restarted_bootstrap.status_code == 200, restarted_bootstrap.text
+    restarted_service = restarted.state.ui_service
     persisted = restarted_client.get("/api/v1/settings").json()["settings"]
     assert persisted == {**settings, "version": persisted["version"]}
     assert restarted_service.conversation.fallback_enabled is False
@@ -244,6 +253,7 @@ def main() -> int:
                     "version_after_update": current["version"],
                 },
                 "settings_restart": persisted,
+                "original_session_survived_restart": True,
                 "ha": "EXTERNAL_RESOURCE_GATE_HA_COMMISSIONING",
                 "phase13": False,
             },

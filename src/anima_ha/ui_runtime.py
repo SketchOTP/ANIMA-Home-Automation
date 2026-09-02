@@ -499,6 +499,7 @@ def build_postgres_core(
     *,
     opa_url: str = "http://127.0.0.1:8181",
     codex: Any | None = None,
+    external_transport: Any | None = None,
 ) -> CoreRuntime:
     """Compose the normal local runtime from accepted Core implementations."""
     journal = PostgresEventJournal(database_url)
@@ -524,6 +525,7 @@ def build_postgres_core(
         manifest, plugin_runtime = external_plugin(
             plugin_id,
             audit_sink=ExternalAuditJournalSink(journal),
+            transport=external_transport,
             searxng_url=os.environ.get("ANIMA_SEARXNG_URL", "http://searxng:8080"),
             searxng_host=os.environ.get("ANIMA_SEARXNG_HOST", "searxng"),
             overpass_url=os.environ.get("ANIMA_OVERPASS_URL", "https://overpass-api.de"),

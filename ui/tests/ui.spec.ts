@@ -67,9 +67,41 @@ test("desktop settings apply persisted presentation preferences", async ({ page 
   await expect(page.getByRole("status").filter({ hasText: "SUCCEEDED" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("data-appearance", "light");
   await expect(page.locator("html")).toHaveAttribute("data-display-mode", "tablet");
+  await page.getByRole("button", { name: "Home" }).click();
+  await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gap)).toBe("12px");
+  await expect(page.locator('[data-widget="presence"]')).toHaveCount(0);
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-appearance", "light");
   await expect(page.locator("html")).toHaveAttribute("data-display-mode", "tablet");
+  await expect(page.locator('[data-widget="presence"]')).toHaveCount(0);
+});
+
+test("desktop layout profiles change measured geometry and widget order", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Layout profile").selectOption("wall");
+  const presence = page.getByRole("checkbox", { name: "presence" });
+  if (!(await presence.isChecked())) await presence.check();
+  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Home" }).click();
+  await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length)).toBe(3);
+  await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gap)).toBe("24px");
+  const beforeAgendaIndex = await page.locator(".widget").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-widget")).indexOf("agenda"));
+  const wallColumns = await page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns);
+  await page.getByRole("button", { name: "Settings" }).click();
+  const agendaUp = page.getByRole("button", { name: "Move agenda up" });
+  const agendaDown = page.getByRole("button", { name: "Move agenda down" });
+  if (await agendaUp.isEnabled()) await agendaUp.click();
+  else await agendaDown.click();
+  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Home" }).click();
+  await expect.poll(async () => page.locator(".widget").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-widget")).indexOf("agenda"))).not.toBe(beforeAgendaIndex);
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Layout profile").selectOption("phone");
+  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Home" }).click();
+  await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length)).toBe(1);
+  expect(await page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns)).not.toBe(wallColumns);
 });
 
 test("responsive navigation and privacy boundary hold at each viewport", async ({ page }) => {
@@ -79,5 +111,31 @@ test("responsive navigation and privacy boundary hold at each viewport", async (
   await page.getByRole("button", { name: "Home" }).click();
   expect(await page.evaluate(() => Object.keys(localStorage).length)).toBe(0);
   expect(await page.evaluate(() => Object.keys(sessionStorage).length)).toBe(0);
-  expect(await page.evaluate(() => Object.keys(indexedDB).length)).toBe(0);
+  const storage = await page.evaluate(async () => ({
+    local: Object.keys(localStorage),
+    session: Object.keys(sessionStorage),
+    indexed: typeof indexedDB.databases === "function" ? (await indexedDB.databases()).map((db) => db.name).filter(Boolean) : [],
+    caches: "caches" in self ? await caches.keys() : [],
+    workers: "serviceWorker" in navigator ? (await navigator.serviceWorker.getRegistrations()).map((registration) => registration.scope) : [],
+  }));
+  expect(storage.local).toEqual([]);
+  expect(storage.session).toEqual([]);
+  expect(storage.indexed).toEqual([]);
+  expect(storage.caches).toEqual([]);
+  expect(storage.workers).toEqual([]);
+});
+
+test("browser application traffic is same-origin and keyboard focus is visible", async ({ page }) => {
+  const origins: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.protocol === "http:" || url.protocol === "https:") origins.push(url.origin);
+  });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
+  await page.getByRole("button", { name: "Anima" }).focus();
+  await expect(page.getByRole("button", { name: "Anima" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Message Anima")).toBeVisible();
+  expect(new Set(origins)).toEqual(new Set(["http://127.0.0.1:18090"]));
 });

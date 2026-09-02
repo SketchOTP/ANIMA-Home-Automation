@@ -1278,7 +1278,12 @@ class MutationRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
-def create_app(service: UIService | None = None, *, codex: Any | None = None) -> FastAPI:
+def create_app(
+    service: UIService | None = None,
+    *,
+    codex: Any | None = None,
+    external_transport: Any | None = None,
+) -> FastAPI:
     if service is None:
         config = UIConfig.from_environment()
         database_url = os.environ.get("ANIMA_DATABASE_URL", "").strip()
@@ -1290,7 +1295,12 @@ def create_app(service: UIService | None = None, *, codex: Any | None = None) ->
         if database_url:
             from anima_ha.ui_runtime import build_postgres_core
 
-            core_runtime = build_postgres_core(database_url, opa_url=config.opa_url, codex=codex)
+            core_runtime = build_postgres_core(
+                database_url,
+                opa_url=config.opa_url,
+                codex=codex,
+                external_transport=external_transport,
+            )
             read_model = PostgresHouseholdReadModel(
                 database_url,
                 graph=core_runtime.graph,
