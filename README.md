@@ -49,6 +49,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
 - Configured conversation composition into Attention, Context Broker, and AgentRuntime; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
+- Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, and restricted external-content handling.
 
@@ -58,7 +59,7 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 
 ## Evidence
 
-Phases 0–11 are Architect accepted. Phase 12 is the active integration and portfolio phase. The [Authority state](.agent/CURRENT.md), [Phase 12 documentation](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md), and completed task packet distinguish deterministic contract tests, integration tests, isolated Home Assistant evidence, live public synthetic provider evidence, and unperformed production commissioning.
+Phases 0–11 are Architect accepted. Phase 12 implementation is complete and pending Architect acceptance. The [Authority state](.agent/CURRENT.md), [Phase 12 documentation](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md), and completed task packet distinguish deterministic contract tests, integrated PostgreSQL/OPA evidence, isolated Home Assistant evidence, live public synthetic provider evidence, and unperformed production commissioning.
 
 ## Implemented Phase 0 through Phase 11 baseline
 

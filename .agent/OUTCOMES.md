@@ -717,3 +717,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
 - The checkpoint publishes the commissioned graph-identity resolver, graph/Truth/plugin-backed PostgreSQL UI read models, accepted Phase 11 provider composition, explicit HA commissioning configuration, and the deterministic real PostgreSQL/OPA verification target. No Phase 13 behavior was added.
 - Governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA. Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`.
+
+## ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3 — Final convergence
+
+- Starting governed checkpoint: `7524cd67daee305e8e4bc4446623fa022fee0cd2`; hosted CI `33655737686` passed on that exact SHA.
+- Implementation checkpoint: `37116b03c65bfac54a5261f30160e9030aa6011c`; hosted CI `33671817841` passed on that exact SHA.
+- Implementation result: configured `create_app()` now composes the existing PostgreSQL/OPA/Core cognition and command stack; semantic role is resolved from commissioned graph authority per operation; OAuth state is browser-bound and single-use; external audit sinks and capability-health projections are active; allowlisted UI preferences persist in PostgreSQL; calendar versions support honest UI concurrency; task/calendar/control UI operations use the existing governed gateways.
+- Evidence: `scripts/validate.sh` passed 166 Python tests, Ruff, strict mypy, and OPA 7/7; frontend unit tests, TypeScript/Vite build, Playwright 9-test responsive matrix, package build, repeat migrations, commissioned-runtime target, final-UX target, screenshot capture/MIME checks, diff-check, and public-safety review passed.
+- Final governed checkpoint: this governance closure commit, pushed after the implementation checkpoint and exact implementation CI. Its exact SHA and hosted CI are recorded in the final Notion readback; the closure files avoid a self-referential hash claim.
+- Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Evidence limits remain live HA commissioning, physical-home behavior, live Luna credentials, native ARM64/Pi execution, production TLS, and real household data. Phase 13 was not implemented.

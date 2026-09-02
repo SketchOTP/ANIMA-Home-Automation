@@ -1,9 +1,11 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; commissioned-runtime hardening and governed evidence closure are published.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; final UX/authority convergence is published for independent review.
 
-Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
-Governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA.
+Prior commissioned-runtime implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
+Prior governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA.
+
+Final UX/authority implementation checkpoint: `37116b03c65bfac54a5261f30160e9030aa6011c`; hosted CI `33671817841` passed on that exact SHA. The final governed checkpoint is the commit containing this closure record; its exact SHA and CI are recorded in the final Notion readback.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.
@@ -73,6 +75,24 @@ policy bypass. A missing configured dependency produces an explicit
 unavailable capability; the test-only echo remains behind
 `ANIMA_UI_TEST_AUTH=1`.
 
+## Final UX/authority convergence
+
+The current hardening keeps authority in Core at every browser boundary. The
+configured UI resolves the authenticated principal's semantic role from the
+commissioned graph for each command and conversation, and fails closed when
+that role is absent. Task and local-calendar mutations are policy-gated
+internal tools; home controls remain Phase 5 → Phase 4 → Phase 9 coordinated
+actions. No browser payload can provide role, provenance, provider identity, or
+execution authority.
+
+HA OAuth state is bound to the initiating browser by an expiring, single-use
+nonce cookie. Capability status is derived independently from plugin health and
+external-audit state, so degraded providers are not reported as online. UI
+preferences use migration `0014_ui_preferences.sql`, an allowlisted PostgreSQL
+store, CSRF/Origin-protected settings routes, and client-side application with
+no persistent browser storage. Calendar list projections include their
+optimistic-concurrency version.
+
 ## Stack qualification
 
 | Layer | Adopted version | Role | License/source |
@@ -121,7 +141,9 @@ maps the fixed test user. An unmapped HA user fails closed with
 | `GET /api/v1/tasks` | household-scoped task projection | session |
 | `POST /api/v1/tasks...` | task mutations | session + CSRF + Core gateway |
 | `GET /api/v1/calendar` | local calendar projection | session |
-| `POST /api/v1/calendar` | calendar mutation | session + CSRF + Core gateway |
+| `POST /api/v1/calendar` | calendar create mutation | session + CSRF + Core gateway |
+| `POST /api/v1/calendar/{event_id}/{operation}` | calendar update/cancel mutation | session + CSRF + Core gateway + expected version |
+| `GET /api/v1/settings` / `PUT /api/v1/settings` | allowlisted presentation preferences | session / session + CSRF + Origin |
 | `GET /api/v1/activity` | bounded sanitized activity | session |
 | `GET /api/v1/capabilities` | availability/health projection | session |
 | `POST /api/v1/conversation` | normalized direct-user request ingress | session + CSRF + journal → attention → context → AgentRuntime |
@@ -152,9 +174,10 @@ is present.
 
 ## Validation boundary
 
-Deterministic backend tests cover health/auth, single-use OAuth state, exact
-principal mapping, hashed sessions, expiry/revocation, CSRF/Origin, semantic
-view-model projection, journaled request provenance, and Core-routed commands.
+Deterministic backend tests cover health/auth, browser-bound single-use OAuth
+state, exact principal/role mapping, hashed sessions, expiry/revocation,
+CSRF/Origin, semantic view-model projection, journaled request provenance,
+allowlisted settings persistence, and Core-routed commands.
 The integrated composition test exercises the real AgentRuntime from an event
 trigger; the echo response is test-only and is not used by the normal
 configured path.

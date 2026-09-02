@@ -182,3 +182,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Production identity must resolve from commissioned provider references to a canonical person and graph membership, never from a UI fallback map or display name. Exact-zero and multi-target results are distinct fail-closed outcomes.
 - The normal PostgreSQL composition can register no-key/qualified Phase 11 providers without activating Walmart or Best Buy; Home Assistant must remain unavailable until its instance, websocket, provider scope, and secret reference are complete.
 - Production read models must consume the graph, Truth projection, and plugin registry. A missing provider is an explicit capability/state result, not a reason to reuse deterministic demo household content.
+
+## ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3
+
+- UI policy context must resolve semantic role from the commissioned graph at the Core boundary for each request; a browser session proves identity but must not carry or choose authorization role.
+- OAuth callback state needs a browser-bound nonce cookie in addition to a server-side expiring single-use state record; state-only validation does not bind the initiating browser.
+- Capability health is a projection, not a static manifest label: plugin enablement, latest provider error, and external audit evidence must distinguish available from degraded and unavailable.
+- Calendar UI mutation needs the server-projected optimistic-concurrency version; otherwise a later update can unknowingly reuse a stale expected version.
+- Persistent PostgreSQL evidence targets must be rerunnable against existing fixtures. Synthetic commissioning IDs/scopes must not collide across separate targets, or the production resolver correctly fails closed on ambiguous mappings.

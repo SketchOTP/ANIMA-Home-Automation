@@ -405,6 +405,17 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3 — Final UX and authority convergence
+
+- Issued: 2026-09-02
+- Architect disposition: `CONTINUE / FINAL CONVERGENCE`; Phases 0–11 accepted; Phase 13 unauthorized.
+- Starting governed checkpoint: `7524cd67daee305e8e4bc4446623fa022fee0cd2`; hosted CI `33655737686` passed on that exact SHA.
+- Objective: close the bounded Phase 12 authority, production-composition, UI capability, preferences, real task/calendar/control-path, browser-evidence, portfolio, and governance gaps without changing accepted Phase 0–11 architecture.
+- Bounded implementation: graph-derived semantic roles are re-resolved for each governed operation; HA OAuth state is browser-bound, expiring, and single-use; active external providers receive journal audit sinks; capabilities report available/degraded/unavailable honestly; preferences use allowlisted PostgreSQL migration `0014_ui_preferences.sql`; calendar version is returned for conflict-safe UI mutation; task/calendar/control and conversation paths remain Core/Phase 5/4/9 routed.
+- Evidence: `scripts/verify_phase12_final_ux.py` passed against real PostgreSQL/OPA/Core composition with only a scripted model; `scripts/validate.sh` passed 166 tests, Ruff, strict mypy, and OPA 7/7; frontend tests/build/Playwright 9-test responsive matrix, migrations, package build, screenshots, diff-check, and public-safety checks passed.
+- Evidence limits: HA OAuth commissioning, physical-home execution, live Luna credentials, native ARM64/Pi, production TLS, and real household data remain unclaimed. Phase 12 status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 13 was not implemented.
+- Source: Architect directive supplied in the governed session and retained as the active continuity record.
+
 ## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — Commissioned runtime truth closure
 
 - Date: 2026-09-02

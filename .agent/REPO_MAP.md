@@ -131,11 +131,14 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 
 - `src/anima_ha/ui_api.py` — ANIMA-owned FastAPI semantic API, HA OAuth bootstrap, exact identity mapping, hashed sessions/CSRF, bounded SSE invalidations, and fail-closed Core command/conversation seams.
 - `src/anima_ha/db/migrations/0013_ui_sessions.sql` — server-side UI session/CSRF digest schema.
+- `src/anima_ha/db/migrations/0014_ui_preferences.sql` — bounded allowlisted PostgreSQL UI preference storage.
+- `scripts/verify_phase12_final_ux.py` — deterministic real `create_app()` PostgreSQL/OPA/Core composition target; only the model response is scripted.
 - `ui/` — React/TypeScript/Vite responsive single-page interface, same-origin browser policy tests, and Playwright desktop/tablet/phone scenarios.
 - `Dockerfile.ui` and `compose.yaml` — reproducible non-root local UI image and loopback-published Compose service.
 - `scripts/verify_phase12_ui.py` and `tests/test_ui_api.py` — deterministic API/auth/view-model/CSRF/SSE evidence.
 - `docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md` — current interface architecture, security boundary, deployment, and evidence limitations.
-- `.agent/tasks/active/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/` — active Phase 12 specification, plan, evidence ledger, and handoff.
+- `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/` — historical Phase 12 specification, evidence ledger, and handoff.
+- `.agent/tasks/completed/ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3/` — final UX/authority convergence evidence and governance packet.
 - `docs/assets/anima-home-desktop.png`, `anima-home-tablet.png`, `anima-home-phone.png` — responsive screenshots captured from the tested UI with synthetic data.
 
 ## Known sensitive/high-risk areas

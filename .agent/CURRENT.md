@@ -4,31 +4,23 @@ Last updated: 2026-09-02
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — COMMISSIONED RUNTIME TRUTH CLOSURE; PENDING ARCHITECT ACCEPTANCE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — FINAL UX/AUTHORITY CONVERGENCE; PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, commissioned HA identity mapping, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and production wiring to the accepted cognition/action stack. Phase 11 is Architect accepted; Phase 13 remains unauthorized.
+Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, commissioned HA identity mapping, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and production wiring to the accepted cognition/action stack. Phase 11 is Architect accepted; Phase 12 is complete pending Architect acceptance; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2` — replace synthetic production commissioning seams with graph-derived identity, Truth/Graph read models, and configured accepted providers while preserving the Phase 12 portfolio boundary. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3` — complete the bounded final Phase 12 UX, authority, runtime-composition, evidence, and portfolio closure. Starting checkpoint: `7524cd67daee305e8e4bc4446623fa022fee0cd2` with hosted CI `33655737686` passed. Phase 11 is Architect accepted; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
-- Phase 11 UPCitemdb implementation checkpoint: `2031f0a9ebded7e7a444516ab619f685d519349f`; hosted CI `33562526807` passed on that exact SHA. The provider is no-key and has no credential resource gate. The final live harness passed both required queries with five distinct products each.
-
-- Best Buy qualification checkpoint: governance commit
-  `7f5ddb0844195e2d558a2fbd24fac3101ae1d34e` is pushed to `origin/main` and
-  hosted CI `33509082116` passed on that exact SHA. The final evidence-closure
-  commit records the same outcome and its CI below.
-
-- Product-research closure started from governed Phase 11 checkpoint `23aa71d774c75529d7e8412e3060446d42a9cf4d`.
-- LedgerMind at `/home/sketch/Projects/LedgerMind` was inspected read-only on the Atlas laptop. Its status-only Walmart smoke test passed signature, catalogue, stores, and item-price probes; cart push remained unsupported. ANIMA copied the bounded contract, not credentials or runtime data.
-- ANIMA now exposes `anima.external.shopping.search_products` through a fixed `developer.api.walmart.com` host, ANIMA-generated RSA-SHA256 request signatures, trusted `SecretBroker` references, normalized `ProductCandidate` plus `retail_offer` data, timestamped external price/availability, and `EXTERNAL_UNTRUSTED` results. No cart, checkout, browser automation, scraping, CAPTCHA bypass, or arbitrary host is implemented.
-- Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
-- Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
-- Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`; Phase 12 is the active authorized phase. The current local integration delta uses the existing Core runtime objects rather than a UI-specific cognition or provider path.
+- The H3 implementation delta is local and limited to Phase 12: Core-owned role resolution, browser-bound OAuth nonce state, truthful capability health, PostgreSQL UI preferences, calendar version projections, real task/calendar/control UI paths, the decisive `create_app()` target, and refreshed responsive screenshots.
+- Normal configured `create_app()` composes PostgreSQL graph/Truth/journal/Attention/Context Broker/AgentRuntime/PluginManager/OPA/task/calendar/action dependencies. Only the model adapter is scripted in the deterministic target; `UnavailableCommandGateway` and the echo fallback are not selected in configured runtime.
+- `scripts/verify_phase12_final_ux.py` passed with `fallback_enabled=false`, a real Journal → Attention → ContextPacket → AgentRuntime trace, policy-gated task success, persisted settings, and explicit `EXTERNAL_RESOURCE_GATE_HA_COMMISSIONING` status.
+- Fresh validation passed: `uv sync --locked --dev`, `scripts/validate.sh` (166 Python tests, Ruff, strict mypy, OPA 7/7), package sdist/wheel, frontend unit tests, TypeScript/Vite build, Playwright 9-test desktop/tablet/phone matrix, migration repeat, commissioned-runtime target, final-UX target, `git diff --check`, and public-safety review.
+- Phase 11 active providers remain Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy. Walmart and Best Buy remain deferred historical candidates; no provider gate is silently substituted.
 
 ### Current product-provider replan
 
@@ -123,10 +115,8 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Current blockers
 
-- The commissioned-runtime implementation is published at `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA. The governed evidence closure and Architect review remain pending.
-- Production composition now derives HA identity from commissioned graph provider references (`home_assistant` / configured scope / `user`) and `MEMBER_OF` household edges; missing or ambiguous mappings fail closed. No synthetic mapping is used unless explicit `ANIMA_UI_TEST_AUTH=1` is enabled.
-- Production PostgreSQL read models now source household name, members, controls, and capabilities from the commissioned graph/Truth projection and Core plugin registry. Missing providers report neutral `UNKNOWN`/`UNAVAILABLE` state; they do not select demo data.
-- Real Home Assistant OAuth/commissioning, physical-home behavior, production TLS, and native ARM64/Pi execution remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with a scripted model adapter; HA remains an explicit commissioning gate on this host.
+- Phase 12 implementation checkpoint `37116b03c65bfac54a5261f30160e9030aa6011c` is published and hosted CI `33671817841` passed on that exact SHA. The final governed checkpoint is the closure commit containing this record; its exact SHA and hosted CI are recorded in the final Notion readback.
+- Real Home Assistant OAuth commissioning, physical-home behavior, production TLS, native ARM64/Pi execution, and live Luna credentials remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with only a scripted model adapter and reports HA as an explicit commissioning gate.
 - Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
@@ -154,7 +144,7 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2` after the final governed checkpoint. Evidence covers graph-derived identity, real PostgreSQL/OPA task/calendar mutation, Journal → Attention → Context → AgentRuntime, active provider registry, explicit HA commissioning limits, browser privacy, and responsive screenshots. Phase 13 remains unauthorized.
+Review `ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3` after the final governed checkpoint. Evidence covers role-derived policy context, browser-bound OAuth state, Core-routed conversation/task/calendar/control paths, PostgreSQL UI preferences, truthful capability health, browser privacy, and responsive screenshots. Phase 13 remains unauthorized.
 
 ## Phase 12 publication state — historical 014H checkpoint
 
