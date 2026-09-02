@@ -1,9 +1,46 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: integrated implementation is under Architect review; final governed checkpoint and hosted CI are recorded in the Authority handoff.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; commissioned-runtime hardening is published and hosted CI is green on the exact implementation checkpoint. The governed closure checkpoint remains the final publication step.
+
+Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.
+
+## Commissioned-runtime truth closure
+
+`create_app()` constructs the PostgreSQL Core composition whenever
+`ANIMA_DATABASE_URL` is present. Core registers the accepted task and local
+calendar tools plus the qualified Phase 11 portfolio: Open-Meteo, private
+SearXNG/Overpass discovery, UPCitemdb, TheMealDB, and optionally ntfy when its
+topic is configured. Walmart and Best Buy are not active providers.
+
+HA identity is resolved from commissioned `home_assistant` provider references
+targeting a canonical `PERSON`, then a single `MEMBER_OF` household edge.
+Missing mappings fail closed with `PRINCIPAL_MAPPING_REQUIRED`; multiple
+targets or household edges fail closed with `PRINCIPAL_MAPPING_CONFLICT`.
+Normal startup never creates the fixed test mapping. It is available only with
+the explicit `ANIMA_UI_TEST_AUTH=1` test flag.
+
+Home bootstrap, household state, presence, controls, and capability views are
+derived from the commissioned graph, Truth projection, and Core plugin
+registry. Missing dependencies produce neutral `UNKNOWN`/`UNAVAILABLE` state;
+they do not select demo household data.
+
+The real local target is reproducible with:
+
+```bash
+ANIMA_DATABASE_URL=postgresql://... \
+ANIMA_OPA_URL=http://127.0.0.1:18181 \
+uv run python scripts/verify_phase12_commissioned_runtime.py
+```
+
+It uses PostgreSQL graph/journal/attention/context/episode stores and the live
+OPA server. Only the model response is scripted. It verifies exact
+commissioned identity mapping, policy-gated task/calendar mutation, the
+Journal → Attention → ContextPacket → AgentRuntime trace, and the active
+provider registry. Real HA OAuth, household data, and physical-home behavior
+remain operator commissioning evidence rather than claims of this fixture.
 
 ## Architecture
 

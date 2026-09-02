@@ -277,3 +277,9 @@ UI, and voice remain out of scope.
 - Published implementation checkpoint: `208b7e546d8485539d2ae06427d268af116f9ceb`; hosted CI `33580734640` passed on the exact head.
 - Decision: wire the normal configured UI into accepted Core services through one composition module; retain test-only echo and demo seams only for explicit test/development configuration.
 - Evidence boundary: deterministic integrated cognition and policy-gated task mutation are reproduced; real Home Assistant OAuth/commissioning, live Luna, physical-home behavior, native ARM64/Pi, production TLS, and live household data remain unclaimed.
+
+## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — 2026-09-02
+
+- Architect disposition: `CONTINUE`; Phase 12 remains pending acceptance; Phase 13 unauthorized.
+- Decision: make commissioned graph identity, PostgreSQL Truth/read models, Core plugin registry, and configured accepted providers the normal production composition. Retain demo/test seams only behind explicit test configuration.
+- Local evidence: exact graph identity mapping, real OPA task/calendar mutation, and real PostgreSQL Journal/Attention/Context/AgentRuntime conversation passed; HA is explicitly unavailable without operator commissioning.

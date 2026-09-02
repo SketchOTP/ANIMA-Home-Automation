@@ -1,18 +1,18 @@
 # Current Project State
 
-Last updated: 2026-09-01
+Last updated: 2026-09-02
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — INTEGRATED AND LOCALLY VALIDATED; GOVERNANCE CLOSURE IN PROGRESS
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — COMMISSIONED RUNTIME TRUTH CLOSURE; PENDING ARCHITECT ACCEPTANCE
 
 ## Current objective
 
-Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, HA OAuth bootstrap, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and fail-closed command seams. Phase 11 is Architect accepted; Phase 13 remains unauthorized.
+Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-model boundary, commissioned HA identity mapping, server-side hashed sessions, CSRF/origin defense, responsive React UI, bounded SSE invalidation, and production wiring to the accepted cognition/action stack. Phase 11 is Architect accepted; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H` — wire the normal UI composition root into the accepted cognition and command stack, prove the integrated paths, and close the portfolio/governance record. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2` — replace synthetic production commissioning seams with graph-derived identity, Truth/Graph read models, and configured accepted providers while preserving the Phase 12 portfolio boundary. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
@@ -123,9 +123,10 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Current blockers
 
-- Phase 12 integration is implemented and published at `208b7e546d8485539d2ae06427d268af116f9ceb`; implementation CI `33580734640` passed. Governance closure is published in the current working tree and awaits its final exact-head hosted CI and Notion readback.
-- Normal configured startup now composes the UI with `CoreConversationPipeline` and `CoreUICommandGateway`; missing PostgreSQL/OPA/Core dependencies remain explicitly unavailable rather than silently selecting the test echo.
-- Real Home Assistant OAuth/commissioning, real household data, production TLS, and native ARM64/Pi execution remain unclaimed. Test auth is explicitly isolated behind `ANIMA_UI_TEST_AUTH=1`.
+- The commissioned-runtime implementation is published at `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA. The governed evidence closure and Architect review remain pending.
+- Production composition now derives HA identity from commissioned graph provider references (`home_assistant` / configured scope / `user`) and `MEMBER_OF` household edges; missing or ambiguous mappings fail closed. No synthetic mapping is used unless explicit `ANIMA_UI_TEST_AUTH=1` is enabled.
+- Production PostgreSQL read models now source household name, members, controls, and capabilities from the commissioned graph/Truth projection and Core plugin registry. Missing providers report neutral `UNKNOWN`/`UNAVAILABLE` state; they do not select demo data.
+- Real Home Assistant OAuth/commissioning, physical-home behavior, production TLS, and native ARM64/Pi execution remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with a scripted model adapter; HA remains an explicit commissioning gate on this host.
 - Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
@@ -153,9 +154,9 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H` after the final governed checkpoint. The evidence should cover the production composition trace, policy-gated commands, browser privacy, responsive screenshots, and the remaining real-commissioning limitations. Phase 13 remains unauthorized.
+Review `ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2` after the final governed checkpoint. Evidence covers graph-derived identity, real PostgreSQL/OPA task/calendar mutation, Journal → Attention → Context → AgentRuntime, active provider registry, explicit HA commissioning limits, browser privacy, and responsive screenshots. Phase 13 remains unauthorized.
 
-## Phase 12 publication state
+## Phase 12 publication state — historical 014H checkpoint
 
 - Starting accepted checkpoint: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 CI `33562645002` passed on that exact SHA.
 - Implementation checkpoint: `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA. The prior implementation-only CI `33572285917` failed on a strict-mypy test typing issue; the bounded fix and rerun passed.
@@ -163,6 +164,14 @@ Review `ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H` after the final go
 - Current integration evidence: `src/anima_ha/ui_runtime.py` composes the existing PostgreSQL journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy service, durable tasks, local calendar, and Phase 9 coordinator. The UI service uses this composition whenever `ANIMA_DATABASE_URL` is configured; without required Core configuration it remains explicitly unavailable, and the test echo is available only under the explicit test flag.
 - Evidence limits: real Home Assistant OAuth/commissioning, native ARM64/Pi, production TLS, and live household data remain unclaimed. The deterministic integrated pipeline uses the real AgentRuntime with a scripted model adapter.
 - Phase 12 status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` after the governed closure checkpoint and exact-head CI are verified. Phase 13 remains unauthorized.
+
+## Phase 12 commissioned-runtime truth closure — current 014H2
+
+- Starting governed checkpoint: `8650da07f132d49987abe32fe86e94a44ff79844`; hosted CI `33581039085` passed on that exact SHA.
+- Implemented locally: `PostgresCommissionedIdentityResolver` uses commissioned HA `user` provider references and canonical `PERSON`/`MEMBER_OF` graph edges; `build_postgres_core()` composes the qualified Phase 11 portfolio and optional HA adapter; `PostgresHouseholdReadModel` uses graph/Truth/plugin state and never delegates to `DemoHouseholdReadModel`.
+- Target evidence: `scripts/verify_phase12_commissioned_runtime.py` passed against local PostgreSQL and live OPA, including exact identity mapping, OPA-authorized task/calendar mutation, active-provider registry, and Journal → Attention → ContextPacket → AgentRuntime trace.
+- Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
+- Current status: implementation is published; this governance checkpoint records the exact evidence and remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` until the closure commit and its exact-head CI are verified. HA commissioning, physical-home behavior, live Luna, native ARM64/Pi, production TLS, and real household data remain unclaimed. Phase 13 remains unauthorized.
 
 ## Phase 10 publication state
 

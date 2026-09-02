@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — INTEGRATED, VALIDATED, GOVERNANCE CLOSURE
-- Active directive: ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — production Core composition, end-to-end evidence, and portfolio closure
-- Active task packet: none; completed Phase 12 packet: `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — COMMISSIONED RUNTIME TRUTH CLOSURE
+- Active directive: ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — graph-derived identity, Core provider composition, and non-demo production read models
+- Active task packet: `.agent/tasks/completed/ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2/`; prior interface packet: `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
-- Last completed outcome: Phase 12 shell checkpoint `800c4cc4b1783e3f755cabff37c3db091b0c9ab1`; the current integration delta is locally validated and awaiting its implementation/publication checkpoint
-- Last state sync: 2026-09-01; Phase 12 production integration and portfolio evidence are implemented locally, with Architect acceptance still pending.
+- Last completed outcome: Phase 12 commissioned-runtime implementation checkpoint `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
+- Last state sync: 2026-09-02; commissioned-runtime implementation is published, with governed closure and Architect acceptance still pending.
 
 ## Current qualification result
 

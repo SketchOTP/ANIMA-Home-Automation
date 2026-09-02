@@ -49,7 +49,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
 - Configured conversation composition into Attention, Context Broker, and AgentRuntime; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
-- Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy.
+- Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, and restricted external-content handling.
 
 ## Safety and trust model
@@ -83,7 +83,7 @@ This checkpoint provides:
 - an ANIMA-owned deterministic action-execution coordinator with durable idempotency/effect records, non-blocking PostgreSQL canonical-resource locks, latest-state preconditions, final policy reauthorization, observed post-action verification, partial/unknown outcomes, and restart reconciliation.
 - an ANIMA-owned declarative durable-task engine with one-shot, fixed-interval, and cron schedules, PostgreSQL leases and `SKIP LOCKED` claims, deterministic guaranteed due events, misfire/DST policy, idempotent creation, and restart-safe run history.
 - bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, local Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, local request auditing, and Phase 9 verification for external writes.
-- a shared locally hosted Phase 12 interface: React/TypeScript/Vite static assets served by FastAPI/Uvicorn, ANIMA semantic household view models, Home Assistant OAuth bootstrap, hashed server-side sessions, CSRF/origin defenses, bounded SSE invalidations, and fail-closed Core command seams.
+- a shared locally hosted Phase 12 interface: React/TypeScript/Vite static assets served by FastAPI/Uvicorn, graph/Truth-backed semantic household view models, Home Assistant OAuth bootstrap with commissioned provider-reference identity resolution, hashed server-side sessions, CSRF/origin defenses, bounded SSE invalidations, and production Core command/conversation composition.
 
 Voice behavior, Phase 13 behavior, and production external-provider approval are not included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses Open-Meteo, private SearXNG, OpenStreetMap Overpass, TheMealDB, UPCitemdb, the first-party local calendar, and ntfy, and no human-delivery claim is made.
 

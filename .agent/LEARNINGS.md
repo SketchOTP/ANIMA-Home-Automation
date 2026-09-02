@@ -176,3 +176,9 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - The configured `create_app()` path must select the Core composition when `ANIMA_DATABASE_URL` is present; absent required configuration remains an explicit unavailable/development state and must not silently enable the test echo.
 - UI mutation adapters should resolve canonical registered tool IDs (`anima.durable-tasks` and `anima.calendar`) and pass controls to the existing Phase 9 coordinator rather than calling domain services directly.
 - Browser screenshots captured by the in-app exporter were JPEG bytes despite `.png` names; publication assets must be MIME-verified and converted to actual PNG files before commit.
+
+## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2
+
+- Production identity must resolve from commissioned provider references to a canonical person and graph membership, never from a UI fallback map or display name. Exact-zero and multi-target results are distinct fail-closed outcomes.
+- The normal PostgreSQL composition can register no-key/qualified Phase 11 providers without activating Walmart or Best Buy; Home Assistant must remain unavailable until its instance, websocket, provider scope, and secret reference are complete.
+- Production read models must consume the graph, Truth projection, and plugin registry. A missing provider is an explicit capability/state result, not a reason to reuse deterministic demo household content.

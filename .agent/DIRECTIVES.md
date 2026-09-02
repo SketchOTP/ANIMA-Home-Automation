@@ -405,6 +405,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — Commissioned runtime truth closure
+
+- Date: 2026-09-02
+- Architect disposition: `CONTINUE`; Phase 12 remains pending Architect acceptance; Phase 13 unauthorized.
+- Objective: replace synthetic production commissioning seams with accepted graph, Truth, Core plugin, PostgreSQL, OPA, Attention, Context, and AgentRuntime composition.
+- Bounded implementation: exact-one HA provider-reference identity mapping to canonical `PERSON` and household membership; qualified Phase 11 provider registration; optional configured HA adapter; graph/Truth/plugin-backed PostgreSQL UI views; explicit degraded behavior without demo substitution.
+- Exclusions: no new identity table, provider, database, broker, agent runtime, UI framework, physical-home claim, or Phase 13 behavior.
+
 ## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Core integration and portfolio closure
 
 - Issued: 2026-09-01

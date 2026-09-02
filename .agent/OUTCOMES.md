@@ -703,3 +703,17 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Result: the configured UI now composes the existing Core journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy service, durable tasks, local calendar, and Phase 9 coordinator through `src/anima_ha/ui_runtime.py`.
 - Evidence: real AgentRuntime journal-trigger trace, policy-gated task mutation, configured-app composition smoke test, 160 Python tests, OPA 4/4, package build, TypeScript/frontend tests/build, Playwright 9-test responsive matrix, Compose config, UI container build, public-safety scan, and three actual synthetic-data screenshots passed.
 - Status: Phase 12 remains pending Architect acceptance until governance closure is published and independently reviewed. Phase 13 was not implemented.
+
+## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — Local implementation result
+
+- Date: 2026-09-02
+- Verdict: `IMPLEMENTATION COMPLETE — PENDING ARCHITECT ACCEPTANCE` locally; publication and hosted CI remain required.
+- Implementation: `PostgresCommissionedIdentityResolver` resolves HA users only through commissioned graph provider references and canonical `PERSON` → `MEMBER_OF` household edges. `build_postgres_core()` composes the accepted PostgreSQL/OPA Core and qualified Phase 11 providers, and registers HA only from complete operator commissioning configuration. `PostgresHouseholdReadModel` no longer calls `DemoHouseholdReadModel`.
+- Evidence: focused unit tests pass; the real local PostgreSQL/OPA target passes task and local-calendar mutation plus Journal → Attention → ContextPacket → AgentRuntime conversation. The target uses a scripted model adapter and synthetic commissioned graph fixture; HA remains an explicit resource gate on this host.
+- Evidence limits: no live HA OAuth/physical-home, native ARM64/Pi, production TLS, or real household-data claim. Phase 13 was not implemented.
+
+## ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2 — Published implementation checkpoint
+
+- Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
+- The checkpoint publishes the commissioned graph-identity resolver, graph/Truth/plugin-backed PostgreSQL UI read models, accepted Phase 11 provider composition, explicit HA commissioning configuration, and the deterministic real PostgreSQL/OPA verification target. No Phase 13 behavior was added.
+- Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the governed evidence-closure commit and exact-head CI remain the final publication step for this directive.
