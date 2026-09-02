@@ -716,4 +716,4 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 
 - Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
 - The checkpoint publishes the commissioned graph-identity resolver, graph/Truth/plugin-backed PostgreSQL UI read models, accepted Phase 11 provider composition, explicit HA commissioning configuration, and the deterministic real PostgreSQL/OPA verification target. No Phase 13 behavior was added.
-- Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; the governed evidence-closure commit and exact-head CI remain the final publication step for this directive.
+- Governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA. Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`.

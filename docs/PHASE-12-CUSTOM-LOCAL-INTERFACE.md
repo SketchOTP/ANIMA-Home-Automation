@@ -1,8 +1,9 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; commissioned-runtime hardening is published and hosted CI is green on the exact implementation checkpoint. The governed closure checkpoint remains the final publication step.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; commissioned-runtime hardening and governed evidence closure are published.
 
 Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
+Governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA.
 
 Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with
 hosted CI `33562645002`. Phase 13 voice behavior is not implemented.

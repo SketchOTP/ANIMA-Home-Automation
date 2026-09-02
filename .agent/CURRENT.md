@@ -171,7 +171,7 @@ Review `ANIMA-HA-P12-COMMISSIONED-RUNTIME-TRUTH-CLOSURE-014H2` after the final g
 - Implemented locally: `PostgresCommissionedIdentityResolver` uses commissioned HA `user` provider references and canonical `PERSON`/`MEMBER_OF` graph edges; `build_postgres_core()` composes the qualified Phase 11 portfolio and optional HA adapter; `PostgresHouseholdReadModel` uses graph/Truth/plugin state and never delegates to `DemoHouseholdReadModel`.
 - Target evidence: `scripts/verify_phase12_commissioned_runtime.py` passed against local PostgreSQL and live OPA, including exact identity mapping, OPA-authorized task/calendar mutation, active-provider registry, and Journal → Attention → ContextPacket → AgentRuntime trace.
 - Implementation checkpoint: `5d52c45c72520611de56361af9010419f2869c6c`; hosted CI `33654654675` passed on that exact SHA.
-- Current status: implementation is published; this governance checkpoint records the exact evidence and remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` until the closure commit and its exact-head CI are verified. HA commissioning, physical-home behavior, live Luna, native ARM64/Pi, production TLS, and real household data remain unclaimed. Phase 13 remains unauthorized.
+- Governed closure checkpoint: `bc7849dba3b65b837aacf2b16e8b7653fae97d08`; hosted CI `33655337251` passed on that exact SHA. Current status is `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; HA commissioning, physical-home behavior, live Luna, native ARM64/Pi, production TLS, and real household data remain unclaimed. Phase 13 remains unauthorized.
 
 ## Phase 10 publication state
 
