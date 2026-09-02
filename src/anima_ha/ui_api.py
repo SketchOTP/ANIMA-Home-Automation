@@ -50,6 +50,10 @@ class PrincipalMappingRequired(UIAuthError):
     """Raised when a Home Assistant user has no exact ANIMA mapping."""
 
 
+class PrincipalMappingConflict(UIAuthError):
+    """Raised when commissioned identity evidence maps to multiple targets."""
+
+
 class UICommandError(RuntimeError):
     """Raised when a UI command cannot be routed through Core."""
 
@@ -239,6 +243,14 @@ class UIIdentity:
             "assurance": Assurance.AUTHENTICATED.value,
             "evidence": EvidenceType.AUTHENTICATED_SESSION.value,
         }
+
+
+class CommissionedIdentityResolver(Protocol):
+    """ANIMA-owned mapping boundary for authenticated provider identities."""
+
+    def resolve_ha_user(self, ha_user_id: str) -> tuple[UUID, UUID]: ...
+
+    def resolve_principal(self, principal_id: UUID) -> tuple[UUID, UUID, str | None]: ...
 
 
 class HouseholdReadModel(Protocol):
@@ -442,12 +454,86 @@ class DemoHouseholdReadModel:
         ]
 
 
+class UnavailableHouseholdReadModel:
+    """Explicit degraded view used when production Core dependencies are absent."""
+
+    def bootstrap(self, identity: UIIdentity) -> dict[str, Any]:
+        return {
+            "identity": identity.to_payload(),
+            "household": {"name": "Household", "mode": "unavailable"},
+            "theme": {"appearance": "night", "accent": "ember", "density": "comfortable"},
+            "layout": {"display_mode": "desktop", "visible_widgets": ["status"]},
+            "capabilities": ["core.unavailable"],
+            "server_version": UI_VERSION,
+            "ui_version": UI_VERSION,
+        }
+
+    def home(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return {
+            "household": {
+                "name": "Household",
+                "status": "UNKNOWN",
+                "summary": "ANIMA Core is unavailable; no household state was substituted.",
+            },
+            "security": {"status": "UNKNOWN", "label": "Security status unavailable"},
+            "presence": {"status": "UNKNOWN", "people": []},
+            "attention": [],
+            "weather": {"status": "UNAVAILABLE", "summary": "Weather provider unavailable"},
+            "calendar": [],
+            "tasks": [],
+            "controls": [],
+            "activity": [],
+            "voice": {"status": "UNAVAILABLE", "label": "Voice is planned for a later phase"},
+        }
+
+    def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def calendar(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return [
+            {
+                "id": "core.unavailable",
+                "label": "ANIMA Core",
+                "state": "unavailable",
+                "detail": "ANIMA_DATABASE_URL is not configured",
+            },
+            {
+                "id": "voice",
+                "label": "Voice software path",
+                "state": "unavailable",
+                "detail": "Phase 13",
+            },
+        ]
+
+
 class PostgresHouseholdReadModel:
     """Normalized read façade over existing Core persistence tables."""
 
-    def __init__(self, database_url: str, connect_timeout: int = 5) -> None:
+    def __init__(
+        self,
+        database_url: str,
+        connect_timeout: int = 5,
+        *,
+        graph: Any | None = None,
+        truth: Any | None = None,
+        plugins: Any | None = None,
+    ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
+        self.graph = graph
+        self.truth = truth
+        self.plugins = plugins
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -455,7 +541,37 @@ class PostgresHouseholdReadModel:
         )
 
     def bootstrap(self, identity: UIIdentity) -> dict[str, Any]:
-        return DemoHouseholdReadModel().bootstrap(identity)
+        household = self.graph.get_node(identity.household_id) if self.graph else None
+        capabilities = self.capabilities(identity)
+        return {
+            "identity": identity.to_payload(),
+            "household": {
+                "name": household.name if household else "Household",
+                "mode": "commissioned" if household else "unavailable",
+            },
+            "theme": {
+                "appearance": "night",
+                "accent": "ember",
+                "density": "comfortable",
+                "reduced_motion": False,
+                "text_scale": "normal",
+            },
+            "layout": {
+                "display_mode": "desktop",
+                "visible_widgets": [
+                    "status",
+                    "presence",
+                    "weather",
+                    "agenda",
+                    "tasks",
+                    "conversation",
+                    "activity",
+                ],
+            },
+            "capabilities": [str(item["id"]) for item in capabilities],
+            "server_version": UI_VERSION,
+            "ui_version": UI_VERSION,
+        }
 
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
         with self._connect() as connection, connection.cursor() as cursor:
@@ -505,12 +621,73 @@ class PostgresHouseholdReadModel:
         ]
 
     def home(self, identity: UIIdentity) -> dict[str, Any]:
-        demo = DemoHouseholdReadModel()
-        result = demo.home(identity)
-        result["tasks"] = self.tasks(identity)[:5]
-        result["calendar"] = self.calendar(identity)[:5]
-        result["activity"] = self.activity(identity)[:8]
-        return result
+        from anima_ha.graph import NodeKind
+        from anima_ha.truth import TruthStatus
+
+        household = self.graph.get_node(identity.household_id) if self.graph else None
+        members = self.graph.members_of_household(identity.household_id) if self.graph else []
+        people: list[dict[str, Any]] = []
+        for member in members:
+            state = "unknown"
+            if self.truth is not None and self.graph is not None:
+                for binding, resolution in self.graph.truth_for_node(
+                    member.canonical_id, self.truth
+                ):
+                    if binding.semantic_attribute != "presence.home":
+                        continue
+                    if resolution.status == TruthStatus.CURRENT_KNOWN:
+                        state = "home" if resolution.value is True else "away"
+                    break
+            people.append({"name": member.name, "state": state})
+
+        controls: list[dict[str, Any]] = []
+        if self.graph is not None:
+            for resource in self.graph.resources_in_place(identity.household_id):
+                capabilities = self.graph.resource_capabilities(resource.canonical_id)
+                power = next(
+                    (
+                        capability
+                        for capability in capabilities
+                        if str(capability.metadata.get("capability_type", "")).startswith("power.")
+                    ),
+                    None,
+                )
+                if power is not None and resource.kind == NodeKind.RESOURCE:
+                    controls.append(
+                        {
+                            "control_id": str(resource.canonical_id),
+                            "label": resource.name,
+                            "state": "UNKNOWN",
+                            "capability": power.metadata.get("capability_type"),
+                        }
+                    )
+
+        presence_status = (
+            "CURRENT" if any(item["state"] != "unknown" for item in people) else "UNKNOWN"
+        )
+        return {
+            "household": {
+                "name": household.name if household else "Household",
+                "status": "CURRENT" if household else "UNKNOWN",
+                "summary": (
+                    "Commissioned household state is available."
+                    if household
+                    else "Household graph is unavailable."
+                ),
+            },
+            "security": {"status": "UNKNOWN", "label": "Security status unavailable"},
+            "presence": {
+                "status": presence_status,
+                "people": people,
+            },
+            "attention": [],
+            "weather": {"status": "UNAVAILABLE", "summary": "Weather provider not connected"},
+            "calendar": self.calendar(identity)[:5],
+            "tasks": self.tasks(identity)[:5],
+            "controls": controls,
+            "activity": self.activity(identity)[:8],
+            "voice": {"status": "UNAVAILABLE", "label": "Voice is planned for a later phase"},
+        }
 
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
         with self._connect() as connection, connection.cursor() as cursor:
@@ -537,7 +714,36 @@ class PostgresHouseholdReadModel:
         ]
 
     def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]:
-        return DemoHouseholdReadModel().capabilities(identity)
+        del identity
+        result = [{"id": "home.status", "label": "Home status", "state": "available"}]
+        if self.plugins is not None:
+            for plugin in self.plugins.list_plugins():
+                state = "available" if plugin.enabled else "unavailable"
+                for capability in plugin.manifest.capabilities:
+                    entry: dict[str, Any] = {
+                        "id": capability,
+                        "label": plugin.manifest.name,
+                        "state": state,
+                    }
+                    if plugin.last_error and not plugin.enabled:
+                        entry["detail"] = plugin.last_error
+                    result.append(entry)
+        result.append(
+            {
+                "id": "conversation",
+                "label": "Anima conversation",
+                "state": "available" if self.plugins is not None else "unavailable",
+            }
+        )
+        result.append(
+            {
+                "id": "voice",
+                "label": "Voice software path",
+                "state": "unavailable",
+                "detail": "Phase 13",
+            }
+        )
+        return result
 
 
 class DemoCommandGateway:
@@ -726,12 +932,18 @@ class UIService:
         commands: UICommandGateway | None = None,
         conversation: ConversationIngress | None = None,
         core_runtime: Any | None = None,
+        identity_resolver: CommissionedIdentityResolver | None = None,
         ha_user_map: dict[str, tuple[UUID, UUID]] | None = None,
     ) -> None:
         self.config = config or UIConfig()
         self.sessions = sessions or InMemorySessionStore()
         self.events = UIEventBroadcaster()
-        self.read_model = read_model or DemoHouseholdReadModel()
+        self.read_model = read_model or (
+            DemoHouseholdReadModel()
+            if self.config.test_auth_enabled
+            else UnavailableHouseholdReadModel()
+        )
+        self.identity_resolver = identity_resolver
         if core_runtime is not None:
             self.commands = commands or core_runtime.commands(self.events)
             self.conversation = conversation or JournalConversationIngress(
@@ -745,9 +957,11 @@ class UIService:
             self.conversation = conversation or JournalConversationIngress(
                 events=self.events, fallback_enabled=self.config.test_auth_enabled
             )
-        self.ha_user_map = ha_user_map or {
-            "test-ha-user": (DEFAULT_HOUSEHOLD_ID, DEFAULT_PRINCIPAL_ID)
-        }
+        self.ha_user_map = (
+            dict(ha_user_map or {"test-ha-user": (DEFAULT_HOUSEHOLD_ID, DEFAULT_PRINCIPAL_ID)})
+            if self.config.test_auth_enabled
+            else {}
+        )
         self.oauth = HomeAssistantOAuth(self.config)
         self._oauth_states: set[str] = set()
 
@@ -763,7 +977,11 @@ class UIService:
         return True
 
     def map_ha_user(self, ha_user_id: str) -> UIIdentity:
-        mapping = self.ha_user_map.get(ha_user_id)
+        mapping = (
+            self.identity_resolver.resolve_ha_user(ha_user_id)
+            if self.identity_resolver is not None
+            else self.ha_user_map.get(ha_user_id)
+        )
         if mapping is None:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         household_id, principal_id = mapping
@@ -839,6 +1057,27 @@ class UIService:
         return refreshed, secret
 
     def identity_from_session(self, record: SessionRecord) -> UIIdentity:
+        if self.identity_resolver is not None:
+            household_id, principal_id, ha_user_id = self.identity_resolver.resolve_principal(
+                record.principal_id
+            )
+            if household_id != record.household_id:
+                raise UIAuthError("PRINCIPAL_MAPPING_REQUIRED")
+            now = _now()
+            evidence = IdentityEvidence(
+                evidence_id=uuid4(),
+                household_id=household_id,
+                claimed_principal_id=principal_id,
+                evidence_type=EvidenceType.AUTHENTICATED_SESSION,
+                issuer="anima_session",
+                issued_at=record.created_at,
+                observed_at=now,
+                expires_at=record.expires_at,
+                assurance=Assurance.AUTHENTICATED,
+                strength=70,
+                provenance="commissioned_graph_identity",
+            )
+            return UIIdentity(household_id, principal_id, ha_user_id or "", evidence)
         for ha_user_id, value in self.ha_user_map.items():
             if value == (record.household_id, record.principal_id):
                 return self.map_ha_user(ha_user_id)
@@ -860,19 +1099,24 @@ def create_app(service: UIService | None = None) -> FastAPI:
         sessions: SessionStore | None = (
             PostgresSessionStore(database_url) if database_url else InMemorySessionStore()
         )
-        read_model: HouseholdReadModel | None = (
-            PostgresHouseholdReadModel(database_url) if database_url else None
-        )
         core_runtime = None
+        read_model: HouseholdReadModel | None = None
         if database_url:
             from anima_ha.ui_runtime import build_postgres_core
 
             core_runtime = build_postgres_core(database_url, opa_url=config.opa_url)
+            read_model = PostgresHouseholdReadModel(
+                database_url,
+                graph=core_runtime.graph,
+                truth=core_runtime.truth.projection,
+                plugins=core_runtime.plugins,
+            )
         svc = UIService(
             config=config,
             sessions=sessions,
             read_model=read_model,
             core_runtime=core_runtime,
+            identity_resolver=core_runtime.identity_resolver if core_runtime else None,
         )
     else:
         svc = service

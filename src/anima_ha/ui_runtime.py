@@ -8,6 +8,7 @@ database service directly.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -40,13 +41,24 @@ from anima_ha.calendar import (
 )
 from anima_ha.context import ContextBroker
 from anima_ha.events import EventEnvelope
-from anima_ha.journal import PostgresEventJournal
+from anima_ha.external import external_plugin
+from anima_ha.graph import NodeKind, PostgresHouseholdGraph
+from anima_ha.home_assistant import (
+    HAInstanceConfig,
+    HassClientConnection,
+    HomeAssistantAdapter,
+    HomeAssistantPlugin,
+    PostgresHAStore,
+    home_assistant_manifest,
+)
+from anima_ha.journal import PostgresEventJournal, PostgresRealityStore
 from anima_ha.plugins import (
     InvocationContext,
     InvocationOutcome,
     InvocationResult,
     NativeRuntime,
     PluginManager,
+    SecretBroker,
 )
 from anima_ha.policy import (
     Assurance,
@@ -57,7 +69,14 @@ from anima_ha.policy import (
     RequestOrigin,
 )
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
-from anima_ha.ui_api import UICommandError, UIEventBroadcaster, UIIdentity
+from anima_ha.ui_api import (
+    CommissionedIdentityResolver,
+    PrincipalMappingConflict,
+    PrincipalMappingRequired,
+    UICommandError,
+    UIEventBroadcaster,
+    UIIdentity,
+)
 
 
 def _identity(identity: UIIdentity) -> IdentityContext:
@@ -219,6 +238,8 @@ class CoreConversationPipeline:
         journal: PostgresEventJournal | None = None,
         profile: AttentionProfile | None = None,
         consumer_name: str = "ui-conversation",
+        action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None,
+        action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None,
     ) -> None:
         self.attention = attention
         self.context = context
@@ -228,6 +249,8 @@ class CoreConversationPipeline:
         self.journal = journal
         self.profile = profile or default_attention_profile("phase12.ui.v1")
         self.consumer_name = consumer_name
+        self.action_refresher = action_refresher
+        self.action_verifier = action_verifier
 
     def _trigger(self, event: EventEnvelope) -> Any:
         candidates = [
@@ -269,6 +292,8 @@ class CoreConversationPipeline:
                 policy_service=self.policy_service,
                 policy_context=PolicyContext(principal_role="resident"),
                 origin=RequestOrigin.DIRECT_USER,
+                action_refresher=self.action_refresher,
+                action_verifier=self.action_verifier,
             )
         )
         response = run.live_response_text or run.episode.response_text
@@ -303,6 +328,11 @@ class CoreRuntime:
     agent: AgentRuntime
     plugins: PluginManager
     action_executor: ActionExecutionCoordinator
+    graph: PostgresHouseholdGraph
+    truth: PostgresRealityStore
+    identity_resolver: CommissionedIdentityResolver
+    action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
+    action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         return CoreConversationPipeline(
@@ -312,6 +342,8 @@ class CoreRuntime:
             policy_service=self.policy_service,
             tools=self.plugins.list_tools,
             journal=self.journal,
+            action_refresher=self.action_refresher,
+            action_verifier=self.action_verifier,
         )
 
     def commands(self, events: UIEventBroadcaster) -> CoreUICommandGateway:
@@ -320,7 +352,74 @@ class CoreRuntime:
             self.policy_service,
             events=events,
             action_executor=self.action_executor,
+            action_refresher=self.action_refresher,
+            action_verifier=self.action_verifier,
         )
+
+
+class PostgresCommissionedIdentityResolver(CommissionedIdentityResolver):
+    """Resolve HA identities through commissioned graph provider references."""
+
+    def __init__(self, graph: Any, provider_scope: str) -> None:
+        self.graph = graph
+        self.provider_scope = provider_scope
+
+    def _resolve_person(self, ha_user_id: str) -> tuple[UUID, UUID]:
+        targets = self.graph.resolve_provider_references(
+            "home_assistant", self.provider_scope, "user", ha_user_id
+        )
+        if not targets:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        if len(targets) != 1 or targets[0].kind != NodeKind.PERSON:
+            raise PrincipalMappingConflict("PRINCIPAL_MAPPING_CONFLICT")
+        households = self.graph.households_for_member(targets[0].canonical_id)
+        if not households:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        if len(households) != 1:
+            raise PrincipalMappingConflict("PRINCIPAL_MAPPING_CONFLICT")
+        return households[0].canonical_id, targets[0].canonical_id
+
+    def resolve_ha_user(self, ha_user_id: str) -> tuple[UUID, UUID]:
+        return self._resolve_person(ha_user_id)
+
+    def resolve_principal(self, principal_id: UUID) -> tuple[UUID, UUID, str | None]:
+        person = self.graph.get_node(principal_id)
+        if person is None or person.kind != NodeKind.PERSON:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        households = self.graph.households_for_member(principal_id)
+        if not households:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        if len(households) != 1:
+            raise PrincipalMappingConflict("PRINCIPAL_MAPPING_CONFLICT")
+        references = [
+            reference
+            for reference in self.graph.provider_references_for(principal_id)
+            if reference.provider == "home_assistant"
+            and reference.provider_scope == self.provider_scope
+            and reference.external_object_kind == "user"
+        ]
+        if len(references) > 1:
+            raise PrincipalMappingConflict("PRINCIPAL_MAPPING_CONFLICT")
+        return (
+            households[0].canonical_id,
+            principal_id,
+            references[0].external_id if references else None,
+        )
+
+
+def _environment_secrets() -> dict[str, str]:
+    """Read declared secret references into the in-process broker only."""
+    names = (
+        "HA_ACCESS_TOKEN",
+        "ANIMA_HA_ACCESS_TOKEN",
+        "NTFY_TOPIC",
+        "NTFY_TOKEN",
+        "WALMART_CONSUMER_ID",
+        "WALMART_KEY_VERSION",
+        "WALMART_PRIVATE_KEY_PATH",
+        "BEST_BUY_API_KEY",
+    )
+    return {name: os.environ[name] for name in names if os.environ.get(name)}
 
 
 def build_postgres_core(
@@ -329,21 +428,72 @@ def build_postgres_core(
     opa_url: str = "http://127.0.0.1:8181",
     codex: Any | None = None,
 ) -> CoreRuntime:
-    """Compose the normal local runtime from accepted Core implementations.
-
-    Provider plugins such as Home Assistant are commissioned separately and
-    can be registered on the returned manager before the service starts.  The
-    built-in task and local-calendar capabilities are always registered here;
-    neither path is a UI-specific direct service call.
-    """
+    """Compose the normal local runtime from accepted Core implementations."""
     journal = PostgresEventJournal(database_url)
-    plugins = PluginManager(journal=journal)
+    graph = PostgresHouseholdGraph(database_url)
+    truth = PostgresRealityStore(database_url)
+    secrets = _environment_secrets()
+    plugins = PluginManager(journal=journal, secret_broker=SecretBroker(secrets))
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
     plugins.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
     plugins.register(CALENDAR_MANIFEST, NativeRuntime(CalendarNativePlugin(calendar_service)))
     plugins.enable(TASK_MANIFEST.plugin_id)
     plugins.enable(CALENDAR_MANIFEST.plugin_id)
+
+    # These are the qualified Phase 11 portfolio providers. Provider identity
+    # is composition-owned; no model argument can select a host or credential.
+    for plugin_id in (
+        "anima.external.weather",
+        "anima.external.discovery",
+        "anima.external.shopping.upcitemdb",
+        "anima.external.recipes",
+    ):
+        manifest, plugin_runtime = external_plugin(
+            plugin_id,
+            searxng_url=os.environ.get("ANIMA_SEARXNG_URL", "http://searxng:8080"),
+            searxng_host=os.environ.get("ANIMA_SEARXNG_HOST", "searxng"),
+            overpass_url=os.environ.get("ANIMA_OVERPASS_URL", "https://overpass-api.de"),
+        )
+        plugins.register(manifest, NativeRuntime(plugin_runtime))
+        plugins.enable(plugin_id)
+    if secrets.get("NTFY_TOPIC"):
+        manifest, plugin_runtime = external_plugin("anima.external.notifications")
+        plugins.register(manifest, NativeRuntime(plugin_runtime))
+        plugins.enable(manifest.plugin_id)
+
+    # HA is commissioned only when the operator has supplied the instance
+    # identity, websocket endpoint, and the already-established secret ref.
+    # Otherwise the capability remains unavailable and authentication maps no
+    # user to a synthetic household.
+    websocket_url = os.environ.get("ANIMA_HA_WEBSOCKET_URL", "").strip()
+    instance_value = os.environ.get("ANIMA_HA_INSTANCE_ID", "").strip()
+    provider_scope = os.environ.get("ANIMA_HA_PROVIDER_SCOPE", instance_value).strip()
+    token_secret_name = os.environ.get("ANIMA_HA_TOKEN_SECRET_NAME", "HA_ACCESS_TOKEN").strip()
+    ha_adapter: HomeAssistantAdapter | None = None
+    if provider_scope and websocket_url and instance_value and secrets.get(token_secret_name):
+        instance_id = UUID(instance_value)
+        if provider_scope != str(instance_id):
+            raise ValueError("ANIMA_HA_PROVIDER_SCOPE must equal ANIMA_HA_INSTANCE_ID")
+        ha_config = HAInstanceConfig(instance_id, websocket_url, token_secret_name)
+        ha_adapter = HomeAssistantAdapter(ha_config, truth, graph, PostgresHAStore(database_url))
+        manifest = home_assistant_manifest(ha_config)
+        ha_runtime = HomeAssistantPlugin(
+            ha_adapter,
+            lambda token: HassClientConnection(
+                ha_config,
+                token,
+                event_callback=ha_adapter.receive_provider_event,
+                disconnect_callback=ha_adapter.disconnected,
+            ),
+        )
+        plugins.register(
+            manifest,
+            NativeRuntime(ha_runtime),
+            configuration={"instance_id": str(instance_id), "websocket_url": websocket_url},
+        )
+        plugins.enable(manifest.plugin_id)
+
     policy_service = PolicyService(OpaPolicyClient(opa_url))
     action_executor = ActionExecutionCoordinator(
         plugins,
@@ -358,6 +508,24 @@ def build_postgres_core(
         journal=journal,
         action_executor=action_executor,
     )
+    identity_resolver = PostgresCommissionedIdentityResolver(graph, provider_scope)
+
+    def refresh(resources: tuple[UUID, ...]) -> Any:
+        from anima_ha.action import TruthSnapshot
+
+        if ha_adapter is None:
+            return TruthSnapshot()
+        values: dict[str, dict[str, Any]] = {}
+        for resource_id in resources:
+            state = ha_adapter.read_state(resource_id)
+            values[str(state["truth_key"])] = {
+                "state": "KNOWN",
+                "value": state.get("state"),
+                "observed_at": state.get("observed_at"),
+            }
+        return TruthSnapshot(values)
+
+    action_refresher = refresh if ha_adapter is not None else None
     return CoreRuntime(
         journal,
         PostgresAttentionService(database_url),
@@ -366,4 +534,8 @@ def build_postgres_core(
         agent,
         plugins,
         action_executor,
+        graph,
+        truth,
+        identity_resolver,
+        action_refresher,
     )

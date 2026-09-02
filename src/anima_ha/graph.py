@@ -751,6 +751,55 @@ class PostgresHouseholdGraph:
             row = cursor.fetchone()
         return self._node(row) if row else None
 
+    def resolve_provider_references(
+        self, provider: str, provider_scope: str, external_object_kind: str, external_id: str
+    ) -> list[CanonicalNode]:
+        """Return every active canonical target for one provider identity.
+
+        The singular resolver is convenient for ordinary resource mappings. UI
+        authentication needs the cardinality as evidence, so it uses this
+        explicit plural form and fails closed on zero or multiple targets.
+        """
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT n.* FROM anima_graph_provider_refs p
+                           JOIN anima_graph_nodes n ON n.canonical_id = p.target_id
+                           WHERE p.provider = %s AND p.provider_scope = %s
+                             AND p.external_object_kind = %s AND p.external_id = %s
+                             AND p.retired_at IS NULL AND n.retired_at IS NULL
+                           ORDER BY n.canonical_id""",
+                (provider, provider_scope, external_object_kind, external_id),
+            )
+            return [self._node(row) for row in cursor.fetchall()]
+
+    def households_for_member(self, member_id: UUID) -> list[CanonicalNode]:
+        """Resolve the household(s) containing a canonical person/member."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT h.* FROM anima_graph_relationships r
+                           JOIN anima_graph_nodes h ON h.canonical_id = r.target_id
+                           WHERE r.source_id = %s AND r.relationship_type = 'MEMBER_OF'
+                             AND r.retired_at IS NULL AND h.kind = 'HOUSEHOLD'
+                             AND h.retired_at IS NULL
+                           ORDER BY h.canonical_id""",
+                (member_id,),
+            )
+            return [self._node(row) for row in cursor.fetchall()]
+
+    def members_of_household(self, household_id: UUID) -> list[CanonicalNode]:
+        """Return active canonical people whose MEMBER_OF edge targets a household."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT p.* FROM anima_graph_relationships r
+                           JOIN anima_graph_nodes p ON p.canonical_id = r.source_id
+                           WHERE r.target_id = %s AND r.relationship_type = 'MEMBER_OF'
+                             AND r.retired_at IS NULL AND p.kind = 'PERSON'
+                             AND p.retired_at IS NULL
+                           ORDER BY p.name, p.canonical_id""",
+                (household_id,),
+            )
+            return [self._node(row) for row in cursor.fetchall()]
+
     def resource_capabilities(self, resource_id: UUID) -> list[CanonicalNode]:
         return self.related(resource_id, RelationshipType.EXPOSES)
 
