@@ -694,3 +694,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - CI correction: the first implementation run `33572285917` failed at strict-mypy test typing; the bounded test-typing fix and MCP stdio startup-handshake bound are included in the implementation SHA above. No Phase 13 behavior was added.
 - Final governed checkpoint: this governance closure commit, published after the implementation checkpoint and tracked by the exact Git SHA and hosted CI recorded in the final handoff/Notion readback.
 - Verdict: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` at the published Phase 12 evidence boundary; Phase 13 remains unauthorized.
+
+## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Integrated implementation checkpoint
+
+- Date: 2026-09-02
+- Starting accepted checkpoint: `800c4cc4b1783e3f755cabff37c3db091b0c9ab1`.
+- Implementation checkpoint: `208b7e546d8485539d2ae06427d268af116f9ceb`; hosted CI `33580734640` passed on that exact SHA.
+- Result: the configured UI now composes the existing Core journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy service, durable tasks, local calendar, and Phase 9 coordinator through `src/anima_ha/ui_runtime.py`.
+- Evidence: real AgentRuntime journal-trigger trace, policy-gated task mutation, configured-app composition smoke test, 160 Python tests, OPA 4/4, package build, TypeScript/frontend tests/build, Playwright 9-test responsive matrix, Compose config, UI container build, public-safety scan, and three actual synthetic-data screenshots passed.
+- Status: Phase 12 remains pending Architect acceptance until governance closure is published and independently reviewed. Phase 13 was not implemented.

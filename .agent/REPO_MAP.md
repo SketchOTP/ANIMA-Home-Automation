@@ -1,6 +1,6 @@
 # Repository Map
 
-Last verified against: PHASE 11 WALMART ENTITLEMENT INVESTIGATION 2026-09-01
+Last verified against: PHASE 12 CORE INTEGRATION / PORTFOLIO CLOSURE 2026-09-01
 
 ## Entry points
 
@@ -30,6 +30,8 @@ Last verified against: PHASE 11 WALMART ENTITLEMENT INVESTIGATION 2026-09-01
 - `src/anima_ha/agent.py` — durable bounded cognition episodes, cloud-safe projection, structured Codex CLI adapter, sequential Phase 5/4 tool loop, budgets, audit, and explicit outcomes.
 - `src/anima_ha/action.py` — deterministic consequential-action lifecycle, canonical-resource locking, freshness/preconditions, final policy reauthorization, idempotency, verification, partial/unknown outcomes, and restart reconciliation.
 - `src/anima_ha/tasks.py` — declarative durable tasks, schedules, cron/DST/misfire policy, trusted task provenance/idempotency, PostgreSQL lifecycle/claim ownership, deterministic due events, task lifecycle tools, and scheduled cognition bridge.
+- `src/anima_ha/ui_runtime.py` — ANIMA-owned production composition root and UI adapters over the existing Journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, policy, tasks, calendar, and Phase 9 coordinator.
+- `src/anima_ha/ui_api.py` — local semantic UI API, session/OAuth boundary, and configured production Core runtime selection.
 - `src/anima_ha/agent_instructions.py` — versioned provider instructions and authority/evidence boundary.
 - `tests/` — deterministic Phase 0–8 unit tests and isolated provider fixtures.
 
@@ -101,6 +103,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `docs/PHASE-10-DURABLE-TASK-ENGINE.md` — declarative task lifecycle, schedule/DST/misfire policy, safety boundary, dependency decisions, and evidence limits.
 - `scripts/verify_phase10_durable_tasks.py` — PostgreSQL migration, idempotent creation, lifecycle parity, stale-worker/cancellation races, real AgentRuntime task creation, fresh scheduled cognition, due-time Phase 9 consequential-action routing, event deduplication, and lease-recovery evidence.
 - `tests/test_tasks.py` — task contract, DST/misfire, trusted AgentRuntime routing/provenance, policy outcomes, idempotency, lifecycle parity, concurrency, household scoping, deterministic dispatch, cancellation, and lease-recovery tests.
+- `tests/test_ui_runtime.py` — real-AgentRuntime journal/Attention/Context trace and Core policy-gated task mutation evidence.
 
 ## Phase 11 external capabilities
 
@@ -133,6 +136,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase12_ui.py` and `tests/test_ui_api.py` — deterministic API/auth/view-model/CSRF/SSE evidence.
 - `docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md` — current interface architecture, security boundary, deployment, and evidence limitations.
 - `.agent/tasks/active/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/` — active Phase 12 specification, plan, evidence ledger, and handoff.
+- `docs/assets/anima-home-desktop.png`, `anima-home-tablet.png`, `anima-home-phone.png` — responsive screenshots captured from the tested UI with synthetic data.
 
 ## Known sensitive/high-risk areas
 

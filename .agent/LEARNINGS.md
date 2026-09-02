@@ -169,3 +169,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - A browser UI can be validated independently with deterministic test auth, but that does not prove the host has composed the real journal, attention, context, AgentRuntime, policy, or Phase 9 command bridges.
 - SSE should carry bounded invalidation names only; clients refetch semantic view models rather than receiving raw events or provider payloads.
 - Phase 13 behavior remains unauthorized.
+
+## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H
+
+- The UI can synchronously drive the existing PostgreSQL Attention path for a newly appended event by priming an event-scoped consumer cursor; this avoids replaying unrelated historical backlog while retaining the canonical Attention implementation.
+- The configured `create_app()` path must select the Core composition when `ANIMA_DATABASE_URL` is present; absent required configuration remains an explicit unavailable/development state and must not silently enable the test echo.
+- UI mutation adapters should resolve canonical registered tool IDs (`anima.durable-tasks` and `anima.calendar`) and pass controls to the existing Phase 9 coordinator rather than calling domain services directly.
+- Browser screenshots captured by the in-app exporter were JPEG bytes despite `.png` names; publication assets must be MIME-verified and converted to actual PNG files before commit.

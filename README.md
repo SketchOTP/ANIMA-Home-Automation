@@ -1,6 +1,64 @@
 # ANIMA HA
 
-ANIMA HA is an evidence-governed prototype of Anima, a local-first household intelligence layer built on Home Assistant. The repository contains Architect-accepted Phases 0–11 and the Phase 12 custom local-interface implementation pending Architect review.
+ANIMA HA is a local-first household intelligence prototype: a custom home interface in front of an event-driven cognition system, with deterministic authority around the model. Luna can reason and select semantic tools; it cannot redefine identity, policy, Truth, provider boundaries, or verification.
+
+![ANIMA HA desktop interface](docs/assets/anima-home-desktop.png)
+
+## Why ANIMA is different
+
+ANIMA treats cognition as a governed loop rather than a chat box. User and provider events enter an append-only journal, Attention decides whether reasoning is warranted, the Context Broker assembles a sparse provenance-rich packet, and Luna runs one bounded episode. Every mutation crosses the Tool Gateway and OPA policy boundary. Consequential household actions additionally use latest-state preconditions, PostgreSQL coordination, idempotency, and observed verification.
+
+This separation makes the important claims inspectable: an LLM proposal is not authorization, an external result is not Truth, and a connector acknowledgement is not physical success.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    U[Household / User / Provider events] --> J[Event Journal]
+    J --> T[Truth projection]
+    J --> G[Household Graph]
+    J --> A[Attention Layer]
+    A --> C[Context Broker]
+    C --> L[Luna AgentRuntime]
+    L --> TG[Phase 5 Tool Gateway]
+    TG --> P[Phase 4 OPA policy]
+    P --> X{Execution boundary}
+    X -->|read or internal policy-gated| S[Tasks / Calendar / external reads]
+    X -->|coordinated consequential| AC[Phase 9 Action Coordinator]
+    AC --> HA[Home Assistant / verified providers]
+    UI[Custom ANIMA UI] -->|conversation and semantic commands| J
+    UI -->|read models and invalidations| RM[ANIMA read models]
+    J --> RM
+```
+
+The interface is a client of Core, not a second agent or direct provider console. Conversation uses the same Journal, Attention, Context Broker, and AgentRuntime path as scheduled cognition. Direct home controls use the same Phase 5 → Phase 4 → Phase 9 boundary.
+
+## Interface snapshots
+
+These screenshots are captured from the tested local application with synthetic household data:
+
+![ANIMA HA desktop interface](docs/assets/anima-home-desktop.png)
+
+![ANIMA HA tablet interface](docs/assets/anima-home-tablet.png)
+
+![ANIMA HA phone interface](docs/assets/anima-home-phone.png)
+
+## What works today
+
+- FastAPI/Uvicorn local interface with React, TypeScript, and Vite.
+- Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
+- Configured conversation composition into Attention, Context Broker, and AgentRuntime; task and local-calendar mutations use the Phase 5/4 policy path.
+- Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
+- Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy.
+- Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, and restricted external-content handling.
+
+## Safety and trust model
+
+Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or arbitrary hosts. External provider content is `EXTERNAL_UNTRUSTED`; restricted product results are live-only and are not promoted to Truth, memory, tasks, or durable episode text. Physical/provider writes require latest-state refresh, policy reauthorization, idempotency, conflict coordination, and post-action observation.
+
+## Evidence
+
+Phases 0–11 are Architect accepted. Phase 12 is the active integration and portfolio phase. The [Authority state](.agent/CURRENT.md), [Phase 12 documentation](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md), and completed task packet distinguish deterministic contract tests, integration tests, isolated Home Assistant evidence, live public synthetic provider evidence, and unperformed production commissioning.
 
 ## Implemented Phase 0 through Phase 11 baseline
 
@@ -24,10 +82,10 @@ This checkpoint provides:
 - an ANIMA-owned bounded cognition loop using isolated ephemeral Codex CLI ChatGPT OAuth turns, Luna 5.6 at medium reasoning, schema-only decisions, mandatory Phase 5/4 tool-policy routing, durable episodes, cloud-safe context projection, and explicit failure/budget outcomes;
 - an ANIMA-owned deterministic action-execution coordinator with durable idempotency/effect records, non-blocking PostgreSQL canonical-resource locks, latest-state preconditions, final policy reauthorization, observed post-action verification, partial/unknown outcomes, and restart reconciliation.
 - an ANIMA-owned declarative durable-task engine with one-shot, fixed-interval, and cron schedules, PostgreSQL leases and `SKIP LOCKED` claims, deterministic guaranteed due events, misfire/DST policy, idempotent creation, and restart-safe run history.
-- bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, refreshable brokered Calendar OAuth, credential gates, local request auditing, and Phase 9 verification for external writes.
+- bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, local Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, local request auditing, and Phase 9 verification for external writes.
 - a shared locally hosted Phase 12 interface: React/TypeScript/Vite static assets served by FastAPI/Uvicorn, ANIMA semantic household view models, Home Assistant OAuth bootstrap, hashed server-side sessions, CSRF/origin defenses, bounded SSE invalidations, and fail-closed Core command seams.
 
-Voice behavior, Phase 13 behavior, and production external-provider approval are not included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses private SearXNG, OpenStreetMap Overpass, and the first-party local calendar, and no human-delivery claim is made.
+Voice behavior, Phase 13 behavior, and production external-provider approval are not included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses Open-Meteo, private SearXNG, OpenStreetMap Overpass, TheMealDB, UPCitemdb, the first-party local calendar, and ntfy, and no human-delivery claim is made.
 
 ## Supported baseline
 

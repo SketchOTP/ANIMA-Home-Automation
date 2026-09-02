@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — IMPLEMENTED LOCALLY, PENDING VALIDATION/PUBLICATION
-- Active directive: ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — shared local interface, secure session/auth boundary, semantic API, and responsive browser evidence
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — INTEGRATED, VALIDATED, GOVERNANCE CLOSURE
+- Active directive: ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — production Core composition, end-to-end evidence, and portfolio closure
+- Active task packet: none; completed Phase 12 packet: `.agent/tasks/completed/ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014/`
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
-- Last completed outcome: Phase 12 implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA; governed closure remains open
-- Last state sync: 2026-09-01; Phase 12 implementation is published, with final governance closure and Architect acceptance pending.
+- Last completed outcome: Phase 12 shell checkpoint `800c4cc4b1783e3f755cabff37c3db091b0c9ab1`; the current integration delta is locally validated and awaiting its implementation/publication checkpoint
+- Last state sync: 2026-09-01; Phase 12 production integration and portfolio evidence are implemented locally, with Architect acceptance still pending.
 
 ## Current qualification result
 
@@ -27,10 +27,11 @@
   with no expiry/purge mechanism. Best Buy therefore cannot be integrated
   under this bounded directive without an Architect-authorized retention
   change.
-- Result: Phase 11 is Architect accepted. Phase 12 is authorized and currently
-  implemented locally, with deterministic backend/frontend/Playwright evidence.
-  The production conversation runtime bridge remains an explicit injection seam
-  and is not claimed as live AgentRuntime evidence. Phase 13 remains unauthorized.
+- Result: Phase 11 is Architect accepted. Phase 12 is authorized; the current
+  integration delta composes the production UI through the existing Journal,
+  Attention, Context Broker, AgentRuntime, Tool Gateway, policy, task,
+  calendar, and action-coordinator boundaries. Phase 12 remains pending
+  Architect acceptance. Phase 13 remains unauthorized.
 
 ## Mandatory kernel
 

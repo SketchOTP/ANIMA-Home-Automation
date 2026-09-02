@@ -269,3 +269,11 @@ UI, and voice remain out of scope.
 - Implemented locally: FastAPI/Uvicorn ANIMA API, HA OAuth bootstrap adapter, exact user-to-principal mapping, hashed server sessions and CSRF, semantic household read models, bounded invalidation SSE, React/Vite UI, migration `0013_ui_sessions.sql`, Dockerfile/Compose, and deterministic/browser validation.
 - Not claimed: real HA OAuth, native Pi deployment, or production Core conversation/command composition. The default production service fails closed until the existing Core bridges are injected; test auth's echo response is explicitly test-only.
 - Governance state: pending fresh validation, implementation publication, final governed evidence closure, hosted CI, Notion reconciliation, and Architect review.
+
+## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Implementation publication
+
+- Date: 2026-09-02
+- Architect disposition: `CONTINUE`; Phase 12 production integration and portfolio closure authorized; Phase 13 unauthorized.
+- Published implementation checkpoint: `208b7e546d8485539d2ae06427d268af116f9ceb`; hosted CI `33580734640` passed on the exact head.
+- Decision: wire the normal configured UI into accepted Core services through one composition module; retain test-only echo and demo seams only for explicit test/development configuration.
+- Evidence boundary: deterministic integrated cognition and policy-gated task mutation are reproduced; real Home Assistant OAuth/commissioning, live Luna, physical-home behavior, native ARM64/Pi, production TLS, and live household data remain unclaimed.

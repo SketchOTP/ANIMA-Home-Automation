@@ -4,7 +4,7 @@ Last updated: 2026-09-01
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — IMPLEMENTED LOCALLY, PENDING VALIDATION/PUBLICATION
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — INTEGRATED AND LOCALLY VALIDATED; GOVERNANCE CLOSURE IN PROGRESS
 
 ## Current objective
 
@@ -12,7 +12,7 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Active directive
 
-`ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014` — implement and independently validate the shared local interface without exposing HA internals, raw persistence, credentials, policy internals, or arbitrary tools. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 is pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H` — wire the normal UI composition root into the accepted cognition and command stack, prove the integrated paths, and close the portfolio/governance record. Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb` with CI `33562645002`; Phase 12 remains pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
@@ -28,7 +28,7 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 - ANIMA now exposes `anima.external.shopping.search_products` through a fixed `developer.api.walmart.com` host, ANIMA-generated RSA-SHA256 request signatures, trusted `SecretBroker` references, normalized `ProductCandidate` plus `retail_offer` data, timestamped external price/availability, and `EXTERNAL_UNTRUSTED` results. No cart, checkout, browser automation, scraping, CAPTCHA bypass, or arbitrary host is implemented.
 - Real AgentRuntime integration and provider tests pass. Credentialed Atlas live evidence returned 9 distinct candidates for `wireless headphones` and 10 for `air fryer`; both met the three-candidate usefulness threshold. Without the three operator secret references and a readable signing key, the provider remains an explicit `EXTERNAL_RESOURCE_GATE`.
 - Fresh locked validation: `uv sync --locked --dev`, Ruff, strict mypy, full pytest (`139 passed`), OPA, package sdist/wheel, `git diff --check`, and public-safety review passed. SearXNG/Overpass and existing Phase 1–10 evidence remain unchanged.
-- Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`; Phase 12 is the active authorized phase. The local interface implementation is pending its own publication and acceptance evidence.
+- Phase 11 is Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`; Phase 12 is the active authorized phase. The current local integration delta uses the existing Core runtime objects rather than a UI-specific cognition or provider path.
 
 ### Current product-provider replan
 
@@ -123,10 +123,9 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Current blockers
 
-- Phase 12 implementation checkpoint `8a8f798d5d2319e690572d69a323e10459924bce` is committed and pushed; hosted CI `33572829176` passed on that exact SHA.
-- The default production conversation path is intentionally fail-closed until the host injects the existing Phase 7/8 journal→attention→context→AgentRuntime bridge; the test-only echo path is not acceptance evidence.
-- Real HA OAuth, real household data, production TLS, and native ARM64/Pi execution remain unclaimed. Test auth is explicitly isolated behind `ANIMA_UI_TEST_AUTH=1`.
-- Phase 12 governed closure is now being published; final-head hosted CI and Notion readback must still be verified before handoff to the Architect.
+- Phase 12 integration is implemented and published at `208b7e546d8485539d2ae06427d268af116f9ceb`; implementation CI `33580734640` passed. Governance closure is published in the current working tree and awaits its final exact-head hosted CI and Notion readback.
+- Normal configured startup now composes the UI with `CoreConversationPipeline` and `CoreUICommandGateway`; missing PostgreSQL/OPA/Core dependencies remain explicitly unavailable rather than silently selecting the test echo.
+- Real Home Assistant OAuth/commissioning, real household data, production TLS, and native ARM64/Pi execution remain unclaimed. Test auth is explicitly isolated behind `ANIMA_UI_TEST_AUTH=1`.
 - Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
@@ -154,15 +153,16 @@ Deliver one shared locally hosted ANIMA interface with an ANIMA-owned API/view-m
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014` after the final governed checkpoint. The published evidence is deterministic backend/UI validation plus Playwright desktop/tablet/phone coverage; the production runtime bridge and real HA OAuth remain host-injected/ungrounded. Phase 13 remains unauthorized.
+Review `ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H` after the final governed checkpoint. The evidence should cover the production composition trace, policy-gated commands, browser privacy, responsive screenshots, and the remaining real-commissioning limitations. Phase 13 remains unauthorized.
 
 ## Phase 12 publication state
 
 - Starting accepted checkpoint: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 CI `33562645002` passed on that exact SHA.
 - Implementation checkpoint: `8a8f798d5d2319e690572d69a323e10459924bce`; hosted CI `33572829176` passed on that exact SHA. The prior implementation-only CI `33572285917` failed on a strict-mypy test typing issue; the bounded fix and rerun passed.
 - Implemented: FastAPI/Uvicorn semantic API, HA OAuth bootstrap, exact user mapping, hashed sessions/CSRF, migration `0013_ui_sessions.sql`, responsive React/Vite UI, bounded SSE invalidations, Docker/Compose, deterministic harness, and Playwright browser matrix.
-- Evidence limits: production Core conversation/command composition is an explicit injected seam and defaults fail-closed; real HA OAuth/commissioning, native ARM64/Pi, production TLS, and live household data remain unclaimed.
-- Phase 12 status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` only after governed closure is published. Phase 13 remains unauthorized.
+- Current integration evidence: `src/anima_ha/ui_runtime.py` composes the existing PostgreSQL journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy service, durable tasks, local calendar, and Phase 9 coordinator. The UI service uses this composition whenever `ANIMA_DATABASE_URL` is configured; without required Core configuration it remains explicitly unavailable, and the test echo is available only under the explicit test flag.
+- Evidence limits: real Home Assistant OAuth/commissioning, native ARM64/Pi, production TLS, and live household data remain unclaimed. The deterministic integrated pipeline uses the real AgentRuntime with a scripted model adapter.
+- Phase 12 status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` after the governed closure checkpoint and exact-head CI are verified. Phase 13 remains unauthorized.
 
 ## Phase 10 publication state
 

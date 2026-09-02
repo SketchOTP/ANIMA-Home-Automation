@@ -405,6 +405,17 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Core integration and portfolio closure
+
+- Issued: 2026-09-01
+- Architect disposition: `CONTINUE`; Phases 0–11 accepted; Phase 13 unauthorized.
+- Objective: compose the normal UI with the accepted ANIMA cognition and command stack, prove the integrated path, remove stale governance placeholders, and publish portfolio-grade README/screenshots.
+- Scope: ANIMA-owned composition root, production conversation pipeline, Core command gateway, configured degraded behavior, deterministic integration evidence, responsive screenshots, Authority reconciliation, and completed task packet.
+- Exclusions: no new agent runtime, event bus, database, provider architecture, Phase 13 voice, physical-home commissioning, or weakening of Phase 4/5/7/8/9/10/11 boundaries.
+- Implementation result: `src/anima_ha/ui_runtime.py` composes the existing journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy, durable tasks, local calendar, and Phase 9 coordinator. The normal configured UI selects this runtime; the test echo remains explicitly test-only.
+- Evidence result: real AgentRuntime journal-trigger integration, policy-gated task mutation, configured-app composition smoke test, Python/OPA/package/frontend/Playwright/container validation, and actual synthetic responsive screenshots passed locally.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+
 ## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Custom local interface
 
 - Issued: 2026-09-01
@@ -441,4 +452,15 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Starting governed checkpoint: `5ddf1eceb1346377d1ab3f857f1cadb9eeb3cf61`, clean and tracking `origin/main`.
 - Best Buy is deferred for operationally unavailable developer onboarding; Walmart remains deferred for entitlement clarification. No retailer fallback, scraping, browser automation, checkout, or Phase 12 behavior is authorized.
 - Scope: qualify the official UPCitemdb free Explorer, adopt it only if the two live household-product searches pass, preserve the semantic `shopping.search_products` tool, use no credentials, enforce Core `EPHEMERAL_RESTRICTED` persistence, and publish evidence.
+- Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+
+## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Core integration and portfolio closure
+
+- Issued: 2026-09-01
+- Architect disposition: `CONTINUE`; Phases 0–11 accepted; Phase 13 unauthorized.
+- Objective: compose the normal UI with the accepted ANIMA cognition and command stack, prove the integrated path, remove stale governance placeholders, and publish portfolio-grade README/screenshots.
+- Scope: ANIMA-owned composition root, production conversation pipeline, Core command gateway, configured degraded behavior, deterministic integration evidence, responsive screenshots, Authority reconciliation, and completed task packet.
+- Exclusions: no new agent runtime, event bus, database, provider architecture, Phase 13 voice, physical-home commissioning, or weakening of Phase 4/5/7/8/9/10/11 boundaries.
+- Implementation result: `src/anima_ha/ui_runtime.py` composes the existing journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy, durable tasks, local calendar, and Phase 9 coordinator. The normal configured UI selects this runtime; the test echo remains explicitly test-only.
+- Evidence result: real AgentRuntime journal-trigger integration, policy-gated task mutation, configured-app composition smoke test, Python/OPA/package/frontend/Playwright/container validation, and actual synthetic responsive screenshots passed locally.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
