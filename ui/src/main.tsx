@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useState } from "react";
+import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
@@ -30,7 +30,8 @@ function useMutation(csrf: string, refresh: () => Promise<void>, setError: (valu
 
 function App() {
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null); const [home, setHome] = useState<Home | null>(null); const [settings, setSettings] = useState<Settings | null>(null); const [capabilities, setCapabilities] = useState<Capability[]>([]); const [tab, setTab] = useState("Home"); const [message, setMessage] = useState(""); const [reply, setReply] = useState(""); const [error, setError] = useState(""); const [outcome, setOutcome] = useState<MutationOutcome | null>(null);
-  const refresh = async () => { try { setError(""); const [b, h, c, s] = await Promise.all([api<Bootstrap>("/api/v1/bootstrap"), api<Home>("/api/v1/home"), api<{ items: Capability[] }>("/api/v1/capabilities"), api<{ settings: Settings }>("/api/v1/settings")]); setBootstrap(b); setHome(h); setCapabilities(c.items); setSettings(s.settings); } catch (err) { setError(err instanceof Error ? err.message : "Anima is unavailable"); } };
+  const refreshGeneration = useRef(0);
+  const refresh = async () => { const generation = ++refreshGeneration.current; try { setError(""); const [b, h, c, s] = await Promise.all([api<Bootstrap>("/api/v1/bootstrap"), api<Home>("/api/v1/home"), api<{ items: Capability[] }>("/api/v1/capabilities"), api<{ settings: Settings }>("/api/v1/settings")]); if (generation !== refreshGeneration.current) return; setBootstrap(b); setHome(h); setCapabilities(c.items); setSettings(s.settings); } catch (err) { if (generation === refreshGeneration.current) setError(err instanceof Error ? err.message : "Anima is unavailable"); } };
   useEffect(() => { void refresh(); }, []);
   useEffect(() => { if (!bootstrap) return; const events = new EventSource("/api/v1/events"); const invalidate = () => void refresh(); ["home.invalidated", "tasks.changed", "calendar.changed", "activity.changed", "conversation.completed", "capabilities.changed", "refresh.required"].forEach((name) => events.addEventListener(name, invalidate)); return () => events.close(); }, [bootstrap]);
   useEffect(() => { if (!settings) return; const root = document.documentElement; root.dataset.appearance = settings.appearance; root.dataset.accent = settings.accent; root.dataset.density = settings.density; root.dataset.textScale = settings.text_scale; root.dataset.reducedMotion = settings.reduced_motion ? "true" : "false"; root.dataset.displayMode = settings.display_mode; }, [settings]);
