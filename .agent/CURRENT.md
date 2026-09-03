@@ -16,6 +16,17 @@ Verify browser session continuity across a real application restart and SSE/refe
 
 The current Notion SSOT records H5R as implemented-unverified: product surfaces are composed, but browser/runtime evidence, a pristine calendar fixture, and confirmation continuation remain unresolved. H5S prohibits a Phase 8 confirmation redesign or Phase 13 work.
 
+## H5T execution result — 2026-09-03
+
+- `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T` observed the same
+  browser tab remain authenticated across candidate UI process PIDs `1059121`
+  and `1073682`; post-restart bootstrap/home/settings/events refetched and
+  persisted presentation state remained visible.
+- Result: `PARTIAL / CONTINUE`. Same-browser restart/refetch reached
+  `E3_TARGET_TESTED`; no-duplicate mutation proof was not established because
+  the bounded task attempt returned `FAILED / ValueError` with no matching
+  durable row. Browser cookie/storage inspection was intentionally not run.
+
 ## H5S execution result — 2026-09-03
 
 - `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S` reconfirmed the

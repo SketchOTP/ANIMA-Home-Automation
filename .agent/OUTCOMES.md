@@ -804,3 +804,13 @@ decision.
 - Preserved negative evidence: browser-only denial, provider recovery, restricted reload/storage, same-session restart/SSE, isolated-HA UI, pristine calendar, and confirmation continuation remain `NOT RUN`/unproven. Existing calendar lifecycle remains `FAILED` against the dirty shared database's bounded first-20 window; no cleanup/reseed occurred.
 - Evidence: new browser/Core targets `E3_TARGET_TESTED`; broader prior regression `E4_REGRESSION_PROTECTED`. No Phase 8 redesign or Phase 13 work was performed.
 - Source: H5/H5R packets, current Notion SSOT, and exact repository/GitHub reconciliation.
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T — same-session restart/SSE closure
+
+- Date: 2026-09-03
+- Disposition: `PARTIAL / CONTINUE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Baseline: `09f1402bdff34a79b0b08b882752c491f89c0959`.
+- Same browser tab remained authenticated across real candidate UI process PIDs `1059121` → `1073682`, with no new login or browser context. Post-restart bootstrap, home, settings, and events refetches succeeded; visible light/phone presentation state and H5R surfaces persisted.
+- A bounded task mutation attempt returned UI `FAILED / ValueError`; no matching durable task row was found. No duplicate-mutation claim is made. Browser cookie/storage inspection was intentionally not performed.
+- Evidence: same-browser restart/refetch `E3_TARGET_TESTED`; no-duplicate mutation remains `NOT RUN`. Candidate runtime was stopped and the pre-existing port-18090 service was preserved.
+- Source: H5T packet, browser runtime observations, server PIDs/logs, PostgreSQL read-only check, and current repository/Notion reconciliation.
