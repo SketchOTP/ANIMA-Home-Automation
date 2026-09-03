@@ -15,7 +15,7 @@ import threading
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field, replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from struct import unpack
 from typing import Any, Protocol
@@ -34,6 +34,7 @@ from anima_ha.plugins import (
 )
 from anima_ha.policy import (
     ActionIntent,
+    Assurance,
     ConfirmationChallenge,
     Decision,
     IdentityContext,
@@ -188,6 +189,10 @@ class ActionRequest:
     safety_spec: ActionSafetySpec | None = None
     lock_scopes: tuple[str, ...] = ()
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    action_intent_id: UUID | None = None
+    episode_id: UUID | None = None
+    trigger_id: UUID | None = None
+    tool_request_number: int | None = None
 
     def __post_init__(self) -> None:
         if not self.idempotency_key.strip():
@@ -195,6 +200,7 @@ class ActionRequest:
         if self.household_id != self.identity.household_id:
             raise ValueError("action household and identity household must match")
         object.__setattr__(self, "created_at", self.created_at.astimezone(UTC))
+        object.__setattr__(self, "action_intent_id", self.action_intent_id or self.action_id)
 
     @classmethod
     def create(
@@ -395,6 +401,99 @@ class ActionClaim:
     record: ActionRecord
     duplicate: bool = False
     idempotency_conflict: bool = False
+
+
+class PendingApprovalStatus(StrEnum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+
+
+@dataclass(frozen=True, slots=True)
+class PendingApproval:
+    """Durable, non-executable continuation metadata for one approval."""
+
+    approval_id: UUID
+    challenge_id: UUID
+    action_id: UUID
+    action_intent_id: UUID
+    household_id: UUID
+    principal_id: UUID
+    episode_id: UUID | None
+    trigger_id: UUID | None
+    tool_id: str
+    tool_version: str
+    arguments: dict[str, Any]
+    resource_ids: tuple[UUID, ...]
+    preconditions: tuple[TruthPrecondition, ...]
+    lock_scopes: tuple[str, ...]
+    idempotency_key: str
+    origin: RequestOrigin
+    risk_class: str
+    safety_profile: str | None
+    summary: str
+    issued_at: datetime
+    expires_at: datetime
+    status: PendingApprovalStatus = PendingApprovalStatus.PENDING
+    decision: str | None = None
+    outcome_refs: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "status", PendingApprovalStatus(self.status))
+        object.__setattr__(self, "origin", RequestOrigin(self.origin))
+        object.__setattr__(self, "issued_at", self.issued_at.astimezone(UTC))
+        object.__setattr__(self, "expires_at", self.expires_at.astimezone(UTC))
+        if self.expires_at <= self.issued_at:
+            raise ValueError("approval expiry must follow issuance")
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "approval_id": str(self.approval_id),
+            "action_id": str(self.action_id),
+            "action_intent_id": str(self.action_intent_id),
+            "household_id": str(self.household_id),
+            "episode_id": str(self.episode_id) if self.episode_id else None,
+            "trigger_id": str(self.trigger_id) if self.trigger_id else None,
+            "tool_id": self.tool_id,
+            "tool_version": self.tool_version,
+            "resource_ids": [str(item) for item in self.resource_ids],
+            "lock_scopes": list(self.lock_scopes),
+            "origin": self.origin.value,
+            "risk_class": self.risk_class,
+            "safety_profile": self.safety_profile,
+            "summary": self.summary,
+            "issued_at": self.issued_at.isoformat(),
+            "expires_at": self.expires_at.isoformat(),
+            "status": self.status.value,
+            "decision": self.decision,
+            "outcome_refs": self.outcome_refs,
+        }
+
+
+class PendingApprovalStore(Protocol):
+    def create(
+        self, request: ActionRequest, intent: ActionIntent, challenge: ConfirmationChallenge
+    ) -> PendingApproval: ...
+
+    def get(self, approval_id: UUID) -> PendingApproval | None: ...
+
+    def list_for(self, household_id: UUID, principal_id: UUID) -> list[PendingApproval]: ...
+
+    def claim(
+        self,
+        approval_id: UUID,
+        *,
+        household_id: UUID,
+        principal_id: UUID,
+        decision: str,
+        now: datetime,
+    ) -> PendingApproval | None: ...
+
+    def complete(
+        self, approval_id: UUID, *, status: PendingApprovalStatus, outcome_refs: dict[str, Any]
+    ) -> None: ...
 
 
 class ActionStore(Protocol):
@@ -676,6 +775,374 @@ class PostgresActionStore:
             connection.commit()
 
 
+def _pending_arguments(request: ActionRequest) -> dict[str, Any]:
+    """Validate the small server-normalized envelope retained for approval."""
+    encoded = json.dumps(request.arguments, sort_keys=True, separators=(",", ":"), default=str)
+    if len(encoded.encode()) > 16_384:
+        raise ValueError("approval arguments exceed the bounded continuation size")
+    lowered = encoded.casefold()
+    if any(
+        marker in lowered
+        for marker in ("password", "secret", "token", "credential", "authorization")
+    ):
+        raise ValueError("approval arguments contain a prohibited secret marker")
+    parsed = json.loads(encoded)
+    if not isinstance(parsed, dict):
+        raise ValueError("approval arguments must remain a JSON object")
+    return parsed
+
+
+def _authenticated_principal(request: ActionRequest) -> UUID:
+    principal_id = request.identity.principal_id
+    if principal_id is None:
+        raise ValueError("approval requires an authenticated principal")
+    return principal_id
+
+
+def _pending_summary(request: ActionRequest, intent: ActionIntent) -> str:
+    resource = (
+        f" on {len(request.resource_ids)} canonical resource(s)" if request.resource_ids else ""
+    )
+    return f"Confirm {intent.semantic_action.replace('_', ' ')}{resource}."
+
+
+class InMemoryPendingApprovalStore:
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self.records: dict[UUID, PendingApproval] = {}
+        self._requests: dict[UUID, ActionRequest] = {}
+
+    def create(
+        self, request: ActionRequest, intent: ActionIntent, challenge: ConfirmationChallenge
+    ) -> PendingApproval:
+        approval = PendingApproval(
+            approval_id=uuid4(),
+            challenge_id=challenge.challenge_id,
+            action_id=request.action_id,
+            action_intent_id=intent.action_intent_id,
+            household_id=request.household_id,
+            principal_id=_authenticated_principal(request),
+            episode_id=request.episode_id,
+            trigger_id=request.trigger_id,
+            tool_id=request.tool.tool_id,
+            tool_version=request.tool.version,
+            arguments=_pending_arguments(request),
+            resource_ids=request.resource_ids,
+            preconditions=request.preconditions,
+            lock_scopes=request.lock_scopes,
+            idempotency_key=request.idempotency_key,
+            origin=request.origin,
+            risk_class=request.tool.risk_class,
+            safety_profile=request.safety_spec.profile_id if request.safety_spec else None,
+            summary=_pending_summary(request, intent),
+            issued_at=challenge.issued_at,
+            expires_at=challenge.expires_at,
+        )
+        with self._lock:
+            self.records[approval.approval_id] = approval
+            self._requests[approval.approval_id] = request
+        return approval
+
+    def get(self, approval_id: UUID) -> PendingApproval | None:
+        with self._lock:
+            return self.records.get(approval_id)
+
+    def list_for(self, household_id: UUID, principal_id: UUID) -> list[PendingApproval]:
+        with self._lock:
+            return [
+                item
+                for item in self.records.values()
+                if item.household_id == household_id
+                and item.principal_id == principal_id
+                and item.status == PendingApprovalStatus.PENDING
+            ]
+
+    def claim(
+        self,
+        approval_id: UUID,
+        *,
+        household_id: UUID,
+        principal_id: UUID,
+        decision: str,
+        now: datetime,
+    ) -> PendingApproval | None:
+        choice = decision.upper()
+        if choice not in {"APPROVE", "REJECT"}:
+            raise ValueError("approval decision must be APPROVE or REJECT")
+        at = now.astimezone(UTC)
+        with self._lock:
+            current = self.records.get(approval_id)
+            if (
+                current is None
+                or current.household_id != household_id
+                or current.principal_id != principal_id
+                or current.status != PendingApprovalStatus.PENDING
+                or current.expires_at <= at
+            ):
+                if (
+                    current
+                    and current.expires_at <= at
+                    and current.status == PendingApprovalStatus.PENDING
+                ):
+                    self.records[approval_id] = replace(
+                        current, status=PendingApprovalStatus.EXPIRED
+                    )
+                return None
+            updated = replace(
+                current,
+                status=(
+                    PendingApprovalStatus.APPROVED
+                    if choice == "APPROVE"
+                    else PendingApprovalStatus.REJECTED
+                ),
+                decision=choice,
+            )
+            self.records[approval_id] = updated
+            return updated
+
+    def complete(
+        self, approval_id: UUID, *, status: PendingApprovalStatus, outcome_refs: dict[str, Any]
+    ) -> None:
+        with self._lock:
+            current = self.records.get(approval_id)
+            if current is not None:
+                self.records[approval_id] = replace(
+                    current, status=status, outcome_refs=dict(outcome_refs)
+                )
+
+    def request_for(self, approval_id: UUID) -> ActionRequest | None:
+        with self._lock:
+            return self._requests.get(approval_id)
+
+
+def _pending_from_row(row: Mapping[str, Any]) -> PendingApproval:
+    return PendingApproval(
+        approval_id=UUID(str(row["approval_id"])),
+        challenge_id=UUID(str(row["challenge_id"])),
+        action_id=UUID(str(row["action_id"])),
+        action_intent_id=UUID(str(row["action_intent_id"])),
+        household_id=UUID(str(row["household_id"])),
+        principal_id=UUID(str(row["principal_id"])),
+        episode_id=UUID(str(row["episode_id"])) if row.get("episode_id") else None,
+        trigger_id=UUID(str(row["trigger_id"])) if row.get("trigger_id") else None,
+        tool_id=str(row["tool_id"]),
+        tool_version=str(row["tool_version"]),
+        arguments=dict(row["arguments"] or {}),
+        resource_ids=tuple(UUID(str(item)) for item in row["resource_ids"] or []),
+        preconditions=tuple(
+            TruthPrecondition(
+                str(item["truth_key"]),
+                item.get("expected_state"),
+                item.get("expected_value"),
+                item.get("expected_version"),
+            )
+            for item in row["preconditions"] or []
+        ),
+        lock_scopes=tuple(str(item) for item in row["lock_scopes"] or []),
+        idempotency_key=str(row["idempotency_key"]),
+        origin=RequestOrigin(str(row["origin"])),
+        risk_class=str(row["risk_class"]),
+        safety_profile=str(row["safety_profile"]) if row.get("safety_profile") else None,
+        summary=str(row["summary"]),
+        issued_at=row["issued_at"],
+        expires_at=row["expires_at"],
+        status=PendingApprovalStatus(str(row["status"])),
+        decision=str(row["decision"]) if row.get("decision") else None,
+        outcome_refs=dict(row["outcome_refs"] or {}),
+    )
+
+
+class PostgresPendingApprovalStore:
+    def __init__(self, database_url: str, connect_timeout: int = 5) -> None:
+        self.database_url = database_url
+        self.connect_timeout = connect_timeout
+
+    def _connect(self) -> psycopg.Connection[Any]:
+        return psycopg.connect(
+            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+        )
+
+    def create(
+        self, request: ActionRequest, intent: ActionIntent, challenge: ConfirmationChallenge
+    ) -> PendingApproval:
+        approval = PendingApproval(
+            approval_id=uuid4(),
+            challenge_id=challenge.challenge_id,
+            action_id=request.action_id,
+            action_intent_id=intent.action_intent_id,
+            household_id=request.household_id,
+            principal_id=_authenticated_principal(request),
+            episode_id=request.episode_id,
+            trigger_id=request.trigger_id,
+            tool_id=request.tool.tool_id,
+            tool_version=request.tool.version,
+            arguments=_pending_arguments(request),
+            resource_ids=request.resource_ids,
+            preconditions=request.preconditions,
+            lock_scopes=request.lock_scopes,
+            idempotency_key=request.idempotency_key,
+            origin=request.origin,
+            risk_class=request.tool.risk_class,
+            safety_profile=request.safety_spec.profile_id if request.safety_spec else None,
+            summary=_pending_summary(request, intent),
+            issued_at=challenge.issued_at,
+            expires_at=challenge.expires_at,
+        )
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_pending_approvals (
+                    approval_id, challenge_id, action_id, action_intent_id, household_id,
+                    principal_id, episode_id, trigger_id, tool_id, tool_version, arguments,
+                    resource_ids, preconditions, lock_scopes, idempotency_key, origin,
+                    risk_class, safety_profile, summary, issued_at, expires_at
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s::jsonb,
+                          %s::jsonb,%s,%s,%s,%s,%s,%s,%s)
+                RETURNING *
+                """,
+                (
+                    approval.approval_id,
+                    approval.challenge_id,
+                    approval.action_id,
+                    approval.action_intent_id,
+                    approval.household_id,
+                    approval.principal_id,
+                    approval.episode_id,
+                    approval.trigger_id,
+                    approval.tool_id,
+                    approval.tool_version,
+                    json.dumps(approval.arguments, sort_keys=True),
+                    json.dumps([str(item) for item in approval.resource_ids]),
+                    json.dumps([item.to_payload() for item in approval.preconditions]),
+                    json.dumps(list(approval.lock_scopes)),
+                    approval.idempotency_key,
+                    approval.origin.value,
+                    approval.risk_class,
+                    approval.safety_profile,
+                    approval.summary,
+                    approval.issued_at,
+                    approval.expires_at,
+                ),
+            )
+            row = cursor.fetchone()
+            connection.commit()
+        if row is None:
+            raise RuntimeError("pending approval was not persisted")
+        return _pending_from_row(dict(row))
+
+    def get(self, approval_id: UUID) -> PendingApproval | None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM anima_pending_approvals WHERE approval_id=%s", (approval_id,)
+            )
+            row = cursor.fetchone()
+        return _pending_from_row(dict(row)) if row else None
+
+    def list_for(self, household_id: UUID, principal_id: UUID) -> list[PendingApproval]:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_pending_approvals SET status='EXPIRED'
+                WHERE household_id=%s AND principal_id=%s AND status='PENDING'
+                  AND expires_at <= now()
+                """,
+                (household_id, principal_id),
+            )
+            cursor.execute(
+                """
+                SELECT * FROM anima_pending_approvals
+                WHERE household_id=%s AND principal_id=%s AND status='PENDING'
+                ORDER BY expires_at, issued_at
+                """,
+                (household_id, principal_id),
+            )
+            rows = list(cursor.fetchall())
+            connection.commit()
+        return [_pending_from_row(dict(row)) for row in rows]
+
+    def claim(
+        self,
+        approval_id: UUID,
+        *,
+        household_id: UUID,
+        principal_id: UUID,
+        decision: str,
+        now: datetime,
+    ) -> PendingApproval | None:
+        choice = decision.upper()
+        if choice not in {"APPROVE", "REJECT"}:
+            raise ValueError("approval decision must be APPROVE or REJECT")
+        at = now.astimezone(UTC)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM anima_pending_approvals WHERE approval_id=%s FOR UPDATE",
+                (approval_id,),
+            )
+            row = cursor.fetchone()
+            if (
+                row is None
+                or str(row["household_id"]) != str(household_id)
+                or str(row["principal_id"]) != str(principal_id)
+            ):
+                connection.rollback()
+                return None
+            if str(row["status"]) != PendingApprovalStatus.PENDING.value:
+                connection.rollback()
+                return None
+            if row["expires_at"] <= at:
+                cursor.execute(
+                    "UPDATE anima_pending_approvals SET status='EXPIRED' WHERE approval_id=%s",
+                    (approval_id,),
+                )
+                connection.commit()
+                return None
+            cursor.execute(
+                """
+                UPDATE anima_confirmation_challenges
+                SET consumed_at=%s
+                WHERE challenge_id=%s AND action_intent_id=%s
+                  AND household_id=%s AND confirming_principal_id=%s
+                  AND consumed_at IS NULL AND expires_at > %s
+                """,
+                (at, row["challenge_id"], row["action_intent_id"], household_id, principal_id, at),
+            )
+            if cursor.rowcount != 1:
+                connection.rollback()
+                return None
+            cursor.execute(
+                """
+                UPDATE anima_pending_approvals
+                SET status=%s, decision=%s
+                WHERE approval_id=%s
+                RETURNING *
+                """,
+                (
+                    PendingApprovalStatus.APPROVED.value
+                    if choice == "APPROVE"
+                    else PendingApprovalStatus.REJECTED.value,
+                    choice,
+                    approval_id,
+                ),
+            )
+            updated = cursor.fetchone()
+            connection.commit()
+        return _pending_from_row(dict(updated)) if updated else None
+
+    def complete(
+        self, approval_id: UUID, *, status: PendingApprovalStatus, outcome_refs: dict[str, Any]
+    ) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_pending_approvals
+                SET status=%s, outcome_refs=%s::jsonb
+                WHERE approval_id=%s
+                """,
+                (status.value, json.dumps(outcome_refs, sort_keys=True), approval_id),
+            )
+            connection.commit()
+
+
 class ResourceLock(AbstractContextManager[bool]):
     def __init__(
         self, connection: psycopg.Connection[Any] | None, keys: list[tuple[int, int]]
@@ -792,11 +1259,13 @@ class ActionExecutionCoordinator:
         locker: PostgresResourceLocker | InMemoryResourceLocker,
         *,
         journal: Any | None = None,
+        pending_approvals: PendingApprovalStore | None = None,
     ) -> None:
         self.gateway = gateway
         self.store = store
         self.locker = locker
         self.journal = journal
+        self.pending_approvals = pending_approvals
 
     def _audit(self, request: ActionRequest, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
@@ -839,6 +1308,7 @@ class ActionExecutionCoordinator:
             capability_id = UUID(str(request.arguments["capability_id"]))
         return ActionIntent.create(
             household_id=request.household_id,
+            action_intent_id=request.action_intent_id,
             semantic_action=request.tool.semantic_action,
             resource_id=resource_id,
             capability_id=capability_id,
@@ -882,6 +1352,33 @@ class ActionExecutionCoordinator:
         if request.refresher is None:
             return TruthSnapshot()
         return request.refresher(request.resource_ids)
+
+    def _issue_confirmation(
+        self, request: ActionRequest, intent: ActionIntent, *, now: datetime
+    ) -> ConfirmationChallenge | None:
+        principal_id = request.identity.principal_id
+        if principal_id is None:
+            return None
+        audit_store = getattr(request.policy_service, "audit_store", None)
+        issuer = getattr(audit_store, "issue_confirmation", None)
+        if callable(issuer):
+            challenge = issuer(
+                action_intent_id=intent.action_intent_id,
+                household_id=request.household_id,
+                confirming_principal_id=principal_id,
+                issued_at=now,
+            )
+            if not isinstance(challenge, ConfirmationChallenge):
+                raise TypeError("confirmation issuer returned an invalid challenge")
+            return challenge
+        return ConfirmationChallenge(
+            challenge_id=uuid4(),
+            action_intent_id=intent.action_intent_id,
+            household_id=request.household_id,
+            confirming_principal_id=principal_id,
+            issued_at=now,
+            expires_at=now + timedelta(minutes=2),
+        )
 
     def _verify(
         self,
@@ -960,7 +1457,10 @@ class ActionExecutionCoordinator:
                 duplicate=True,
                 idempotency_conflict=True,
             )
-        if claim.duplicate:
+        if claim.duplicate and not (
+            claim.record.status == ActionStatus.REQUIRE_CONFIRMATION
+            and request.confirmation is not None
+        ):
             return ActionExecutionResult(claim.record, duplicate=True)
 
         self._audit(request, "action.started", {"tool_id": request.tool.tool_id})
@@ -1039,6 +1539,36 @@ class ActionExecutionCoordinator:
                 Decision.REQUIRE_STRONGER_AUTH: ActionStatus.REQUIRE_STRONGER_AUTH,
             }
             if decision.decision in decision_map:
+                if decision.decision == Decision.REQUIRE_CONFIRMATION and self.pending_approvals:
+                    challenge = self._issue_confirmation(request, intent, now=_now())
+                    if challenge is None:
+                        return self._terminal(
+                            request,
+                            ActionStatus.REQUIRE_STRONGER_AUTH,
+                            detail="confirmation requires an authenticated principal",
+                            snapshot=snapshot,
+                        )
+                    try:
+                        approval = self.pending_approvals.create(request, intent, challenge)
+                    except ValueError as exc:
+                        return self._terminal(
+                            request,
+                            ActionStatus.REQUIRE_STRONGER_AUTH,
+                            detail=str(exc),
+                            snapshot=snapshot,
+                        )
+                    return self._terminal(
+                        request,
+                        ActionStatus.REQUIRE_CONFIRMATION,
+                        detail=decision.reason_code,
+                        snapshot=snapshot,
+                        result={
+                            "approval_id": str(approval.approval_id),
+                            "action_intent_id": str(approval.action_intent_id),
+                            "expires_at": approval.expires_at.isoformat(),
+                            "summary": approval.summary,
+                        },
+                    )
                 return self._terminal(
                     request,
                     decision_map[decision.decision],
@@ -1240,6 +1770,109 @@ class ActionExecutionCoordinator:
                     else None
                 ),
             )
+
+    def approve_pending(
+        self,
+        approval_id: UUID,
+        *,
+        household_id: UUID,
+        principal_id: UUID,
+        decision: str,
+        tool: ToolDescriptor,
+        policy_service: PolicyService,
+        policy_context: PolicyContext | None = None,
+        refresher: TruthRefresher | None = None,
+        verifier: ActionVerifier | None = None,
+        origin: RequestOrigin = RequestOrigin.DIRECT_USER,
+        now: datetime | None = None,
+    ) -> ActionExecutionResult | None:
+        """Atomically claim an approval, then resume its exact action envelope.
+
+        The store consumes the challenge before this method re-runs current
+        identity, Truth, policy, and coordinator checks.  The local challenge
+        object is intentionally unconsumed only for that one in-process OPA
+        evaluation; the database claim is the single-use fence.
+        """
+        if self.pending_approvals is None:
+            return None
+        at = now or _now()
+        pending = self.pending_approvals.claim(
+            approval_id,
+            household_id=household_id,
+            principal_id=principal_id,
+            decision=decision,
+            now=at,
+        )
+        if pending is None:
+            return None
+        if pending.status == PendingApprovalStatus.REJECTED:
+            record = self.store.update(
+                pending.action_id,
+                ActionStatus.POLICY_DENIED,
+                detail="confirmation was rejected by the authenticated principal",
+            )
+            self.pending_approvals.complete(
+                approval_id,
+                status=PendingApprovalStatus.REJECTED,
+                outcome_refs={"action_status": record.status.value},
+            )
+            return ActionExecutionResult(record)
+        if pending.status != PendingApprovalStatus.APPROVED:
+            return None
+        if tool.tool_id != pending.tool_id or tool.version != pending.tool_version:
+            record = self.store.update(
+                pending.action_id,
+                ActionStatus.POLICY_DENIED,
+                detail="approved tool descriptor no longer matches the pending request",
+            )
+            self.pending_approvals.complete(
+                approval_id,
+                status=PendingApprovalStatus.FAILED,
+                outcome_refs={"action_status": record.status.value},
+            )
+            return ActionExecutionResult(record)
+        confirmation = ConfirmationChallenge(
+            challenge_id=pending.challenge_id,
+            action_intent_id=pending.action_intent_id,
+            household_id=pending.household_id,
+            confirming_principal_id=pending.principal_id,
+            issued_at=pending.issued_at,
+            expires_at=pending.expires_at,
+        )
+        request = ActionRequest.create(
+            action_id=pending.action_id,
+            action_intent_id=pending.action_intent_id,
+            idempotency_key=pending.idempotency_key,
+            household_id=pending.household_id,
+            tool=tool,
+            arguments=dict(pending.arguments),
+            identity=IdentityContext(
+                household_id,
+                principal_id,
+                Assurance.AUTHENTICATED,
+            ),
+            policy_service=policy_service,
+            policy_context=policy_context or PolicyContext(),
+            resource_ids=pending.resource_ids,
+            preconditions=pending.preconditions,
+            lock_scopes=pending.lock_scopes,
+            refresher=refresher,
+            verifier=verifier,
+            confirmation=confirmation,
+            origin=origin,
+            safety_spec=resolve_action_safety_spec(tool),
+            episode_id=pending.episode_id,
+            trigger_id=pending.trigger_id,
+            tool_request_number=None,
+            created_at=pending.issued_at,
+        )
+        execution = self.execute(request)
+        self.pending_approvals.complete(
+            approval_id,
+            status=PendingApprovalStatus.APPROVED,
+            outcome_refs={"action_status": execution.record.status.value},
+        )
+        return execution
 
 
 ActionCoordinator = ActionExecutionCoordinator

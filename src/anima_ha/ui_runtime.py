@@ -18,6 +18,7 @@ from anima_ha.action import (
     ActionExecutionCoordinator,
     ActionRequest,
     PostgresActionStore,
+    PostgresPendingApprovalStore,
     PostgresResourceLocker,
     resolve_action_safety_spec,
 )
@@ -26,6 +27,7 @@ from anima_ha.agent import (
     CodexCliRuntime,
     EpisodeRequest,
     EpisodeRunResult,
+    FinalDisposition,
     PostgresEpisodeStore,
 )
 from anima_ha.attention import (
@@ -66,6 +68,7 @@ from anima_ha.policy import (
     OpaPolicyClient,
     PolicyContext,
     PolicyService,
+    PostgresPolicyStore,
     RequestOrigin,
 )
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
@@ -151,6 +154,7 @@ class CoreUICommandGateway:
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
     policy_role_resolver: Callable[[UUID], str | None] | None = None
     control_capability_resolver: Callable[[UUID], UUID | None] | None = None
+    agent: AgentRuntime | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -169,6 +173,9 @@ class CoreUICommandGateway:
             ),
             None,
         )
+
+    def _tool_by_id(self, tool_id: str) -> Any:
+        return next((item for item in self.manager.list_tools() if item.tool_id == tool_id), None)
 
     def _invoke(
         self, identity: UIIdentity, plugin_prefix: str, name: str, payload: dict[str, Any]
@@ -269,6 +276,62 @@ class CoreUICommandGateway:
         if self.events:
             self.events.publish("home.invalidated")
         return _safe_action_result(execution, tool.tool_id)
+
+    def confirmation(self, identity: UIIdentity, approval_id: str, decision: str) -> dict[str, Any]:
+        if self.action_executor is None or self.action_executor.pending_approvals is None:
+            raise UICommandError("CORE_CONFIRMATION_UNAVAILABLE")
+        try:
+            approval_uuid = UUID(approval_id)
+        except ValueError as exc:
+            raise UICommandError("INVALID_APPROVAL_ID") from exc
+        pending = self.action_executor.pending_approvals.get(approval_uuid)
+        if pending is None or pending.household_id != identity.household_id:
+            raise UICommandError("APPROVAL_NOT_FOUND")
+        tool = self._tool_by_id(pending.tool_id)
+        if tool is None or not tool.availability:
+            raise UICommandError(f"CORE_TOOL_UNAVAILABLE:{pending.tool_id}")
+        choice = decision.upper()
+        if choice == "APPROVE" and self.agent is not None:
+            resumed = self.agent.resume_confirmation(
+                approval_uuid,
+                identity=_identity(identity),
+                policy_context=self._policy_context(identity),
+                tool_resolver=self._tool_by_id,
+                policy_service=self.policy_service,
+                action_refresher=self.action_refresher,
+                action_verifier=self.action_verifier,
+            )
+            if resumed is None:
+                raise UICommandError("APPROVAL_NOT_ACTIONABLE")
+            result = {
+                "status": (
+                    "SUCCEEDED"
+                    if resumed.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
+                    else "FAILED"
+                ),
+                "operation": pending.tool_id,
+                "episode_id": str(resumed.episode.episode_id),
+                "detail": resumed.episode.failure_class or resumed.episode.response_text,
+            }
+        else:
+            execution = self.action_executor.approve_pending(
+                approval_uuid,
+                household_id=identity.household_id,
+                principal_id=identity.principal_id,
+                decision=choice,
+                tool=tool,
+                policy_service=self.policy_service,
+                policy_context=self._policy_context(identity),
+                refresher=self.action_refresher,
+                verifier=self.action_verifier,
+                origin=RequestOrigin.DIRECT_USER,
+            )
+            if execution is None:
+                raise UICommandError("APPROVAL_NOT_ACTIONABLE")
+            result = _safe_action_result(execution, pending.tool_id)
+        if self.events:
+            self.events.publish("home.invalidated")
+        return result
 
 
 class CoreConversationPipeline:
@@ -419,6 +482,7 @@ class CoreRuntime:
             action_verifier=self.action_verifier,
             policy_role_resolver=self.identity_resolver.resolve_role,
             control_capability_resolver=resolve_power_capability,
+            agent=self.agent,
         )
 
 
@@ -571,12 +635,15 @@ def build_postgres_core(
         )
         plugins.enable(manifest.plugin_id)
 
-    policy_service = PolicyService(OpaPolicyClient(opa_url))
+    policy_service = PolicyService(
+        OpaPolicyClient(opa_url), audit_store=PostgresPolicyStore(database_url)
+    )
     action_executor = ActionExecutionCoordinator(
         plugins,
         PostgresActionStore(database_url),
         PostgresResourceLocker(database_url),
         journal=journal,
+        pending_approvals=PostgresPendingApprovalStore(database_url),
     )
     agent = AgentRuntime(
         codex or CodexCliRuntime(),

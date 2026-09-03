@@ -296,3 +296,10 @@ UI, and voice remain out of scope.
 - Architect disposition: `CONTINUE`; Phase 12 remains pending acceptance; Phase 13 unauthorized.
 - Decision: make commissioned graph identity, PostgreSQL Truth/read models, Core plugin registry, and configured accepted providers the normal production composition. Retain demo/test seams only behind explicit test configuration.
 - Local evidence: exact graph identity mapping, real OPA task/calendar mutation, and real PostgreSQL Journal/Attention/Context/AgentRuntime conversation passed; HA is explicitly unavailable without operator commissioning.
+
+## ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U — 2026-09-03
+
+- Architect disposition: `CONTINUE — FINAL PHASE 12 CORRECTNESS CLOSURE`; starting governed checkpoint `684806ae53832ddd40cd0ee000ffbe35609a8ff2`; Phase 13 unauthorized.
+- Decision: implement durable exact-intent confirmation continuation inside the accepted Phase 4/5/8/9 boundaries. No new workflow engine, broker, database, provider, or authority store was added.
+- Local evidence: PostgreSQL pending-approval migration/verifier passed; focused and full validation passed; H4/H5 Core, isolated-HA API, restricted-content, frontend, and clean-filesystem browser reproduction passed. H5T's prior task `ValueError` remains historical negative evidence.
+- Publication state: implementation and final governed SHA/CI are recorded by superseding governance entries after push; Phase 12 remains pending Architect acceptance.

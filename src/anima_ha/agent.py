@@ -389,6 +389,8 @@ class EpisodeStore(Protocol):
 
     def get_by_trigger(self, trigger_id: UUID) -> AgentEpisode | None: ...
 
+    def get(self, episode_id: UUID) -> AgentEpisode | None: ...
+
     def record_turn(
         self,
         episode_id: UUID,
@@ -419,7 +421,7 @@ class EpisodeStore(Protocol):
         *,
         status: EpisodeStatus,
         disposition: FinalDisposition,
-        completed_at: datetime,
+        completed_at: datetime | None,
         turn_count: int,
         tool_count: int,
         usage: TokenUsage,
@@ -1026,6 +1028,9 @@ class InMemoryEpisodeStore:
         episode_id = self.by_trigger.get(trigger_id)
         return self.episodes.get(episode_id) if episode_id else None
 
+    def get(self, episode_id: UUID) -> AgentEpisode | None:
+        return self.episodes.get(episode_id)
+
     def record_turn(
         self,
         episode_id: UUID,
@@ -1085,7 +1090,7 @@ class InMemoryEpisodeStore:
         *,
         status: EpisodeStatus,
         disposition: FinalDisposition,
-        completed_at: datetime,
+        completed_at: datetime | None,
         turn_count: int,
         tool_count: int,
         usage: TokenUsage,
@@ -1209,6 +1214,12 @@ class PostgresEpisodeStore:
             row = cursor.fetchone()
         return self._episode(row) if row else None
 
+    def get(self, episode_id: UUID) -> AgentEpisode | None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM anima_agent_episodes WHERE episode_id=%s", (episode_id,))
+            row = cursor.fetchone()
+        return self._episode(row) if row else None
+
     def record_turn(
         self,
         episode_id: UUID,
@@ -1308,7 +1319,7 @@ class PostgresEpisodeStore:
         *,
         status: EpisodeStatus,
         disposition: FinalDisposition,
-        completed_at: datetime,
+        completed_at: datetime | None,
         turn_count: int,
         tool_count: int,
         usage: TokenUsage,
@@ -1390,6 +1401,82 @@ class AgentRuntime:
         self.journal = journal
         self.action_executor = action_executor
 
+    def resume_confirmation(
+        self,
+        approval_id: UUID,
+        *,
+        identity: IdentityContext,
+        policy_context: PolicyContext | None = None,
+        tool_resolver: Callable[[str], ToolDescriptor | None],
+        policy_service: PolicyService,
+        action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None,
+        action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None,
+    ) -> EpisodeRunResult | None:
+        """Resume a waiting episode without replaying its earlier tool calls."""
+        if self.action_executor is None or self.action_executor.pending_approvals is None:
+            return None
+        pending = self.action_executor.pending_approvals.get(approval_id)
+        if pending is None or pending.episode_id is None or identity.principal_id is None:
+            return None
+        tool = tool_resolver(pending.tool_id)
+        if tool is None:
+            return None
+        execution = self.action_executor.approve_pending(
+            approval_id,
+            household_id=identity.household_id,
+            principal_id=identity.principal_id,
+            decision="APPROVE",
+            tool=tool,
+            policy_service=policy_service,
+            policy_context=policy_context,
+            refresher=action_refresher,
+            verifier=action_verifier,
+            origin=RequestOrigin.DIRECT_USER,
+        )
+        if execution is None:
+            return None
+        episode = self.store.get(pending.episode_id)
+        if episode is None:
+            return None
+        if execution.record.status == ActionStatus.SUCCEEDED:
+            status = EpisodeStatus.COMPLETED
+            disposition = FinalDisposition.TOOL_SEQUENCE_COMPLETED
+            response = "Confirmed action completed and was verified."
+            failure = None
+        elif execution.record.status == ActionStatus.REQUIRE_STRONGER_AUTH:
+            status = EpisodeStatus.WAITING_STRONGER_AUTH
+            disposition = FinalDisposition.REQUIRES_STRONGER_AUTH
+            response = "This action requires stronger authentication."
+            failure = execution.record.detail
+        else:
+            status = EpisodeStatus.COMPLETED
+            disposition = FinalDisposition.TOOL_FAILURE
+            response = "The confirmed action was not completed."
+            failure = execution.record.detail
+        finished = self.store.finish(
+            episode.episode_id,
+            status=status,
+            disposition=disposition,
+            completed_at=None
+            if status == EpisodeStatus.WAITING_STRONGER_AUTH
+            else datetime.now(UTC),
+            turn_count=episode.codex_turn_count,
+            tool_count=episode.tool_request_count,
+            usage=episode.usage,
+            response_text=response,
+            failure_class=failure,
+        )
+        self._audit(
+            finished,
+            "agent.episode.continuation_completed",
+            {
+                "approval_id": str(approval_id),
+                "action_id": str(execution.record.action_id),
+                "action_status": execution.record.status.value,
+            },
+        )
+        return EpisodeRunResult(finished)
+
     def _audit(self, episode: AgentEpisode, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
             return
@@ -1431,7 +1518,12 @@ class AgentRuntime:
             episode.episode_id,
             status=status,
             disposition=disposition,
-            completed_at=datetime.now(UTC),
+            completed_at=(
+                None
+                if status
+                in {EpisodeStatus.WAITING_CONFIRMATION, EpisodeStatus.WAITING_STRONGER_AUTH}
+                else datetime.now(UTC)
+            ),
             turn_count=turn_count,
             tool_count=tool_count,
             usage=usage,
@@ -1741,7 +1833,14 @@ class AgentRuntime:
                         )
                         execution = action_executor.execute(
                             ActionRequest.create(
+                                action_intent_id=uuid5(
+                                    TOOL_INVOCATION_NAMESPACE,
+                                    f"intent:{request.trigger_id}:{tool_count}:{tool.tool_id}:{argument_digest}",
+                                ),
                                 idempotency_key=f"episode:{episode.episode_id}:tool:{tool_count}",
+                                episode_id=episode.episode_id,
+                                trigger_id=request.trigger_id,
+                                tool_request_number=tool_count,
                                 household_id=request.household_id,
                                 tool=tool,
                                 arguments=decision.arguments,
@@ -1755,30 +1854,35 @@ class AgentRuntime:
                                 origin=request.origin,
                             )
                         )
-                        result = execution.invocation or InvocationResult(
-                            {
-                                ActionStatus.POLICY_DENIED: InvocationOutcome.POLICY_DENIED,
-                                ActionStatus.REQUIRE_CONFIRMATION: (
-                                    InvocationOutcome.REQUIRE_CONFIRMATION
-                                ),
-                                ActionStatus.REQUIRE_STRONGER_AUTH: (
-                                    InvocationOutcome.REQUIRE_STRONGER_AUTH
-                                ),
-                                ActionStatus.VERIFICATION_FAILED: (
-                                    InvocationOutcome.VERIFICATION_FAILED
-                                ),
-                                ActionStatus.UNKNOWN_RESULT: InvocationOutcome.UNKNOWN_RESULT,
-                                ActionStatus.PARTIAL: InvocationOutcome.UNKNOWN_RESULT,
-                                ActionStatus.RECOVERY_REQUIRED: InvocationOutcome.UNKNOWN_RESULT,
-                            }.get(execution.record.status, InvocationOutcome.PLUGIN_ERROR),
+                        action_outcome = {
+                            ActionStatus.SUCCEEDED: InvocationOutcome.SUCCESS,
+                            ActionStatus.POLICY_DENIED: InvocationOutcome.POLICY_DENIED,
+                            ActionStatus.REQUIRE_CONFIRMATION: (
+                                InvocationOutcome.REQUIRE_CONFIRMATION
+                            ),
+                            ActionStatus.REQUIRE_STRONGER_AUTH: (
+                                InvocationOutcome.REQUIRE_STRONGER_AUTH
+                            ),
+                            ActionStatus.VERIFICATION_FAILED: InvocationOutcome.VERIFICATION_FAILED,
+                            ActionStatus.UNKNOWN_RESULT: InvocationOutcome.UNKNOWN_RESULT,
+                            ActionStatus.PARTIAL: InvocationOutcome.UNKNOWN_RESULT,
+                            ActionStatus.RECOVERY_REQUIRED: InvocationOutcome.UNKNOWN_RESULT,
+                        }.get(execution.record.status, InvocationOutcome.PLUGIN_ERROR)
+                        result = InvocationResult(
+                            action_outcome,
                             tool.tool_id,
                             tool.plugin_id,
                             tool.version,
-                            0.0,
+                            execution.invocation.elapsed_ms if execution.invocation else 0.0,
                             result=execution.record.result,
                             error_class=execution.record.detail,
                             provenance=tool.provenance,
                             external_content_trust=tool.external_content_trust,
+                            policy_decision=(
+                                execution.invocation.policy_decision
+                                if execution.invocation
+                                else None
+                            ),
                         )
                     else:
                         result = self.gateway.invoke(

@@ -534,3 +534,13 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: no browser cookie/storage inspection, Phase 8 redesign, Phase 13, new infrastructure, production mutation, credentials, cleanup/reseed, or evidence inflation.
 - Required result: canonical CODEX RESULT, exact process/session evidence, packet and append-only records, GitHub/Notion reconciliation, and honest Phase 12 gate classification.
 - Source: current Notion H5S result and repository/runtime reconstruction.
+
+## ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U — durable confirmation closure
+
+- Issued: 2026-09-03
+- Architect disposition: `CONTINUE — FINAL PHASE 12 CORRECTNESS CLOSURE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Baseline: `684806ae53832ddd40cd0ee000ffbe35609a8ff2`; the preceding hosted run `33705661046` failed only because `src/anima_ha/ui_api.py` was not Ruff-formatted.
+- Objective: provide a safe durable exact-intent approval/rejection continuation across the existing Phase 4 confirmation, Phase 5 policy, Phase 8 episode, Phase 9 coordinator, and PostgreSQL boundaries; correct the bounded task regression; publish exact-head evidence.
+- Required invariants: authenticated household/principal binding; exact action intent, episode, trigger, tool version, idempotency, trusted preconditions and lock scopes; single-use/expiry/replay protection; current policy/Truth reauthorization; no pending restricted content or secrets; no Phase 13.
+- Implemented scope: `anima_pending_approvals` migration and stores, stable `ActionRequest` identity, same-episode `AgentRuntime.resume_confirmation`, UI approval/rejection route, pending-approval report controls, H5U PostgreSQL verifier, and CI wiring. No accepted Phase 4/5/8/9 semantics were redesigned.
+- Source: Architect H5U directive, current repository inspection, and the canonical Notion SSOT.

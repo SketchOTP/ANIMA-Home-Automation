@@ -231,6 +231,25 @@ Evidence remains local/x86 unless separately marked: no native Raspberry Pi
 run, public deployment, production TLS, real household data, or Phase 13 voice
 qualification is claimed.
 
+## Durable confirmation continuation
+
+The H5U continuation adds a PostgreSQL-backed pending-approval record for
+policy decisions that require confirmation. It preserves the exact
+system-owned action intent, authenticated household/principal, episode,
+trigger, tool version, idempotency identity, trusted preconditions, lock
+scopes, and bounded semantic request envelope. Public/UI approval payloads do
+not contain executable arguments, secrets, credentials, or restricted
+provider content. Approval/rejection is session/CSRF/origin protected,
+expiry-aware, single-use, and re-authorized against current policy and state
+before the existing Phase 9 coordinator can dispatch.
+
+The AgentRuntime leaves a confirmation episode resumable and continues the
+same episode without replaying the original model tool request. The UI reports
+the Phase 9 terminal record rather than connector acknowledgement. The H5U
+PostgreSQL verifier proves exact-intent preservation, wrong-principal and
+single-use rejection, and exactly one provider call. Phase 12 remains pending
+Architect acceptance; Phase 13 voice behavior is not implemented.
+
 ## Visual evidence
 
 The responsive interface was captured from the running application with the

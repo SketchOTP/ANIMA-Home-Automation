@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5T SAME-SESSION RESTART/SSE EVIDENCE CLOSURE; CONTINUE
-- Active directive: ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T — verify browser session continuity across real application restart and SSE/refetch recovery
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T/`; prior H5/H5R/H5S packets remain preserved
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5U DURABLE CONFIRMATION CONTINUATION; CONTINUE
+- Active directive: ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U — close durable exact-intent approval/rejection continuation and final Phase 12 correctness evidence
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/`; prior H5/H5R/H5S/H5T packets remain preserved
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
 - Last completed outcome: H5 implementation/evidence checkpoint `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Governance/CI reliability checkpoint `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA and published the H5 evidence artifact.
-- Last state sync: 2026-09-03; H5S reconfirmed product/Core/isolated-HA evidence but Phase 12 remains unaccepted with browser-only gaps. H5T is now the single bounded same-session restart/SSE closure directive.
+- Last state sync: 2026-09-03; H5U is the active bounded correctness continuation. Phase 12 remains unaccepted and Phase 13 remains unauthorized.
 
 ## Current qualification result
 

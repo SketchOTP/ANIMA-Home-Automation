@@ -4,49 +4,44 @@ Last updated: 2026-09-03
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5T SAME-SESSION RESTART/SSE EVIDENCE CLOSURE; CONTINUE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5U DURABLE CONFIRMATION CONTINUATION; CONTINUE
 
 ## Current objective
 
-Verify browser session continuity across a real application restart and SSE/refetch recovery, or honestly classify the target if the environment cannot support it. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
+Close the durable exact-intent confirmation/rejection continuation and publish
+fresh evidence without weakening accepted Phase 4/5/8/9 boundaries. Phase 11
+is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13
+remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T` — use the existing H5/H5R runtime and browser surface to prove the same browser session survives a real application-process restart and recovers via SSE/refetch without losing settings or duplicating mutations. Baseline is `09f1402bdff34a79b0b08b882752c491f89c0959`.
+`ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U` — starting
+checkpoint `684806ae53832ddd40cd0ee000ffbe35609a8ff2`. Pending approvals must
+bind exact action intent, principal, household, episode, tool version,
+idempotency, trusted preconditions, and bounded semantic request data; approval
+must be authenticated, single-use, expiry-aware, re-authorized, and resumed
+through the existing Phase 9 coordinator. Phase 13 is unauthorized.
 
-The current Notion SSOT records H5R as implemented-unverified: product surfaces are composed, but browser/runtime evidence, a pristine calendar fixture, and confirmation continuation remain unresolved. H5S prohibits a Phase 8 confirmation redesign or Phase 13 work.
+## H5U current result — 2026-09-03
 
-## H5T execution result — 2026-09-03
+- Durable PostgreSQL pending-approval persistence and UI approval/rejection
+  routing are implemented locally; the public payload omits executable
+  arguments while the bounded server envelope permits exact reconstruction.
+- AgentRuntime confirmation remains the same episode and does not replay the
+  original tool. Wrong principal, expiry, rejection, and replay fail closed;
+  the real PostgreSQL verifier observes exactly one provider call.
+- Fresh local validation and supporting H4/H5/isolated-HA/restricted-content
+  targets pass. The historical H5T task `FAILED / ValueError` is preserved;
+  current H5 Core task mutation passes after the bounded correction.
+- Publication and exact hosted CI remain required before this checkpoint can
+  be handed back to the Architect. Phase 12 is not accepted.
 
-- `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T` observed the same
-  browser tab remain authenticated across candidate UI process PIDs `1059121`
-  and `1073682`; post-restart bootstrap/home/settings/events refetched and
-  persisted presentation state remained visible.
-- Result: `PARTIAL / CONTINUE`. Same-browser restart/refetch and one bounded
-  settings mutation reached `E3_TARGET_TESTED`; settings persisted after the
-  second process restart with one logged PUT and no duplicate PUT. Live SSE
-  event delivery and durable-task duplicate accounting remain unproven; the
-  bounded task attempt returned `FAILED / ValueError` with no matching row.
-  Browser cookie/storage inspection was intentionally not run.
+## Prior closure history
 
-## H5S execution result — 2026-09-03
-
-- `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S` reconfirmed the
-  current H5R product surfaces in an isolated browser runtime, reran the H5
-  Core and isolated-HA targets, and preserved the prior full regression result.
-- Result: `PARTIAL / CONTINUE`. Product-surface browser evidence and supporting
-  Core/API evidence pass at E3; named browser-only denial, provider recovery,
-  restricted reload/storage, same-session restart/SSE, isolated-HA UI, and
-  pristine calendar evidence remain unproven. Confirmation continuation is
-  unavailable under the existing contract; no Phase 8 redesign or Phase 13
-  work was introduced.
-
-## H5R execution result — 2026-09-03
-
-- Product surfaces are implemented from existing Core boundaries: household-scoped Graph rooms/devices; sanitized Journal notifications; Episode reports; Action summaries and pending confirmation state; capability-derived health; corrected Activity rendering; and version-2 preference migration/order normalization.
-- Confirmation investigation passed for exact intent/principal/expiry binding, durable storage, and single-use consumption. No UI continuation contract exists; pending confirmation is therefore rendered as unavailable without an approval control or Phase 8 redesign.
-- Validation: 169 Python tests, Ruff, frontend TypeScript/Vite build, frontend policy tests 3/3, focused product browser test 1/1, and full desktop browser 7/8 passed. The one failed browser check is the pre-existing calendar lifecycle against a shared DB with 34 historical rows and a bounded first-20 display; the HTTP create returned 200 and the negative evidence is retained.
-- Evidence level: new surfaces `E3_TARGET_TESTED`; broader repository regression `E4_REGRESSION_PROTECTED`. Phase 12 remains `IMPLEMENTED_UNVERIFIED / CONTINUE`, pending canonical gate reconciliation and Architect direction on confirmation continuation and the remaining H5 browser/runtime evidence.
+H5T same-browser restart/SSE evidence remains `PARTIAL / CONTINUE`; its live
+SSE and durable-task duplicate-accounting limits remain historical negative
+evidence. H5S/H5R/H5/H4 records remain preserved below and in the append-only
+ledgers.
 
 The repository's former H5 pointer below is retained as historical context only:
 

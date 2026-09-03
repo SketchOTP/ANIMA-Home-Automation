@@ -13,6 +13,7 @@ from anima_ha.action import (
     ActionExecutionCoordinator,
     ActionStatus,
     InMemoryActionStore,
+    InMemoryPendingApprovalStore,
     InMemoryResourceLocker,
     TruthSnapshot,
 )
@@ -64,6 +65,16 @@ HOUSEHOLD_ID = UUID("ecbd0d84-6f5f-40f8-928f-1d5dfe758dd7")
 class AllowEvaluator:
     def evaluate(self, document: dict[str, Any]) -> dict[str, Any]:
         return {"decision": "ALLOW", "reason_code": "READ_ONLY_ALLOWED", "policy_version": "test"}
+
+
+class ConfirmationEvaluator:
+    def evaluate(self, document: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "decision": "REQUIRE_CONFIRMATION",
+            "reason_code": "CONFIRM_REQUIRED",
+            "policy_version": "test",
+            "confirmation_required": True,
+        }
 
 
 def tool(tool_id: str = "anima.test.read", *, risk: str = "READ_ONLY") -> ToolDescriptor:
@@ -587,6 +598,75 @@ def test_real_agent_path_rejects_manual_change_against_system_owned_baseline() -
     record = next(iter(action_store.records.values()))
     assert record.status == ActionStatus.PRECONDITION_FAILED
     assert provider_gateway.calls == []
+
+
+def test_agent_confirmation_continues_same_episode_without_replaying_tool() -> None:
+    descriptor = action_tool()
+    principal = uuid4()
+    baseline = PolicyContext(truth=(TruthPolicyContext("power", "KNOWN", "off"),))
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "2"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
+    provider_gateway = Gateway()
+    pending = InMemoryPendingApprovalStore()
+    coordinator = ActionExecutionCoordinator(
+        provider_gateway,
+        InMemoryActionStore(),
+        InMemoryResourceLocker(),
+        pending_approvals=pending,
+    )
+    packet_request = request(
+        (descriptor,), policy_context=baseline, action_refresher=lambda resources: next(snapshots)
+    )
+    packet_request = EpisodeRequest(
+        packet_request.trigger_id,
+        packet_request.context_packet_id,
+        packet_request.household_id,
+        packet_request.context_packet,
+        packet_request.tools,
+        IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+        PolicyService(ConfirmationEvaluator()),
+        baseline,
+        action_refresher=packet_request.action_refresher,
+    )
+    agent = AgentRuntime(
+        ScriptedCodexAdapter(
+            [
+                CodexTurnResult(
+                    ToolRequestDecision(
+                        descriptor.tool_id,
+                        {"resource_id": str(uuid4()), "desired_on": True},
+                    ),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                )
+            ]
+        ),
+        provider_gateway,
+        InMemoryEpisodeStore(),
+        action_executor=coordinator,
+    )
+    waiting = agent.run(packet_request)
+    assert waiting.episode.status == EpisodeStatus.WAITING_CONFIRMATION
+    approval = pending.list_for(HOUSEHOLD_ID, principal)[0]
+    resumed = agent.resume_confirmation(
+        approval.approval_id,
+        identity=IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+        policy_context=baseline,
+        tool_resolver=lambda tool_id: descriptor if tool_id == descriptor.tool_id else None,
+        policy_service=PolicyService(AllowEvaluator()),
+        action_refresher=packet_request.action_refresher,
+    )
+    assert resumed is not None
+    assert resumed.episode.episode_id == waiting.episode.episode_id
+    assert resumed.episode.status == EpisodeStatus.COMPLETED
+    assert resumed.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
+    assert len(provider_gateway.calls) == 1
 
 
 def test_real_phase5_gateway_does_not_execute_when_phase4_denies() -> None:

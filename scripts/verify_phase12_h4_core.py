@@ -197,6 +197,7 @@ def main() -> int:
     )
 
     settings = {
+        "version": 2,
         "appearance": "light",
         "accent": "sky",
         "density": "compact",
@@ -223,7 +224,14 @@ def main() -> int:
     assert restarted_bootstrap.status_code == 200, restarted_bootstrap.text
     restarted_service = restarted.state.ui_service
     persisted = restarted_client.get("/api/v1/settings").json()["settings"]
-    assert persisted == {**settings, "version": persisted["version"]}
+    expected_order = settings["widget_order"] + [
+        item for item in persisted["widget_order"] if item not in settings["widget_order"]
+    ]
+    assert persisted == {
+        **settings,
+        "version": persisted["version"],
+        "widget_order": expected_order,
+    }
     assert restarted_service.conversation.fallback_enabled is False
     assert restarted_client.get("/api/v1/tasks").status_code == 200
     assert restarted_client.get("/api/v1/calendar").status_code == 200

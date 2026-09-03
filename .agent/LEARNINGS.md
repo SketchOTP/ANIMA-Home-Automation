@@ -205,3 +205,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - H5 hosted acceptance must use deterministic external fixtures; live public-provider responses are environment-dependent and are not a valid substitute for browser/Core provider degradation and audit evidence.
 - Passing a deterministic Core/API target plus a green Playwright smoke matrix does not establish browser-visible denial, restricted-content reload/storage, same-session process restart/SSE, or browser-visible provider recovery. Those evidence classes remain explicit until dedicated journeys run.
 - Hosted Compose readiness must be gated on container health plus a final database readiness check before migrations; a single readiness probe can pass during PostgreSQL startup and immediately fail on the next check.
+
+## ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U
+
+- A confirmation challenge alone is insufficient for safe continuation: the durable pending record must preserve the exact system-owned action intent and trusted request envelope while keeping executable arguments out of its public/UI payload.
+- Approval is a new authorization boundary, not a replay of the original model request. It must atomically claim the pending record, bind the current principal/household, re-evaluate current policy and Truth, and invoke the existing Phase 9 coordinator at most once.
+- A confirmation episode can remain nonterminal and resume in the same AgentRuntime episode without replaying the original tool request; the continuation result must be projected from the Phase 9 terminal record.
+- Historical failure evidence remains useful after a bounded correction: H5T's task `FAILED / ValueError` is retained, while the current H5 Core target independently proves the corrected task mutation.

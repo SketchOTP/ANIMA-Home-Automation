@@ -824,3 +824,14 @@ decision.
   settings PUT and post-restart refetches, with no duplicate settings PUT.
 - Live SSE event delivery and durable-task duplicate accounting remain
   unproven. The final H5T disposition remains `PARTIAL / CONTINUE`.
+
+## ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U — implementation and local evidence
+
+- Date: 2026-09-03
+- Starting SHA: `684806ae53832ddd40cd0ee000ffbe35609a8ff2`.
+- Disposition: `CONTINUE — FINAL PHASE 12 CORRECTNESS CLOSURE`; Phase 12 is not accepted and Phase 13 remains unauthorized.
+- Implemented: durable PostgreSQL pending approvals, exact-intent preservation, same-episode AgentRuntime continuation, authenticated UI approval/rejection, and the PostgreSQL H5U verifier. Pending payloads omit executable arguments; the bounded server envelope is retained only to reconstruct the exact trusted request.
+- Focused evidence passed: exact-intent confirmation, rejection, expiry, wrong-principal rejection, single-use replay rejection, same-episode continuation without tool replay, and one-provider-call PostgreSQL approval.
+- Broader local evidence passed: `uv sync --locked --dev`, `scripts/validate.sh` (172 tests, Ruff, strict mypy, OPA 7/7), migrations initial/repeat, H4/H5 Core, isolated-HA API, restricted-content, frontend checks/build, and a clean-filesystem Playwright reproduction (12 executed passes plus 12 responsive skips by design).
+- Historical H5T `FAILED / ValueError` task evidence is preserved; current H5 Core task mutation passes after the bounded correction. No Phase 13 behavior was implemented.
+- Publication and hosted exact-head CI remain required before the result is handed to the Architect.

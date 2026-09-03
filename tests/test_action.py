@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -8,7 +9,9 @@ from anima_ha.action import (
     ActionRequest,
     ActionStatus,
     InMemoryActionStore,
+    InMemoryPendingApprovalStore,
     InMemoryResourceLocker,
+    PendingApprovalStatus,
     TruthPrecondition,
     TruthSnapshot,
     VerificationOutcome,
@@ -36,6 +39,16 @@ class AllowEvaluator:
 class DenyEvaluator:
     def evaluate(self, document: dict[str, Any]) -> dict[str, Any]:
         return {"decision": "DENY", "reason_code": "DENIED", "policy_version": "test"}
+
+
+class ConfirmationEvaluator:
+    def evaluate(self, document: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "decision": "REQUIRE_CONFIRMATION",
+            "reason_code": "CONFIRM_REQUIRED",
+            "policy_version": "test",
+            "confirmation_required": True,
+        }
 
 
 class Gateway:
@@ -392,6 +405,155 @@ def test_policy_denial_never_marks_execution_or_calls_gateway() -> None:
     result = coordinator.execute(action)
     assert result.record.status == ActionStatus.POLICY_DENIED
     assert gateway.calls == 0
+
+
+def test_confirmation_is_durable_exact_intent_and_resumes_once() -> None:
+    gateway = Gateway()
+    pending = InMemoryPendingApprovalStore()
+    store = InMemoryActionStore()
+    coordinator = ActionExecutionCoordinator(
+        gateway, store, InMemoryResourceLocker(), pending_approvals=pending
+    )
+    principal = uuid4()
+    snapshots = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "2"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
+    action = ActionRequest.create(
+        idempotency_key="confirmation-action",
+        household_id=HOUSEHOLD,
+        tool=tool(),
+        arguments={"resource_id": str(RESOURCE), "desired_on": True},
+        identity=IdentityContext(HOUSEHOLD, principal, Assurance.AUTHENTICATED),
+        policy_service=PolicyService(ConfirmationEvaluator()),
+        refresher=lambda resources: next(snapshots),
+    )
+    first = coordinator.execute(action)
+    assert first.record.status == ActionStatus.REQUIRE_CONFIRMATION
+    assert first.record.result is not None
+    approval_id = UUID(str(first.record.result["approval_id"]))
+    approval = pending.get(approval_id)
+    assert approval is not None
+    assert approval.action_intent_id == action.action_intent_id
+    assert gateway.calls == 0
+
+    approved = coordinator.approve_pending(
+        approval_id,
+        household_id=HOUSEHOLD,
+        principal_id=principal,
+        decision="APPROVE",
+        tool=action.tool,
+        policy_service=PolicyService(AllowEvaluator()),
+        refresher=lambda resources: next(snapshots),
+    )
+    assert approved is not None
+    assert approved.record.status == ActionStatus.SUCCEEDED
+    assert gateway.calls == 1
+    assert (
+        coordinator.approve_pending(
+            approval_id,
+            household_id=HOUSEHOLD,
+            principal_id=principal,
+            decision="APPROVE",
+            tool=action.tool,
+            policy_service=PolicyService(AllowEvaluator()),
+            refresher=lambda resources: next(snapshots),
+        )
+        is None
+    )
+
+
+def test_confirmation_wrong_principal_reject_and_expiry_are_fail_closed() -> None:
+    pending = InMemoryPendingApprovalStore()
+    gateway = Gateway()
+    store = InMemoryActionStore()
+    coordinator = ActionExecutionCoordinator(
+        gateway, store, InMemoryResourceLocker(), pending_approvals=pending
+    )
+    principal = uuid4()
+    action = ActionRequest.create(
+        idempotency_key="confirmation-boundary",
+        household_id=HOUSEHOLD,
+        tool=tool(),
+        arguments={"resource_id": str(RESOURCE), "desired_on": True},
+        identity=IdentityContext(HOUSEHOLD, principal, Assurance.AUTHENTICATED),
+        policy_service=PolicyService(ConfirmationEvaluator()),
+        refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
+        ),
+    )
+    first = coordinator.execute(action)
+    assert first.record.result is not None
+    approval_id = UUID(str(first.record.result["approval_id"]))
+    assert (
+        coordinator.approve_pending(
+            approval_id,
+            household_id=HOUSEHOLD,
+            principal_id=uuid4(),
+            decision="APPROVE",
+            tool=action.tool,
+            policy_service=PolicyService(AllowEvaluator()),
+        )
+        is None
+    )
+    current = pending.get(approval_id)
+    assert current is not None
+    assert current.status == PendingApprovalStatus.PENDING
+    rejected = coordinator.approve_pending(
+        approval_id,
+        household_id=HOUSEHOLD,
+        principal_id=principal,
+        decision="REJECT",
+        tool=action.tool,
+        policy_service=PolicyService(AllowEvaluator()),
+    )
+    assert rejected is not None
+    assert rejected.record.status == ActionStatus.POLICY_DENIED
+    assert gateway.calls == 0
+    assert (
+        coordinator.approve_pending(
+            approval_id,
+            household_id=HOUSEHOLD,
+            principal_id=principal,
+            decision="APPROVE",
+            tool=action.tool,
+            policy_service=PolicyService(AllowEvaluator()),
+        )
+        is None
+    )
+
+    expiring = ActionRequest.create(
+        idempotency_key="confirmation-expiry",
+        household_id=HOUSEHOLD,
+        tool=tool(),
+        arguments={"resource_id": str(RESOURCE), "desired_on": True},
+        identity=IdentityContext(HOUSEHOLD, principal, Assurance.AUTHENTICATED),
+        policy_service=PolicyService(ConfirmationEvaluator()),
+        refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
+        ),
+    )
+    expired_result = coordinator.execute(expiring)
+    assert expired_result.record.result is not None
+    expired_id = UUID(str(expired_result.record.result["approval_id"]))
+    assert (
+        coordinator.approve_pending(
+            expired_id,
+            household_id=HOUSEHOLD,
+            principal_id=principal,
+            decision="APPROVE",
+            tool=expiring.tool,
+            policy_service=PolicyService(AllowEvaluator()),
+            now=datetime.now(UTC) + timedelta(minutes=3),
+        )
+        is None
+    )
+    expired = pending.get(expired_id)
+    assert expired is not None
+    assert expired.status == PendingApprovalStatus.EXPIRED
 
 
 def test_restart_recovery_marks_planned_and_executing_without_retry() -> None:

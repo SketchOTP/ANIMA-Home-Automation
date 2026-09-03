@@ -146,6 +146,15 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `ui/tests/ui.spec.ts` and `ui/playwright.config.ts` — serialized H4 browser matrix with desktop functional journeys and tablet/phone responsive smoke.
 - `.agent/tasks/completed/ANIMA-HA-P12-VERIFIED-UX-E2E-CLOSURE-014H4/` — H4 directive, evidence ledger, and handoff.
 
+### Phase 12 H5U durable confirmation continuation
+
+- `src/anima_ha/action.py` — stable action-intent identity, durable pending-approval stores, authenticated single-use claim, expiry, rejection, and exact-request approval through the existing Phase 9 coordinator.
+- `src/anima_ha/agent.py` — resumable confirmation episodes and same-episode continuation without replaying the original tool request.
+- `src/anima_ha/ui_runtime.py` and `src/anima_ha/ui_api.py` — Core-routed approval/rejection boundary with session/CSRF/origin protection and bounded pending-approval projection.
+- `src/anima_ha/db/migrations/0015_pending_approvals.sql` — PostgreSQL pending-approval persistence.
+- `scripts/verify_phase12_h5u_confirmation.py` — real PostgreSQL exact-intent, wrong-principal, single-use, and one-dispatch verifier.
+- `.agent/tasks/active/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/` — current H5U directive, plan, evidence, and handoff; prior H5/H5R/H5S/H5T packets remain preserved historical records.
+
 ### Phase 12 H5 browser acceptance evidence
 
 - `scripts/verify_phase12_h5_core.py` — deterministic PostgreSQL/OPA/Core target for external audit redaction, provider degraded/recovery projection, restricted-content durable scanning, and original-session reconstruction.

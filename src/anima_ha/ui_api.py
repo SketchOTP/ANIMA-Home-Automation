@@ -395,6 +395,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, control_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def confirmation(
+        self, identity: UIIdentity, approval_id: str, decision: str
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -421,6 +425,9 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, control_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"control.{control_id}")
+
+    def confirmation(self, identity: UIIdentity, approval_id: str, decision: str) -> dict[str, Any]:
+        return self._unavailable(f"confirmation.{approval_id}")
 
 
 class ConversationIngress(Protocol):
@@ -833,9 +840,7 @@ class PostgresHouseholdReadModel:
 
         capabilities = self.capabilities(identity)
         rooms: list[dict[str, Any]] = []
-        if self.graph is not None and callable(
-            getattr(self.graph, "places_in_household", None)
-        ):
+        if self.graph is not None and callable(getattr(self.graph, "places_in_household", None)):
             places = self.graph.places_in_household(identity.household_id)
             for place in places:
                 if place.kind not in {NodeKind.ROOM, NodeKind.ZONE}:
@@ -920,8 +925,7 @@ class PostgresHouseholdReadModel:
             {
                 "notification_id": f"event:{row['event_type']}:{row['occurred_at'].isoformat()}",
                 "summary": (
-                    "Household event recorded: "
-                    f"{str(row['event_type']).replace('.', ' · ')}"
+                    f"Household event recorded: {str(row['event_type']).replace('.', ' · ')}"
                 ),
                 "status": "CURRENT",
                 "importance": str(row["importance"]),
@@ -957,9 +961,7 @@ class PostgresHouseholdReadModel:
             for row in rows
         ]
 
-    def _actions(
-        self, identity: UIIdentity
-    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    def _actions(self, identity: UIIdentity) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         try:
             with self._connect() as connection, connection.cursor() as cursor:
                 cursor.execute(
@@ -973,6 +975,25 @@ class PostgresHouseholdReadModel:
                     (identity.household_id,),
                 )
                 rows = cursor.fetchall()
+                cursor.execute(
+                    """
+                    UPDATE anima_pending_approvals SET status='EXPIRED'
+                    WHERE household_id=%s AND principal_id=%s AND status='PENDING'
+                      AND expires_at <= now()
+                    """,
+                    (identity.household_id, identity.principal_id),
+                )
+                cursor.execute(
+                    """
+                    SELECT approval_id, action_id, tool_id, summary, expires_at
+                    FROM anima_pending_approvals
+                    WHERE household_id=%s AND principal_id=%s AND status='PENDING'
+                    ORDER BY expires_at, issued_at
+                    """,
+                    (identity.household_id, identity.principal_id),
+                )
+                approval_rows = cursor.fetchall()
+                connection.commit()
         except psycopg.Error:
             return [], []
         actions = [
@@ -987,14 +1008,15 @@ class PostgresHouseholdReadModel:
         ]
         pending = [
             {
-                "action_id": item["action_id"],
-                "tool_id": item["tool_id"],
-                "status": item["status"],
-                "summary": "Confirmation is required; this interface cannot continue it yet.",
-                "continuation": "UNAVAILABLE",
+                "approval_id": str(item["approval_id"]),
+                "action_id": str(item["action_id"]),
+                "tool_id": str(item["tool_id"]),
+                "status": "REQUIRE_CONFIRMATION",
+                "summary": str(item["summary"]),
+                "expires_at": item["expires_at"].isoformat(),
+                "continuation": "AVAILABLE",
             }
-            for item in actions
-            if item["status"] == "REQUIRE_CONFIRMATION"
+            for item in approval_rows
         ]
         return actions, pending
 
@@ -1822,6 +1844,29 @@ def create_app(
             )
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.post("/api/v1/approvals/{approval_id}")
+    async def approval(
+        approval_id: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        if set(body.payload) != {"decision"} or str(body.payload["decision"]).upper() not in {
+            "APPROVE",
+            "REJECT",
+        }:
+            raise HTTPException(status_code=400, detail="INVALID_APPROVAL_DECISION")
+        try:
+            return svc.commands.confirmation(
+                svc.identity_from_session(session),
+                approval_id,
+                str(body.payload["decision"]),
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     @app.get("/api/v1/events")
     async def events(request: Request) -> StreamingResponse:
