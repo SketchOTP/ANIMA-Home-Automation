@@ -10,12 +10,12 @@
 
 ## Current pointers
 
-- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5R PRODUCT-SURFACE ACCEPTANCE CLOSURE; CONTINUE
-- Active directive: ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R — reconcile H5R product gate and close the highest-value Phase 12 surface gap
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R/`; superseded H5 packet: `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/`
+- Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5S DECISIVE BROWSER/RUNTIME EVIDENCE CLOSURE; CONTINUE
+- Active directive: ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S — close or honestly classify the remaining Phase 12 browser/runtime evidence gate
+- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S/`; prior H5/H5R packets remain preserved
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
 - Last completed outcome: H5 implementation/evidence checkpoint `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Governance/CI reliability checkpoint `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA and published the H5 evidence artifact.
-- Last state sync: 2026-09-03; H5R product surfaces are implemented and targeted-tested, but Phase 12 remains unaccepted with decisive browser/runtime evidence gaps and confirmation continuation unresolved.
+- Last state sync: 2026-09-03; H5R product surfaces are implemented and targeted-tested, but Phase 12 remains unaccepted with decisive browser/runtime evidence gaps and confirmation continuation unresolved. H5S is now the single bounded evidence-closure directive.
 
 ## Current qualification result
 

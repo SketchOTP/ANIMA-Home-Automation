@@ -792,3 +792,15 @@ decision.
 - Resulting implementation SHA: `764c8fac52ddcd565a3f1c3fd46ec8071ae8bcb7`;
   remote `main` was verified at this SHA. No new hosted workflow run was
   associated with this commit (`NOT RUN`).
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S — decisive evidence closure
+
+- Date: 2026-09-03
+- Disposition: `PARTIAL / CONTINUE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Baseline: `0bc4a1d1826a4f8c874c90ed935587206a2f4935`.
+- Reran `verify_phase12_h5_core.py` successfully, including real Core composition, provider degraded/recovery, restricted sentinel absence, session reconstruction, and post-restart durable mutation.
+- Reran `verify_phase12_h4_isolated_ha.py` successfully: HTTP → CoreUICommandGateway → Phase 5 → OPA → Phase 9 → isolated HA, with success and deliberate verification failure.
+- Browser readback passed on isolated candidate runtime `127.0.0.1:18091` after session recovery: H5R product surfaces and widget settings were visible after reload; the future Voice label was absent.
+- Preserved negative evidence: browser-only denial, provider recovery, restricted reload/storage, same-session restart/SSE, isolated-HA UI, pristine calendar, and confirmation continuation remain `NOT RUN`/unproven. Existing calendar lifecycle remains `FAILED` against the dirty shared database's bounded first-20 window; no cleanup/reseed occurred.
+- Evidence: new browser/Core targets `E3_TARGET_TESTED`; broader prior regression `E4_REGRESSION_PROTECTED`. No Phase 8 redesign or Phase 13 work was performed.
+- Source: H5/H5R packets, current Notion SSOT, and exact repository/GitHub reconciliation.

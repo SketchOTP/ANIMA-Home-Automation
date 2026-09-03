@@ -4,17 +4,29 @@ Last updated: 2026-09-03
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5R PRODUCT-SURFACE ACCEPTANCE CLOSURE; IMPLEMENTED_UNVERIFIED / CONTINUE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5S DECISIVE BROWSER/RUNTIME EVIDENCE CLOSURE; CONTINUE
 
 ## Current objective
 
-Reconcile and verify the H5R product-surface closure, then close the remaining Phase 12 browser/runtime evidence gaps. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
+Close or honestly classify the remaining Phase 12 browser/runtime evidence gaps against the canonical H5/H5R gate. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R` — reconcile the current Notion-authorized Phase 12 product-surface replan and close the actual product exit gate. The prior H5 implementation/evidence remains preserved and partial; no H5 browser-only successor work should begin. Baseline is `fe1833987aeaac60e680fca7035fa3e915ca1d70`.
+`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S` — use the implemented H5R product surfaces and existing H5 evidence to run decisive browser/runtime targets, close only demonstrated gaps, and classify unavailable/unsafe claims without inflating evidence. Baseline is `0bc4a1d1826a4f8c874c90ed935587206a2f4935`.
 
-The current Notion SSOT supersedes H5 with H5R because the product surface remains incomplete: activity is mismapped to a future voice card; rooms/devices, sanitized notifications/reports/recent actions, truthful health, and supported pending approval state are not sufficiently represented. H5R requires confirmation-contract investigation first and prohibits a decorative approval flow or Phase 13 behavior.
+The current Notion SSOT records H5R as implemented-unverified: product surfaces are composed, but browser/runtime evidence, a pristine calendar fixture, and confirmation continuation remain unresolved. H5S prohibits a Phase 8 confirmation redesign or Phase 13 work.
+
+## H5S execution result — 2026-09-03
+
+- `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S` reconfirmed the
+  current H5R product surfaces in an isolated browser runtime, reran the H5
+  Core and isolated-HA targets, and preserved the prior full regression result.
+- Result: `PARTIAL / CONTINUE`. Product-surface browser evidence and supporting
+  Core/API evidence pass at E3; named browser-only denial, provider recovery,
+  restricted reload/storage, same-session restart/SSE, isolated-HA UI, and
+  pristine calendar evidence remain unproven. Confirmation continuation is
+  unavailable under the existing contract; no Phase 8 redesign or Phase 13
+  work was introduced.
 
 ## H5R execution result — 2026-09-03
 

@@ -512,3 +512,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Objective: close the actual Phase 12 product-surface exit gate with existing Core contracts, including activity semantics, Graph-derived rooms/devices, sanitized notifications/reports/recent actions, truthful health, and supported pending user action, while preserving H5 evidence and prohibiting Phase 13.
 - Required first investigation: Phase 4 confirmation challenge issue/consume and durable store, Phase 5 confirmation input, Phase 8 `WAITING_CONFIRMATION`, and existing UI/Core data paths. A material Phase 8 redesign requires `NEEDS ARCHITECT DECISION — CONFIRMATION_CONTINUATION_GAP`.
 - Source: current canonical ANIMA HA Notion SSOT fetched 2026-09-03; local pointer reconciliation records the strategic discrepancy without rewriting H5 history.
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S — decisive evidence closure
+
+- Issued: 2026-09-03
+- Parent: `ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R`, result `IMPLEMENTED_UNVERIFIED / CONTINUE`.
+- Baseline: `0bc4a1d1826a4f8c874c90ed935587206a2f4935`, local `main == origin/main`.
+- Objective: run the highest-value feasible Phase 12 browser/runtime acceptance targets against the implemented H5R product surfaces, preserve negative evidence, and honestly classify the remaining gate.
+- Scope: existing UI/API/runtime, H5/H5R harnesses, isolated fixtures, browser/restart/SSE/restricted/provider/isolated-HA/calendar evidence, and smallest test/harness correction needed for decisive proof.
+- Exclusions: no Phase 8 confirmation redesign, decorative approval, Phase 13, new infrastructure/provider, production mutation, credentials, destructive fixture cleanup, or evidence inflation.
+- Required result: return the canonical CODEX RESULT, update the packet and append-only records, synchronize/refetch Notion and GitHub, and do not self-accept Phase 12.
+- Source: current canonical Notion SSOT and H5R governed result, reconciled at invocation.
