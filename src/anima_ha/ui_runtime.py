@@ -27,7 +27,6 @@ from anima_ha.agent import (
     CodexCliRuntime,
     EpisodeRequest,
     EpisodeRunResult,
-    FinalDisposition,
     PostgresEpisodeStore,
 )
 from anima_ha.attention import (
@@ -291,27 +290,33 @@ class CoreUICommandGateway:
         if tool is None or not tool.availability:
             raise UICommandError(f"CORE_TOOL_UNAVAILABLE:{pending.tool_id}")
         choice = decision.upper()
-        if choice == "APPROVE" and self.agent is not None:
+        if self.agent is not None:
             resumed = self.agent.resume_confirmation(
                 approval_uuid,
                 identity=_identity(identity),
+                decision=choice,
                 policy_context=self._policy_context(identity),
                 tool_resolver=self._tool_by_id,
+                tools=tuple(self.manager.list_tools()),
                 policy_service=self.policy_service,
                 action_refresher=self.action_refresher,
                 action_verifier=self.action_verifier,
             )
             if resumed is None:
                 raise UICommandError("APPROVAL_NOT_ACTIONABLE")
+            action = self.action_executor.store.get(pending.action_id)
             result = {
-                "status": (
-                    "SUCCEEDED"
-                    if resumed.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
-                    else "FAILED"
-                ),
+                "status": action.status.value if action is not None else "UNKNOWN_RESULT",
                 "operation": pending.tool_id,
                 "episode_id": str(resumed.episode.episode_id),
                 "detail": resumed.episode.failure_class or resumed.episode.response_text,
+                "response": resumed.live_response_text or resumed.episode.response_text,
+                "episode_status": resumed.episode.status.value,
+                "episode_disposition": (
+                    resumed.episode.final_disposition.value
+                    if resumed.episode.final_disposition
+                    else "UNKNOWN"
+                ),
             }
         else:
             execution = self.action_executor.approve_pending(

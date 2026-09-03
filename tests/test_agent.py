@@ -633,20 +633,22 @@ def test_agent_confirmation_continues_same_episode_without_replaying_tool() -> N
         baseline,
         action_refresher=packet_request.action_refresher,
     )
+    adapter = ScriptedCodexAdapter(
+        [
+            CodexTurnResult(
+                ToolRequestDecision(
+                    descriptor.tool_id,
+                    {"resource_id": str(uuid4()), "desired_on": True},
+                ),
+                TokenUsage(),
+                1.0,
+                (),
+            ),
+            final(response=True, text="The confirmed action is complete."),
+        ]
+    )
     agent = AgentRuntime(
-        ScriptedCodexAdapter(
-            [
-                CodexTurnResult(
-                    ToolRequestDecision(
-                        descriptor.tool_id,
-                        {"resource_id": str(uuid4()), "desired_on": True},
-                    ),
-                    TokenUsage(),
-                    1.0,
-                    (),
-                )
-            ]
-        ),
+        adapter,
         provider_gateway,
         InMemoryEpisodeStore(),
         action_executor=coordinator,
@@ -666,7 +668,101 @@ def test_agent_confirmation_continues_same_episode_without_replaying_tool() -> N
     assert resumed.episode.episode_id == waiting.episode.episode_id
     assert resumed.episode.status == EpisodeStatus.COMPLETED
     assert resumed.episode.final_disposition == FinalDisposition.TOOL_SEQUENCE_COMPLETED
+    assert resumed.episode.response_text == "The confirmed action is complete."
+    assert len(adapter.prompts) == 2
+    assert '"action_status":"SUCCEEDED"' in adapter.prompts[1]
+    assert '"approval_status":"APPROVED"' in adapter.prompts[1]
     assert len(provider_gateway.calls) == 1
+    assert (
+        agent.resume_confirmation(
+            approval.approval_id,
+            identity=IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+            policy_context=baseline,
+            tool_resolver=lambda tool_id: descriptor if tool_id == descriptor.tool_id else None,
+            tools=(descriptor,),
+            policy_service=PolicyService(AllowEvaluator()),
+            action_refresher=packet_request.action_refresher,
+        )
+        is None
+    )
+    assert len(provider_gateway.calls) == 1
+
+
+def test_agent_rejection_resumes_same_episode_without_provider_dispatch() -> None:
+    descriptor = action_tool()
+    principal = uuid4()
+    baseline = PolicyContext(truth=(TruthPolicyContext("power", "KNOWN", "off"),))
+    provider_gateway = Gateway()
+    pending = InMemoryPendingApprovalStore()
+    coordinator = ActionExecutionCoordinator(
+        provider_gateway,
+        InMemoryActionStore(),
+        InMemoryResourceLocker(),
+        pending_approvals=pending,
+    )
+    packet_request = request(
+        (descriptor,),
+        policy_context=baseline,
+        action_refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
+        ),
+    )
+    packet_request = EpisodeRequest(
+        packet_request.trigger_id,
+        packet_request.context_packet_id,
+        packet_request.household_id,
+        packet_request.context_packet,
+        packet_request.tools,
+        IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+        PolicyService(ConfirmationEvaluator()),
+        baseline,
+        action_refresher=packet_request.action_refresher,
+    )
+    adapter = ScriptedCodexAdapter(
+        [
+            CodexTurnResult(
+                ToolRequestDecision(
+                    descriptor.tool_id,
+                    {"resource_id": str(uuid4()), "desired_on": True},
+                ),
+                TokenUsage(),
+                1.0,
+                (),
+            ),
+            final(response=True, text="I did not execute the rejected action."),
+        ]
+    )
+    store = InMemoryEpisodeStore()
+    agent = AgentRuntime(
+        adapter,
+        provider_gateway,
+        store,
+        action_executor=coordinator,
+    )
+    waiting = agent.run(packet_request)
+    approval = pending.list_for(HOUSEHOLD_ID, principal)[0]
+
+    resumed = agent.resume_confirmation(
+        approval.approval_id,
+        identity=IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+        decision="REJECT",
+        policy_context=baseline,
+        tool_resolver=lambda tool_id: descriptor if tool_id == descriptor.tool_id else None,
+        tools=(descriptor,),
+        policy_service=PolicyService(AllowEvaluator()),
+        action_refresher=packet_request.action_refresher,
+    )
+
+    assert resumed is not None
+    assert resumed.episode.episode_id == waiting.episode.episode_id
+    assert resumed.episode.status == EpisodeStatus.COMPLETED
+    assert resumed.episode.final_disposition == FinalDisposition.TOOL_FAILURE
+    assert resumed.episode.response_text == "I did not execute the rejected action."
+    assert len(adapter.prompts) == 2
+    assert '"approval_decision":"REJECT"' in adapter.prompts[1]
+    assert '"approval_status":"REJECTED"' in adapter.prompts[1]
+    assert provider_gateway.calls == []
+    assert store.continuation_results[0]["episode_id"] == waiting.episode.episode_id
 
 
 def test_real_phase5_gateway_does_not_execute_when_phase4_denies() -> None:

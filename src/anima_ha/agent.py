@@ -391,6 +391,19 @@ class EpisodeStore(Protocol):
 
     def get(self, episode_id: UUID) -> AgentEpisode | None: ...
 
+    def load_context_packet(self, episode_id: UUID) -> dict[str, Any] | None: ...
+
+    def load_transcript(self, episode_id: UUID) -> list[dict[str, Any]]: ...
+
+    def record_continuation_result(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        result: dict[str, Any],
+        transcript_digest: str,
+    ) -> None: ...
+
     def record_turn(
         self,
         episode_id: UUID,
@@ -992,6 +1005,8 @@ class InMemoryEpisodeStore:
         self.by_trigger: dict[UUID, UUID] = {}
         self.turns: list[dict[str, Any]] = []
         self.tool_requests: list[dict[str, Any]] = []
+        self.context_packets: dict[UUID, dict[str, Any]] = {}
+        self.continuation_results: list[dict[str, Any]] = []
 
     def claim(
         self,
@@ -1022,6 +1037,7 @@ class InMemoryEpisodeStore:
         )
         self.episodes[episode_id] = episode
         self.by_trigger[request.trigger_id] = episode_id
+        self.context_packets[episode_id] = dict(request.context_packet)
         return episode
 
     def get_by_trigger(self, trigger_id: UUID) -> AgentEpisode | None:
@@ -1030,6 +1046,62 @@ class InMemoryEpisodeStore:
 
     def get(self, episode_id: UUID) -> AgentEpisode | None:
         return self.episodes.get(episode_id)
+
+    def load_context_packet(self, episode_id: UUID) -> dict[str, Any] | None:
+        packet = self.context_packets.get(episode_id)
+        return dict(packet) if packet is not None else None
+
+    def load_transcript(self, episode_id: UUID) -> list[dict[str, Any]]:
+        events: list[tuple[tuple[int, int, int], dict[str, Any]]] = []
+        for item in self.turns:
+            if item["episode_id"] != episode_id:
+                continue
+            result = item.get("result")
+            if result is not None:
+                payload = result.decision.to_payload()
+            else:
+                payload = item.get("decision_projection")
+            if payload is not None:
+                events.append(((int(item["turn_number"]), 0, 0), {"model_decision": payload}))
+        for item in self.tool_requests:
+            if item["episode_id"] != episode_id:
+                continue
+            events.append(
+                (
+                    (int(item["turn_number"]), 1, int(item["request_number"])),
+                    {"tool_result": item["sanitized_result"]},
+                )
+            )
+        for item in self.continuation_results:
+            if item["episode_id"] != episode_id:
+                continue
+            events.append(
+                (
+                    (int(item["request_number"]), 2, 0),
+                    {"tool_result": item["result"]},
+                )
+            )
+        return [event for _, event in sorted(events, key=lambda item: item[0])]
+
+    def record_continuation_result(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        result: dict[str, Any],
+        transcript_digest: str,
+    ) -> None:
+        if any(item["approval_id"] == approval_id for item in self.continuation_results):
+            return
+        self.continuation_results.append(
+            {
+                "episode_id": episode_id,
+                "approval_id": approval_id,
+                "request_number": request_number,
+                "result": dict(result),
+                "transcript_digest": transcript_digest,
+            }
+        )
 
     def record_turn(
         self,
@@ -1220,6 +1292,97 @@ class PostgresEpisodeStore:
             row = cursor.fetchone()
         return self._episode(row) if row else None
 
+    def load_context_packet(self, episode_id: UUID) -> dict[str, Any] | None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT packet
+                FROM anima_context_packets AS packet_row
+                JOIN anima_agent_episodes AS episode
+                  ON episode.context_packet_id = packet_row.context_packet_id
+                WHERE episode.episode_id=%s
+                """,
+                (episode_id,),
+            )
+            row = cursor.fetchone()
+        if not row:
+            return None
+        packet = row["packet"]
+        return dict(packet) if isinstance(packet, dict) else json.loads(str(packet))
+
+    def load_transcript(self, episode_id: UUID) -> list[dict[str, Any]]:
+        events: list[tuple[tuple[int, int, int], dict[str, Any]]] = []
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT turn_number, decision FROM anima_agent_turns WHERE episode_id=%s",
+                (episode_id,),
+            )
+            for row in cursor.fetchall():
+                if row["decision"] is not None:
+                    decision = row["decision"]
+                    if isinstance(decision, str):
+                        decision = json.loads(decision)
+                    events.append(
+                        ((int(row["turn_number"]), 0, 0), {"model_decision": dict(decision)})
+                    )
+            cursor.execute(
+                """
+                SELECT request_number, turn_number, sanitized_result
+                FROM anima_agent_tool_requests WHERE episode_id=%s
+                """,
+                (episode_id,),
+            )
+            for row in cursor.fetchall():
+                value = row["sanitized_result"]
+                if isinstance(value, str):
+                    value = json.loads(value)
+                events.append(
+                    (
+                        (int(row["turn_number"]), 1, int(row["request_number"])),
+                        {"tool_result": value},
+                    )
+                )
+            cursor.execute(
+                """
+                SELECT request_number, result
+                FROM anima_agent_continuations WHERE episode_id=%s
+                ORDER BY request_number, created_at
+                """,
+                (episode_id,),
+            )
+            for row in cursor.fetchall():
+                value = row["result"]
+                if isinstance(value, str):
+                    value = json.loads(value)
+                events.append(((int(row["request_number"]), 2, 0), {"tool_result": value}))
+        return [event for _, event in sorted(events, key=lambda item: item[0])]
+
+    def record_continuation_result(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        result: dict[str, Any],
+        transcript_digest: str,
+    ) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_agent_continuations
+                    (episode_id, approval_id, request_number, result, transcript_digest)
+                VALUES (%s,%s,%s,%s::jsonb,%s)
+                ON CONFLICT (approval_id) DO NOTHING
+                """,
+                (
+                    episode_id,
+                    approval_id,
+                    request_number,
+                    canonical_json(result),
+                    transcript_digest,
+                ),
+            )
+            connection.commit()
+
     def record_turn(
         self,
         episode_id: UUID,
@@ -1406,13 +1569,15 @@ class AgentRuntime:
         approval_id: UUID,
         *,
         identity: IdentityContext,
+        decision: str = "APPROVE",
         policy_context: PolicyContext | None = None,
         tool_resolver: Callable[[str], ToolDescriptor | None],
+        tools: Sequence[ToolDescriptor] | None = None,
         policy_service: PolicyService,
         action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None,
         action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None,
     ) -> EpisodeRunResult | None:
-        """Resume a waiting episode without replaying its earlier tool calls."""
+        """Resolve one approval, append its result, and resume the same model loop."""
         if self.action_executor is None or self.action_executor.pending_approvals is None:
             return None
         pending = self.action_executor.pending_approvals.get(approval_id)
@@ -1425,7 +1590,7 @@ class AgentRuntime:
             approval_id,
             household_id=identity.household_id,
             principal_id=identity.principal_id,
-            decision="APPROVE",
+            decision=decision,
             tool=tool,
             policy_service=policy_service,
             policy_context=policy_context,
@@ -1438,44 +1603,76 @@ class AgentRuntime:
         episode = self.store.get(pending.episode_id)
         if episode is None:
             return None
-        if execution.record.status == ActionStatus.SUCCEEDED:
-            status = EpisodeStatus.COMPLETED
-            disposition = FinalDisposition.TOOL_SEQUENCE_COMPLETED
-            response = "Confirmed action completed and was verified."
-            failure = None
-        elif execution.record.status == ActionStatus.REQUIRE_STRONGER_AUTH:
-            status = EpisodeStatus.WAITING_STRONGER_AUTH
-            disposition = FinalDisposition.REQUIRES_STRONGER_AUTH
-            response = "This action requires stronger authentication."
-            failure = execution.record.detail
-        else:
-            status = EpisodeStatus.COMPLETED
-            disposition = FinalDisposition.TOOL_FAILURE
-            response = "The confirmed action was not completed."
-            failure = execution.record.detail
-        finished = self.store.finish(
+        action_status = execution.record.status
+        outcome = {
+            ActionStatus.SUCCEEDED: InvocationOutcome.SUCCESS,
+            ActionStatus.FAILED: InvocationOutcome.PLUGIN_ERROR,
+            ActionStatus.RESOURCE_BUSY: InvocationOutcome.PLUGIN_ERROR,
+            ActionStatus.PRECONDITION_FAILED: InvocationOutcome.VERIFICATION_FAILED,
+            ActionStatus.POLICY_DENIED: InvocationOutcome.POLICY_DENIED,
+            ActionStatus.REQUIRE_CONFIRMATION: InvocationOutcome.REQUIRE_CONFIRMATION,
+            ActionStatus.REQUIRE_STRONGER_AUTH: InvocationOutcome.REQUIRE_STRONGER_AUTH,
+            ActionStatus.VERIFICATION_FAILED: InvocationOutcome.VERIFICATION_FAILED,
+            ActionStatus.UNKNOWN_RESULT: InvocationOutcome.UNKNOWN_RESULT,
+            ActionStatus.PARTIAL: InvocationOutcome.UNKNOWN_RESULT,
+            ActionStatus.RECOVERY_REQUIRED: InvocationOutcome.UNKNOWN_RESULT,
+        }.get(action_status, InvocationOutcome.PLUGIN_ERROR)
+        resolved_result = {
+            "tool_id": pending.tool_id,
+            "action_id": str(pending.action_id),
+            "approval_id": str(approval_id),
+            "approval_status": "APPROVED" if decision.upper() == "APPROVE" else "REJECTED",
+            "action_status": action_status.value,
+            "outcome": outcome.value,
+            "verification_status": (
+                "VERIFIED" if action_status == ActionStatus.SUCCEEDED else action_status.value
+            ),
+            "dispatch_state": (
+                execution.invocation.dispatch_state.value
+                if execution.invocation is not None
+                else "BEFORE_DISPATCH"
+            ),
+            "detail": execution.record.detail,
+            "result": sanitize_value(execution.record.result),
+            "trust": "LOCAL_TRUSTED",
+            "approval_decision": decision.upper(),
+        }
+        transcript = self.store.load_transcript(episode.episode_id)
+        transcript.append({"tool_result": resolved_result})
+        transcript_digest = digest_json(transcript)
+        self.store.record_continuation_result(
             episode.episode_id,
-            status=status,
-            disposition=disposition,
-            completed_at=None
-            if status == EpisodeStatus.WAITING_STRONGER_AUTH
-            else datetime.now(UTC),
-            turn_count=episode.codex_turn_count,
-            tool_count=episode.tool_request_count,
-            usage=episode.usage,
-            response_text=response,
-            failure_class=failure,
+            approval_id,
+            episode.tool_request_count,
+            resolved_result,
+            transcript_digest,
         )
-        self._audit(
-            finished,
-            "agent.episode.continuation_completed",
-            {
-                "approval_id": str(approval_id),
-                "action_id": str(execution.record.action_id),
-                "action_status": execution.record.status.value,
-            },
+        packet = self.store.load_context_packet(episode.episode_id)
+        if packet is None:
+            return None
+        current_tools = tuple(tools or (tool,))
+        # The caller may provide the complete current catalogue by binding the
+        # resolver to it; the pending tool is the fail-closed minimum.
+        continuation_request = EpisodeRequest(
+            trigger_id=episode.trigger_id,
+            context_packet_id=episode.context_packet_id,
+            household_id=episode.household_id,
+            context_packet=packet,
+            tools=current_tools,
+            identity=identity,
+            policy_service=policy_service,
+            policy_context=policy_context,
+            origin=RequestOrigin.DIRECT_USER,
+            action_refresher=action_refresher,
+            action_verifier=action_verifier,
         )
-        return EpisodeRunResult(finished)
+        return self.run(
+            continuation_request,
+            _episode=episode,
+            _projection=project_context_packet(packet),
+            _transcript=transcript,
+            _any_tool_failure=action_status != ActionStatus.SUCCEEDED,
+        )
 
     def _audit(self, episode: AgentEpisode, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
@@ -1544,37 +1741,48 @@ class AgentRuntime:
         )
         return EpisodeRunResult(finished, live_response_text=live_response_text)
 
-    def run(self, request: EpisodeRequest) -> EpisodeRunResult:
-        projection = project_context_packet(request.context_packet)
-        episode_id = uuid4()
-        started_at = datetime.now(UTC)
-        episode = self.store.claim(
-            request,
-            projection,
-            episode_id=episode_id,
-            codex_version=self.adapter.codex_version,
-            model=self.adapter.model,
-            reasoning_effort=self.adapter.reasoning_effort,
-            started_at=started_at,
-        )
+    def run(
+        self,
+        request: EpisodeRequest,
+        *,
+        _episode: AgentEpisode | None = None,
+        _projection: CloudProjection | None = None,
+        _transcript: list[dict[str, Any]] | None = None,
+        _any_tool_failure: bool = False,
+    ) -> EpisodeRunResult:
+        """Run a new episode or continue an existing durable episode."""
+        projection = _projection or project_context_packet(request.context_packet)
+        episode = _episode
         if episode is None:
-            existing = self.store.get_by_trigger(request.trigger_id)
-            if existing is None:
-                raise AgentRuntimeError("duplicate claim detected without durable episode")
-            return EpisodeRunResult(existing, duplicate_claim=True)
-        self._audit(
-            episode,
-            "agent.episode.started",
-            {
-                "context_packet_id": str(request.context_packet_id),
-                "context_digest": projection.local_digest,
-                "cloud_projection_digest": projection.projection_digest,
-                "cloud_payload_bytes": projection.serialized_bytes,
-                "cloud_omission_count": projection.omission_count,
-                "model": self.adapter.model,
-                "reasoning_effort": self.adapter.reasoning_effort,
-            },
-        )
+            episode_id = uuid4()
+            started_at = datetime.now(UTC)
+            episode = self.store.claim(
+                request,
+                projection,
+                episode_id=episode_id,
+                codex_version=self.adapter.codex_version,
+                model=self.adapter.model,
+                reasoning_effort=self.adapter.reasoning_effort,
+                started_at=started_at,
+            )
+            if episode is None:
+                existing = self.store.get_by_trigger(request.trigger_id)
+                if existing is None:
+                    raise AgentRuntimeError("duplicate claim detected without durable episode")
+                return EpisodeRunResult(existing, duplicate_claim=True)
+            self._audit(
+                episode,
+                "agent.episode.started",
+                {
+                    "context_packet_id": str(request.context_packet_id),
+                    "context_digest": projection.local_digest,
+                    "cloud_projection_digest": projection.projection_digest,
+                    "cloud_payload_bytes": projection.serialized_bytes,
+                    "cloud_omission_count": projection.omission_count,
+                    "model": self.adapter.model,
+                    "reasoning_effort": self.adapter.reasoning_effort,
+                },
+            )
         if not self.adapter.check_auth():
             return self._finish(
                 episode,
@@ -1588,12 +1796,12 @@ class AgentRuntime:
         tools = tuple(tool for tool in request.tools if tool.availability)
         tool_by_id = {tool.tool_id: tool for tool in tools}
         schema = decision_schema(tuple(tool_by_id))
-        transcript: list[dict[str, Any]] = []
-        restricted_content_seen = False
-        usage = TokenUsage()
-        turn_count = 0
-        tool_count = 0
-        any_tool_failure = False
+        transcript: list[dict[str, Any]] = list(_transcript or [])
+        restricted_content_seen = episode.restricted_content_seen
+        usage = episode.usage
+        turn_count = episode.codex_turn_count
+        tool_count = episode.tool_request_count
+        any_tool_failure = _any_tool_failure
         started_monotonic = time.monotonic()
         while turn_count < self.limits.max_codex_turns:
             elapsed = time.monotonic() - started_monotonic
