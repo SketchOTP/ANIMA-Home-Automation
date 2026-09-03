@@ -504,3 +504,11 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Implementation result: `src/anima_ha/ui_runtime.py` composes the existing journal, Attention, Context Broker, AgentRuntime, PluginManager/Tool Gateway, OPA policy, durable tasks, local calendar, and Phase 9 coordinator. The normal configured UI selects this runtime; the test echo remains explicitly test-only.
 - Evidence result: real AgentRuntime journal-trigger integration, policy-gated task mutation, configured-app composition smoke test, Python/OPA/package/frontend/Playwright/container validation, and actual synthetic responsive screenshots passed locally.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
+## ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R — active Notion replan
+
+- Disposition: `ACTIVE — REPLAN/SUPERSEDE H5 BEFORE FURTHER IMPLEMENTATION`.
+- Parent: `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5`, published partial H5 implementation/evidence at `fe1833987aeaac60e680fca7035fa3e915ca1d70`.
+- Baseline: local `main == origin/main == fe1833987aeaac60e680fca7035fa3e915ca1d70` at issuance.
+- Objective: close the actual Phase 12 product-surface exit gate with existing Core contracts, including activity semantics, Graph-derived rooms/devices, sanitized notifications/reports/recent actions, truthful health, and supported pending user action, while preserving H5 evidence and prohibiting Phase 13.
+- Required first investigation: Phase 4 confirmation challenge issue/consume and durable store, Phase 5 confirmation input, Phase 8 `WAITING_CONFIRMATION`, and existing UI/Core data paths. A material Phase 8 redesign requires `NEEDS ARCHITECT DECISION — CONFIRMATION_CONTINUATION_GAP`.
+- Source: current canonical ANIMA HA Notion SSOT fetched 2026-09-03; local pointer reconciliation records the strategic discrepancy without rewriting H5 history.

@@ -104,6 +104,26 @@ test("desktop layout profiles change measured geometry and widget order", async 
   expect(await page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns)).not.toBe(wallColumns);
 });
 
+test("desktop home exposes governed household surfaces and truthful health", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
+  await page.getByRole("button", { name: "Settings" }).click();
+  for (const name of ["activity", "household", "reports", "health"]) {
+    const widget = page.getByRole("checkbox", { name });
+    if (!(await widget.isChecked())) await widget.check();
+  }
+  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Home" }).click();
+  await expect(page.getByRole("heading", { name: "Rooms & devices" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Notifications & recent actions" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "System health" })).toBeVisible();
+  await expect(page.locator('[data-widget="activity"] h2')).toHaveText("Activity");
+  await expect(page.getByText("Voice is planned for a later phase")).toHaveCount(0);
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(page.getByRole("checkbox", { name: "household" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "reports" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "health" })).toBeVisible();
+});
+
 test("responsive navigation and privacy boundary hold at each viewport", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
   await page.getByRole("button", { name: "Capabilities" }).click();
@@ -137,5 +157,5 @@ test("browser application traffic is same-origin and keyboard focus is visible",
   await expect(page.getByRole("button", { name: "Anima" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Message Anima")).toBeVisible();
-  expect(new Set(origins)).toEqual(new Set(["http://127.0.0.1:18090"]));
+  expect(new Set(origins)).toEqual(new Set([new URL(page.url()).origin]));
 });

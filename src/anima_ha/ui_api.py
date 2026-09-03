@@ -258,7 +258,7 @@ class CommissionedIdentityResolver(Protocol):
 
 
 DEFAULT_UI_PREFERENCES: dict[str, Any] = {
-    "version": 1,
+    "version": 2,
     "appearance": "night",
     "accent": "ember",
     "density": "comfortable",
@@ -274,6 +274,9 @@ DEFAULT_UI_PREFERENCES: dict[str, Any] = {
         "controls",
         "conversation",
         "activity",
+        "household",
+        "reports",
+        "health",
     ],
     "widget_order": [
         "status",
@@ -284,6 +287,9 @@ DEFAULT_UI_PREFERENCES: dict[str, Any] = {
         "controls",
         "conversation",
         "activity",
+        "household",
+        "reports",
+        "health",
     ],
 }
 UI_WIDGETS = frozenset(DEFAULT_UI_PREFERENCES["visible_widgets"])
@@ -295,6 +301,12 @@ def validate_ui_preferences(value: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("unknown UI preference")
     result = dict(DEFAULT_UI_PREFERENCES)
     result.update(value)
+    stored_version = value.get("version", 1)
+    if not isinstance(stored_version, int) or stored_version < 1:
+        raise ValueError("version is not supported")
+    if stored_version < 2:
+        for key in ("visible_widgets", "widget_order"):
+            result[key] = list(dict.fromkeys([*result[key], "household", "reports", "health"]))
     if result["appearance"] not in {"system", "light", "night"}:
         raise ValueError("appearance is not supported")
     if result["accent"] not in {"ember", "sage", "sky"}:
@@ -316,7 +328,15 @@ def validate_ui_preferences(value: dict[str, Any]) -> dict[str, Any]:
             or not all(isinstance(item, str) and item in UI_WIDGETS for item in items)
         ):
             raise ValueError(f"{key} contains an unsupported widget")
-    result["version"] = 1
+    result["widget_order"] = [
+        *result["widget_order"],
+        *[
+            item
+            for item in DEFAULT_UI_PREFERENCES["widget_order"]
+            if item not in result["widget_order"]
+        ],
+    ]
+    result["version"] = 2
     return result
 
 
@@ -336,6 +356,30 @@ class HouseholdReadModel(Protocol):
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
+
+
+def _health_view(
+    capabilities: list[dict[str, Any]], *, core_available: bool = True
+) -> dict[str, Any]:
+    unavailable = [
+        str(item["label"]) for item in capabilities if item.get("state") == "unavailable"
+    ]
+    degraded = [str(item["label"]) for item in capabilities if item.get("state") == "degraded"]
+    if not core_available:
+        status = "UNAVAILABLE"
+        summary = "ANIMA Core is unavailable; household state was not substituted."
+    elif unavailable or degraded:
+        status = "DEGRADED"
+        summary = "Core is connected, but some capabilities are unavailable or degraded."
+    else:
+        status = "CURRENT"
+        summary = "Core and commissioned capabilities are available."
+    return {
+        "status": status,
+        "summary": summary,
+        "unavailable": unavailable,
+        "degraded": degraded,
+    }
 
 
 class UICommandGateway(Protocol):
@@ -466,6 +510,7 @@ class DemoHouseholdReadModel:
         }
 
     def home(self, identity: UIIdentity) -> dict[str, Any]:
+        capabilities = self.capabilities(identity)
         return {
             "household": {
                 "name": "Anima Home",
@@ -484,6 +529,39 @@ class DemoHouseholdReadModel:
             "controls": [],
             "activity": self.activity(identity)[:8],
             "voice": {"status": "UNAVAILABLE", "label": "Voice is planned for a later phase"},
+            "rooms": [
+                {
+                    "place_id": "room-demo",
+                    "name": "Living room",
+                    "kind": "ROOM",
+                    "devices": [
+                        {
+                            "device_id": "device-demo",
+                            "name": "Demo lamp",
+                            "kind": "RESOURCE",
+                            "state": "UNKNOWN",
+                        }
+                    ],
+                }
+            ],
+            "notifications": [
+                {
+                    "notification_id": "notification-demo",
+                    "summary": "Anima interface ready",
+                    "status": "CURRENT",
+                    "occurred_at": _now().isoformat(),
+                }
+            ],
+            "reports": [
+                {
+                    "report_id": "report-demo",
+                    "summary": "No completed household reports yet.",
+                    "status": "UNKNOWN",
+                }
+            ],
+            "recent_actions": [],
+            "pending_approvals": [],
+            "health": _health_view(capabilities),
         }
 
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
@@ -540,7 +618,6 @@ class UnavailableHouseholdReadModel:
         }
 
     def home(self, identity: UIIdentity) -> dict[str, Any]:
-        del identity
         return {
             "household": {
                 "name": "Household",
@@ -556,6 +633,12 @@ class UnavailableHouseholdReadModel:
             "controls": [],
             "activity": [],
             "voice": {"status": "UNAVAILABLE", "label": "Voice is planned for a later phase"},
+            "rooms": [],
+            "notifications": [],
+            "reports": [],
+            "recent_actions": [],
+            "pending_approvals": [],
+            "health": _health_view(self.capabilities(identity), core_available=False),
         }
 
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
@@ -748,6 +831,42 @@ class PostgresHouseholdReadModel:
                         }
                     )
 
+        capabilities = self.capabilities(identity)
+        rooms: list[dict[str, Any]] = []
+        if self.graph is not None and callable(
+            getattr(self.graph, "places_in_household", None)
+        ):
+            places = self.graph.places_in_household(identity.household_id)
+            for place in places:
+                if place.kind not in {NodeKind.ROOM, NodeKind.ZONE}:
+                    continue
+                devices = []
+                for resource in self.graph.resources_in_place(place.canonical_id):
+                    if resource.canonical_id in {
+                        UUID(str(item["device_id"])) for room in rooms for item in room["devices"]
+                    }:
+                        continue
+                    devices.append(
+                        {
+                            "device_id": str(resource.canonical_id),
+                            "name": resource.name,
+                            "kind": resource.kind.value,
+                            "state": "UNKNOWN",
+                        }
+                    )
+                rooms.append(
+                    {
+                        "place_id": str(place.canonical_id),
+                        "name": place.name,
+                        "kind": place.kind.value,
+                        "devices": devices,
+                    }
+                )
+
+        notifications = self._notifications(identity)
+        reports = self._reports(identity)
+        recent_actions, pending_approvals = self._actions(identity)
+
         presence_status = (
             "CURRENT" if any(item["state"] != "unknown" for item in people) else "UNKNOWN"
         )
@@ -773,7 +892,111 @@ class PostgresHouseholdReadModel:
             "controls": controls,
             "activity": self.activity(identity)[:8],
             "voice": {"status": "UNAVAILABLE", "label": "Voice is planned for a later phase"},
+            "rooms": rooms,
+            "notifications": notifications,
+            "reports": reports,
+            "recent_actions": recent_actions,
+            "pending_approvals": pending_approvals,
+            "health": _health_view(capabilities, core_available=household is not None),
         }
+
+    def _notifications(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        try:
+            with self._connect() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT event_type, occurred_at, importance
+                    FROM anima_event_journal
+                    WHERE metadata->>'household_id'=%s AND importance <> 'NORMAL'
+                    ORDER BY journal_position DESC
+                    LIMIT 12
+                    """,
+                    (str(identity.household_id),),
+                )
+                rows = cursor.fetchall()
+        except psycopg.Error:
+            return []
+        return [
+            {
+                "notification_id": f"event:{row['event_type']}:{row['occurred_at'].isoformat()}",
+                "summary": (
+                    "Household event recorded: "
+                    f"{str(row['event_type']).replace('.', ' · ')}"
+                ),
+                "status": "CURRENT",
+                "importance": str(row["importance"]),
+                "occurred_at": row["occurred_at"].isoformat(),
+            }
+            for row in rows
+        ]
+
+    def _reports(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        try:
+            with self._connect() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT episode_id, status, final_disposition, completed_at
+                    FROM anima_agent_episodes
+                    WHERE household_id=%s
+                    ORDER BY COALESCE(completed_at, started_at) DESC
+                    LIMIT 12
+                    """,
+                    (identity.household_id,),
+                )
+                rows = cursor.fetchall()
+        except psycopg.Error:
+            return []
+        return [
+            {
+                "report_id": str(row["episode_id"]),
+                "summary": f"Anima episode {str(row['status']).replace('_', ' ').lower()}",
+                "status": str(row["status"]),
+                "disposition": str(row["final_disposition"] or "UNKNOWN"),
+                "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
+            }
+            for row in rows
+        ]
+
+    def _actions(
+        self, identity: UIIdentity
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        try:
+            with self._connect() as connection, connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT action_id, tool_id, status, detail, updated_at
+                    FROM anima_actions
+                    WHERE household_id=%s
+                    ORDER BY updated_at DESC
+                    LIMIT 20
+                    """,
+                    (identity.household_id,),
+                )
+                rows = cursor.fetchall()
+        except psycopg.Error:
+            return [], []
+        actions = [
+            {
+                "action_id": str(row["action_id"]),
+                "tool_id": str(row["tool_id"]),
+                "status": str(row["status"]),
+                "detail": str(row["detail"] or "No further detail recorded."),
+                "updated_at": row["updated_at"].isoformat(),
+            }
+            for row in rows
+        ]
+        pending = [
+            {
+                "action_id": item["action_id"],
+                "tool_id": item["tool_id"],
+                "status": item["status"],
+                "summary": "Confirmation is required; this interface cannot continue it yet.",
+                "continuation": "UNAVAILABLE",
+            }
+            for item in actions
+            if item["status"] == "REQUIRE_CONFIRMATION"
+        ]
+        return actions, pending
 
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
         with self._connect() as connection, connection.cursor() as cursor:

@@ -381,6 +381,23 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
   behavior after target-network qualification, materially different Pi resource
   measurements, or an Architect-authorized provider decision.
 
+## Phase 12 H5R product-surface prior art — 2026-09-03
+
+- Sources checked: [Home Assistant dashboards](https://www.home-assistant.io/dashboards/),
+  [Activity card](https://www.home-assistant.io/dashboards/logbook/), and the
+  [device registry developer contract](https://developers.home-assistant.io/docs/device_registry_index/).
+- The upstream dashboard model treats cards/views as user-facing composition,
+  Activity targets as scoped entities/devices/areas, and device placement as an
+  area relationship. This supports `REFERENCE` only: ANIMA continues to own
+  its semantic view model and commissioned Household Graph rather than mirroring
+  Home Assistant registry state or adding a new provider surface.
+- Decision: `REFERENCE` the card/activity/area-device composition; `BUILD` the
+  bounded ANIMA read surfaces from existing Graph, Journal, Episode, Action, and
+  capability-health contracts. No new dependency or external integration was
+  adopted.
+- Recheck trigger: a material Phase 12 information-architecture change or a
+  future authorized Home Assistant registry composition directive.
+
 ## ANIMA-HA-P11-WALMART-ENTITLEMENT-QUALIFICATION-013R3 — Walmart entitlement
 
 - Date checked: 2026-09-01. Disposition: `BLOCKED — WALMART_CLARIFICATION_REQUIRED`.

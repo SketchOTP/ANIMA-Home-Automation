@@ -624,6 +624,23 @@ class PostgresHouseholdGraph:
             "kind IN ('HOUSEHOLD','PROPERTY','BUILDING','FLOOR','ROOM','ZONE','OUTSIDE')"
         )
 
+    def places_in_household(self, household_id: UUID) -> list[CanonicalNode]:
+        """Return active place nodes contained by one commissioned household."""
+        return self._list_nodes(
+            """canonical_id IN (
+                WITH RECURSIVE descendants(canonical_id) AS (
+                    SELECT %s::uuid
+                    UNION
+                    SELECT r.target_id
+                    FROM anima_graph_relationships r
+                    JOIN descendants d ON d.canonical_id = r.source_id
+                    WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                )
+                SELECT canonical_id FROM descendants
+            ) AND kind IN ('PROPERTY','BUILDING','FLOOR','ROOM','ZONE','OUTSIDE')""",
+            (household_id,),
+        )
+
     def _list_nodes(
         self, predicate: str = "TRUE", params: tuple[Any, ...] = ()
     ) -> list[CanonicalNode]:

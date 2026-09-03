@@ -1,16 +1,29 @@
 # Current Project State
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5 BROWSER ACCEPTANCE EVIDENCE CLOSURE; CONTINUE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5R PRODUCT-SURFACE ACCEPTANCE CLOSURE; IMPLEMENTED_UNVERIFIED / CONTINUE
 
 ## Current objective
 
-Close the remaining H5 browser acceptance evidence gaps: measurable display modes, browser-visible policy denial, deterministic provider degradation/recovery, restricted-content storage/reload, original-session process restart/SSE recovery, and exact hosted evidence. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
+Reconcile and verify the H5R product-surface closure, then close the remaining Phase 12 browser/runtime evidence gaps. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
 
 ## Active directive
+
+`ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R` — reconcile the current Notion-authorized Phase 12 product-surface replan and close the actual product exit gate. The prior H5 implementation/evidence remains preserved and partial; no H5 browser-only successor work should begin. Baseline is `fe1833987aeaac60e680fca7035fa3e915ca1d70`.
+
+The current Notion SSOT supersedes H5 with H5R because the product surface remains incomplete: activity is mismapped to a future voice card; rooms/devices, sanitized notifications/reports/recent actions, truthful health, and supported pending approval state are not sufficiently represented. H5R requires confirmation-contract investigation first and prohibits a decorative approval flow or Phase 13 behavior.
+
+## H5R execution result — 2026-09-03
+
+- Product surfaces are implemented from existing Core boundaries: household-scoped Graph rooms/devices; sanitized Journal notifications; Episode reports; Action summaries and pending confirmation state; capability-derived health; corrected Activity rendering; and version-2 preference migration/order normalization.
+- Confirmation investigation passed for exact intent/principal/expiry binding, durable storage, and single-use consumption. No UI continuation contract exists; pending confirmation is therefore rendered as unavailable without an approval control or Phase 8 redesign.
+- Validation: 169 Python tests, Ruff, frontend TypeScript/Vite build, frontend policy tests 3/3, focused product browser test 1/1, and full desktop browser 7/8 passed. The one failed browser check is the pre-existing calendar lifecycle against a shared DB with 34 historical rows and a bounded first-20 display; the HTTP create returned 200 and the negative evidence is retained.
+- Evidence level: new surfaces `E3_TARGET_TESTED`; broader repository regression `E4_REGRESSION_PROTECTED`. Phase 12 remains `IMPLEMENTED_UNVERIFIED / CONTINUE`, pending canonical gate reconciliation and Architect direction on confirmation continuation and the remaining H5 browser/runtime evidence.
+
+The repository's former H5 pointer below is retained as historical context only:
 
 `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5` — close only the remaining browser behavior/evidence gaps without changing accepted Phase 0–11 architecture. Starting checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14` with hosted CI `33686702038` passed. Implementation/evidence head is `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Latest governance/CI reliability head is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA. Phase 12 remains CONTINUE and pending Architect acceptance; Phase 13 is unauthorized.
 

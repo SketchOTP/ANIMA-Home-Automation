@@ -14,6 +14,7 @@ from anima_ha.ui_api import (
     UIEventBroadcaster,
     UIService,
     create_app,
+    validate_ui_preferences,
 )
 
 
@@ -103,6 +104,20 @@ def test_home_is_anima_view_model_and_mutations_require_csrf_and_origin() -> Non
     )
     assert response.status_code == 200
     assert response.json()["trace"]["origin"] == "DIRECT_USER"
+
+
+def test_home_exposes_product_surfaces_and_legacy_preferences_migrate() -> None:
+    client, _, _ = authenticated_client()
+    home = client.get("/api/v1/home").json()
+    assert home["rooms"][0]["name"] == "Living room"
+    assert home["rooms"][0]["devices"][0]["name"] == "Demo lamp"
+    assert home["notifications"][0]["summary"] == "Anima interface ready"
+    assert home["health"]["status"] == "DEGRADED"
+    migrated = validate_ui_preferences(
+        {"version": 1, "visible_widgets": ["status"], "widget_order": ["status"]}
+    )
+    assert migrated["version"] == 2
+    assert migrated["visible_widgets"] == ["status", "household", "reports", "health"]
 
 
 def test_production_conversation_requires_the_real_runtime_bridge() -> None:

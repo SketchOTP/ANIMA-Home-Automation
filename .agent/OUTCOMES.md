@@ -748,3 +748,43 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Hosted CI `33696481738` passed on the exact current head. It passed H4/H5 Core targets, isolated-HA API verification, restricted-content PostgreSQL scanning, Docker UI health, frontend checks, and Playwright with 11 passed and 10 skipped tests across desktop/tablet/phone.
 - H5 added measurable display-mode CSS behavior and deterministic Core/API evidence for external audit redaction, provider degraded/recovery projection, restricted live-only content, and same-session reconstruction. Artifact `9872060277` (`phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`) has ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
 - H5 remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`: browser-visible denial, provider recovery, restricted-content reload/storage, same-browser restart/SSE, and browser-visible isolated-HA journeys remain not run. Phase 13 was not implemented.
+
+## ANIMA-HA-P12-PRODUCT-SURFACE-ACCEPTANCE-CLOSURE-014H5R — H5R product-surface closure
+
+- Date: 2026-09-03
+- Disposition: `IMPLEMENTED_UNVERIFIED / CONTINUE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Baseline: `fe1833987aeaac60e680fca7035fa3e915ca1d70`.
+
+### Work performed
+
+Reconciled the active Notion H5R replan with local Authority pointers while
+preserving the published H5 implementation and evidence. Added a
+household-scoped graph place query, Core-owned semantic rooms/devices,
+sanitized journal notifications, episode reports, action summaries and
+pending-confirmation state, capability-derived health, corrected Activity
+rendering, and additive version-2 preference migration/order normalization.
+
+### Acceptance results
+
+- Confirmation contract investigation: `PASSED` for exact action-intent and
+  principal binding, expiry, durable challenge storage, single-use consumption,
+  and Phase 8 `WAITING_CONFIRMATION` transition.
+- Product-surface API/browser target: `PASSED` — 13 focused Python tests and
+  one isolated desktop browser journey.
+- Broader code regression: `PASSED` — 169 Python tests, Ruff, TypeScript/Vite
+  build, and frontend policy tests 3/3.
+- Desktop browser regression: `FAILED` one existing calendar lifecycle test in
+  a shared development database with 34 historical calendar rows; the create
+  request returned HTTP 200 but the bounded first-20 response omitted the new
+  row. Seven other desktop tests passed. No destructive cleanup or reseed was
+  performed.
+
+### Evidence limits and next gate
+
+New surface evidence is `E3_TARGET_TESTED`; broader regression is
+`E4_REGRESSION_PROTECTED`. No live confirmation continuation was added because
+the repository has no safe UI/API continuation contract; the UI states that
+pending confirmation is unavailable and provides no bypass. Phase 12 still
+requires the remaining H5 browser/runtime evidence, a pristine bounded
+calendar run, and Architect reconciliation of the confirmation-continuation
+decision.
