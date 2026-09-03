@@ -318,3 +318,12 @@ UI, and voice remain out of scope.
 - Decision: continue inside the accepted Phase 4/5/8/9 boundaries by making approval/rejection a genuine same-episode AgentRuntime continuation. No workflow engine, new infrastructure, or Phase 13 behavior was added.
 - Current implementation adds migration `0016_agent_continuations`, durable context/transcript reconstruction, normalized continuation result persistence, UI continuation routing, and a real-OPA PostgreSQL verifier.
 - Current local evidence is `E3_TARGET_TESTED` for the H5V target. Full regression, hosted CI, final governance, and Architect acceptance remain open.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V-R1 — 2026-09-03
+
+- Architect disposition: `CONTINUE`; H5V-R1 implementation is retained, Phase 12 remains unaccepted, and Phase 13 remains unauthorized.
+- Starting checkpoint `761f6214993a676bdd43f911e237dffbbee7a684`; implementation checkpoint `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`; CI isolation checkpoint `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`.
+- Hosted CI `33818551425` passed on the exact final checkpoint. Artifact `9917602062` digest: `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
+- H5V-R1 adds continuation lifecycle/fencing/recovery, original catalogue/runtime binding, pre-dispatch durable preflight, cumulative active-runtime accounting, exact policy-intent propagation, dedicated management projections, and test-only browser approval/rejection tests.
+- Local evidence: 174 Python tests, Ruff, strict mypy, OPA 7/7, migrations, H5V Core/true-resume verifiers, frontend checks/tests/build, existing browser matrix, dedicated H5V browser 2/2, package build, diff-check, and public-safety scan passed.
+- Remaining evidence is explicitly open: complete browser denial/strong-auth/provider/restricted/restart/SSE journeys, dirty task/calendar fixture, crash/concurrency ledger, and browser-visible isolated-HA outcomes. This record does not self-accept Phase 12.

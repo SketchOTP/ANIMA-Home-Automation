@@ -856,3 +856,14 @@ decision.
 - Focused evidence passed: approval gives two model turns, one provider dispatch, `SUCCEEDED`, provider execution context, and one durable continuation record; rejection gives two model turns, zero provider dispatch, `POLICY_DENIED`, and one durable continuation record. Both preserve the original episode ID and transcript continuity without replaying the original model tool request.
 - Local migration, Ruff, strict mypy, focused agent/action tests, and `scripts/verify_phase12_h5v_true_resume.py` passed. The verifier uses a real PostgreSQL journal → attention → trigger → context chain, PostgreSQL episode/action/approval stores, and real OPA.
 - Remaining evidence: dedicated Phase 12 browser confirmation/restart/SSE and broader acceptance matrix. The implementation checkpoint and its exact-head hosted CI are published; this record does not self-accept Phase 12.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V-R1 — bounded continuation hardening
+
+- Date: 2026-09-03
+- Architect disposition: `CONTINUE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Starting checkpoint: `761f6214993a676bdd43f911e237dffbbee7a684`.
+- Implementation checkpoint: `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
+- CI isolation checkpoint: `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI `33818551425` passed on the exact SHA. Artifact `9917602062` was published with digest `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
+- Implemented: durable continuation lifecycle/fencing/reclaim, pre-dispatch context/transcript/catalogue/runtime preflight, cumulative active-runtime accounting, exact approval policy-intent propagation, dedicated task/calendar projections, and test-only browser approval/rejection coverage.
+- Fresh evidence: 174 Python tests, Ruff, strict mypy, OPA 7/7, migrations, package build, frontend check/test/Vite build, 24 existing browser checks (12 executed and 12 intentional responsive skips), 2/2 dedicated H5V browser journeys, H5V PostgreSQL/OPA true-resume verifier, H5 Core verifier, diff-check, and public-safety scan passed.
+- Remaining evidence limits: browser denial/strong-auth, provider recovery, restricted browser lifecycle/storage, same-browser process restart/SSE, dirty task/calendar fixture, complete crash/concurrency accounting, and browser-visible isolated-HA outcomes remain unproven. This is an implementation/evidence checkpoint, not a Phase 12 acceptance claim.

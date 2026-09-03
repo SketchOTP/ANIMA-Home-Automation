@@ -35,8 +35,52 @@ Required remaining evidence includes a dedicated browser confirmation journey,
 same-browser process restart/SSE continuation, and any broader Phase 12
 acceptance evidence required by the Architect. The existing hosted Playwright
 job is green but does not itself exercise those H5V-specific journeys. Local
-frontend validation is not available on this host because `npm` is not
-installed; hosted frontend validation is the authoritative check for this
+frontend validation uses the bundled Node/npm runtime on this host and hosted
+frontend validation remains the authoritative check for the published
 checkpoint. The implementation checkpoint is published; the packet remains
 active until those acceptance gaps are resolved or explicitly returned to the
 Architect.
+
+## H5V-R1 continuation hardening — 2026-09-03
+
+Implementation checkpoint: `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
+Hosted CI run `33817879359` was cancelled after exposing a port collision in
+the test workflow; the bounded follow-up CI configuration was published in
+`58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`, whose exact-head hosted CI run is
+`33818551425` (`success`). Artifact `9917602062` is
+`phase12-h5-evidence-58636eaec87a9ad4ddd0958b916a4d74b2d9fe74` with digest
+`sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
+
+The bounded H5V-R1 implementation adds durable continuation lifecycle fields,
+claim ownership/fencing and expired-lease reclaim, original tool-catalogue and
+runtime-identity binding, pre-dispatch context/transcript preflight, cumulative
+active-runtime accounting, recovery-safe approval handling, exact policy-intent
+propagation, dedicated task/calendar projections, and a test-only browser
+approval/rejection composition. The normal Playwright configuration now
+excludes the dedicated H5V spec; the H5V server uses an isolated port so it
+does not collide with the Docker UI health target.
+
+Fresh local evidence:
+
+- `scripts/validate.sh`: passed 174 Python tests, Ruff, strict mypy, and OPA
+  7/7.
+- Migrations: repeat-safe with no pending migrations.
+- `scripts/verify_phase12_h5v_true_resume.py`: passed with real PostgreSQL and
+  OPA; approval preserved one episode, two model turns, one provider dispatch,
+  provider execution context, and `SUCCEEDED`; rejection preserved one
+  episode, two model turns, zero provider dispatches, and `POLICY_DENIED`.
+- `scripts/verify_phase12_h5_core.py`: passed with external audit redaction,
+  provider degraded/recovery, restricted PostgreSQL sentinel absence, original
+  session reconstruction, and post-restart task mutation.
+- Dedicated H5V Playwright: 2/2 passed (browser approval and rejection).
+- Existing Playwright matrix: 12 executed passes and 12 intentional responsive
+  skips across desktop/tablet/phone; frontend check, tests, and Vite build
+  passed. Package sdist/wheel, diff-check, and public-safety scan passed.
+
+Evidence limits remain material and keep this packet active: browser-visible
+real denial/strong-auth, provider degradation/recovery, restricted-content
+live/reload/storage inventory, same-browser process restart with SSE recovery,
+dirty task/calendar projection under the required historical-row fixture,
+crash-window/concurrency accounting, and browser-visible isolated-HA outcomes
+are not all proven by this checkpoint. The H5V-R1 work therefore remains
+`CONTINUE`; it does not self-accept Phase 12 and does not implement Phase 13.

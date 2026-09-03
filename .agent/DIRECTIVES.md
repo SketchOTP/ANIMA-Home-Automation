@@ -551,3 +551,13 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Architect disposition: `CONTINUE`; H5U is partially accepted, Phase 12 remains unaccepted, and Phase 13 remains unauthorized.
 - Objective: replace fixed-text confirmation terminalization with genuine same-episode AgentRuntime continuation after authenticated approval or rejection.
 - Scope: durable context/transcript reconstruction, append-only continuation evidence, real OPA confirmation, no tool replay, honest Phase 9 terminal status, UI confirmation integration, and exact-head validation. No workflow engine, new broker/database/provider, or Phase 13 behavior.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V-R1 — bounded H5V completion amendment
+
+- Issued: 2026-09-03
+- Architect disposition: `CONTINUE — H5V CORE RESUME RETAINED; PHASE 12 EXIT GATE NOT MET`.
+- Starting checkpoint: `761f6214993a676bdd43f911e237dffbbee7a684`.
+- Objective: harden true same-episode resume with pre-dispatch durable preflight, original catalogue/runtime binding, continuation lifecycle/fencing/recovery, cumulative budgets, dedicated task/calendar projections, and decisive browser/restart evidence. Phase 13 remains unauthorized.
+- Published implementation checkpoint: `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
+- Final tested checkpoint: `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI `33818551425` passed on the exact SHA. Artifact `9917602062`, digest `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
+- Result: continuation core, real PostgreSQL/OPA approval/rejection, dedicated browser approval/rejection, full local validation, and hosted CI passed. The complete browser/restart/recovery acceptance matrix remains open; this amendment does not accept Phase 12.

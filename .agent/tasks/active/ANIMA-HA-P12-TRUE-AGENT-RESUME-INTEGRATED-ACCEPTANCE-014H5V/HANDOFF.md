@@ -1,13 +1,24 @@
-# H5V handoff
+# H5V-R1 handoff
 
-H5V implementation checkpoint:
-`d3c8beacef23e20e69a6cafd31eae1b7e6a9edb2`.
-Hosted CI `33777520224` passed on that exact SHA and published artifact
-`9902390114`.
+H5V-R1 implementation checkpoint:
+`8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
+The follow-up CI configuration checkpoint is
+`58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI
+`33818551425` passed on that exact SHA. Artifact `9917602062` was published
+with digest
+`sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
 
-The real PostgreSQL/OPA verifier proves approval and rejection as genuine
-same-episode second model turns with durable continuation records and no tool
-replay. Phase 12 remains `CONTINUE` because the existing hosted browser matrix
-does not yet provide a dedicated browser confirmation/rejection journey or
-same-browser restart/SSE continuation evidence. No Phase 13 behavior was
-implemented. Return control to the Architect for the remaining evidence gate.
+The real PostgreSQL/OPA verifier and dedicated H5V browser composition prove
+approval and rejection as genuine same-episode second model turns with
+durable continuation state, exact policy-intent binding, no original-tool
+replay, one provider dispatch on approval, and zero provider dispatches on
+rejection. The continuation hardening also binds the original tool catalogue
+and runtime identity, preflights durable context/transcript state before
+consuming approval, and enforces owner/fence checks for recovery.
+
+Phase 12 remains `CONTINUE` and is not self-accepted. The required browser
+denial/strong-auth, provider recovery, restricted browser lifecycle,
+same-browser process restart/SSE, complete crash/concurrency ledger, dirty
+task/calendar evidence, and browser-visible isolated-HA journeys remain
+unproven. No Phase 13 behavior was implemented. Return control to the
+Architect with these explicit evidence limits.

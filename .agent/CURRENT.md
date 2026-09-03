@@ -11,22 +11,25 @@ PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5V TRUE AGENT RESUME; CONTINUE
 Close the true resumable AgentRuntime confirmation/rejection path and publish
 fresh evidence without weakening accepted Phase 4/5/8/9 boundaries. Phase 11
 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13
-remains unauthorized.
+remains unauthorized. The H5V-R1 implementation checkpoint is published, but
+the remaining browser/restart/recovery evidence gate is not closed.
 
 ## Active directive
 
-`ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V` — starting
-checkpoint `a94bd3cbe27922088bbb24256f548e2605a71bcd`. Approval and rejection
+`ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V-R1` — starting
+checkpoint `761f6214993a676bdd43f911e237dffbbee7a684`. Approval and rejection
 must append a normalized durable result to the original episode transcript and
 invoke a second AgentRuntime model turn without replaying the original tool.
-Real OPA, PostgreSQL stores, UI confirmation, and integrated evidence remain in
-scope. Phase 13 is unauthorized.
+Real OPA, PostgreSQL stores, UI confirmation, browser recovery, and integrated
+evidence remain in scope. Phase 13 is unauthorized.
 
-## H5V current result — 2026-09-03
+## H5V-R1 current result — 2026-09-03
 
-- The active implementation adds migration `0016_agent_continuations`, durable
-  context/transcript loading to the episode-store interface, and a same-episode
-  continuation in `AgentRuntime.resume_confirmation()`.
+- The published H5V-R1 implementation adds continuation lifecycle migration
+  `0017_continuation_lifecycle` plus compatibility migration `0018`, durable
+  context/transcript loading, fenced continuation recovery, original
+  tool-catalogue/runtime binding, cumulative active-runtime accounting, and a
+  same-episode continuation in `AgentRuntime.resume_confirmation()`.
 - Approval and rejection are both represented as normalized continuation tool
   results. The original action is not replayed; approval dispatches once and
   rejection dispatches zero times. The resumed model receives the action status,
@@ -35,13 +38,17 @@ scope. Phase 13 is unauthorized.
   seeds a real journal → attention → trigger → context chain and proves two
   model turns in one PostgreSQL episode, durable continuation rows, `SUCCEEDED`
   approval, `POLICY_DENIED` rejection, and provider execution context forwarding.
-- H5V implementation checkpoint `d3c8beacef23e20e69a6cafd31eae1b7e6a9edb2`
-  passed hosted CI `33777520224` on the exact SHA; artifact `9902390114` was
-  published. The hosted job also reran the real-OPA/PostgreSQL verifier,
-  frontend checks/build, Docker UI health, and the existing H5 evidence set.
-- H5V is not yet accepted. A dedicated browser approval/rejection journey and
-  same-browser restart/SSE continuation evidence are not present in the
-  hosted matrix. The implementation is published, but Phase 12 remains
+- H5V implementation checkpoint `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`
+  was followed by the CI port-isolation checkpoint
+  `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI `33818551425` passed
+  on the exact latter SHA and published artifact `9917602062` with digest
+  `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
+- H5V-R1 is not yet accepted. Real PostgreSQL/OPA approve/reject continuation,
+  two dedicated browser approval/rejection journeys, full Python/static/
+  frontend/package validation, and the existing Core evidence passed. Browser
+  denial/strong-auth, provider recovery, restricted lifecycle, same-browser
+  process restart/SSE, complete crash/concurrency ledger, dirty-data and
+  browser-visible isolated-HA journeys remain unproven. Phase 12 remains
   `CONTINUE` pending Architect review.
 
 ## H5U current result — historical 2026-09-03

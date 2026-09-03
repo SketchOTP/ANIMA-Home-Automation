@@ -157,15 +157,24 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 
 ### Phase 12 H5V true AgentRuntime resume
 
-- `src/anima_ha/agent.py` — durable episode context/transcript reconstruction
-  and same-episode approval/rejection continuation through the existing model
-  loop.
-- `src/anima_ha/db/migrations/0016_agent_continuations.sql` — append-only
-  continuation result and transcript-digest persistence.
-- `src/anima_ha/ui_runtime.py` — UI confirmation uses the Core AgentRuntime
-  continuation and projects the Phase 9 action record.
-- `scripts/verify_phase12_h5v_true_resume.py` — real PostgreSQL journal/context,
-  real OPA approval/rejection, durable episode, two-turn, and no-replay target.
+- `src/anima_ha/agent.py` — durable episode context/transcript reconstruction,
+  fenced continuation lifecycle, original tool-catalogue/runtime binding,
+  cumulative active-runtime accounting, and same-episode continuation.
+- `src/anima_ha/db/migrations/0017_continuation_lifecycle.sql` and
+  `0018_continuation_lifecycle_compat.sql` — continuation lifecycle, lease,
+  fence, runtime identity, catalogue, and recovery persistence.
+- `src/anima_ha/action.py` and `src/anima_ha/plugins.py` — exact policy-intent
+  propagation and recovery-safe approval execution through Phase 9.
+- `src/anima_ha/ui_runtime.py` and `ui/src/main.tsx` — dedicated task/calendar
+  management projections and Core confirmation result wiring.
+- `scripts/verify_phase12_h5v_true_resume.py` and
+  `scripts/verify_phase12_h5_core.py` — real PostgreSQL/OPA resume and Core
+  boundary targets.
+- `scripts/serve_phase12_h5v.py`, `ui/playwright.h5v.config.ts`, and
+  `ui/tests/h5v.spec.ts` — explicit test-only browser approval/rejection
+  composition; the normal Playwright config excludes these tests.
+- `scripts/verify_phase12_h5v_ledger.py` — secret-free scenario ledger for the
+  currently proven H5V subset.
 - `.agent/tasks/active/ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V/`
   — active H5V directive/evidence packet.
 
