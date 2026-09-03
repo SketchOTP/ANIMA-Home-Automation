@@ -12,7 +12,7 @@ Close the remaining H5 browser acceptance evidence gaps: measurable display mode
 
 ## Active directive
 
-`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5` — close only the remaining browser behavior/evidence gaps without changing accepted Phase 0–11 architecture. Starting checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14` with hosted CI `33686702038` passed. Current implementation/evidence head is `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Phase 12 remains CONTINUE and pending Architect acceptance; Phase 13 is unauthorized.
+`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5` — close only the remaining browser behavior/evidence gaps without changing accepted Phase 0–11 architecture. Starting checkpoint: `33440106ea629eda0386a062924e1f84c4b32c14` with hosted CI `33686702038` passed. Implementation/evidence head is `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Latest governance/CI reliability head is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA. Phase 12 remains CONTINUE and pending Architect acceptance; Phase 13 is unauthorized.
 
 ## Current verified state
 
@@ -30,6 +30,7 @@ Close the remaining H5 browser acceptance evidence gaps: measurable display mode
 - H5 implementation/evidence sequence: `2bc175852afc4003176f9be910f70618d8a1b827`, `aa0f24e12577dc536fb6cecf331aae6544ea3c94`, `e6ab72618ee5fdf2aebaaadaf83a9ebbb4adb485`, `5882d9e0047b8d07d7f5d45b5081a59d3340fbf3`, and `800d8cf4a183ce0e7548545182ed09f0687ad98f`. Hosted CI `33696481738` passed on the exact current head and published artifact `phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`, artifact ID `9872060277`, ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
 - H5 deterministic Core evidence proves real `create_app()` PostgreSQL/OPA/Graph/Truth/Journal/Attention/Context/AgentRuntime composition, original session reuse across reconstruction, post-restart task mutation, external audit digest redaction, deterministic provider degraded/recovery states, restricted live response with zero PostgreSQL sentinel occurrences, and the reused isolated-HA API path. Display-mode CSS now produces measured wall/tablet/phone/desktop geometry differences.
 - H5 is not complete: hosted browser coverage remains the pre-existing functional/smoke matrix and does not independently run browser-visible denial, provider recovery, restricted-content reload/storage, process restart/SSE with the same browser session, or browser-visible isolated-HA outcomes. These are explicit `NOT RUN`/`UNSUPPORTED BY CURRENT TARGET` evidence limits. Status remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`.
+- The governance/CI reliability follow-up is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact head after the workflow was bounded to wait for healthy PostgreSQL/OPA containers before migration. This is publication/CI evidence only and does not close the unrun browser journeys.
 
 ### H4 evidence and publication state
 

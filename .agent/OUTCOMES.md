@@ -683,6 +683,12 @@ Evidence is x86-64 and local/isolated; native ARM64/Pi, physical-home, productio
 - Evidence boundary: deterministic TestClient and browser evidence establish the local interface contract. Production conversation/command bridges remain explicit host-injected seams and are not claimed as live Core integration until wired and tested.
 - Phase 13 remains unauthorized.
 
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5 — governance/CI reliability checkpoint
+
+- Governance checkpoint: `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on the exact head.
+- The workflow now waits for healthy PostgreSQL/OPA Compose containers before migration. The prior run `33697435341` failed only at transient database readiness; no H5 target had started.
+- H5 remains partial and `CONTINUE`; browser-visible denial, provider recovery, restricted-content reload/storage, same-session process restart/SSE, and browser-visible isolated-HA journeys remain unrun. Phase 13 remains unauthorized.
+
 ## ANIMA-HA-P12-CUSTOM-LOCAL-INTERFACE-014 — Governed closure
 
 - Starting accepted SHA: `918365ce7c6145780112a808411d750fb0e289eb`; Phase 11 hosted CI `33562645002` passed on that exact SHA.

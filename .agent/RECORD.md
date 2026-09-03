@@ -277,6 +277,12 @@ UI, and voice remain out of scope.
 - The head includes bounded display-mode behavior, deterministic H5 Core/API evidence, and CI fixes for the runtime policy bundle and Compose service lifetime. Missing browser-level denial, provider recovery, restricted-content reload/storage, same-session restart/SSE, and browser-visible isolated-HA evidence remain open.
 - Phase 13 remains unauthorized.
 
+## 2026-09-03 — H5 governance/CI reliability checkpoint
+
+- Published governance checkpoint `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on the exact head.
+- A bounded workflow readiness fix waits for healthy PostgreSQL/OPA containers before migration after governance-head run `33697435341` hit a transient PostgreSQL readiness race.
+- H5 remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`; no Phase 13 behavior was implemented.
+
 ## ANIMA-HA-P12-CORE-INTEGRATION-PORTFOLIO-CLOSURE-014H — Implementation publication
 
 - Date: 2026-09-02

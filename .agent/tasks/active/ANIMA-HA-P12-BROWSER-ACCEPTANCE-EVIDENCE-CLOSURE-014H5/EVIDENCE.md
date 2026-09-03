@@ -7,6 +7,8 @@
 - Artifact: `phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`
 - Artifact ID: `9872060277`
 - Artifact ZIP SHA-256: `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`
+- Governance/CI reliability checkpoint: `828230a73d3c9097bab448192747a3f6786c0d4f`
+- Governance-head hosted CI: `33697593173` — `success` on the exact governance head.
 
 ## Passed evidence
 
@@ -27,6 +29,7 @@
 - `NOT RUN`: browser-visible isolated-HA outcome target; the API allowance is covered by the reused isolated-HA harness.
 - `NOT RUN`: a complete H5 Playwright journey matrix. Hosted Playwright reports 11 passed and 10 skipped across desktop/tablet/phone; the skipped cases are responsive/functional variants, not the missing H5 journeys.
 - The prior live public-provider harness was intentionally removed from H5 hosted CI because H5 requires deterministic provider fixtures; its earlier local live results remain separate evidence and are not promoted to exact hosted evidence.
+- The first governance-head run `33697435341` failed during a transient PostgreSQL startup/readiness race before H5 targets. The bounded workflow fix waits for healthy Compose containers; rerun `33697593173` passed. This history does not change the explicit browser evidence limits above.
 
 ## Status
 

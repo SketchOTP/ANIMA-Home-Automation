@@ -16,6 +16,8 @@ same-browser process restart/SSE recovery, and browser-visible isolated-HA
 outcomes remain `NOT RUN` acceptance evidence. Phase 12 remains `CONTINUE`; this
 document does not promote it to Architect accepted.
 
+The latest governance/CI reliability checkpoint is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA. Its bounded workflow fix waits for healthy PostgreSQL/OPA containers before migration. This does not promote the unrun browser journeys to completed evidence.
+
 H4 implementation head: `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI
 `33686351783` passed on that exact SHA. The later governance checkpoint is
 recorded in the final Authority/Notion readback.

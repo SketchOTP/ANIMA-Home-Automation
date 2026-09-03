@@ -405,6 +405,12 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required operator action: inspect only nonsecret Walmart.io/Impact application metadata in an already-authorized session, then obtain narrow Walmart clarification if the private local assistant/data/link use is not explicit. No account changes or agreement acceptance are authorized.
 - Source: Architect directive supplied in the governed session and recorded in the canonical Notion SSOT.
 
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5 — governance/CI reliability follow-up
+
+- Governance checkpoint: `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA.
+- Bounded correction: the hosted workflow waits for healthy PostgreSQL and OPA containers before running the migration, with bounded diagnostics on timeout. No application, architecture, provider, or Phase 13 behavior changed.
+- H5 disposition remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE` because decisive browser journeys remain unrun.
+
 ## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5
 
 - Architect disposition: `CONTINUE — H4 IMPLEMENTATION RETAINED; PHASE 12 NOT ACCEPTED`.
