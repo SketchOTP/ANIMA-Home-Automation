@@ -9,12 +9,12 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
-  use: { baseURL: "http://127.0.0.1:18091", trace: "retain-on-failure" },
+  use: { baseURL: "http://127.0.0.1:18092", trace: "retain-on-failure" },
   webServer: {
-    command: `cd .. && ANIMA_DATABASE_URL=${databaseUrl} ANIMA_OPA_URL=${opaUrl} ANIMA_UI_PORT=18091 ANIMA_UI_STATIC_DIR=ui/dist uv run python scripts/serve_phase12_h5v.py`,
-    url: "http://127.0.0.1:18091/healthz",
+    command: `cd .. && ANIMA_DATABASE_URL=${databaseUrl} ANIMA_OPA_URL=${opaUrl} ANIMA_UI_PORT=18092 ANIMA_UI_STATIC_DIR=ui/dist uv run python scripts/serve_phase12_h5v.py`,
+    url: "http://127.0.0.1:18092/healthz",
     reuseExistingServer: false,
-    timeout: 30_000,
+    timeout: 60_000,
   },
   projects: [{ name: "desktop", use: { ...devices["Desktop Chrome"] } }],
 });
