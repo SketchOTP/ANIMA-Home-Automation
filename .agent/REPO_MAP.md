@@ -155,6 +155,20 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `scripts/verify_phase12_h5u_confirmation.py` — real PostgreSQL exact-intent, wrong-principal, single-use, and one-dispatch verifier.
 - `.agent/tasks/completed/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/` — completed H5U directive, plan, evidence, and handoff; prior H5/H5R/H5S/H5T packets are preserved as completed historical records.
 
+### Phase 12 H5V true AgentRuntime resume
+
+- `src/anima_ha/agent.py` — durable episode context/transcript reconstruction
+  and same-episode approval/rejection continuation through the existing model
+  loop.
+- `src/anima_ha/db/migrations/0016_agent_continuations.sql` — append-only
+  continuation result and transcript-digest persistence.
+- `src/anima_ha/ui_runtime.py` — UI confirmation uses the Core AgentRuntime
+  continuation and projects the Phase 9 action record.
+- `scripts/verify_phase12_h5v_true_resume.py` — real PostgreSQL journal/context,
+  real OPA approval/rejection, durable episode, two-turn, and no-replay target.
+- `.agent/tasks/active/ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V/`
+  — active H5V directive/evidence packet.
+
 ### Phase 12 H5 browser acceptance evidence
 
 - `scripts/verify_phase12_h5_core.py` — deterministic PostgreSQL/OPA/Core target for external audit redaction, provider degraded/recovery projection, restricted-content durable scanning, and original-session reconstruction.

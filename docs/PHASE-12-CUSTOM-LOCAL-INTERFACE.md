@@ -1,7 +1,12 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` for the H5U confirmation
-continuation; this document does not self-accept Phase 12.
+Status: `CONTINUE — H5V TRUE AGENT RESUME PENDING ARCHITECT ACCEPTANCE`;
+this document does not self-accept Phase 12.
+
+H5V is the active bounded continuation from the H5U review. It preserves the
+durable exact-intent approval boundary and adds a real second AgentRuntime turn
+in the original episode after approval or rejection. The H5V implementation
+and evidence remain pending final validation and Architect review.
 
 H5 current checkpoint: `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI
 `33696481738` passed on that exact SHA. The hosted job published artifact

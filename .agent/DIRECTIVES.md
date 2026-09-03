@@ -544,3 +544,10 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Required invariants: authenticated household/principal binding; exact action intent, episode, trigger, tool version, idempotency, trusted preconditions and lock scopes; single-use/expiry/replay protection; current policy/Truth reauthorization; no pending restricted content or secrets; no Phase 13.
 - Implemented scope: `anima_pending_approvals` migration and stores, stable `ActionRequest` identity, same-episode `AgentRuntime.resume_confirmation`, UI approval/rejection route, pending-approval report controls, H5U PostgreSQL verifier, and CI wiring. No accepted Phase 4/5/8/9 semantics were redesigned.
 - Source: Architect H5U directive, current repository inspection, and the canonical Notion SSOT.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V — true resumable cognition
+
+- Issued: 2026-09-03
+- Architect disposition: `CONTINUE`; H5U is partially accepted, Phase 12 remains unaccepted, and Phase 13 remains unauthorized.
+- Objective: replace fixed-text confirmation terminalization with genuine same-episode AgentRuntime continuation after authenticated approval or rejection.
+- Scope: durable context/transcript reconstruction, append-only continuation evidence, real OPA confirmation, no tool replay, honest Phase 9 terminal status, UI confirmation integration, and exact-head validation. No workflow engine, new broker/database/provider, or Phase 13 behavior.

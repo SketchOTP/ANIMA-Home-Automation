@@ -4,25 +4,47 @@ Last updated: 2026-09-03
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5U DURABLE CONFIRMATION CONTINUATION; CONTINUE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5V TRUE AGENT RESUME; CONTINUE
 
 ## Current objective
 
-Close the durable exact-intent confirmation/rejection continuation and publish
+Close the true resumable AgentRuntime confirmation/rejection path and publish
 fresh evidence without weakening accepted Phase 4/5/8/9 boundaries. Phase 11
 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13
 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U` — starting
-checkpoint `684806ae53832ddd40cd0ee000ffbe35609a8ff2`. Pending approvals must
-bind exact action intent, principal, household, episode, tool version,
-idempotency, trusted preconditions, and bounded semantic request data; approval
-must be authenticated, single-use, expiry-aware, re-authorized, and resumed
-through the existing Phase 9 coordinator. Phase 13 is unauthorized.
+`ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V` — starting
+checkpoint `a94bd3cbe27922088bbb24256f548e2605a71bcd`. Approval and rejection
+must append a normalized durable result to the original episode transcript and
+invoke a second AgentRuntime model turn without replaying the original tool.
+Real OPA, PostgreSQL stores, UI confirmation, and integrated evidence remain in
+scope. Phase 13 is unauthorized.
 
-## H5U current result — 2026-09-03
+## H5V current result — 2026-09-03
+
+- The active implementation adds migration `0016_agent_continuations`, durable
+  context/transcript loading to the episode-store interface, and a same-episode
+  continuation in `AgentRuntime.resume_confirmation()`.
+- Approval and rejection are both represented as normalized continuation tool
+  results. The original action is not replayed; approval dispatches once and
+  rejection dispatches zero times. The resumed model receives the action status,
+  approval decision, and bounded evidence.
+- Focused tests and the real-OPA PostgreSQL verifier pass locally. The verifier
+  seeds a real journal → attention → trigger → context chain and proves two
+  model turns in one PostgreSQL episode, durable continuation rows, `SUCCEEDED`
+  approval, `POLICY_DENIED` rejection, and provider execution context forwarding.
+- H5V implementation checkpoint `d3c8beacef23e20e69a6cafd31eae1b7e6a9edb2`
+  passed hosted CI `33777520224` on the exact SHA; artifact `9902390114` was
+  published. The hosted job also reran the real-OPA/PostgreSQL verifier,
+  frontend checks/build, Docker UI health, and the existing H5 evidence set.
+- H5V is not yet accepted. A dedicated browser approval/rejection journey and
+  same-browser restart/SSE continuation evidence are not present in the
+  hosted matrix. The implementation is published, but Phase 12 remains
+  `CONTINUE` pending Architect review.
+
+## H5U current result — historical 2026-09-03
 
 - Durable PostgreSQL pending-approval persistence and UI approval/rejection
   routing are implemented locally; the public payload omits executable
@@ -166,9 +188,14 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Current blockers
 
-- H5U implementation is published at `dbb4720882b25ad1d840c2c270191227f0c4ea1d` with exact-head hosted CI `33746353829` passed. Final governed closure checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` also passed exact-head hosted CI `33747181905` and is remote-verified.
+- H5V implementation is published at
+  `d3c8beacef23e20e69a6cafd31eae1b7e6a9edb2` with exact-head hosted CI
+  `33777520224` passed. Local real-OPA/PostgreSQL continuation evidence also
+  passes. Dedicated browser confirmation/rejection and same-browser
+  restart/SSE continuation evidence remain open; this governance checkpoint
+  records that bounded implementation state without self-accepting Phase 12.
 - Real Home Assistant OAuth commissioning, physical-home behavior, production TLS, native ARM64/Pi execution, and live Luna credentials remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with only a scripted model adapter and reports HA as an explicit commissioning gate.
-- Phase 12 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` for the H5U implementation/evidence boundary; Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
+- Phase 12 remains `CONTINUE — H5V IMPLEMENTATION/EVIDENCE IN PROGRESS`; Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
 
@@ -195,11 +222,11 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U` after
-the final governed checkpoint and exact-head CI. Evidence covers durable exact
-intent, authenticated single-use approval/rejection, same-episode continuation,
-PostgreSQL persistence, and the existing Phase 12 regression boundary. Phase
-13 remains unauthorized.
+Review `ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V` after
+the final governed checkpoint and exact-head CI. Evidence must cover durable
+context/transcript reconstruction, real OPA, approval/rejection second turns,
+no tool replay, and the existing Phase 12 regression boundary. Phase 13
+remains unauthorized.
 
 ## Phase 12 publication state — historical 014H checkpoint
 

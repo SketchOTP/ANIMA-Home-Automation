@@ -1,0 +1,14 @@
+# ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V
+
+H5V is a bounded Phase 12 continuation from the Architect review of H5U.
+The objective is to make confirmation approval and rejection resume the same
+durable AgentRuntime episode with persisted context and transcript evidence.
+
+Scope is limited to the existing ANIMA journal/context/AgentRuntime,
+Phase 5/4/9 action boundary, UI confirmation path, PostgreSQL persistence, and
+the required integration evidence. Phase 13 behavior, workflow engines, new
+brokers, new databases, and new providers are out of scope.
+
+The parent H5U checkpoint and negative evidence remain historical. This packet
+must not claim Phase 12 acceptance; the final disposition belongs to the
+Architect.

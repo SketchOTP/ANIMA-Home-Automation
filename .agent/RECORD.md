@@ -311,3 +311,10 @@ UI, and voice remain out of scope.
 - Final governed SHA `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` passed hosted CI
   `33747181905` on the exact head and was verified on `origin/main`.
 - Phase 12 remains pending Architect acceptance; Phase 13 was not implemented.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V — 2026-09-03
+
+- Architect review disposition: `CONTINUE — H5U PARTIALLY ACCEPTED; PHASE 12 NOT ACCEPTED`.
+- Decision: continue inside the accepted Phase 4/5/8/9 boundaries by making approval/rejection a genuine same-episode AgentRuntime continuation. No workflow engine, new infrastructure, or Phase 13 behavior was added.
+- Current implementation adds migration `0016_agent_continuations`, durable context/transcript reconstruction, normalized continuation result persistence, UI continuation routing, and a real-OPA PostgreSQL verifier.
+- Current local evidence is `E3_TARGET_TESTED` for the H5V target. Full regression, hosted CI, final governance, and Architect acceptance remain open.

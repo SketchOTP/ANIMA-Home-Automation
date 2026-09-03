@@ -846,3 +846,13 @@ decision.
 - H5U is complete as a bounded implementation/evidence work unit;
   Phase 12 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Phase 13 was not
   implemented.
+
+## ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V — implementation and local evidence
+
+- Date: 2026-09-03
+- Starting checkpoint: `a94bd3cbe27922088bbb24256f548e2605a71bcd`; H5U final hosted CI `33747792370` passed on that exact head.
+- Disposition: `CONTINUE`; Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Implemented: append-only `anima_agent_continuations` persistence; durable episode context/transcript loading; same-episode AgentRuntime continuation after approval or rejection; normalized action/approval/verification evidence; UI confirmation routing through the continuation; real-OPA PostgreSQL verifier wiring.
+- Focused evidence passed: approval gives two model turns, one provider dispatch, `SUCCEEDED`, provider execution context, and one durable continuation record; rejection gives two model turns, zero provider dispatch, `POLICY_DENIED`, and one durable continuation record. Both preserve the original episode ID and transcript continuity without replaying the original model tool request.
+- Local migration, Ruff, strict mypy, focused agent/action tests, and `scripts/verify_phase12_h5v_true_resume.py` passed. The verifier uses a real PostgreSQL journal → attention → trigger → context chain, PostgreSQL episode/action/approval stores, and real OPA.
+- Remaining evidence: dedicated Phase 12 browser confirmation/restart/SSE and broader acceptance matrix. The implementation checkpoint and its exact-head hosted CI are published; this record does not self-accept Phase 12.
