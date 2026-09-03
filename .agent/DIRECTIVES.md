@@ -523,3 +523,14 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Exclusions: no Phase 8 confirmation redesign, decorative approval, Phase 13, new infrastructure/provider, production mutation, credentials, destructive fixture cleanup, or evidence inflation.
 - Required result: return the canonical CODEX RESULT, update the packet and append-only records, synchronize/refetch Notion and GitHub, and do not self-accept Phase 12.
 - Source: current canonical Notion SSOT and H5R governed result, reconciled at invocation.
+
+## ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T — same-session restart/SSE closure
+
+- Issued: 2026-09-03
+- Parent: H5S `ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S`, result `PARTIAL / CONTINUE`.
+- Baseline: `09f1402bdff34a79b0b08b882752c491f89c0959`, local `main == origin/main`.
+- Objective: prove the same browser session survives a real application-process restart and recovers through SSE/refetch without duplicate mutation.
+- Scope: existing UI server/session store/SSE/browser harness and bounded isolated runtime; smallest observation/harness correction only.
+- Exclusions: no browser cookie/storage inspection, Phase 8 redesign, Phase 13, new infrastructure, production mutation, credentials, cleanup/reseed, or evidence inflation.
+- Required result: canonical CODEX RESULT, exact process/session evidence, packet and append-only records, GitHub/Notion reconciliation, and honest Phase 12 gate classification.
+- Source: current Notion H5S result and repository/runtime reconstruction.

@@ -4,15 +4,15 @@ Last updated: 2026-09-03
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5S DECISIVE BROWSER/RUNTIME EVIDENCE CLOSURE; CONTINUE
+PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5T SAME-SESSION RESTART/SSE EVIDENCE CLOSURE; CONTINUE
 
 ## Current objective
 
-Close or honestly classify the remaining Phase 12 browser/runtime evidence gaps against the canonical H5/H5R gate. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
+Verify browser session continuity across a real application restart and SSE/refetch recovery, or honestly classify the target if the environment cannot support it. Phase 11 is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13 remains unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5S` — use the implemented H5R product surfaces and existing H5 evidence to run decisive browser/runtime targets, close only demonstrated gaps, and classify unavailable/unsafe claims without inflating evidence. Baseline is `0bc4a1d1826a4f8c874c90ed935587206a2f4935`.
+`ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5T` — use the existing H5/H5R runtime and browser surface to prove the same browser session survives a real application-process restart and recovers via SSE/refetch without losing settings or duplicating mutations. Baseline is `09f1402bdff34a79b0b08b882752c491f89c0959`.
 
 The current Notion SSOT records H5R as implemented-unverified: product surfaces are composed, but browser/runtime evidence, a pristine calendar fixture, and confirmation continuation remain unresolved. H5S prohibits a Phase 8 confirmation redesign or Phase 13 work.
 
