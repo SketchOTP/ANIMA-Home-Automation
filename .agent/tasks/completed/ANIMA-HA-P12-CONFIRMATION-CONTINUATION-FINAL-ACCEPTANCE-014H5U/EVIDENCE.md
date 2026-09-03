@@ -43,6 +43,6 @@ CSRF, and origin checks.
 
 Implementation checkpoint: `dbb4720882b25ad1d840c2c270191227f0c4ea1d`.
 Implementation hosted CI: `33746353829` passed on that exact SHA.
-The subsequent governance commit is the final governed checkpoint; its exact
-SHA and hosted CI are recorded in the final Authority/Notion readback. Phase
-12 remains pending Architect acceptance; Phase 13 is not implemented.
+Final governed checkpoint: `b2049f306416a1d0cd4f61cd370d0686c5bec2d7`.
+Final governed hosted CI: `33747181905` passed on that exact SHA. Phase 12
+remains pending Architect acceptance; Phase 13 is not implemented.

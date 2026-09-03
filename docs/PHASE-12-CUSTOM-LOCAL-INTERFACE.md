@@ -22,9 +22,9 @@ The latest governance/CI reliability checkpoint is `828230a73d3c9097bab448192747
 H5U implementation checkpoint: `dbb4720882b25ad1d840c2c270191227f0c4ea1d`;
 hosted CI `33746353829` passed on that exact SHA. H5U adds durable exact-intent
 confirmation continuation, authenticated single-use approval/rejection,
-same-episode runtime resumption, and PostgreSQL evidence. The final governed
-checkpoint and exact CI are recorded in the Authority/Notion readback after
-the closure commit. Phase 13 remains unauthorized.
+same-episode runtime resumption, and PostgreSQL evidence. Final governed
+checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` passed hosted CI
+`33747181905` on that exact SHA. Phase 13 remains unauthorized.
 
 H4 implementation head: `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI
 `33686351783` passed on that exact SHA. The later governance checkpoint is

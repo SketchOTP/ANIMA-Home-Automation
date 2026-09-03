@@ -303,3 +303,11 @@ UI, and voice remain out of scope.
 - Decision: implement durable exact-intent confirmation continuation inside the accepted Phase 4/5/8/9 boundaries. No new workflow engine, broker, database, provider, or authority store was added.
 - Local evidence: PostgreSQL pending-approval migration/verifier passed; focused and full validation passed; H4/H5 Core, isolated-HA API, restricted-content, frontend, and clean-filesystem browser reproduction passed. H5T's prior task `ValueError` remains historical negative evidence.
 - Publication state: implementation and final governed SHA/CI are recorded by superseding governance entries after push; Phase 12 remains pending Architect acceptance.
+
+### H5U publication correction — 2026-09-03
+
+- Implementation SHA `dbb4720882b25ad1d840c2c270191227f0c4ea1d` passed hosted CI
+  `33746353829` on the exact head.
+- Final governed SHA `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` passed hosted CI
+  `33747181905` on the exact head and was verified on `origin/main`.
+- Phase 12 remains pending Architect acceptance; Phase 13 was not implemented.

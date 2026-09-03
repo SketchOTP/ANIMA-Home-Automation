@@ -834,4 +834,15 @@ decision.
 - Focused evidence passed: exact-intent confirmation, rejection, expiry, wrong-principal rejection, single-use replay rejection, same-episode continuation without tool replay, and one-provider-call PostgreSQL approval.
 - Broader local evidence passed: `uv sync --locked --dev`, `scripts/validate.sh` (172 tests, Ruff, strict mypy, OPA 7/7), migrations initial/repeat, H4/H5 Core, isolated-HA API, restricted-content, frontend checks/build, and a clean-filesystem Playwright reproduction (12 executed passes plus 12 responsive skips by design).
 - Historical H5T `FAILED / ValueError` task evidence is preserved; current H5 Core task mutation passes after the bounded correction. No Phase 13 behavior was implemented.
-- Publication and hosted exact-head CI remain required before the result is handed to the Architect.
+- Publication and hosted exact-head CI passed; the result is handed to the Architect with Phase 12 still pending acceptance.
+
+### H5U publication readback — 2026-09-03
+
+- Implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d` was
+  pushed and passed hosted CI `33746353829` on the exact SHA.
+- Final governed checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` was
+  pushed and passed hosted CI `33747181905` on the exact SHA. Remote `main`
+  resolves to that checkpoint and the tree was clean at verification.
+- H5U is complete as a bounded implementation/evidence work unit;
+  Phase 12 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. Phase 13 was not
+  implemented.

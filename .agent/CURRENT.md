@@ -166,7 +166,7 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Current blockers
 
-- H5U implementation is published at `dbb4720882b25ad1d840c2c270191227f0c4ea1d` with exact-head hosted CI `33746353829` passed. The final governed closure commit and its exact-head CI are the remaining publication records for this work unit.
+- H5U implementation is published at `dbb4720882b25ad1d840c2c270191227f0c4ea1d` with exact-head hosted CI `33746353829` passed. Final governed closure checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7` also passed exact-head hosted CI `33747181905` and is remote-verified.
 - Real Home Assistant OAuth commissioning, physical-home behavior, production TLS, native ARM64/Pi execution, and live Luna credentials remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with only a scripted model adapter and reports HA as an explicit commissioning gate.
 - Phase 12 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` for the H5U implementation/evidence boundary; Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
