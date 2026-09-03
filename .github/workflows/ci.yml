@@ -26,11 +26,22 @@ jobs:
           SEARXNG_SECRET: ci-only-placeholder
           ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
         run: |
+          set -euo pipefail
           docker compose up -d db opa
+          db_id="$(docker compose ps -q db)"
+          opa_id="$(docker compose ps -q opa)"
           for attempt in {1..30}; do
-            if docker compose exec -T db pg_isready -U anima -d anima >/dev/null 2>&1 \
+            db_health="$(docker inspect --format '{{.State.Health.Status}}' "$db_id" 2>/dev/null || true)"
+            opa_health="$(docker inspect --format '{{.State.Health.Status}}' "$opa_id" 2>/dev/null || true)"
+            if [[ "$db_health" == "healthy" && "$opa_health" == "healthy" ]] \
+              && docker compose exec -T db pg_isready -U anima -d anima >/dev/null 2>&1 \
               && curl --fail --silent http://127.0.0.1:18181/health >/dev/null; then
               break
+            fi
+            if [[ "$attempt" == 30 ]]; then
+              docker compose ps
+              docker compose logs --no-color db opa
+              exit 1
             fi
             sleep 2
           done
