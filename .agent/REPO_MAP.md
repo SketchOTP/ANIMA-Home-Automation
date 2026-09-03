@@ -153,7 +153,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/ui_runtime.py` and `src/anima_ha/ui_api.py` — Core-routed approval/rejection boundary with session/CSRF/origin protection and bounded pending-approval projection.
 - `src/anima_ha/db/migrations/0015_pending_approvals.sql` — PostgreSQL pending-approval persistence.
 - `scripts/verify_phase12_h5u_confirmation.py` — real PostgreSQL exact-intent, wrong-principal, single-use, and one-dispatch verifier.
-- `.agent/tasks/active/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/` — current H5U directive, plan, evidence, and handoff; prior H5/H5R/H5S/H5T packets remain preserved historical records.
+- `.agent/tasks/completed/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/` — completed H5U directive, plan, evidence, and handoff; prior H5/H5R/H5S/H5T packets are preserved as completed historical records.
 
 ### Phase 12 H5 browser acceptance evidence
 
@@ -161,7 +161,7 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `Dockerfile.ui` — reproducible UI image including the installed-runtime Phase 4 policy bundle required by the normal `create_app()` composition.
 - `.github/workflows/ci.yml` — hosted H5 Core, restricted-content, isolated-HA API, Docker health, frontend, Playwright, build, diff-check, safety, and artifact-upload targets; live public-provider calls are intentionally excluded from H5 hosted CI in favor of deterministic fixtures.
 - `ui/src/styles.css` and `ui/tests/ui.spec.ts` — measurable display-mode layout behavior and computed-geometry/order assertions.
-- `.agent/tasks/active/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/` — active H5 directive, evidence, and handoff; it remains active because decisive browser journeys are not yet complete.
+- `.agent/tasks/completed/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/` — superseded H5 directive, evidence, and handoff; its incomplete browser journeys remain preserved as negative historical evidence.
 
 ## Known sensitive/high-risk areas
 

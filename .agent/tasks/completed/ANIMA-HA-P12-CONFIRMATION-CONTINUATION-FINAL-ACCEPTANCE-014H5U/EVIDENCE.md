@@ -41,6 +41,8 @@ CSRF, and origin checks.
   negative evidence; the current H5 Core target reproduces task mutation
   successfully after the bounded correction.
 
-Exact implementation/final SHAs and hosted CI IDs are appended after
-publication. Phase 12 remains pending Architect acceptance; Phase 13 is not
-implemented.
+Implementation checkpoint: `dbb4720882b25ad1d840c2c270191227f0c4ea1d`.
+Implementation hosted CI: `33746353829` passed on that exact SHA.
+The subsequent governance commit is the final governed checkpoint; its exact
+SHA and hosted CI are recorded in the final Authority/Notion readback. Phase
+12 remains pending Architect acceptance; Phase 13 is not implemented.

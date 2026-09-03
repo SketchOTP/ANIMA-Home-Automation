@@ -33,8 +33,10 @@ through the existing Phase 9 coordinator. Phase 13 is unauthorized.
 - Fresh local validation and supporting H4/H5/isolated-HA/restricted-content
   targets pass. The historical H5T task `FAILED / ValueError` is preserved;
   current H5 Core task mutation passes after the bounded correction.
-- Publication and exact hosted CI remain required before this checkpoint can
-  be handed back to the Architect. Phase 12 is not accepted.
+- Implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d` is
+  published and hosted CI `33746353829` passed on that exact SHA. The governed
+  closure checkpoint is the subsequent governance commit; Phase 12 is not
+  accepted.
 
 ## Prior closure history
 
@@ -58,11 +60,11 @@ The repository's former H5 pointer below is retained as historical context only:
 - Fresh validation passed: `uv sync --locked --dev`, `scripts/validate.sh` (168 Python tests, Ruff, strict mypy, OPA 7/7), package sdist/wheel, frontend unit tests, TypeScript/Vite build, Playwright (11 passed/10 skipped across desktop/tablet/phone), migration repeat, H4/H5 Core targets, isolated-HA target, restricted-content target, `git diff --check`, public-safety review, and hosted Docker UI health.
 - Phase 11 active providers remain Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy. Walmart and Best Buy remain deferred historical candidates; no provider gate is silently substituted.
 
-### H5 evidence and publication state
+### H5 evidence and publication state (historical)
 
 - H5 implementation/evidence sequence: `2bc175852afc4003176f9be910f70618d8a1b827`, `aa0f24e12577dc536fb6cecf331aae6544ea3c94`, `e6ab72618ee5fdf2aebaaadaf83a9ebbb4adb485`, `5882d9e0047b8d07d7f5d45b5081a59d3340fbf3`, and `800d8cf4a183ce0e7548545182ed09f0687ad98f`. Hosted CI `33696481738` passed on the exact current head and published artifact `phase12-h5-evidence-800d8cf4a183ce0e7548545182ed09f0687ad98f`, artifact ID `9872060277`, ZIP digest `33e32d1966462416f27b1fec109cfac7097de2d15dac0f5e8086a580ce31a383`.
 - H5 deterministic Core evidence proves real `create_app()` PostgreSQL/OPA/Graph/Truth/Journal/Attention/Context/AgentRuntime composition, original session reuse across reconstruction, post-restart task mutation, external audit digest redaction, deterministic provider degraded/recovery states, restricted live response with zero PostgreSQL sentinel occurrences, and the reused isolated-HA API path. Display-mode CSS now produces measured wall/tablet/phone/desktop geometry differences.
-- H5 is not complete: hosted browser coverage remains the pre-existing functional/smoke matrix and does not independently run browser-visible denial, provider recovery, restricted-content reload/storage, process restart/SSE with the same browser session, or browser-visible isolated-HA outcomes. These are explicit `NOT RUN`/`UNSUPPORTED BY CURRENT TARGET` evidence limits. Status remains `CONTINUE — IMPLEMENTATION/EVIDENCE PARTIAL; PENDING ARCHITECT ACCEPTANCE`.
+- H5 was not complete: hosted browser coverage remained the pre-existing functional/smoke matrix and did not independently run browser-visible denial, provider recovery, restricted-content reload/storage, process restart/SSE with the same browser session, or browser-visible isolated-HA outcomes. These are preserved `NOT RUN`/`UNSUPPORTED BY CURRENT TARGET` limits; H5U supersedes this work unit for the current continuation.
 - The governance/CI reliability follow-up is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact head after the workflow was bounded to wait for healthy PostgreSQL/OPA containers before migration. This is publication/CI evidence only and does not close the unrun browser journeys.
 
 ### H4 evidence and publication state
@@ -164,9 +166,9 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Current blockers
 
-- Phase 12 implementation checkpoint `37116b03c65bfac54a5261f30160e9030aa6011c` is published and hosted CI `33671817841` passed on that exact SHA. The final governed checkpoint is the closure commit containing this record; its exact SHA and hosted CI are recorded in the final Notion readback.
+- H5U implementation is published at `dbb4720882b25ad1d840c2c270191227f0c4ea1d` with exact-head hosted CI `33746353829` passed. The final governed closure commit and its exact-head CI are the remaining publication records for this work unit.
 - Real Home Assistant OAuth commissioning, physical-home behavior, production TLS, native ARM64/Pi execution, and live Luna credentials remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with only a scripted model adapter and reports HA as an explicit commissioning gate.
-- Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
+- Phase 12 remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` for the H5U implementation/evidence boundary; Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
 
 ## Latest accepted evidence
 
@@ -193,7 +195,11 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-FINAL-UX-AUTHORITY-ACCEPTANCE-CLOSURE-014H3` after the final governed checkpoint. Evidence covers role-derived policy context, browser-bound OAuth state, Core-routed conversation/task/calendar/control paths, PostgreSQL UI preferences, truthful capability health, browser privacy, and responsive screenshots. Phase 13 remains unauthorized.
+Review `ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U` after
+the final governed checkpoint and exact-head CI. Evidence covers durable exact
+intent, authenticated single-use approval/rejection, same-episode continuation,
+PostgreSQL persistence, and the existing Phase 12 regression boundary. Phase
+13 remains unauthorized.
 
 ## Phase 12 publication state — historical 014H checkpoint
 

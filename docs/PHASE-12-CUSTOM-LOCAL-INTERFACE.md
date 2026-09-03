@@ -1,6 +1,7 @@
 # Phase 12 — Custom Whole-Home Interface
 
-Status: `CONTINUE — H5 EVIDENCE CLOSURE INCOMPLETE; PENDING ARCHITECT ACCEPTANCE`.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE` for the H5U confirmation
+continuation; this document does not self-accept Phase 12.
 
 H5 current checkpoint: `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI
 `33696481738` passed on that exact SHA. The hosted job published artifact
@@ -17,6 +18,13 @@ outcomes remain `NOT RUN` acceptance evidence. Phase 12 remains `CONTINUE`; this
 document does not promote it to Architect accepted.
 
 The latest governance/CI reliability checkpoint is `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA. Its bounded workflow fix waits for healthy PostgreSQL/OPA containers before migration. This does not promote the unrun browser journeys to completed evidence.
+
+H5U implementation checkpoint: `dbb4720882b25ad1d840c2c270191227f0c4ea1d`;
+hosted CI `33746353829` passed on that exact SHA. H5U adds durable exact-intent
+confirmation continuation, authenticated single-use approval/rejection,
+same-episode runtime resumption, and PostgreSQL evidence. The final governed
+checkpoint and exact CI are recorded in the Authority/Notion readback after
+the closure commit. Phase 13 remains unauthorized.
 
 H4 implementation head: `9e12f6e295b52ec382c1952a21a1a95287100740`; hosted CI
 `33686351783` passed on that exact SHA. The later governance checkpoint is

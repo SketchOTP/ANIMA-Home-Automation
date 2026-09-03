@@ -12,10 +12,10 @@
 
 - Current stage: PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5U DURABLE CONFIRMATION CONTINUATION; CONTINUE
 - Active directive: ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U — close durable exact-intent approval/rejection continuation and final Phase 12 correctness evidence
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/`; prior H5/H5R/H5S/H5T packets remain preserved
+- Active task packet: none; H5U is the current closure record at `.agent/tasks/completed/ANIMA-HA-P12-CONFIRMATION-CONTINUATION-FINAL-ACCEPTANCE-014H5U/`, and prior H5/H5R/H5S/H5T packets are preserved as completed historical work units
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
-- Last completed outcome: H5 implementation/evidence checkpoint `800d8cf4a183ce0e7548545182ed09f0687ad98f`; hosted CI `33696481738` passed on that exact SHA. Governance/CI reliability checkpoint `828230a73d3c9097bab448192747a3f6786c0d4f`; hosted CI `33697593173` passed on that exact SHA and published the H5 evidence artifact.
-- Last state sync: 2026-09-03; H5U is the active bounded correctness continuation. Phase 12 remains unaccepted and Phase 13 remains unauthorized.
+- Last completed outcome: H5U implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d`; hosted CI `33746353829` passed on that exact SHA. The governed closure checkpoint is the subsequent governance commit and exact-head CI.
+- Last state sync: 2026-09-03; H5U implementation/evidence is complete pending Architect acceptance. Phase 12 remains unaccepted and Phase 13 remains unauthorized.
 
 ## Current qualification result
 
