@@ -15,6 +15,7 @@ from anima_ha.action import (
     InMemoryActionStore,
     InMemoryPendingApprovalStore,
     InMemoryResourceLocker,
+    PendingApprovalStatus,
     TruthSnapshot,
 )
 from anima_ha.agent import (
@@ -575,6 +576,7 @@ def test_real_agent_path_rejects_manual_change_against_system_owned_baseline() -
         policy_context=baseline,
         action_refresher=lambda resources: state_after_manual_change,
     )
+    store = InMemoryEpisodeStore()
     agent = AgentRuntime(
         ScriptedCodexAdapter(
             [
@@ -591,7 +593,7 @@ def test_real_agent_path_rejects_manual_change_against_system_owned_baseline() -
             ]
         ),
         provider_gateway,
-        InMemoryEpisodeStore(),
+        store,
         action_executor=coordinator,
     )
     agent.run(episode_request)
@@ -633,6 +635,7 @@ def test_agent_confirmation_continues_same_episode_without_replaying_tool() -> N
         baseline,
         action_refresher=packet_request.action_refresher,
     )
+    store = InMemoryEpisodeStore()
     adapter = ScriptedCodexAdapter(
         [
             CodexTurnResult(
@@ -650,12 +653,17 @@ def test_agent_confirmation_continues_same_episode_without_replaying_tool() -> N
     agent = AgentRuntime(
         adapter,
         provider_gateway,
-        InMemoryEpisodeStore(),
+        store,
         action_executor=coordinator,
     )
     waiting = agent.run(packet_request)
     assert waiting.episode.status == EpisodeStatus.WAITING_CONFIRMATION
     approval = pending.list_for(HOUSEHOLD_ID, principal)[0]
+    interruption = store.get_continuation(waiting.episode.episode_id, approval.approval_id)
+    assert interruption is not None
+    assert interruption["continuation_status"] == "PENDING_RESOLUTION"
+    assert interruption["tool_catalogue"][0]["tool_id"] == descriptor.tool_id
+    assert interruption["tool_catalogue_digest"]
     resumed = agent.resume_confirmation(
         approval.approval_id,
         identity=IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
@@ -1088,3 +1096,73 @@ def test_unrestricted_provider_result_and_turn_remain_durable() -> None:
     assert store.turns[0]["result"] is not None
     assert store.tool_requests[0]["sanitized_result"]["result"]["answer"] == "weather"
     assert gateway.calls
+
+
+def test_resume_preflight_missing_context_preserves_pending_approval() -> None:
+    descriptor = action_tool()
+    principal = uuid4()
+    baseline = PolicyContext(truth=(TruthPolicyContext("power", "KNOWN", "off"),))
+    pending = InMemoryPendingApprovalStore()
+    gateway = Gateway()
+    coordinator = ActionExecutionCoordinator(
+        gateway,
+        InMemoryActionStore(),
+        InMemoryResourceLocker(),
+        pending_approvals=pending,
+    )
+    packet_request = request(
+        (descriptor,),
+        policy_context=baseline,
+        action_refresher=lambda resources: TruthSnapshot(
+            {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
+        ),
+    )
+    packet_request = EpisodeRequest(
+        packet_request.trigger_id,
+        packet_request.context_packet_id,
+        packet_request.household_id,
+        packet_request.context_packet,
+        packet_request.tools,
+        IdentityContext(HOUSEHOLD_ID, principal, Assurance.AUTHENTICATED),
+        PolicyService(ConfirmationEvaluator()),
+        baseline,
+        action_refresher=packet_request.action_refresher,
+    )
+    store = InMemoryEpisodeStore()
+    agent = AgentRuntime(
+        ScriptedCodexAdapter(
+            [
+                CodexTurnResult(
+                    ToolRequestDecision(
+                        descriptor.tool_id,
+                        {"resource_id": str(uuid4()), "desired_on": True},
+                    ),
+                    TokenUsage(),
+                    1.0,
+                    (),
+                )
+            ]
+        ),
+        gateway,
+        store,
+        action_executor=coordinator,
+    )
+    waiting = agent.run(packet_request)
+    approval = pending.list_for(HOUSEHOLD_ID, principal)[0]
+    store.context_packets.pop(waiting.episode.episode_id, None)
+    assert (
+        agent.resume_confirmation(
+            approval.approval_id,
+            identity=packet_request.identity,
+            policy_context=baseline,
+            tool_resolver=lambda tool_id: descriptor,
+            tools=(descriptor,),
+            policy_service=PolicyService(AllowEvaluator()),
+            action_refresher=packet_request.action_refresher,
+        )
+        is None
+    )
+    preserved = pending.get(approval.approval_id)
+    assert preserved is not None
+    assert preserved.status == PendingApprovalStatus.PENDING
+    assert gateway.calls == []

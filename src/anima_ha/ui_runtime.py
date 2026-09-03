@@ -603,7 +603,9 @@ def build_postgres_core(
         plugins.enable(plugin_id)
     if secrets.get("NTFY_TOPIC"):
         manifest, plugin_runtime = external_plugin(
-            "anima.external.notifications", audit_sink=ExternalAuditJournalSink(journal)
+            "anima.external.notifications",
+            audit_sink=ExternalAuditJournalSink(journal),
+            transport=external_transport,
         )
         plugins.register(manifest, NativeRuntime(plugin_runtime))
         plugins.enable(manifest.plugin_id)

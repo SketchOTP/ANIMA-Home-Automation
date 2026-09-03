@@ -18,7 +18,7 @@ import threading
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, BinaryIO, Protocol
@@ -335,6 +335,7 @@ class AgentEpisode:
     response_text: str = ""
     failure_class: str | None = None
     restricted_content_seen: bool = False
+    active_runtime_ms: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -395,6 +396,33 @@ class EpisodeStore(Protocol):
 
     def load_transcript(self, episode_id: UUID) -> list[dict[str, Any]]: ...
 
+    def get_continuation(self, episode_id: UUID, approval_id: UUID) -> dict[str, Any] | None: ...
+
+    def record_interruption(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        transcript_digest: str,
+        tool_catalogue: list[dict[str, Any]],
+        runtime_identity: dict[str, Any],
+    ) -> None: ...
+
+    def claim_continuation(
+        self, episode_id: UUID, approval_id: UUID, owner: str, lease_seconds: int = 120
+    ) -> bool: ...
+
+    def release_continuation(self, episode_id: UUID, approval_id: UUID, owner: str) -> None: ...
+
+    def transition_continuation(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        owner: str,
+        status: str,
+        model_state: str,
+    ) -> bool: ...
+
     def record_continuation_result(
         self,
         episode_id: UUID,
@@ -402,6 +430,7 @@ class EpisodeStore(Protocol):
         request_number: int,
         result: dict[str, Any],
         transcript_digest: str,
+        owner: str,
     ) -> None: ...
 
     def record_turn(
@@ -440,6 +469,7 @@ class EpisodeStore(Protocol):
         usage: TokenUsage,
         response_text: str,
         failure_class: str | None,
+        active_runtime_ms: int = 0,
     ) -> AgentEpisode: ...
 
 
@@ -453,6 +483,27 @@ def canonical_json(value: Any) -> str:
 
 def digest_json(value: Any) -> str:
     return hashlib.sha256(canonical_json(value).encode()).hexdigest()
+
+
+def tool_catalogue_projection(tools: Sequence[ToolDescriptor]) -> list[dict[str, Any]]:
+    """Persist only the bounded authority identity of an episode's tools."""
+    return [
+        {
+            "tool_id": tool.tool_id,
+            "plugin_id": tool.plugin_id,
+            "capability_id": tool.capability_id,
+            "version": tool.version,
+            "schema_digest": digest_json(tool.input_schema),
+            "risk_class": tool.risk_class,
+            "read_only": tool.read_only,
+            "execution_boundary": (
+                tool.execution_boundary.value if tool.execution_boundary is not None else None
+            ),
+            "verification_requirement": tool.verification_requirement,
+            "available": tool.availability,
+        }
+        for tool in sorted(tools, key=lambda item: item.tool_id)
+    ]
 
 
 def _sensitive_key(key: object) -> bool:
@@ -1007,6 +1058,7 @@ class InMemoryEpisodeStore:
         self.tool_requests: list[dict[str, Any]] = []
         self.context_packets: dict[UUID, dict[str, Any]] = {}
         self.continuation_results: list[dict[str, Any]] = []
+        self._continuation_lock = threading.RLock()
 
     def claim(
         self,
@@ -1075,6 +1127,8 @@ class InMemoryEpisodeStore:
         for item in self.continuation_results:
             if item["episode_id"] != episode_id:
                 continue
+            if not item.get("result"):
+                continue
             events.append(
                 (
                     (int(item["request_number"]), 2, 0),
@@ -1083,6 +1137,111 @@ class InMemoryEpisodeStore:
             )
         return [event for _, event in sorted(events, key=lambda item: item[0])]
 
+    def get_continuation(self, episode_id: UUID, approval_id: UUID) -> dict[str, Any] | None:
+        with self._continuation_lock:
+            for item in self.continuation_results:
+                if item["episode_id"] == episode_id and item["approval_id"] == approval_id:
+                    return dict(item)
+        return None
+
+    def record_interruption(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        transcript_digest: str,
+        tool_catalogue: list[dict[str, Any]],
+        runtime_identity: dict[str, Any],
+    ) -> None:
+        with self._continuation_lock:
+            if self.get_continuation(episode_id, approval_id) is not None:
+                return
+            self.continuation_results.append(
+                {
+                    "episode_id": episode_id,
+                    "approval_id": approval_id,
+                    "request_number": request_number,
+                    "result": {},
+                    "transcript_digest": transcript_digest,
+                    "transcript_digest_before": transcript_digest,
+                    "tool_catalogue": list(tool_catalogue),
+                    "tool_catalogue_digest": digest_json(tool_catalogue),
+                    "runtime_identity": dict(runtime_identity),
+                    "continuation_status": "PENDING_RESOLUTION",
+                    "fencing_generation": 0,
+                    "claim_owner": None,
+                    "claimed_at": None,
+                    "claim_expires_at": None,
+                    "model_continuation_state": "NOT_STARTED",
+                }
+            )
+
+    def claim_continuation(
+        self, episode_id: UUID, approval_id: UUID, owner: str, lease_seconds: int = 120
+    ) -> bool:
+        with self._continuation_lock:
+            item = self.get_continuation(episode_id, approval_id)
+            now = datetime.now(UTC)
+            if item is None or (
+                item.get("continuation_status") not in {"PENDING_RESOLUTION", "ACTION_RESOLVED"}
+                and not (
+                    item.get("continuation_status") in {"CLAIMED", "MODEL_RESUMING"}
+                    and isinstance(item.get("claim_expires_at"), datetime)
+                    and item["claim_expires_at"] <= now
+                )
+            ):
+                return False
+            for existing in self.continuation_results:
+                if existing["episode_id"] == episode_id and existing["approval_id"] == approval_id:
+                    if (
+                        existing.get("continuation_status") in {"ACTION_RESOLVED", "MODEL_RESUMING"}
+                        and existing.get("claim_owner") is not None
+                    ):
+                        return False
+                    existing["continuation_status"] = "CLAIMED"
+                    existing["claim_owner"] = owner
+                    existing["claim_expires_at"] = now + timedelta(seconds=lease_seconds)
+                    existing["claimed_at"] = now
+                    existing["fencing_generation"] = int(existing.get("fencing_generation", 0)) + 1
+                    return True
+        return False
+
+    def release_continuation(self, episode_id: UUID, approval_id: UUID, owner: str) -> None:
+        with self._continuation_lock:
+            for item in self.continuation_results:
+                if (
+                    item["episode_id"] == episode_id
+                    and item["approval_id"] == approval_id
+                    and item.get("claim_owner") == owner
+                    and item.get("continuation_status")
+                    in {"CLAIMED", "ACTION_RESOLVED", "MODEL_RESUMING"}
+                    and item.get("continuation_status") == "CLAIMED"
+                ):
+                    item["continuation_status"] = "PENDING_RESOLUTION"
+                    item["claim_owner"] = None
+                    item["claim_expires_at"] = None
+                    return
+
+    def transition_continuation(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        owner: str,
+        status: str,
+        model_state: str,
+    ) -> bool:
+        with self._continuation_lock:
+            for item in self.continuation_results:
+                if (
+                    item["episode_id"] == episode_id
+                    and item["approval_id"] == approval_id
+                    and item.get("claim_owner") == owner
+                ):
+                    item["continuation_status"] = status
+                    item["model_continuation_state"] = model_state
+                    return True
+        return False
+
     def record_continuation_result(
         self,
         episode_id: UUID,
@@ -1090,18 +1249,26 @@ class InMemoryEpisodeStore:
         request_number: int,
         result: dict[str, Any],
         transcript_digest: str,
+        owner: str,
     ) -> None:
-        if any(item["approval_id"] == approval_id for item in self.continuation_results):
-            return
-        self.continuation_results.append(
-            {
-                "episode_id": episode_id,
-                "approval_id": approval_id,
-                "request_number": request_number,
-                "result": dict(result),
-                "transcript_digest": transcript_digest,
-            }
-        )
+        with self._continuation_lock:
+            for item in self.continuation_results:
+                if item["approval_id"] == approval_id:
+                    if (
+                        item.get("continuation_status") != "CLAIMED"
+                        or item.get("claim_owner") != owner
+                    ):
+                        raise RuntimeError("continuation claim is no longer owned")
+                    item.update(
+                        result=dict(result),
+                        transcript_digest=transcript_digest,
+                        continuation_status="ACTION_RESOLVED",
+                        model_continuation_state="NOT_STARTED",
+                        claim_owner=None,
+                        claim_expires_at=None,
+                    )
+                    return
+            raise RuntimeError("continuation record disappeared before result insertion")
 
     def record_turn(
         self,
@@ -1168,6 +1335,7 @@ class InMemoryEpisodeStore:
         usage: TokenUsage,
         response_text: str,
         failure_class: str | None,
+        active_runtime_ms: int = 0,
     ) -> AgentEpisode:
         old = self.episodes[episode_id]
         episode = AgentEpisode(
@@ -1191,6 +1359,7 @@ class InMemoryEpisodeStore:
             response_text,
             failure_class,
             old.restricted_content_seen,
+            old.active_runtime_ms + active_runtime_ms,
         )
         self.episodes[episode_id] = episode
         return episode
@@ -1234,6 +1403,7 @@ class PostgresEpisodeStore:
             str(row["response_text"] or ""),
             str(row["failure_class"]) if row["failure_class"] else None,
             bool((row.get("metadata") or {}).get("restricted_content_seen", False)),
+            int(row.get("active_runtime_ms") or 0),
         )
 
     def claim(
@@ -1354,8 +1524,117 @@ class PostgresEpisodeStore:
                 value = row["result"]
                 if isinstance(value, str):
                     value = json.loads(value)
+                if not value:
+                    continue
                 events.append(((int(row["request_number"]), 2, 0), {"tool_result": value}))
         return [event for _, event in sorted(events, key=lambda item: item[0])]
+
+    def get_continuation(self, episode_id: UUID, approval_id: UUID) -> dict[str, Any] | None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM anima_agent_continuations WHERE episode_id=%s AND approval_id=%s",
+                (episode_id, approval_id),
+            )
+            row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def record_interruption(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        request_number: int,
+        transcript_digest: str,
+        tool_catalogue: list[dict[str, Any]],
+        runtime_identity: dict[str, Any],
+    ) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_agent_continuations (
+                    episode_id, approval_id, request_number, result, transcript_digest,
+                    continuation_status, schema_version, fencing_generation,
+                    transcript_digest_before, tool_catalogue, tool_catalogue_digest,
+                    runtime_identity, model_continuation_state
+                ) VALUES (
+                    %s,%s,%s,'{}'::jsonb,%s,'PENDING_RESOLUTION',1,0,%s,%s::jsonb,%s,
+                    %s::jsonb,'NOT_STARTED'
+                )
+                ON CONFLICT (approval_id) DO NOTHING
+                """,
+                (
+                    episode_id,
+                    approval_id,
+                    request_number,
+                    transcript_digest,
+                    transcript_digest,
+                    canonical_json(tool_catalogue),
+                    digest_json(tool_catalogue),
+                    canonical_json(runtime_identity),
+                ),
+            )
+            connection.commit()
+
+    def claim_continuation(
+        self, episode_id: UUID, approval_id: UUID, owner: str, lease_seconds: int = 120
+    ) -> bool:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_agent_continuations
+                SET continuation_status='CLAIMED', claim_owner=%s, claimed_at=now(),
+                    claim_expires_at=now() + (%s * interval '1 second'),
+                    fencing_generation=fencing_generation + 1,
+                    last_transition_at=now()
+                WHERE episode_id=%s AND approval_id=%s
+                  AND (
+                    continuation_status='PENDING_RESOLUTION'
+                    OR (continuation_status='ACTION_RESOLVED' AND claim_owner IS NULL)
+                    OR (continuation_status IN ('CLAIMED', 'MODEL_RESUMING')
+                        AND claim_expires_at <= now())
+                  )
+                """,
+                (owner, lease_seconds, episode_id, approval_id),
+            )
+            claimed = cursor.rowcount == 1
+            connection.commit()
+        return claimed
+
+    def release_continuation(self, episode_id: UUID, approval_id: UUID, owner: str) -> None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_agent_continuations
+                SET continuation_status='PENDING_RESOLUTION', claim_owner=NULL, claimed_at=NULL,
+                    claim_expires_at=NULL, last_transition_at=now()
+                WHERE episode_id=%s AND approval_id=%s
+                  AND continuation_status='CLAIMED' AND claim_owner=%s
+                """,
+                (episode_id, approval_id, owner),
+            )
+            connection.commit()
+
+    def transition_continuation(
+        self,
+        episode_id: UUID,
+        approval_id: UUID,
+        owner: str,
+        status: str,
+        model_state: str,
+    ) -> bool:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_agent_continuations
+                SET continuation_status=%s, model_continuation_state=%s,
+                    last_transition_at=now()
+                WHERE episode_id=%s AND approval_id=%s AND claim_owner=%s
+                  AND continuation_status IN ('CLAIMED', 'ACTION_RESOLVED', 'MODEL_RESUMING')
+                """,
+                (status, model_state, episode_id, approval_id, owner),
+            )
+            changed = cursor.rowcount == 1
+            connection.commit()
+        return changed
 
     def record_continuation_result(
         self,
@@ -1364,23 +1643,35 @@ class PostgresEpisodeStore:
         request_number: int,
         result: dict[str, Any],
         transcript_digest: str,
+        owner: str,
     ) -> None:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO anima_agent_continuations
-                    (episode_id, approval_id, request_number, result, transcript_digest)
-                VALUES (%s,%s,%s,%s::jsonb,%s)
-                ON CONFLICT (approval_id) DO NOTHING
+                UPDATE anima_agent_continuations
+                SET result=%s::jsonb, transcript_digest=%s,
+                    continuation_status=%s, action_status=%s,
+                    verification_status=%s, action_dispatch_state=%s,
+                    last_transition_at=now(), claim_expires_at=NULL,
+                    model_continuation_state='NOT_STARTED', claim_owner=NULL
+                WHERE episode_id=%s AND approval_id=%s
+                  AND continuation_status='CLAIMED' AND claim_owner=%s
                 """,
                 (
-                    episode_id,
-                    approval_id,
-                    request_number,
                     canonical_json(result),
                     transcript_digest,
+                    "ACTION_RESOLVED",
+                    result.get("action_status"),
+                    result.get("verification_status"),
+                    result.get("dispatch_state"),
+                    episode_id,
+                    approval_id,
+                    owner,
                 ),
             )
+            if cursor.rowcount != 1:
+                connection.rollback()
+                raise RuntimeError("continuation claim is no longer owned")
             connection.commit()
 
     def record_turn(
@@ -1488,6 +1779,7 @@ class PostgresEpisodeStore:
         usage: TokenUsage,
         response_text: str,
         failure_class: str | None,
+        active_runtime_ms: int = 0,
     ) -> AgentEpisode:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
@@ -1495,7 +1787,8 @@ class PostgresEpisodeStore:
                 UPDATE anima_agent_episodes SET status=%s, completed_at=%s,
                     codex_turn_count=%s, tool_request_count=%s, input_tokens=%s,
                     cached_input_tokens=%s, output_tokens=%s, reasoning_output_tokens=%s,
-                    final_disposition=%s, response_text=%s, failure_class=%s
+                    final_disposition=%s, response_text=%s, failure_class=%s,
+                    active_runtime_ms=active_runtime_ms + %s
                 WHERE episode_id=%s RETURNING *
                 """,
                 (
@@ -1510,6 +1803,7 @@ class PostgresEpisodeStore:
                     disposition.value,
                     response_text,
                     failure_class,
+                    active_runtime_ms,
                     episode_id,
                 ),
             )
@@ -1563,6 +1857,7 @@ class AgentRuntime:
         self.limits = limits or EpisodeLimits()
         self.journal = journal
         self.action_executor = action_executor
+        self._active_runs: dict[UUID, float] = {}
 
     def resume_confirmation(
         self,
@@ -1577,33 +1872,154 @@ class AgentRuntime:
         action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None,
         action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None,
     ) -> EpisodeRunResult | None:
-        """Resolve one approval, append its result, and resume the same model loop."""
+        """Preflight, fence, resolve one approval, and resume the same model loop."""
         if self.action_executor is None or self.action_executor.pending_approvals is None:
             return None
         pending = self.action_executor.pending_approvals.get(approval_id)
-        if pending is None or pending.episode_id is None or identity.principal_id is None:
+        if (
+            pending is None
+            or pending.episode_id is None
+            or identity.principal_id is None
+            or pending.expires_at <= datetime.now(UTC)
+        ):
             return None
         tool = tool_resolver(pending.tool_id)
         if tool is None:
             return None
-        execution = self.action_executor.approve_pending(
-            approval_id,
-            household_id=identity.household_id,
-            principal_id=identity.principal_id,
-            decision=decision,
-            tool=tool,
-            policy_service=policy_service,
-            policy_context=policy_context,
-            refresher=action_refresher,
-            verifier=action_verifier,
-            origin=RequestOrigin.DIRECT_USER,
-        )
-        if execution is None:
-            return None
         episode = self.store.get(pending.episode_id)
-        if episode is None:
+        continuation = self.store.get_continuation(pending.episode_id, approval_id)
+        continuation_status = (
+            str(continuation.get("continuation_status")) if continuation is not None else None
+        )
+        claim_expiry = continuation.get("claim_expires_at") if continuation else None
+        continuation_reclaimable = continuation_status in {
+            None,
+            "PENDING_RESOLUTION",
+            "ACTION_RESOLVED",
+        } or (
+            continuation_status in {"CLAIMED", "MODEL_RESUMING"}
+            and isinstance(claim_expiry, datetime)
+            and claim_expiry <= datetime.now(UTC)
+        )
+        if (
+            episode is None
+            or episode.status != EpisodeStatus.WAITING_CONFIRMATION
+            or episode.completed_at is not None
+            or continuation is None
+            or not continuation_reclaimable
+        ):
             return None
-        action_status = execution.record.status
+        packet = self.store.load_context_packet(episode.episode_id)
+        transcript = self.store.load_transcript(episode.episode_id)
+        packet_digest = str(packet.get("digest") or digest_json(packet)) if packet else None
+        if packet is None or packet_digest != episode.context_digest:
+            return None
+        expected_transcript_digest = (
+            continuation.get("transcript_digest")
+            if continuation_status in {"ACTION_RESOLVED", "MODEL_RESUMING"}
+            and continuation.get("result")
+            else continuation.get("transcript_digest_before")
+        )
+        if expected_transcript_digest and digest_json(transcript) != str(
+            expected_transcript_digest
+        ):
+            return None
+        tool_result_count = sum(
+            1
+            for item in transcript
+            if isinstance(item.get("tool_result"), dict)
+            and item["tool_result"].get("tool_id") == pending.tool_id
+        )
+        if tool_result_count != 1:
+            return None
+        original_catalogue = continuation.get("tool_catalogue") or []
+        if not isinstance(original_catalogue, list) or not original_catalogue:
+            return None
+        current_tools = {item.tool_id: item for item in (tools or (tool,))}
+        allowed_tools: list[ToolDescriptor] = []
+        for raw in original_catalogue:
+            if not isinstance(raw, dict):
+                return None
+            candidate = current_tools.get(str(raw.get("tool_id")))
+            if candidate is None or not candidate.availability:
+                continue
+            candidate_boundary = (
+                candidate.execution_boundary.value
+                if candidate.execution_boundary is not None
+                else None
+            )
+            compatible = (
+                candidate.version == str(raw.get("version"))
+                and candidate.plugin_id == str(raw.get("plugin_id"))
+                and candidate.capability_id == str(raw.get("capability_id"))
+                and candidate.risk_class == str(raw.get("risk_class"))
+                and candidate.read_only == bool(raw.get("read_only"))
+                and candidate_boundary == raw.get("execution_boundary")
+                and candidate.verification_requirement == str(raw.get("verification_requirement"))
+                and digest_json(candidate.input_schema) == str(raw.get("schema_digest"))
+            )
+            if not compatible:
+                if candidate.tool_id == pending.tool_id:
+                    return None
+                continue
+            allowed_tools.append(candidate)
+        if not any(item.tool_id == pending.tool_id for item in allowed_tools):
+            return None
+        runtime_identity = continuation.get("runtime_identity") or {}
+        expected_runtime = {
+            "model": self.adapter.model,
+            "reasoning_effort": self.adapter.reasoning_effort,
+            "codex_version": self.adapter.codex_version,
+            "instruction_version": INSTRUCTION_VERSION,
+        }
+        if runtime_identity and any(
+            str(runtime_identity.get(key)) != value for key, value in expected_runtime.items()
+        ):
+            return None
+        owner = f"agent-resume:{uuid4()}"
+        if not self.store.claim_continuation(episode.episode_id, approval_id, owner):
+            return None
+        self._audit(
+            episode,
+            "agent.continuation.claimed",
+            {
+                "approval_id": str(approval_id),
+                "original_catalogue_digest": str(continuation.get("tool_catalogue_digest")),
+                "resumed_catalogue_digest": digest_json(tool_catalogue_projection(allowed_tools)),
+            },
+        )
+        stored_result = (
+            dict(continuation["result"])
+            if continuation_status == "ACTION_RESOLVED"
+            and isinstance(continuation.get("result"), dict)
+            and continuation.get("result")
+            else None
+        )
+        execution = None
+        if stored_result is None:
+            execution = self.action_executor.approve_pending(
+                approval_id,
+                household_id=identity.household_id,
+                principal_id=identity.principal_id,
+                decision=decision,
+                tool=tool,
+                policy_service=policy_service,
+                policy_context=policy_context,
+                refresher=action_refresher,
+                verifier=action_verifier,
+                origin=RequestOrigin.DIRECT_USER,
+                allow_recovery=True,
+            )
+            if execution is None:
+                self.store.release_continuation(episode.episode_id, approval_id, owner)
+                return None
+        action_status = (
+            ActionStatus(str(stored_result["action_status"]))
+            if stored_result is not None and stored_result.get("action_status")
+            else execution.record.status
+            if execution is not None
+            else ActionStatus.UNKNOWN_RESULT
+        )
         outcome = {
             ActionStatus.SUCCEEDED: InvocationOutcome.SUCCESS,
             ActionStatus.FAILED: InvocationOutcome.PLUGIN_ERROR,
@@ -1617,48 +2033,58 @@ class AgentRuntime:
             ActionStatus.PARTIAL: InvocationOutcome.UNKNOWN_RESULT,
             ActionStatus.RECOVERY_REQUIRED: InvocationOutcome.UNKNOWN_RESULT,
         }.get(action_status, InvocationOutcome.PLUGIN_ERROR)
-        resolved_result = {
-            "tool_id": pending.tool_id,
-            "action_id": str(pending.action_id),
-            "approval_id": str(approval_id),
-            "approval_status": "APPROVED" if decision.upper() == "APPROVE" else "REJECTED",
-            "action_status": action_status.value,
-            "outcome": outcome.value,
-            "verification_status": (
-                "VERIFIED" if action_status == ActionStatus.SUCCEEDED else action_status.value
-            ),
-            "dispatch_state": (
-                execution.invocation.dispatch_state.value
-                if execution.invocation is not None
-                else "BEFORE_DISPATCH"
-            ),
-            "detail": execution.record.detail,
-            "result": sanitize_value(execution.record.result),
-            "trust": "LOCAL_TRUSTED",
-            "approval_decision": decision.upper(),
-        }
-        transcript = self.store.load_transcript(episode.episode_id)
-        transcript.append({"tool_result": resolved_result})
-        transcript_digest = digest_json(transcript)
-        self.store.record_continuation_result(
-            episode.episode_id,
-            approval_id,
-            episode.tool_request_count,
-            resolved_result,
-            transcript_digest,
-        )
-        packet = self.store.load_context_packet(episode.episode_id)
-        if packet is None:
+        if stored_result is not None:
+            resolved_result = stored_result
+        else:
+            assert execution is not None
+            resolved_result = {
+                "tool_id": pending.tool_id,
+                "action_id": str(pending.action_id),
+                "approval_id": str(approval_id),
+                "approval_status": "APPROVED" if decision.upper() == "APPROVE" else "REJECTED",
+                "action_status": action_status.value,
+                "outcome": outcome.value,
+                "verification_status": (
+                    "VERIFIED" if action_status == ActionStatus.SUCCEEDED else action_status.value
+                ),
+                "dispatch_state": (
+                    execution.invocation.dispatch_state.value
+                    if execution.invocation is not None
+                    else "BEFORE_DISPATCH"
+                ),
+                "detail": execution.record.detail,
+                "result": sanitize_value(execution.record.result),
+                "trust": "LOCAL_TRUSTED",
+                "approval_decision": decision.upper(),
+            }
+        if stored_result is None:
+            transcript.append({"tool_result": resolved_result})
+            transcript_digest = digest_json(transcript)
+            self.store.record_continuation_result(
+                episode.episode_id,
+                approval_id,
+                episode.tool_request_count,
+                resolved_result,
+                transcript_digest,
+                owner,
+            )
+            # Result insertion releases the action-resolution fence. Reclaim
+            # it before beginning the resumed model turn.
+            if not self.store.claim_continuation(episode.episode_id, approval_id, owner):
+                return None
+        else:
+            if not transcript or transcript[-1].get("tool_result") != stored_result:
+                transcript.append({"tool_result": stored_result})
+        if not self.store.transition_continuation(
+            episode.episode_id, approval_id, owner, "MODEL_RESUMING", "RUNNING"
+        ):
             return None
-        current_tools = tuple(tools or (tool,))
-        # The caller may provide the complete current catalogue by binding the
-        # resolver to it; the pending tool is the fail-closed minimum.
         continuation_request = EpisodeRequest(
             trigger_id=episode.trigger_id,
             context_packet_id=episode.context_packet_id,
             household_id=episode.household_id,
             context_packet=packet,
-            tools=current_tools,
+            tools=tuple(allowed_tools),
             identity=identity,
             policy_service=policy_service,
             policy_context=policy_context,
@@ -1666,13 +2092,29 @@ class AgentRuntime:
             action_refresher=action_refresher,
             action_verifier=action_verifier,
         )
-        return self.run(
-            continuation_request,
-            _episode=episode,
-            _projection=project_context_packet(packet),
-            _transcript=transcript,
-            _any_tool_failure=action_status != ActionStatus.SUCCEEDED,
+        try:
+            resumed = self.run(
+                continuation_request,
+                _episode=episode,
+                _projection=project_context_packet(packet),
+                _transcript=transcript,
+                _any_tool_failure=action_status != ActionStatus.SUCCEEDED,
+            )
+        except Exception:
+            self.store.transition_continuation(
+                episode.episode_id, approval_id, owner, "RECOVERY_REQUIRED", "FAILED"
+            )
+            raise
+        continuation_status = {
+            EpisodeStatus.COMPLETED: "COMPLETED",
+            EpisodeStatus.NO_ACTION: "COMPLETED",
+            EpisodeStatus.WAITING_CONFIRMATION: "WAITING_CONFIRMATION",
+            EpisodeStatus.WAITING_STRONGER_AUTH: "WAITING_STRONGER_AUTH",
+        }.get(resumed.episode.status, "FAILED")
+        self.store.transition_continuation(
+            episode.episode_id, approval_id, owner, continuation_status, "COMPLETED"
         )
+        return resumed
 
     def _audit(self, episode: AgentEpisode, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
@@ -1703,6 +2145,11 @@ class AgentRuntime:
         response_text: str = "",
         failure_class: str | None = None,
     ) -> EpisodeRunResult:
+        active_started = self._active_runs.pop(episode.episode_id, time.monotonic())
+        active_runtime_ms = max(
+            0,
+            int((time.monotonic() - active_started) * 1000),
+        )
         durable_response = response_text
         live_response_text: str | None = None
         if episode.restricted_content_seen:
@@ -1726,6 +2173,7 @@ class AgentRuntime:
             usage=usage,
             response_text=durable_response,
             failure_class=failure_class,
+            active_runtime_ms=active_runtime_ms,
         )
         self._audit(
             finished,
@@ -1783,14 +2231,15 @@ class AgentRuntime:
                     "reasoning_effort": self.adapter.reasoning_effort,
                 },
             )
+        self._active_runs[episode.episode_id] = time.monotonic()
         if not self.adapter.check_auth():
             return self._finish(
                 episode,
                 status=EpisodeStatus.FAILED,
                 disposition=FinalDisposition.PROVIDER_UNAVAILABLE,
-                turn_count=0,
-                tool_count=0,
-                usage=TokenUsage(),
+                turn_count=episode.codex_turn_count,
+                tool_count=episode.tool_request_count,
+                usage=episode.usage,
                 failure_class="CODEX_CHATGPT_AUTH_UNAVAILABLE",
             )
         tools = tuple(tool for tool in request.tools if tool.availability)
@@ -1803,8 +2252,10 @@ class AgentRuntime:
         tool_count = episode.tool_request_count
         any_tool_failure = _any_tool_failure
         started_monotonic = time.monotonic()
+        prior_active_seconds = episode.active_runtime_ms / 1000.0
         while turn_count < self.limits.max_codex_turns:
-            elapsed = time.monotonic() - started_monotonic
+            segment_elapsed = time.monotonic() - started_monotonic
+            elapsed = prior_active_seconds + segment_elapsed
             if elapsed >= self.limits.wall_timeout_seconds:
                 return self._finish(
                     episode,
@@ -2131,6 +2582,23 @@ class AgentRuntime:
                 episode = replace(episode, restricted_content_seen=True)
                 self.store.mark_restricted_content(episode.episode_id)
             if result.outcome == InvocationOutcome.REQUIRE_CONFIRMATION:
+                approval_id = None
+                if isinstance(result.result, dict) and result.result.get("approval_id"):
+                    approval_id = UUID(str(result.result["approval_id"]))
+                if approval_id is not None:
+                    self.store.record_interruption(
+                        episode.episode_id,
+                        approval_id,
+                        tool_count,
+                        digest_json(transcript),
+                        tool_catalogue_projection(tools),
+                        {
+                            "model": self.adapter.model,
+                            "reasoning_effort": self.adapter.reasoning_effort,
+                            "codex_version": self.adapter.codex_version,
+                            "instruction_version": INSTRUCTION_VERSION,
+                        },
+                    )
                 return self._finish(
                     episode,
                     status=EpisodeStatus.WAITING_CONFIRMATION,

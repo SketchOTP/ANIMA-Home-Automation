@@ -66,10 +66,12 @@ class Gateway:
         )
         self.calls = 0
         self.contexts: list[Any] = []
+        self.action_intent_ids: list[UUID | None] = []
 
     def invoke(self, tool_id: str, arguments: dict[str, Any], **kwargs: Any) -> InvocationResult:
         self.calls += 1
         self.contexts.append(kwargs.get("execution_context"))
+        self.action_intent_ids.append(kwargs.get("action_intent_id"))
         return InvocationResult(
             self.outcome,
             tool_id,
@@ -229,6 +231,7 @@ def test_provider_idempotency_context_is_forwarded_without_model_arguments() -> 
     assert context.execution_id == action.action_id
     assert context.anima_idempotency_key == action.idempotency_key
     assert context.provider_idempotency_key == f"anima:{action.action_id}"
+    assert gateway.action_intent_ids == [action.action_intent_id]
     assert "provider_idempotency_key" not in action.arguments
 
 

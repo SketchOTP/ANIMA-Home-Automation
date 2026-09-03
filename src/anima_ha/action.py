@@ -1240,6 +1240,7 @@ class ActionGateway(Protocol):
         arguments: dict[str, Any],
         *,
         household_id: UUID,
+        action_intent_id: UUID | None = None,
         identity: IdentityContext,
         origin: RequestOrigin,
         resource_id: UUID | None = None,
@@ -1457,10 +1458,10 @@ class ActionExecutionCoordinator:
                 duplicate=True,
                 idempotency_conflict=True,
             )
-        if claim.duplicate and not (
-            claim.record.status == ActionStatus.REQUIRE_CONFIRMATION
-            and request.confirmation is not None
-        ):
+        if claim.duplicate and claim.record.status not in {
+            ActionStatus.REQUIRE_CONFIRMATION,
+            ActionStatus.PLANNED,
+        }:
             return ActionExecutionResult(claim.record, duplicate=True)
 
         self._audit(request, "action.started", {"tool_id": request.tool.tool_id})
@@ -1641,6 +1642,7 @@ class ActionExecutionCoordinator:
                     policy_context=context,
                     confirmation=request.confirmation,
                     execution_context=execution_context,
+                    action_intent_id=request.action_intent_id,
                 )
             except Exception as exc:
                 invocation = InvocationResult(
@@ -1785,23 +1787,43 @@ class ActionExecutionCoordinator:
         verifier: ActionVerifier | None = None,
         origin: RequestOrigin = RequestOrigin.DIRECT_USER,
         now: datetime | None = None,
+        allow_recovery: bool = False,
     ) -> ActionExecutionResult | None:
-        """Atomically claim an approval, then resume its exact action envelope.
+        """Resume an approval after the caller has completed continuation preflight.
 
-        The store consumes the challenge before this method re-runs current
-        identity, Truth, policy, and coordinator checks.  The local challenge
-        object is intentionally unconsumed only for that one in-process OPA
-        evaluation; the database claim is the single-use fence.
+        A durable APPROVED row is reusable only for recovery after a crash
+        between challenge consumption and action dispatch.  The action
+        idempotency record remains the dispatch fence in that window.
         """
         if self.pending_approvals is None:
             return None
         at = now or _now()
-        pending = self.pending_approvals.claim(
-            approval_id,
-            household_id=household_id,
-            principal_id=principal_id,
-            decision=decision,
-            now=at,
+        choice = decision.upper()
+        if choice not in {"APPROVE", "REJECT"}:
+            raise ValueError("approval decision must be APPROVE or REJECT")
+        existing = self.pending_approvals.get(approval_id)
+        recovering = existing is not None and existing.status in {
+            PendingApprovalStatus.APPROVED,
+            PendingApprovalStatus.REJECTED,
+        }
+        if recovering and not allow_recovery:
+            return None
+        pending = (
+            existing
+            if existing is not None
+            and existing.household_id == household_id
+            and existing.principal_id == principal_id
+            and (
+                (choice == "APPROVE" and existing.status == PendingApprovalStatus.APPROVED)
+                or (choice == "REJECT" and existing.status == PendingApprovalStatus.REJECTED)
+            )
+            else self.pending_approvals.claim(
+                approval_id,
+                household_id=household_id,
+                principal_id=principal_id,
+                decision=choice,
+                now=at,
+            )
         )
         if pending is None:
             return None

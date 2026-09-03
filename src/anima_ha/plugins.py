@@ -996,6 +996,7 @@ class PluginManager:
         arguments: dict[str, Any],
         *,
         household_id: UUID,
+        action_intent_id: UUID | None = None,
         identity: IdentityContext,
         origin: RequestOrigin = RequestOrigin.DIRECT_USER,
         resource_id: UUID | None = None,
@@ -1098,6 +1099,7 @@ class PluginManager:
             if policy_context is not None:
                 intent_kwargs["truth"] = policy_context.truth
             intent = ActionIntent.create(
+                action_intent_id=action_intent_id or uuid4(),
                 **intent_kwargs,
             )
             if intent.risk_class.value != tool.risk_class:

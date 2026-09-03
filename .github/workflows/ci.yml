@@ -110,6 +110,9 @@ jobs:
           npm run build
           npx playwright install --with-deps chromium webkit
           npm run e2e -- --reporter=html,line
+          ./node_modules/.bin/playwright test -c playwright.h5v.config.ts --reporter=html,line
+          cd ..
+          uv run --locked python scripts/verify_phase12_h5v_ledger.py | tee /tmp/anima-h5-evidence/phase12-h5v-ledger.json
       - name: Publish Phase 12 H5 evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4

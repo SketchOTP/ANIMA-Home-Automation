@@ -5,6 +5,7 @@ const opaUrl = process.env.ANIMA_E2E_OPA_URL ?? "http://127.0.0.1:18181";
 
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: ["**/h5v.spec.ts"],
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
