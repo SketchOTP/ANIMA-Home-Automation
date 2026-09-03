@@ -22,10 +22,12 @@ The current Notion SSOT records H5R as implemented-unverified: product surfaces 
   browser tab remain authenticated across candidate UI process PIDs `1059121`
   and `1073682`; post-restart bootstrap/home/settings/events refetched and
   persisted presentation state remained visible.
-- Result: `PARTIAL / CONTINUE`. Same-browser restart/refetch reached
-  `E3_TARGET_TESTED`; no-duplicate mutation proof was not established because
-  the bounded task attempt returned `FAILED / ValueError` with no matching
-  durable row. Browser cookie/storage inspection was intentionally not run.
+- Result: `PARTIAL / CONTINUE`. Same-browser restart/refetch and one bounded
+  settings mutation reached `E3_TARGET_TESTED`; settings persisted after the
+  second process restart with one logged PUT and no duplicate PUT. Live SSE
+  event delivery and durable-task duplicate accounting remain unproven; the
+  bounded task attempt returned `FAILED / ValueError` with no matching row.
+  Browser cookie/storage inspection was intentionally not run.
 
 ## H5S execution result — 2026-09-03
 

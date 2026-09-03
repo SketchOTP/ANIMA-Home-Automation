@@ -24,8 +24,13 @@ stopped and restarted. No new login or browser context was used.
 - `NOT RUN` — browser cookie/storage inspection was intentionally not
   performed; continuity is established by visible same-tab behavior and
   server/session evidence only.
-- `NOT RUN` — a successful bounded mutation followed by restart and exact
-  no-duplicate accounting. The attempted task test produced UI status
+- `PASSED / E3_TARGET_TESTED` — one bounded settings mutation returned visible
+  `SUCCEEDED` before the second restart. After process PID `1080604` was
+  replaced by the stopped candidate, the same tab still showed the persisted
+  `normal` text scale and authenticated UI; server logs show one settings PUT
+  and post-restart GET refetches, with no duplicate settings PUT.
+- `NOT RUN` — a durable task mutation followed by restart and exact task-row
+  duplicate accounting. The separate task attempt produced UI status
   `FAILED / ValueError` and no matching durable task row; it is retained as
   negative evidence rather than a mutation pass.
 - `PASSED` — candidate process was stopped after evidence capture; the
@@ -33,8 +38,9 @@ stopped and restarted. No new login or browser context was used.
 
 ## Evidence boundary and remaining gap
 
-Same-browser post-restart continuity/refetch evidence is `E3_TARGET_TESTED`.
-The stronger no-duplicate mutation claim is unproven, so this directive cannot
-close the complete restart/recovery gate. H5 browser-only denial, provider
+Same-browser post-restart continuity/refetch and one bounded settings mutation
+are `E3_TARGET_TESTED`; live SSE event delivery and durable-task duplicate
+accounting remain unproven, so this directive cannot close the complete
+restart/recovery gate. H5 browser-only denial, provider
 recovery, restricted reload/storage, isolated-HA UI, calendar fixture, and
 confirmation continuation gaps remain outside this directive and unclaimed.

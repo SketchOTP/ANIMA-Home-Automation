@@ -814,3 +814,13 @@ decision.
 - A bounded task mutation attempt returned UI `FAILED / ValueError`; no matching durable task row was found. No duplicate-mutation claim is made. Browser cookie/storage inspection was intentionally not performed.
 - Evidence: same-browser restart/refetch `E3_TARGET_TESTED`; no-duplicate mutation remains `NOT RUN`. Candidate runtime was stopped and the pre-existing port-18090 service was preserved.
 - Source: H5T packet, browser runtime observations, server PIDs/logs, PostgreSQL read-only check, and current repository/Notion reconciliation.
+
+### H5T evidence amendment — 2026-09-03
+
+- A second real restart sequence used process PIDs `1079567` → `1080604`.
+- One bounded settings `PUT` returned visible `SUCCEEDED` before restart; the
+  same browser tab remained authenticated afterward and showed the persisted
+  `normal` text scale, `phone` display mode, and H5R surfaces. Logs show one
+  settings PUT and post-restart refetches, with no duplicate settings PUT.
+- Live SSE event delivery and durable-task duplicate accounting remain
+  unproven. The final H5T disposition remains `PARTIAL / CONTINUE`.
