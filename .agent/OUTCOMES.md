@@ -886,3 +886,22 @@ decision.
   voice broadcast, and physical-household mutation remain unclaimed pending
   host commissioning and compatibility validation. Phase 14/15 remain
   unauthorized.
+
+## ANIMA-HA-P13-HA-DEVICE-CONTROL — bounded UI onboarding slice
+
+- Date: 2026-09-04.
+- Disposition: implementation in progress under the Phase 13 SENTRY-ready
+  platform transition; no Phase 13 acceptance claim.
+- Implemented a Devices view and authenticated API routes for bounded ZHA
+  pairing, HA registry refresh, and commissioning a present discovered device
+  into an existing ANIMA room. The plugin derives canonical resource,
+  capability, provider-reference, and Truth-binding records from the registry.
+- `refresh_inventory` is read-only. Pairing and commissioning are Core-owned
+  policy-gated capabilities of the trusted built-in HA plugin; the browser
+  cannot choose a host, raw HA service, entity target, credential, relationship,
+  or arbitrary configuration payload. Existing `desired_on` semantic power
+  controls remain Phase 5/4/9 verified actions.
+- Focused and full Python tests passed, as did the frontend TypeScript check
+  and Vite production build. Physical pairing and real-household behavior are
+  not claimed until the existing isolated HA evidence path is run with the
+  operator-commissioned instance.

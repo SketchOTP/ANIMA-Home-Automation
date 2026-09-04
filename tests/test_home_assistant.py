@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from anima_ha.events import ObservationState
-from anima_ha.graph import NodeKind, ProviderReference, TargetKind
+from anima_ha.graph import CanonicalNode, NodeKind, ProviderReference, TargetKind
 from anima_ha.home_assistant import (
     HAActionOutcome,
     HAAdapterError,
@@ -96,6 +96,30 @@ class FakeGraph:
         return self.references if target_id in {self.resource_id, self.capability_id} else []
 
 
+class CommissioningGraph(FakeGraph):
+    def __init__(self, scope: str, resource_id: UUID, capability_id: UUID) -> None:
+        super().__init__(scope, resource_id, capability_id)
+        self.household_id = uuid4()
+        self.place_id = uuid4()
+        self.household = CanonicalNode(self.household_id, NodeKind.HOUSEHOLD, "Test household")
+        self.place = CanonicalNode(self.place_id, NodeKind.ROOM, "Basement")
+        self.commissioned: Any = None
+
+    def get_node(self, canonical_id: UUID) -> CanonicalNode | None:
+        return {self.household_id: self.household, self.place_id: self.place}.get(canonical_id)
+
+    def places_in_household(self, household_id: UUID) -> list[CanonicalNode]:
+        return [self.place] if household_id == self.household_id else []
+
+    def commission(self, document: Any) -> Any:
+        self.commissioned = document
+        return SimpleNamespace(
+            created_nodes=len(document.nodes),
+            created_relationships=len(document.relationships),
+            created_provider_references=len(document.provider_references),
+        )
+
+
 def state(entity_id: str, value: str, stamp: str = "2026-08-29T18:00:00+00:00") -> dict[str, Any]:
     return {
         "entity_id": entity_id,
@@ -151,6 +175,7 @@ class FakeConnection:
         self.observed_after_call = observed_after_call
         self.start_error = start_error
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
+        self.data_calls: list[tuple[str, str, dict[str, Any]]] = []
         self.stopped = False
 
     def start(self) -> HADiscoverySnapshot:
@@ -171,6 +196,10 @@ class FakeConnection:
     def call_service(self, domain: str, service: str, target: dict[str, Any]) -> dict[str, Any]:
         self.calls.append((domain, service, target))
         return {"context": {"id": "service-context"}}
+
+    def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> dict[str, Any]:
+        self.data_calls.append((domain, service, data))
+        return {"context": {"id": "pairing-context"}}
 
     def get_state(self, entity_id: str) -> dict[str, Any] | None:
         value = self.observed_after_call if self.calls else "off"
@@ -427,7 +456,16 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
         },
     )
     manager.enable("anima.provider.home-assistant")
-    assert {tool.name for tool in manager.list_tools()} == {"read_state", "set_power"}
+    tools = {tool.name: tool for tool in manager.list_tools()}
+    assert set(tools) == {
+        "refresh_inventory",
+        "permit_zigbee_join",
+        "commission_device",
+        "read_state",
+        "set_power",
+    }
+    assert tools["permit_zigbee_join"].execution_boundary.value == "POLICY_GATED_INTERNAL"
+    assert tools["commission_device"].execution_boundary.value == "POLICY_GATED_INTERNAL"
     assert all("call_service" not in tool.name for tool in manager.list_tools())
     household_id = uuid4()
     result = manager.invoke(
@@ -446,6 +484,40 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
     manager.disable("anima.provider.home-assistant")
     assert manager.list_tools() == []
     assert connection.stopped is True
+
+
+def test_pairing_window_uses_bounded_internal_zha_service(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    connection = FakeConnection()
+    adapter.start(connection)
+    assert adapter.permit_zigbee_join(999)["duration_seconds"] == 120
+    assert connection.data_calls == [("zha", "permit", {"duration": 120})]
+
+
+def test_discovered_device_commissions_from_registry_into_canonical_graph(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, store = adapter_parts
+    graph = CommissioningGraph(str(adapter.config.instance_id), uuid4(), uuid4())
+    adapter.graph = graph  # type: ignore[assignment]
+    adapter.start(FakeConnection())
+    plugin = HomeAssistantPlugin(adapter, lambda token: FakeConnection())
+    result = plugin.invoke_for_household(
+        "commission_device",
+        {
+            "device_id": "ha-device",
+            "name": "SenseGuard Basement",
+            "place_id": str(graph.place_id),
+        },
+        5.0,
+        graph.household_id,
+    )
+    assert result["device_id"] == "ha-device"
+    assert result["power_capability_count"] == 1
+    assert graph.commissioned is not None
+    assert len(store.objects) == 3
 
 
 def test_verification_failure_is_not_gateway_success(

@@ -82,6 +82,19 @@ compare the event and current state with the household's persisted preferences
 and return a notification decision. A follow-up question re-enters ANIMA's
 semantic read path and does not query HA directly.
 
+## ANIMA device onboarding
+
+The ANIMA UI is also the supported operator surface for adding commissioned
+Home Assistant devices. Its Devices view opens a bounded ZHA pairing window,
+refreshes the HA registry, and lets an authenticated household principal
+assign a discovered device to an existing ANIMA room. The built-in HA plugin
+derives canonical resources, capabilities, provider references, and Truth
+bindings from the registry. It does not expose arbitrary HA services or raw
+configuration to SENTRY, Luna, or the browser. Newly commissioned power
+capabilities appear in Home and retain the normal Phase 5 -> Phase 4 -> Phase
+9 verified-control path. See
+[`PHASE-13-HA-DEVICE-CONTROL.md`](PHASE-13-HA-DEVICE-CONTROL.md).
+
 ## Boundaries and current evidence
 
 The implementation is intentionally split into a durable queue, a Core-owned

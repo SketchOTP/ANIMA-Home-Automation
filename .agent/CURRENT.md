@@ -39,6 +39,26 @@ work is historical accepted baseline. Phase 13 is the only active
 implementation scope under 015B and remains pending fresh compatibility and
 host-commissioning evidence; this file does not self-accept it.
 
+## Phase 13 HA device-control slice — 2026-09-04
+
+- The ANIMA UI now includes a Devices view for the supported Home Assistant
+  onboarding flow. It can open a bounded 1–120 second ZHA pairing window,
+  refresh the HA registry, and commission a present discovered device into an
+  existing ANIMA household place.
+- `refresh_inventory` is read-only. `permit_zigbee_join` and
+  `commission_device` are Core-owned policy-gated internal capabilities of the
+  built-in HA plugin. The browser cannot choose an HA host, service, entity
+  target, credential, graph relationship, or arbitrary configuration payload.
+- Commissioning derives deterministic canonical resource/capability IDs,
+  provider references, Truth bindings, and power controls from the refreshed
+  registry. Existing power control remains the semantic `desired_on` contract
+  and continues through Phase 5, Phase 4, Phase 9, and observed verification.
+- Focused and full Python tests plus the frontend TypeScript check and Vite
+  production build pass for this slice. Physical-device pairing and real-home
+  behavior remain unclaimed until the existing isolated HA harness and operator
+  commissioning are run; this does not authorize Phase 14, Phase 15, or raw HA
+  administration.
+
 ## H5V-R1 current result — 2026-09-03
 
 - The published H5V-R1 implementation adds continuation lifecycle migration

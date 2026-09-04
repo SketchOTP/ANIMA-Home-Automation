@@ -29,11 +29,50 @@ def authenticated_client() -> tuple[TestClient, str, UIService]:
     return client, csrf, service
 
 
+class DeviceCommandStub:
+    def device_inventory(self, identity: object) -> dict[str, object]:
+        del identity
+        return {
+            "status": "AVAILABLE",
+            "items": [
+                {
+                    "external_object_kind": "device",
+                    "external_id": "ha-device",
+                    "present": True,
+                    "metadata": {"name": "SenseGuard Basement"},
+                }
+            ],
+        }
+
+    def device_mutation(
+        self, identity: object, operation: str, payload: dict[str, object]
+    ) -> dict[str, object]:
+        del identity
+        return {"status": "SUCCEEDED", "operation": operation, "result": payload}
+
+
 def test_health_is_public_but_household_data_requires_session() -> None:
     app = create_app(UIService(config=UIConfig(test_auth_enabled=True)))
     client = TestClient(app)
     assert client.get("/healthz").json()["status"] == "ok"
     assert client.get("/api/v1/home").status_code == 401
+
+
+def test_device_routes_return_registry_and_route_bounded_mutations() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
+    client = TestClient(create_app(service), follow_redirects=False)
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+    csrf = callback.headers["x-anima-csrf"]
+    assert client.get("/api/v1/devices").json()["items"][0]["external_id"] == "ha-device"
+    response = client.post(
+        "/api/v1/devices/permit-pairing",
+        json={"payload": {"duration_seconds": 60}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "SUCCEEDED"
+    assert response.json()["operation"] == "permit-pairing"
 
 
 def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:

@@ -55,6 +55,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
 - Configured conversation composition into Attention, Context Broker, and the selected intelligence provider; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
+- ANIMA-owned device onboarding from the local Devices view: open a bounded ZHA pairing window, refresh the commissioned HA registry, place a discovered device in an existing room, and expose only its normalized semantic capabilities. Power controls continue through the Phase 5/4/9 path.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
@@ -120,6 +121,7 @@ On filesystem mounts that cannot create virtual-environment symlinks (including 
 The validation command runs format, lint, type, and unit checks. The database commands use only the local `.env` file and do not require household configuration.
 
 For the full evidence workflow, see [`docs/PHASE-0-RUNTIME-BASELINE.md`](docs/PHASE-0-RUNTIME-BASELINE.md).
+For the ANIMA-owned Home Assistant pairing, discovery, commissioning, and control boundary, see [`docs/PHASE-13-HA-DEVICE-CONTROL.md`](docs/PHASE-13-HA-DEVICE-CONTROL.md).
 For the Phase 1 event/truth contracts and replay boundary, see [`docs/PHASE-1-REALITY-SUBSTRATE.md`](docs/PHASE-1-REALITY-SUBSTRATE.md).
 For the Phase 2 graph contracts, prior-art decisions, commissioning, and evidence boundary, see [`docs/PHASE-2-HOUSEHOLD-GRAPH.md`](docs/PHASE-2-HOUSEHOLD-GRAPH.md).
 For the Phase 3 memory taxonomy, lifecycle, retrieval/index boundary, routine model, prior-art decisions, and evidence boundary, see [`docs/PHASE-3-GOVERNED-MEMORY.md`](docs/PHASE-3-GOVERNED-MEMORY.md).

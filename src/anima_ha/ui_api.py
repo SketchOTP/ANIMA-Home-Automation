@@ -391,6 +391,12 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def device_inventory(self, identity: UIIdentity) -> dict[str, Any]: ...
+
+    def device_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
     def control(
         self, identity: UIIdentity, control_id: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
@@ -420,6 +426,14 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"calendar.{operation}")
+
+    def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
+        return {"status": "UNAVAILABLE", "items": [], "reason": "CORE_NOT_CONFIGURED"}
+
+    def device_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"device.{operation}")
 
     def control(
         self, identity: UIIdentity, control_id: str, payload: dict[str, Any]
@@ -1815,6 +1829,28 @@ def create_app(
     @app.get("/api/v1/capabilities")
     async def capabilities(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.capabilities(current_identity(request))}
+
+    @app.get("/api/v1/devices")
+    async def devices(request: Request) -> dict[str, Any]:
+        return svc.commands.device_inventory(current_identity(request))
+
+    @app.post("/api/v1/devices/{operation}")
+    async def mutate_devices(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"refresh", "permit-pairing", "commission"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_DEVICE_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.device_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.post("/api/v1/conversation")
     async def conversation(

@@ -153,6 +153,7 @@ class CoreUICommandGateway:
     policy_role_resolver: Callable[[UUID], str | None] | None = None
     control_capability_resolver: Callable[[UUID], UUID | None] | None = None
     agent: AgentRuntime | None = None
+    home_assistant_adapter: HomeAssistantAdapter | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -203,9 +204,12 @@ class CoreUICommandGateway:
             invocation_context=invocation_context,
         )
         if self.events:
-            self.events.publish(
-                "tasks.changed" if plugin_prefix == "anima.durable-tasks" else "calendar.changed"
-            )
+            event_name = {
+                "anima.durable-tasks": "tasks.changed",
+                "anima.calendar": "calendar.changed",
+                "anima.provider.home-assistant": "home.invalidated",
+            }.get(plugin_prefix, "capabilities.changed")
+            self.events.publish(event_name)
         return _safe_result(result)
 
     @staticmethod
@@ -237,6 +241,55 @@ class CoreUICommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._invoke(identity, "anima.calendar", operation, payload)
+
+    def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
+        """Return the bounded, already-discovered HA registry for this household."""
+        del identity
+        plugin = self._tool("anima.provider.home-assistant", "refresh_inventory")
+        if self.home_assistant_adapter is None or plugin is None or not plugin.availability:
+            return {
+                "status": "UNAVAILABLE",
+                "items": [],
+                "reason": "HOME_ASSISTANT_NOT_COMMISSIONED",
+            }
+        items = []
+        for item in self.home_assistant_adapter.provider_inventory():
+            metadata = dict(item.get("metadata") or {})
+            items.append(
+                {
+                    "external_object_kind": str(item.get("external_object_kind", "")),
+                    "external_id": str(item.get("external_id", "")),
+                    "present": bool(item.get("present")),
+                    "metadata": {
+                        key: metadata[key]
+                        for key in (
+                            "name",
+                            "name_by_user",
+                            "area_id",
+                            "device_id",
+                            "platform",
+                            "disabled_by",
+                            "mapping_status",
+                            "canonical_target_id",
+                        )
+                        if key in metadata
+                    },
+                }
+            )
+        return {"status": "AVAILABLE", "items": items}
+
+    def device_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {
+            "refresh": "refresh_inventory",
+            "permit-pairing": "permit_zigbee_join",
+            "commission": "commission_device",
+        }
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_DEVICE_OPERATION")
+        return self._invoke(identity, "anima.provider.home-assistant", name, payload)
 
     def control(
         self, identity: UIIdentity, control_id: str, payload: dict[str, Any]
@@ -539,6 +592,7 @@ class CoreRuntime:
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
     intelligence_store: PostgresIntelligenceStore | None = None
     intelligence_provider: IntelligenceProviderMode = IntelligenceProviderMode.EMBEDDED_REFERENCE
+    home_assistant_adapter: HomeAssistantAdapter | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -581,6 +635,7 @@ class CoreRuntime:
             policy_role_resolver=self.identity_resolver.resolve_role,
             control_capability_resolver=resolve_power_capability,
             agent=self.agent,
+            home_assistant_adapter=self.home_assistant_adapter,
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -815,6 +870,7 @@ def build_postgres_core(
         None,
         intelligence_store,
         intelligence_provider,
+        ha_adapter,
     )
 
 

@@ -305,6 +305,8 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
         "anima.calendar.create_event",
         "anima.calendar.update_event",
         "anima.calendar.cancel_event",
+        "anima.provider.home-assistant.permit_zigbee_join",
+        "anima.provider.home-assistant.commission_device",
     }
 )
 
@@ -318,7 +320,12 @@ def _core_execution_boundary(
         if (
             manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
             and manifest.trust_class == TrustClass.TRUSTED_NATIVE
-            and manifest.source in {"builtin:anima_ha.tasks", "builtin:anima_ha.calendar"}
+            and manifest.source
+            in {
+                "builtin:anima_ha.tasks",
+                "builtin:anima_ha.calendar",
+                "builtin:anima_ha.home_assistant",
+            }
         ):
             return ExecutionBoundary.POLICY_GATED_INTERNAL
         return ExecutionBoundary.COORDINATED_CONSEQUENTIAL

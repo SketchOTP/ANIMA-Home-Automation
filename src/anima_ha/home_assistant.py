@@ -34,7 +34,17 @@ from anima_ha.events import (
     ObservationState,
     TruthObservation,
 )
-from anima_ha.graph import PostgresHouseholdGraph
+from anima_ha.graph import (
+    CanonicalNode,
+    CanonicalRelationship,
+    CommissioningDocument,
+    NodeKind,
+    PostgresHouseholdGraph,
+    ProviderReference,
+    RelationshipType,
+    TargetKind,
+    TruthBinding,
+)
 from anima_ha.journal import PostgresRealityStore
 from anima_ha.plugins import (
     CORE_VERSION,
@@ -236,6 +246,7 @@ class HAConnection(Protocol):
     def stop(self) -> None: ...
     def snapshot(self) -> HADiscoverySnapshot: ...
     def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any: ...
+    def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> Any: ...
     def get_state(self, entity_id: str) -> dict[str, Any] | None: ...
     def ping(self) -> None: ...
 
@@ -397,6 +408,18 @@ class HassClientConnection:
     def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any:
         return self._submit(
             self._call_service_async(domain, service, target), self.config.command_timeout
+        )
+
+    async def _call_service_data_async(
+        self, domain: str, service: str, data: dict[str, Any]
+    ) -> Any:
+        if self._client is None:
+            raise HAAdapterError("Home Assistant client is not started")
+        return await self._client.call_service(domain, service, service_data=data)
+
+    def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> Any:
+        return self._submit(
+            self._call_service_data_async(domain, service, data), self.config.command_timeout
         )
 
     def get_state(self, entity_id: str) -> dict[str, Any] | None:
@@ -897,6 +920,26 @@ class HomeAssistantAdapter:
     def provider_inventory(self) -> list[dict[str, Any]]:
         return self.store.inventory(self.config.instance_id)
 
+    def permit_zigbee_join(self, duration_seconds: int) -> dict[str, Any]:
+        """Open a bounded ZHA pairing window through the configured HA instance."""
+        duration = max(1, min(int(duration_seconds), 120))
+        connection = self.connection
+        if connection is None or not connection.connected:
+            raise HAAdapterError("Home Assistant is offline")
+        call_service_data = getattr(connection, "call_service_data", None)
+        if not callable(call_service_data):
+            raise HAAdapterError("Home Assistant transport cannot open a pairing window")
+        call_service_data("zha", "permit", {"duration": duration})
+        self._audit(
+            "home_assistant.zigbee_pairing_requested",
+            {"duration_seconds": duration},
+        )
+        return {
+            "duration_seconds": duration,
+            "provider": PROVIDER,
+            "detail": "ZHA pairing window opened",
+        }
+
     def _entity_for(self, resource_id: UUID, capability_id: UUID | None = None) -> str:
         references = []
         if capability_id is not None:
@@ -1028,18 +1071,224 @@ class HomeAssistantPlugin:
     def list_tools(self) -> list[dict[str, Any]]:
         return [
             {
-                "name": "read_state",
+                "name": "refresh_inventory",
                 "input_schema": home_assistant_manifest(self.adapter.config).tools[0][
                     "input_schema"
                 ],
             },
             {
-                "name": "set_power",
+                "name": "permit_zigbee_join",
                 "input_schema": home_assistant_manifest(self.adapter.config).tools[1][
                     "input_schema"
                 ],
             },
+            {
+                "name": "commission_device",
+                "input_schema": home_assistant_manifest(self.adapter.config).tools[2][
+                    "input_schema"
+                ],
+            },
+            {
+                "name": "read_state",
+                "input_schema": home_assistant_manifest(self.adapter.config).tools[3][
+                    "input_schema"
+                ],
+            },
+            {
+                "name": "set_power",
+                "input_schema": home_assistant_manifest(self.adapter.config).tools[4][
+                    "input_schema"
+                ],
+            },
         ]
+
+    def invoke_for_household(
+        self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID
+    ) -> Any:
+        if name == "refresh_inventory":
+            self.adapter.reconcile()
+            return {
+                "provider": PROVIDER,
+                "household_id": str(household_id),
+                "items": self.adapter.provider_inventory(),
+            }
+        if name == "permit_zigbee_join":
+            return self.adapter.permit_zigbee_join(int(arguments["duration_seconds"]))
+        if name == "commission_device":
+            return self._commission_device(
+                household_id,
+                str(arguments["device_id"]),
+                str(arguments["name"]),
+                UUID(str(arguments["place_id"])),
+            )
+        return self.invoke(name, arguments, timeout)
+
+    def _commission_device(
+        self, household_id: UUID, device_id: str, name: str, place_id: UUID
+    ) -> dict[str, Any]:
+        """Map one discovered HA device into ANIMA's canonical graph.
+
+        The browser can choose a display name and already-commissioned room,
+        but it cannot supply provider hosts, arbitrary entity IDs, or graph
+        relationships. Those are derived from the HA inventory and ANIMA's
+        existing provider scope.
+        """
+        if not name.strip() or len(name.strip()) > 120:
+            raise PluginValidationError("device name must be 1-120 characters")
+        place = self.adapter.graph.get_node(place_id)
+        household = self.adapter.graph.get_node(household_id)
+        if household is None or household.kind != NodeKind.HOUSEHOLD:
+            raise PluginValidationError("household is not commissioned")
+        if place is None or place_id not in {
+            item.canonical_id for item in self.adapter.graph.places_in_household(household_id)
+        }:
+            raise PluginValidationError("place is not in the commissioned household")
+        inventory = self.adapter.provider_inventory()
+        device = next(
+            (
+                item
+                for item in inventory
+                if item.get("external_object_kind") == "device"
+                and str(item.get("external_id")) == device_id
+                and bool(item.get("present"))
+            ),
+            None,
+        )
+        if device is None:
+            raise PluginValidationError("discovered Home Assistant device is unavailable")
+        entities = [
+            item
+            for item in inventory
+            if item.get("external_object_kind") == "entity"
+            and bool(item.get("present"))
+            and str(dict(item.get("metadata") or {}).get("device_id", "")) == device_id
+        ]
+        resource_id = uuid5(
+            NAMESPACE_URL,
+            f"anima://home-assistant/{self.adapter.config.provider_scope}/device/{device_id}",
+        )
+        nodes: list[CanonicalNode] = [household, place]
+        nodes.append(
+            CanonicalNode(
+                resource_id,
+                NodeKind.RESOURCE
+                if any(
+                    str(item["external_id"]).split(".", 1)[0]
+                    in {"input_boolean", "light", "switch"}
+                    for item in entities
+                )
+                else NodeKind.SENSOR,
+                name.strip(),
+                metadata={
+                    "provider": PROVIDER,
+                    "provider_device_id": device_id,
+                    "commissioned_by": "anima.ui",
+                },
+            )
+        )
+        relationships = [
+            CanonicalRelationship(
+                uuid5(NAMESPACE_URL, f"anima://home-assistant/{device_id}/installed-in/{place_id}"),
+                RelationshipType.INSTALLED_IN,
+                resource_id,
+                place_id,
+            )
+        ]
+        references = [
+            ProviderReference(
+                uuid5(
+                    NAMESPACE_URL,
+                    f"anima://home-assistant/{self.adapter.config.provider_scope}/device-ref/{device_id}",
+                ),
+                PROVIDER,
+                self.adapter.config.provider_scope,
+                "device",
+                device_id,
+                resource_id,
+            )
+        ]
+        bindings: list[TruthBinding] = []
+        capabilities = 0
+        for item in entities:
+            entity_id = str(item["external_id"])
+            capability_id = uuid5(
+                NAMESPACE_URL,
+                f"anima://home-assistant/{self.adapter.config.provider_scope}/entity-capability/{entity_id}",
+            )
+            domain = entity_id.split(".", 1)[0]
+            writable = domain in {"input_boolean", "light", "switch"}
+            capability_type = "power.set" if writable else "state.read"
+            nodes.append(
+                CanonicalNode(
+                    capability_id,
+                    NodeKind.CAPABILITY,
+                    f"{name.strip()} {domain} capability",
+                    metadata={
+                        "capability_type": capability_type,
+                        "readable": True,
+                        "writable": writable,
+                        "provider_entity_id": entity_id,
+                    },
+                )
+            )
+            relationships.append(
+                CanonicalRelationship(
+                    uuid5(
+                        NAMESPACE_URL, f"anima://home-assistant/{entity_id}/exposes/{resource_id}"
+                    ),
+                    RelationshipType.EXPOSES,
+                    resource_id,
+                    capability_id,
+                )
+            )
+            references.append(
+                ProviderReference(
+                    uuid5(
+                        NAMESPACE_URL,
+                        f"anima://home-assistant/{self.adapter.config.provider_scope}/entity-ref/{entity_id}",
+                    ),
+                    PROVIDER,
+                    self.adapter.config.provider_scope,
+                    "entity",
+                    entity_id,
+                    capability_id,
+                    TargetKind.CAPABILITY,
+                )
+            )
+            bindings.append(
+                TruthBinding(
+                    uuid5(
+                        NAMESPACE_URL, f"anima://home-assistant/{entity_id}/truth/{capability_id}"
+                    ),
+                    capability_id,
+                    TargetKind.CAPABILITY,
+                    f"state/capability/{capability_id}/value",
+                    "power.state" if writable else "state",
+                )
+            )
+            capabilities += int(writable)
+        result = self.adapter.graph.commission(
+            CommissioningDocument(
+                1,
+                tuple(nodes),
+                tuple(relationships),
+                provider_references=tuple(references),
+                truth_bindings=tuple(bindings),
+            )
+        )
+        self.adapter.reconcile()
+        return {
+            "resource_id": str(resource_id),
+            "device_id": device_id,
+            "place_id": str(place_id),
+            "entity_count": len(entities),
+            "power_capability_count": capabilities,
+            "commission": {
+                "created_nodes": result.created_nodes,
+                "created_relationships": result.created_relationships,
+                "created_provider_references": result.created_provider_references,
+            },
+        }
 
     def invoke(
         self,
@@ -1049,6 +1298,11 @@ class HomeAssistantPlugin:
         execution_context: ProviderExecutionContext | None = None,
     ) -> Any:
         del timeout, execution_context
+        if name == "refresh_inventory":
+            self.adapter.reconcile()
+            return {"provider": PROVIDER, "items": self.adapter.provider_inventory()}
+        if name == "permit_zigbee_join":
+            return self.adapter.permit_zigbee_join(int(arguments["duration_seconds"]))
         resource_id = UUID(str(arguments["resource_id"]))
         capability = arguments.get("capability_id")
         capability_id = UUID(str(capability)) if capability else None
@@ -1063,6 +1317,27 @@ class HomeAssistantPlugin:
 
 def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
     id_schema = {"type": "string", "format": "uuid"}
+    refresh_schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    }
+    permit_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["duration_seconds"],
+        "properties": {"duration_seconds": {"type": "integer", "minimum": 1, "maximum": 120}},
+        "additionalProperties": False,
+    }
+    commission_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["device_id", "name", "place_id"],
+        "properties": {
+            "device_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "name": {"type": "string", "minLength": 1, "maxLength": 120},
+            "place_id": id_schema,
+        },
+        "additionalProperties": False,
+    }
     common: dict[str, Any] = {
         "type": "object",
         "required": ["resource_id"],
@@ -1083,8 +1358,43 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
         description="Bounded Home Assistant household substrate adapter",
         runtime_kind=RuntimeKind.TRUSTED_NATIVE,
         trust_class=TrustClass.TRUSTED_NATIVE,
-        capabilities=("home.state", "home.control"),
+        capabilities=("home.state", "home.control", "home.discovery", "home.commissioning"),
         tools=(
+            {
+                "name": "refresh_inventory",
+                "description": "Refresh the discovered Home Assistant device inventory",
+                "input_schema": refresh_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "refresh_home_assistant",
+                "risk_class": "READ_ONLY",
+                "read_only": True,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "permit_zigbee_join",
+                "description": "Open a short, bounded ZHA pairing window",
+                "input_schema": permit_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "permit_zigbee_join",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "commission_device",
+                "description": (
+                    "Commission one discovered Home Assistant device into the household graph"
+                ),
+                "input_schema": commission_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "commission_home_device",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
             {
                 "name": "read_state",
                 "description": "Read a commissioned canonical household resource state",
