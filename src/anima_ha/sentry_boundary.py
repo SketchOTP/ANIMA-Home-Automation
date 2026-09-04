@@ -22,6 +22,7 @@ from anima_ha.intelligence import (
     IntelligenceLifecycle,
     IntelligenceOrigin,
     IntelligenceRequest,
+    IntelligenceRequestFactory,
     IntelligenceResult,
     IntelligenceResultStatus,
     IntelligenceStore,
@@ -37,6 +38,7 @@ from anima_ha.plugins import (
 from anima_ha.policy import (
     Assurance,
     EvidenceType,
+    IdentityAggregator,
     IdentityContext,
     IdentityEvidence,
     PolicyContext,
@@ -65,6 +67,9 @@ class SentryIdentityEvidenceEnvelope:
 
     def to_anima_evidence(self, household_id: UUID, principal_id: UUID | None) -> IdentityEvidence:
         observed = self.observed_at.astimezone(UTC)
+        evidence_usable = (
+            self.state.casefold() == "recognized" and self.profile_state.casefold() == "recognized"
+        )
         # Recognition, proximity, and voice are never allowed to mint
         # AUTHENTICATED or STRONG_AUTHENTICATED evidence.
         return IdentityEvidence(
@@ -72,7 +77,7 @@ class SentryIdentityEvidenceEnvelope:
                 _INVOCATION_NAMESPACE, f"sentry-evidence:{self.endpoint_id}:{observed.isoformat()}"
             ),
             household_id=household_id,
-            claimed_principal_id=principal_id,
+            claimed_principal_id=principal_id if evidence_usable else None,
             evidence_type=(
                 EvidenceType.LOCAL_PROXIMITY
                 if self.local_proximity
@@ -89,6 +94,7 @@ class SentryIdentityEvidenceEnvelope:
             metadata={
                 "voice_claim_present": self.spoken_identity_claim is not None,
                 "sentry_state": self.state,
+                "usable_for_principal_candidate": evidence_usable,
             },
         )
 
@@ -152,10 +158,47 @@ class CoreSentryBoundary:
     def health(self) -> SentryBoundaryHealth:
         return SentryBoundaryHealth("anima-core", "available")
 
-    def claim_request(self, worker_id: str) -> IntelligenceRequest | None:
+    def claim_request(
+        self, worker_id: str, *, household_id: UUID | None = None
+    ) -> IntelligenceRequest | None:
         # A SENTRY worker can claim only requests explicitly addressed to the
         # SENTRY provider; it must never consume another provider's queue.
-        return self.intelligence_store.claim(worker_id, provider_id="sentry")
+        return self.intelligence_store.claim(
+            worker_id, provider_id="sentry", household_id=household_id
+        )
+
+    def claim_specific_request(
+        self, request_id: UUID, worker_id: str, household_id: UUID
+    ) -> IntelligenceRequest | None:
+        return self.intelligence_store.claim_specific(
+            request_id,
+            worker_id,
+            household_id=household_id,
+            provider_id="sentry",
+        )
+
+    def start_provider(self, request: IntelligenceRequest, worker_id: str) -> bool:
+        """Fence the provider boundary before any SENTRY model code runs."""
+        try:
+            self._assert_active(request)
+        except SentryBoundaryError:
+            return False
+        if request.claim_owner != worker_id:
+            return False
+        if request.lifecycle == IntelligenceLifecycle.PROVIDER_RUNNING:
+            return True
+        if request.lifecycle not in {
+            IntelligenceLifecycle.CLAIMED,
+            IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
+        }:
+            return False
+        return self.intelligence_store.transition(
+            request.request_id,
+            worker_id,
+            request.fencing_generation,
+            IntelligenceLifecycle.PROVIDER_RUNNING,
+            {"provider_invocation_started": True, "provider": "sentry"},
+        )
 
     def renew_request(self, request: IntelligenceRequest, worker_id: str) -> bool:
         if request.claim_owner != worker_id:
@@ -172,8 +215,14 @@ class CoreSentryBoundary:
 
     def request_context(self, request: IntelligenceRequest) -> dict[str, Any]:
         if self.context_loader is None:
+            direct = request.request_metadata.get("direct_context")
+            if isinstance(direct, dict):
+                return dict(direct)
             raise SentryBoundaryError("CONTEXT_BOUNDARY_UNAVAILABLE")
         if request.trigger_id is None:
+            direct = request.request_metadata.get("direct_context")
+            if isinstance(direct, dict):
+                return dict(direct)
             raise SentryBoundaryError("CONTEXT_TRIGGER_UNAVAILABLE")
         packet = self.context_loader(request.trigger_id)
         if packet is None:
@@ -181,6 +230,40 @@ class CoreSentryBoundary:
         if str(packet.get("household_id", request.household_id)) != str(request.household_id):
             raise SentryBoundaryError("CONTEXT_HOUSEHOLD_MISMATCH")
         return packet
+
+    def create_direct_request(
+        self,
+        *,
+        household_id: UUID,
+        sentry_request_id: str,
+        source_surface: str,
+        user_text: str,
+        identity_evidence_refs: tuple[str, ...] = (),
+    ) -> IntelligenceRequest:
+        """Create direct SENTRY work without consuming autonomous Attention."""
+        request = IntelligenceRequestFactory.for_direct_sentry_interaction(
+            sentry_request_id=sentry_request_id,
+            household_id=household_id,
+            source_surface=source_surface,
+            user_text=user_text,
+            tools=self.manager.list_tools(),
+            identity_evidence_refs=identity_evidence_refs,
+        )
+        return self.intelligence_store.enqueue(request)
+
+    def record_sentry_identity(
+        self,
+        request: IntelligenceRequest,
+        envelope: SentryIdentityEvidenceEnvelope,
+        *,
+        profile_principal_id: UUID | None = None,
+    ) -> IdentityContext:
+        """Persist bounded SENTRY evidence and aggregate it without escalation."""
+        evidence = envelope.to_anima_evidence(request.household_id, profile_principal_id)
+        recorder = getattr(self.policy_service, "record_evidence", None)
+        if callable(recorder):
+            recorder(evidence)
+        return IdentityAggregator().aggregate(request.household_id, [evidence])
 
     @staticmethod
     def _schema_digest(schema: dict[str, Any]) -> str:
@@ -398,13 +481,7 @@ class SentryBridgeWorker:
         ):
             return None
         try:
-            transitioned = self.boundary.intelligence_store.transition(
-                request.request_id,
-                self.worker_id,
-                request.fencing_generation,
-                IntelligenceLifecycle.PROVIDER_RUNNING,
-            )
-            if not transitioned:
+            if not self.boundary.start_provider(request, self.worker_id):
                 raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
             result = self.provider.run(
                 request,

@@ -19,10 +19,13 @@ import socket
 import socketserver
 import stat
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
+
+import psycopg
 
 from anima_ha.db.migrate import migrate
 from anima_ha.intelligence import (
@@ -30,7 +33,11 @@ from anima_ha.intelligence import (
     IntelligenceResult,
     IntelligenceResultStatus,
 )
-from anima_ha.sentry_boundary import CoreSentryBoundary, SentryBoundaryError
+from anima_ha.sentry_boundary import (
+    CoreSentryBoundary,
+    SentryBoundaryError,
+    SentryIdentityEvidenceEnvelope,
+)
 from anima_ha.ui_runtime import build_postgres_core
 
 MAX_BODY = 64 * 1024
@@ -39,6 +46,99 @@ BINDING_TTL = timedelta(minutes=5)
 
 class ServiceAuthError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class SentryServicePrincipal:
+    """ANIMA-owned, server-side identity for one SENTRY household client."""
+
+    client_id: str
+    household_id: UUID
+    provider_id: str
+    credential_generation: int
+    token_digest: str
+    enabled: bool = True
+    allowed_origins: tuple[str, ...] = ("DIRECT_SENTRY_INTERACTION", "SENTRY_PROVIDER")
+
+    @classmethod
+    def from_secret(
+        cls,
+        *,
+        client_id: str,
+        household_id: UUID,
+        provider_id: str,
+        token: str,
+        credential_generation: int = 1,
+    ) -> SentryServicePrincipal:
+        if not client_id.strip() or not provider_id.strip() or credential_generation < 1:
+            raise ValueError("invalid SENTRY service-principal configuration")
+        return cls(
+            client_id=client_id,
+            household_id=household_id,
+            provider_id=provider_id,
+            credential_generation=credential_generation,
+            token_digest=hashlib.sha256(token.encode()).hexdigest(),
+        )
+
+    def authenticates(self, token: str) -> bool:
+        return self.enabled and hmac.compare_digest(
+            self.token_digest, hashlib.sha256(token.encode()).hexdigest()
+        )
+
+
+class PostgresSentryPrincipalRegistry:
+    """Durable ANIMA-owned registration for the SENTRY service identity."""
+
+    def __init__(self, database_url: str) -> None:
+        self.database_url = database_url
+
+    def register(self, principal: SentryServicePrincipal) -> None:
+        with psycopg.connect(self.database_url) as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO anima_sentry_service_principals
+                    (client_id, household_id, provider_id, credential_generation,
+                     token_digest, enabled, allowed_origins)
+                VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb)
+                ON CONFLICT (client_id) DO UPDATE SET
+                    household_id=EXCLUDED.household_id,
+                    provider_id=EXCLUDED.provider_id,
+                    credential_generation=EXCLUDED.credential_generation,
+                    token_digest=EXCLUDED.token_digest,
+                    enabled=EXCLUDED.enabled,
+                    allowed_origins=EXCLUDED.allowed_origins,
+                    updated_at=now()
+                """,
+                (
+                    principal.client_id,
+                    principal.household_id,
+                    principal.provider_id,
+                    principal.credential_generation,
+                    principal.token_digest,
+                    principal.enabled,
+                    json.dumps(list(principal.allowed_origins)),
+                ),
+            )
+            connection.commit()
+
+    def active(self, principal: SentryServicePrincipal, token: str) -> bool:
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with psycopg.connect(self.database_url) as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT 1 FROM anima_sentry_service_principals
+                WHERE client_id=%s AND household_id=%s AND provider_id=%s
+                  AND credential_generation=%s AND token_digest=%s AND enabled
+                """,
+                (
+                    principal.client_id,
+                    principal.household_id,
+                    principal.provider_id,
+                    principal.credential_generation,
+                    digest,
+                ),
+            )
+            return cursor.fetchone() is not None
 
 
 def read_credential_file(path_value: str) -> str:
@@ -67,7 +167,14 @@ class SentryBindingCodec:
     def __init__(self, secret: str) -> None:
         self.secret = secret.encode("utf-8")
 
-    def issue(self, request: Any, *, sentry_request_id: str, source_surface: str) -> str:
+    def issue(
+        self,
+        request: Any,
+        *,
+        sentry_request_id: str,
+        source_surface: str,
+        principal: SentryServicePrincipal | None = None,
+    ) -> str:
         now = datetime.now(UTC)
         payload = {
             "request_id": str(request.request_id),
@@ -86,12 +193,19 @@ class SentryBindingCodec:
             ][:16],
             "worker_id": request.claim_owner,
             "generation": request.fencing_generation,
+            "client_id": principal.client_id if principal else None,
+            "credential_generation": principal.credential_generation if principal else None,
         }
         encoded = _b64(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode())
         signature = hmac.new(self.secret, encoded.encode(), hashlib.sha256).digest()
         return f"{encoded}.{_b64(signature)}"
 
-    def verify(self, value: str, request: Any) -> dict[str, Any]:
+    def verify(
+        self,
+        value: str,
+        request: Any,
+        principal: SentryServicePrincipal | None = None,
+    ) -> dict[str, Any]:
         try:
             encoded, signature = value.split(".", 1)
             expected = hmac.new(self.secret, encoded.encode(), hashlib.sha256).digest()
@@ -111,6 +225,13 @@ class SentryBindingCodec:
             or payload.get("catalogue_digest") != request.catalogue_digest
             or payload.get("generation") != request.fencing_generation
             or payload.get("worker_id") != request.claim_owner
+            or (
+                principal is not None
+                and (
+                    payload.get("client_id") != principal.client_id
+                    or payload.get("credential_generation") != principal.credential_generation
+                )
+            )
         ):
             raise ServiceAuthError("interaction binding does not match request")
         return cast(dict[str, Any], payload)
@@ -123,13 +244,23 @@ class _UnixHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 
 class CoreSentryHTTPService:
-    def __init__(self, boundary: CoreSentryBoundary, token_loader: Callable[[], str]) -> None:
+    def __init__(
+        self,
+        boundary: CoreSentryBoundary,
+        token_loader: Callable[[], str],
+        *,
+        service_principal: SentryServicePrincipal | None = None,
+        profile_principal_resolver: Callable[[UUID, str], UUID | None] | None = None,
+        principal_registry: PostgresSentryPrincipalRegistry | None = None,
+    ) -> None:
         self.boundary = boundary
         self.token_loader = token_loader
-        self.service_token = ""
+        self.service_principal = service_principal
+        self.profile_principal_resolver = profile_principal_resolver
+        self.principal_registry = principal_registry
         self.bindings = SentryBindingCodec("unused-until-authenticated")
 
-    def authenticate(self, headers: Any) -> None:
+    def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
         # Reloading on every request gives rotation/revocation semantics. A
         # rotated token also invalidates previously issued binding signatures.
         self.service_token = self.token_loader()
@@ -137,15 +268,32 @@ class CoreSentryHTTPService:
         provided = str(headers.get("Authorization", ""))
         if not hmac.compare_digest(provided, f"Bearer {self.service_token}"):
             raise ServiceAuthError("service authentication failed")
+        if self.service_principal is not None:
+            if self.service_principal.provider_id != "sentry":
+                raise ServiceAuthError("service principal provider is not allowed")
+            if not self.service_principal.authenticates(self.service_token):
+                raise ServiceAuthError("service principal is revoked or rotated")
+            if self.principal_registry is not None and not self.principal_registry.active(
+                self.service_principal, self.service_token
+            ):
+                raise ServiceAuthError("service principal is not active")
+        return self.service_principal
 
-    def _request(self, request_id: str, body: dict[str, Any]) -> Any:
+    def _request(
+        self,
+        request_id: str,
+        body: dict[str, Any],
+        principal: SentryServicePrincipal | None = None,
+    ) -> Any:
         request = self.boundary.intelligence_store.get(UUID(request_id))
         if request is None:
             raise SentryBoundaryError("INTELLIGENCE_REQUEST_NOT_FOUND")
         binding = str(body.get("binding", ""))
         if not binding:
             raise ServiceAuthError("interaction binding required")
-        self.bindings.verify(binding, request)
+        if principal is not None and request.household_id != principal.household_id:
+            raise ServiceAuthError("service principal household mismatch")
+        self.bindings.verify(binding, request, principal)
         self.boundary._assert_active(request)
         return request
 
@@ -165,17 +313,99 @@ class CoreSentryHTTPService:
         }
 
     def claim_and_bind(
-        self, worker_id: str, sentry_request_id: str, source_surface: str
+        self,
+        worker_id: str,
+        sentry_request_id: str,
+        source_surface: str,
+        principal: SentryServicePrincipal | None = None,
     ) -> dict[str, Any]:
-        request = self.boundary.claim_request(worker_id)
+        effective_worker = principal.client_id if principal is not None else worker_id
+        request = self.boundary.claim_request(
+            effective_worker, household_id=principal.household_id if principal else None
+        )
         if request is None:
             return {"status": "EMPTY"}
         binding = self.bindings.issue(
-            request, sentry_request_id=sentry_request_id, source_surface=source_surface
+            request,
+            sentry_request_id=sentry_request_id,
+            source_surface=source_surface,
+            principal=principal,
         )
         if not self.boundary.intelligence_store.transition(
             request.request_id,
-            worker_id,
+            effective_worker,
+            request.fencing_generation,
+            IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
+        ):
+            raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
+        return {"status": "CLAIMED", **self.request_payload(request, binding)}
+
+    def direct_interaction(
+        self,
+        *,
+        sentry_request_id: str,
+        source_surface: str,
+        user_text: str,
+        principal: SentryServicePrincipal,
+        identity_observation: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Create and bind a new direct request, independent of Attention."""
+        if "DIRECT_SENTRY_INTERACTION" not in principal.allowed_origins:
+            raise ServiceAuthError("direct SENTRY interaction is not allowed")
+        refs: tuple[str, ...] = ()
+        if identity_observation:
+            refs = (
+                hashlib.sha256(
+                    json.dumps(identity_observation, sort_keys=True).encode()
+                ).hexdigest(),
+            )
+        request = self.boundary.create_direct_request(
+            household_id=principal.household_id,
+            sentry_request_id=sentry_request_id,
+            source_surface=source_surface,
+            user_text=user_text,
+            identity_evidence_refs=refs,
+        )
+        if identity_observation:
+            envelope = SentryIdentityEvidenceEnvelope(
+                endpoint_id=str(identity_observation.get("endpoint_id", "sentry"))[:256],
+                profile_state=str(identity_observation.get("profile_state", "unknown"))[:64],
+                confidence=int(identity_observation.get("confidence", 0)),
+                observed_at=datetime.fromisoformat(
+                    str(identity_observation.get("observed_at", datetime.now(UTC).isoformat()))
+                ),
+                local_proximity=bool(identity_observation.get("local_proximity", False)),
+                spoken_identity_claim=(
+                    str(identity_observation["spoken_identity_claim"])
+                    if identity_observation.get("spoken_identity_claim") is not None
+                    else None
+                ),
+                state=str(identity_observation.get("state", "unknown"))[:64],
+            )
+            mapped = (
+                self.profile_principal_resolver(
+                    principal.household_id, str(identity_observation.get("profile_id", ""))
+                )
+                if self.profile_principal_resolver is not None
+                else None
+            )
+            self.boundary.record_sentry_identity(request, envelope, profile_principal_id=mapped)
+        claimed = self.boundary.claim_specific_request(
+            request.request_id, str(principal.client_id), principal.household_id
+        )
+        if claimed is None or claimed.request_id != request.request_id:
+            raise SentryBoundaryError("DIRECT_INTERACTION_CLAIM_FAILED")
+        request = claimed
+        binding = self.bindings.issue(
+            request,
+            sentry_request_id=sentry_request_id,
+            source_surface=source_surface,
+            principal=principal,
+        )
+        needs_delivery = request.lifecycle == IntelligenceLifecycle.CLAIMED
+        if needs_delivery and not self.boundary.intelligence_store.transition(
+            request.request_id,
+            str(principal.client_id),
             request.fencing_generation,
             IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
         ):
@@ -183,16 +413,9 @@ class CoreSentryHTTPService:
         return {"status": "CLAIMED", **self.request_payload(request, binding)}
 
     def dispatch(self, request: Any) -> None:
-        if (
-            request.lifecycle == IntelligenceLifecycle.DELIVERED_TO_PROVIDER
-            and not self.boundary.intelligence_store.transition(
-                request.request_id,
-                str(request.claim_owner),
-                request.fencing_generation,
-                IntelligenceLifecycle.PROVIDER_RUNNING,
-            )
-        ):
-            raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
+        if request.lifecycle == IntelligenceLifecycle.DELIVERED_TO_PROVIDER:
+            if not self.boundary.start_provider(request, str(request.claim_owner)):
+                raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
 
 
 class _Handler(http.server.BaseHTTPRequestHandler):
@@ -231,7 +454,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         try:
             service = self._service()
-            service.authenticate(self.headers)
+            principal = service.authenticate(self.headers)
             body = self._json()
             response: dict[str, Any]
             if self.path == "/v1/health":
@@ -241,9 +464,24 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                     str(body.get("worker_id", "")),
                     str(body.get("sentry_request_id", secrets.token_hex(8))),
                     str(body.get("source_surface", "sentry")),
+                    principal,
+                )
+            elif self.path == "/v1/interactions/direct":
+                if principal is None:
+                    raise ServiceAuthError("direct interaction requires a scoped service principal")
+                response = service.direct_interaction(
+                    sentry_request_id=str(body.get("sentry_request_id", "")),
+                    source_surface=str(body.get("source_surface", "sentry")),
+                    user_text=str(body.get("user_text", "")),
+                    principal=principal,
+                    identity_observation=(
+                        dict(body["identity_observation"])
+                        if isinstance(body.get("identity_observation"), dict)
+                        else None
+                    ),
                 )
             elif self.path == "/v1/requests/renew":
-                request = service._request(str(body["request_id"]), body)
+                request = service._request(str(body["request_id"]), body, principal)
                 ok = service.boundary.renew_request(request, str(request.claim_owner))
                 response = {"status": "RENEWED" if ok else "CLAIM_LOST"}
             else:
@@ -251,7 +489,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 if len(parts) != 4 or parts[:2] != ["v1", "requests"]:
                     self._write(404, {"error": "NOT_FOUND"})
                     return
-                request = service._request(parts[2], body)
+                request = service._request(parts[2], body, principal)
                 operation = parts[3]
                 if operation == "context":
                     response = service.boundary.request_context(request)
@@ -265,6 +503,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         dict(body.get("arguments") or {}),
                         ordinal=int(body.get("ordinal", 1)),
                     )
+                elif operation == "provider-start":
+                    worker_id = request.claim_owner
+                    response = {
+                        "status": "PROVIDER_RUNNING"
+                        if worker_id
+                        and service.boundary.start_provider(request, worker_id)
+                        else "CLAIM_LOST"
+                    }
                 elif operation == "result":
                     result = IntelligenceResult(
                         request.request_id,
@@ -319,7 +565,29 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         path.unlink()
     server = _UnixHTTPServer(str(path), _Handler)  # type: ignore[arg-type]
     os.chmod(path, 0o600)
-    server.service = CoreSentryHTTPService(core.sentry_boundary(), token_loader)
+    token = token_loader()
+    client_id = os.environ.get("ANIMA_SENTRY_CLIENT_ID", "").strip()
+    household_value = os.environ.get("ANIMA_SENTRY_HOUSEHOLD_ID", "").strip()
+    if not client_id or not household_value:
+        raise RuntimeError(
+            "ANIMA Core service requires ANIMA_SENTRY_CLIENT_ID and "
+            "ANIMA_SENTRY_HOUSEHOLD_ID for household-scoped registration"
+        )
+    principal = SentryServicePrincipal.from_secret(
+        client_id=client_id,
+        household_id=UUID(household_value),
+        provider_id="sentry",
+        token=token,
+        credential_generation=int(os.environ.get("ANIMA_SENTRY_CREDENTIAL_GENERATION", "1")),
+    )
+    principal_registry = PostgresSentryPrincipalRegistry(database_url)
+    principal_registry.register(principal)
+    server.service = CoreSentryHTTPService(
+        core.sentry_boundary(),
+        token_loader,
+        service_principal=principal,
+        principal_registry=principal_registry,
+    )
     try:
         server.serve_forever()
     finally:

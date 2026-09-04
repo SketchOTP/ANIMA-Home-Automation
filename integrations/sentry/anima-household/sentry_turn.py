@@ -33,20 +33,41 @@ class SentryHouseholdTurn:
         *,
         sentry_request_id: str,
         source_surface: str,
+        user_text: str | None = None,
+        identity_observation: dict[str, Any] | None = None,
     ) -> None:
         self.client = client
         self.model = model
         self.sentry_request_id = sentry_request_id
         self.source_surface = source_surface
+        self.user_text = user_text
+        self.identity_observation = identity_observation
 
     def run(self) -> dict[str, Any]:
-        opened = self.client.open_interaction(self.sentry_request_id, self.source_surface)
+        opened = (
+            self.client.open_direct_interaction(
+                self.sentry_request_id,
+                self.source_surface,
+                self.user_text if self.user_text is not None else "",
+                self.identity_observation,
+            )
+            if self.user_text is not None
+            else self.client.open_interaction(self.sentry_request_id, self.source_surface)
+        )
         if opened.get("status") != "CLAIMED":
             return {"status": "UNAVAILABLE", "reason": "NO_ANIMA_REQUEST"}
         request_id = str(opened["request_id"])
         binding = str(opened["binding"])
         context = self.client.context(request_id, binding)
         catalogue = list(self.client.tools(request_id, binding).get("tools") or [])
+        started = self.client.provider_start(request_id, binding)
+        if started.get("status") != "PROVIDER_RUNNING":
+            return {
+                "status": "UNKNOWN_RESULT",
+                "request_id": request_id,
+                "sentry_request_id": self.sentry_request_id,
+                "reason": "ANIMA_PROVIDER_START_REJECTED",
+            }
         plan = self.model.plan(context, catalogue)
         calls = plan.get("calls") or []
         if not isinstance(calls, list) or len(calls) > 3:

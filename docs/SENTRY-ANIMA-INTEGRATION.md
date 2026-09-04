@@ -113,3 +113,22 @@ terminalized as ambiguous instead of being blindly replayed. Existing HA,
 policy, action, task, calendar, provider, and UI tests remain the regression
 boundary. Host-level SENTRY installation and any real voice broadcast still
 require commissioning and must not be inferred from deterministic unit tests.
+
+## R2 boundary additions
+
+The Core service now exposes two distinct intake contracts. Autonomous work is
+claimed from the SENTRY queue, while `POST /v1/interactions/direct` creates a
+new `DIRECT_SENTRY_INTERACTION` and claims that exact request. A direct request
+contains only sparse server-built context; it does not consume an Attention
+request.
+
+Every client turn must call `POST /v1/requests/{request_id}/provider-start`
+after loading context and the request-bound catalogue, and before invoking
+Codex/Luna. Once that transition succeeds, expiry is potentially executed
+provider work and is not safe for blind replay.
+
+The ANIMA service registers SENTRY as a server-owned service principal bound to
+one configured household and the `sentry` provider. The client cannot choose a
+household, role, assurance, or provider. SENTRY identity observations are
+translated into short-lived `RECOGNIZED` evidence only; unknown, ambiguous, or
+expired observations cannot name a principal or authenticate a request.

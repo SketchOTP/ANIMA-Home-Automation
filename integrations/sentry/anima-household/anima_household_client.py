@@ -108,6 +108,23 @@ class AnimaHouseholdClient:
             },
         )
 
+    def open_direct_interaction(
+        self,
+        sentry_request_id: str,
+        source_surface: str,
+        user_text: str,
+        identity_observation: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return self.call(
+            "/v1/interactions/direct",
+            {
+                "sentry_request_id": sentry_request_id,
+                "source_surface": source_surface,
+                "user_text": user_text,
+                "identity_observation": identity_observation,
+            },
+        )
+
     def context(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/context", {"binding": binding})
 
@@ -137,6 +154,11 @@ class AnimaHouseholdClient:
 
     def renew(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call("/v1/requests/renew", {"request_id": request_id, "binding": binding})
+
+    def provider_start(self, request_id: str, binding: str) -> dict[str, Any]:
+        return self.call(
+            f"/v1/requests/{request_id}/provider-start", {"binding": binding}
+        )
 
     def status(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/status", {"binding": binding})

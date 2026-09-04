@@ -16,6 +16,7 @@ from anima_ha.intelligence import (
     IntelligenceLifecycle,
     IntelligenceOrigin,
     IntelligenceRequest,
+    IntelligenceRequestFactory,
     IntelligenceResult,
     IntelligenceResultStatus,
 )
@@ -34,6 +35,7 @@ from anima_ha.sentry_boundary import (
 from anima_ha.sentry_service import (
     CoreSentryHTTPService,
     SentryBindingCodec,
+    SentryServicePrincipal,
     ServiceAuthError,
     read_credential_file,
 )
@@ -48,6 +50,33 @@ class MemoryStore:
 
     def get(self, request_id: UUID) -> IntelligenceRequest | None:
         return self.request if request_id == self.request.request_id else None
+
+    def transition(
+        self,
+        request_id: UUID,
+        worker_id: str,
+        generation: int,
+        lifecycle: IntelligenceLifecycle,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        del metadata
+        if (
+            request_id != self.request.request_id
+            or worker_id != self.request.claim_owner
+            or generation != self.request.fencing_generation
+            or self.request.lease_expires_at is None
+            or self.request.lease_expires_at <= datetime.now(UTC)
+        ):
+            return False
+        self.request = replace(
+            self.request,
+            lifecycle=lifecycle,
+            provider_invocation_started=(
+                self.request.provider_invocation_started
+                or lifecycle == IntelligenceLifecycle.PROVIDER_RUNNING
+            ),
+        )
+        return True
 
 
 class Manager:
@@ -155,6 +184,77 @@ def test_binding_is_server_issued_and_bound_to_request_identity() -> None:
         codec.verify(binding, replace(request, household_id=uuid4()))
 
 
+def test_provider_start_is_fenced_before_model_execution() -> None:
+    request = replace(
+        request_for(catalogue=()),
+        lifecycle=IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
+    )
+    store = MemoryStore(request)
+    boundary = CoreSentryBoundary(cast(Any, Manager([])), object(), cast(Any, store))
+
+    assert boundary.start_provider(request, WORKER) is True
+    current = store.get(request.request_id)
+    assert current is not None
+    assert current.lifecycle == IntelligenceLifecycle.PROVIDER_RUNNING
+    assert current.provider_invocation_started is True
+
+    stale = replace(request, claim_owner="other-worker")
+    assert boundary.start_provider(stale, WORKER) is False
+
+
+def test_direct_request_factory_is_independent_of_attention() -> None:
+    request = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="voice-123",
+        household_id=HOUSEHOLD,
+        source_surface="gtk",
+        user_text="What is the basement state?",
+        tools=[tool()],
+    )
+    assert request.origin == IntelligenceOrigin.DIRECT_SENTRY_INTERACTION
+    assert request.trigger_id is None
+    assert request.request_metadata["direct_context"]["user_text"] == (
+        "What is the basement state?"
+    )
+    assert request.catalogue[0]["tool_id"] == "anima.test.read"
+
+
+def test_service_principal_is_server_bound_to_household_and_provider() -> None:
+    token = "t" * 48
+    principal = SentryServicePrincipal.from_secret(
+        client_id="sentry-household-1",
+        household_id=HOUSEHOLD,
+        provider_id="sentry",
+        token=token,
+    )
+    assert principal.authenticates(token)
+    assert not principal.authenticates("x" * 48)
+    assert principal.provider_id == "sentry"
+    assert principal.household_id == HOUSEHOLD
+
+
+def test_identity_recording_persists_only_non_escalating_evidence() -> None:
+    request = request_for(catalogue=())
+    recorded: list[Any] = []
+    policy = SimpleNamespace(record_evidence=recorded.append)
+    boundary = CoreSentryBoundary(
+        cast(Any, Manager([])), policy, cast(Any, MemoryStore(request))
+    )
+    context = boundary.record_sentry_identity(
+        request,
+        SentryIdentityEvidenceEnvelope(
+            endpoint_id="office",
+            profile_state="recognized",
+            confidence=100,
+            observed_at=datetime.now(UTC),
+            local_proximity=True,
+            spoken_identity_claim="Sketch",
+        ),
+        profile_principal_id=uuid4(),
+    )
+    assert len(recorded) == 1
+    assert context.assurance.value == "RECOGNIZED"
+
+
 def test_request_catalogue_is_frozen_and_new_global_tools_are_not_visible() -> None:
     original = tool()
     digest = CoreSentryBoundary._schema_digest(original.input_schema)
@@ -220,3 +320,15 @@ def test_sentry_identity_evidence_never_escalates_to_authentication() -> None:
     assert evidence.assurance.value == "RECOGNIZED"
     assert evidence.strength <= 50
     assert evidence.evidence_type.value == "LOCAL_PROXIMITY"
+
+
+def test_expired_or_ambiguous_sentry_observation_cannot_name_a_principal() -> None:
+    evidence = SentryIdentityEvidenceEnvelope(
+        endpoint_id="office-endpoint",
+        profile_state="expired",
+        confidence=99,
+        observed_at=datetime.now(UTC),
+        state="expired",
+    ).to_anima_evidence(HOUSEHOLD, uuid4())
+    assert evidence.claimed_principal_id is None
+    assert evidence.metadata["usable_for_principal_candidate"] is False

@@ -1,5 +1,14 @@
 # Handoff — ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B
 
+## R2 status
+
+R2 is an implementation continuation, not an acceptance declaration. The
+ANIMA-side corrections add pre-model provider fencing, direct interaction
+creation, request-specific claiming, household/provider service-principal
+binding, and non-escalating SENTRY identity evidence. Real/shadow SENTRY host,
+physical SenseGuard, voice, and live household action evidence remain gates for
+Architect review.
+
 ## Current disposition
 
 `CONTINUE — IMPLEMENTATION/EVIDENCE IN PROGRESS`

@@ -19,3 +19,14 @@ client-only. Provider-running requests are never blindly reclaimed, and every
 SENTRY request uses the catalogue frozen at request creation. Device registry
 normalization covers current HA child-device/config-entry records, while the
 typed SenseGuard policy remains the only alert configuration surface.
+
+## R2 continuation
+
+1. Fence every SENTRY provider turn before model execution.
+2. Separate direct interaction creation from autonomous queue claiming.
+3. Enforce server-owned household/provider service principals and identity
+   evidence translation.
+4. Validate the client-only MCP boundary and request catalogue fencing.
+5. Run shadow/live SENTRY, SenseGuard, and governed HA evidence when the
+   protected host and physical resources are available; report explicit gates
+   otherwise.

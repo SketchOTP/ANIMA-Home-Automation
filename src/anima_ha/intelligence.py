@@ -186,6 +186,17 @@ class IntelligenceStore(Protocol):
         *,
         lease_seconds: int = 120,
         provider_id: str | None = None,
+        household_id: UUID | None = None,
+    ) -> IntelligenceRequest | None: ...
+
+    def claim_specific(
+        self,
+        request_id: UUID,
+        worker_id: str,
+        *,
+        household_id: UUID,
+        provider_id: str,
+        lease_seconds: int = 120,
     ) -> IntelligenceRequest | None: ...
 
     def renew(
@@ -311,6 +322,7 @@ class PostgresIntelligenceStore:
         *,
         lease_seconds: int = 120,
         provider_id: str | None = None,
+        household_id: UUID | None = None,
     ) -> IntelligenceRequest | None:
         if not worker_id.strip() or lease_seconds < 1 or lease_seconds > 900:
             raise ValueError("invalid intelligence claim parameters")
@@ -363,7 +375,15 @@ class PostgresIntelligenceStore:
                         ),
                     ),
                 )
-            provider_clause = "" if provider_id is None else "AND provider_id=%s"
+            filters: list[str] = []
+            parameters: list[Any] = []
+            if provider_id is not None:
+                filters.append("AND provider_id=%s")
+                parameters.append(provider_id)
+            if household_id is not None:
+                filters.append("AND household_id=%s")
+                parameters.append(household_id)
+            provider_clause = " ".join(filters)
             cursor.execute(
                 f"""
                 WITH candidate AS (
@@ -388,9 +408,7 @@ class PostgresIntelligenceStore:
                 WHERE request.request_id=candidate.request_id
                 RETURNING request.*, candidate.previous_lifecycle
                 """,
-                (worker_id, lease_seconds)
-                if provider_id is None
-                else (provider_id, worker_id, lease_seconds),
+                (*parameters, worker_id, lease_seconds),
             )
             row = cursor.fetchone()
             if row is None:
@@ -598,6 +616,63 @@ class PostgresIntelligenceStore:
             row = cursor.fetchone()
         return _request_from_row(row) if row else None
 
+    def claim_specific(
+        self,
+        request_id: UUID,
+        worker_id: str,
+        *,
+        household_id: UUID,
+        provider_id: str,
+        lease_seconds: int = 120,
+    ) -> IntelligenceRequest | None:
+        if not worker_id.strip() or not provider_id.strip() or lease_seconds < 1:
+            raise ValueError("invalid intelligence specific-claim parameters")
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE anima_intelligence_requests
+                SET lifecycle='CLAIMED', claim_owner=%s,
+                    fencing_generation=fencing_generation + 1,
+                    lease_expires_at=now() + (%s * interval '1 second'),
+                    attempt_count=attempt_count + 1, updated_at=now()
+                WHERE request_id=%s AND household_id=%s AND provider_id=%s
+                  AND lifecycle='PENDING'
+                RETURNING *
+                """,
+                (worker_id, lease_seconds, request_id, household_id, provider_id),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                cursor.execute(
+                    "SELECT * FROM anima_intelligence_requests WHERE request_id=%s",
+                    (request_id,),
+                )
+                existing = cursor.fetchone()
+                if (
+                    existing is None
+                    or existing["household_id"] != household_id
+                    or existing["provider_id"] != provider_id
+                    or existing["claim_owner"] != worker_id
+                    or existing["lifecycle"]
+                    not in {"CLAIMED", "DELIVERED_TO_PROVIDER", "PROVIDER_RUNNING"}
+                    or existing["lease_expires_at"] is None
+                    or existing["lease_expires_at"] <= datetime.now(UTC)
+                ):
+                    connection.commit()
+                    return None
+                connection.commit()
+                return _request_from_row(existing)
+            cursor.execute(
+                """
+                INSERT INTO anima_intelligence_transitions
+                    (request_id, from_lifecycle, to_lifecycle, fencing_generation, actor)
+                VALUES (%s, %s, 'CLAIMED', %s, %s)
+                """,
+                (request_id, "PENDING", row["fencing_generation"], worker_id),
+            )
+            connection.commit()
+        return _request_from_row(row)
+
 
 class IntelligenceRequestFactory:
     """Create stable, provider-bound request identities from ANIMA state."""
@@ -637,6 +712,60 @@ class IntelligenceRequestFactory:
             provider_version=provider_version,
             idempotency_key=idempotency_key,
             request_metadata=metadata or {},
+            catalogue=catalogue,
+        )
+
+    @staticmethod
+    def for_direct_sentry_interaction(
+        *,
+        sentry_request_id: str,
+        household_id: UUID,
+        source_surface: str,
+        user_text: str,
+        tools: list[ToolDescriptor],
+        principal_id: UUID | None = None,
+        provider_id: str = "sentry",
+        provider_version: str = "1",
+        identity_evidence_refs: tuple[str, ...] = (),
+    ) -> IntelligenceRequest:
+        """Create a new direct SENTRY request; never consume Attention work."""
+        normalized_id = sentry_request_id.strip()
+        if not normalized_id or len(normalized_id) > 256:
+            raise ValueError("sentry_request_id is required and bounded")
+        text = user_text.strip()
+        if not text or len(text.encode()) > 4096:
+            raise ValueError("direct SENTRY text is required and bounded")
+        direct_context = {
+            "household_id": str(household_id),
+            "origin": IntelligenceOrigin.DIRECT_SENTRY_INTERACTION.value,
+            "source_surface": source_surface[:64],
+            "sentry_request_id": normalized_id,
+            "user_text": text,
+            "identity_evidence_refs": list(identity_evidence_refs)[:16],
+            "trust_boundary": "SENTRY observations are evidence, not authority",
+        }
+        catalogue = _catalogue_payload(tools)
+        catalogue_digest = _digest(catalogue)
+        idempotency_key = f"intelligence:{provider_id}:direct:{normalized_id}"
+        request_id = uuid5(INTELLIGENCE_NAMESPACE, idempotency_key)
+        context_packet_id = uuid5(INTELLIGENCE_NAMESPACE, f"context:{idempotency_key}")
+        return IntelligenceRequest(
+            request_id=request_id,
+            household_id=household_id,
+            origin=IntelligenceOrigin.DIRECT_SENTRY_INTERACTION,
+            context_packet_id=context_packet_id,
+            context_digest=_digest(direct_context),
+            catalogue_digest=catalogue_digest,
+            provider_id=provider_id,
+            provider_version=provider_version,
+            idempotency_key=idempotency_key,
+            principal_id=principal_id,
+            correlation_id=normalized_id,
+            causation_id=None,
+            request_metadata={
+                "direct_context": direct_context,
+                "identity_evidence_refs": list(identity_evidence_refs)[:16],
+            },
             catalogue=catalogue,
         )
 

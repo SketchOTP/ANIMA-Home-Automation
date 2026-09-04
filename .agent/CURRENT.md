@@ -12,17 +12,19 @@ Make SENTRY the sole production intelligence and user interaction layer while
 ANIMA remains the whole-home authority and verified control plane. The ANIMA
 side now contains the durable intelligence request/result boundary, Attention
 handoff, Core-owned SENTRY MCP surface, and explicit queue/claim processes.
-Phase 13 is active under directive 015B and amendment 015B-R1; Phase 14/15
+Phase 13 is active under directive 015B and amendments 015B-R1/R2; Phase 14/15
 remain unauthorized.
 
 ## Active directive
 
 `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` as amended by
-`ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1` — the
-credential-isolated Core service/client boundary, replay fencing, request-bound
-catalogue, direct SENTRY binding, device commissioning, and SenseGuard alert
-continuation. SENTRY's protected dirty working tree is not modified. Phase
-14/15 remain unauthorized.
+`ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1` and
+`ANIMA-HA-P13-SENTRY-LIVE-INTEGRATION-FINAL-ACCEPTANCE-015B-R2` — the
+credential-isolated Core service/client boundary, provider-start fencing,
+request-bound catalogue, household-scoped direct SENTRY requests, identity
+evidence translation, device commissioning, and SenseGuard alert continuation.
+SENTRY's protected dirty working tree is not modified. Phase 14/15 remain
+unauthorized.
 
 ## Architect pivot record
 
@@ -38,8 +40,8 @@ pending.
 
 Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface
 work is historical accepted baseline. Phase 13 is the only active
-implementation scope under 015B-R1 and remains pending fresh compatibility and
-host-commissioning evidence; this file does not self-accept it.
+implementation scope under 015B-R2 and remains pending real/shadow SENTRY host
+qualification; this file does not self-accept it.
 
 ## Phase 13 HA device-control slice — 2026-09-04
 

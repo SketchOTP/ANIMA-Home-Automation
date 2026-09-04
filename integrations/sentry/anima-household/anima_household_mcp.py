@@ -34,6 +34,23 @@ def anima_open_interaction(
     return value
 
 
+@server.tool(
+    name="anima_open_direct_interaction", description="Create one direct SENTRY household request"
+)
+def anima_open_direct_interaction(
+    sentry_request_id: str,
+    user_text: str,
+    source_surface: str = "sentry",
+    identity_observation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    value = _client().open_direct_interaction(
+        sentry_request_id, source_surface, user_text, identity_observation
+    )
+    if value.get("status") == "CLAIMED":
+        _INTERACTION.update(request_id=str(value["request_id"]), binding=str(value["binding"]))
+    return value
+
+
 def _bound(request_id: str) -> str:
     if _INTERACTION.get("request_id") != request_id:
         raise RuntimeError("ANIMA interaction is not open for this request")
@@ -78,6 +95,13 @@ def anima_submit_result(
 @server.tool(name="anima_renew", description="Renew the active ANIMA interaction lease")
 def anima_renew(request_id: str) -> dict[str, Any]:
     return _client().renew(request_id, _bound(request_id))
+
+
+@server.tool(
+    name="anima_provider_start", description="Fence provider execution before SENTRY reasoning"
+)
+def anima_provider_start(request_id: str) -> dict[str, Any]:
+    return _client().provider_start(request_id, _bound(request_id))
 
 
 @server.tool(name="anima_status", description="Get exact bounded request status")
