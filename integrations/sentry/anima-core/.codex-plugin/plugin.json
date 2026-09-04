@@ -1,0 +1,17 @@
+{
+  "name": "anima-household-core",
+  "version": "0.1.0",
+  "description": "Connect SENTRY to the ANIMA household authority through typed Core tools.",
+  "author": {"name": "SketchOTP"},
+  "license": "MIT",
+  "keywords": ["anima", "home-automation", "sentry", "mcp"],
+  "interface": {
+    "displayName": "ANIMA Household Core",
+    "shortDescription": "Governed household state, actions, tasks, and alerts",
+    "longDescription": "SENTRY reasons through ANIMA; ANIMA owns household identity, policy, Home Assistant access, verification, and durable truth.",
+    "developerName": "SketchOTP",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  },
+  "mcpServers": "./.mcp.json"
+}

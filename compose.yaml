@@ -69,6 +69,7 @@ services:
       ANIMA_UI_PORT: 8090
       ANIMA_UI_STATIC_DIR: /app/ui/dist
       ANIMA_OPA_URL: http://opa:8181
+      ANIMA_INTELLIGENCE_PROVIDER: ${ANIMA_INTELLIGENCE_PROVIDER:-embedded_reference}
       ANIMA_SEARXNG_URL: http://searxng:8080
       ANIMA_SEARXNG_HOST: searxng
       ANIMA_OVERPASS_URL: https://overpass-api.de

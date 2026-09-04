@@ -1,27 +1,33 @@
 # Current Project State
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ## Current stage
 
-PHASE 12 CUSTOM WHOLE-HOME INTERFACE — H5V TRUE AGENT RESUME; CONTINUE
+PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — IMPLEMENTATION IN PROGRESS
 
 ## Current objective
 
-Close the true resumable AgentRuntime confirmation/rejection path and publish
-fresh evidence without weakening accepted Phase 4/5/8/9 boundaries. Phase 11
-is Architect accepted; Phase 12 remains unaccepted and CONTINUE; Phase 13
-remains unauthorized. The H5V-R1 implementation checkpoint is published, but
-the remaining browser/restart/recovery evidence gate is not closed.
+Make SENTRY the sole production intelligence and user interaction layer while
+ANIMA remains the whole-home authority and verified control plane. The ANIMA
+side now contains the durable intelligence request/result boundary, Attention
+handoff, Core-owned SENTRY MCP surface, and explicit queue/claim processes.
+Phase 13 is active under directive 015B; Phase 14/15 remain unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V-R1` — starting
-checkpoint `761f6214993a676bdd43f911e237dffbbee7a684`. Approval and rejection
-must append a normalized durable result to the original episode transcript and
-invoke a second AgentRuntime model turn without replaying the original tool.
-Real OPA, PostgreSQL stores, UI confirmation, browser recovery, and integrated
-evidence remain in scope. Phase 13 is unauthorized.
+`ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` — the SENTRY-ready
+platform boundary, durable provider handoff, Attention delivery, and clean
+SENTRY-baseline compatibility work. SENTRY's protected dirty working tree is
+not modified. Phase 14 resilience and Phase 15 demonstration remain
+unauthorized.
+
+## Current authority result
+
+Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface
+work is historical accepted baseline. Phase 13 is the only active
+implementation scope under 015B and remains pending fresh compatibility and
+host-commissioning evidence; this file does not self-accept it.
 
 ## H5V-R1 current result — 2026-09-03
 

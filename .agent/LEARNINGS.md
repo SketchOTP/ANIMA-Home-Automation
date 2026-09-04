@@ -215,4 +215,22 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Approval and rejection are distinct normalized tool results appended to the same episode. The original tool request is never replayed; only an approval dispatch may call the provider, and it does so through the existing Phase 9 coordinator.
 - The continuation result must report the post-claim approval status (`APPROVED` or `REJECTED`), not the stale pre-claim pending object. Phase 9 action-record status remains authoritative over connector evidence.
 - A real PostgreSQL journal/attention/trigger/context seed is sufficient to exercise the durable episode foreign-key boundary without creating a parallel runtime or authority store. Phase 13 remains unauthorized.
+
+### Phase 13 SENTRY-ready platform
+
+- ANIMA must remain the sole household authority when SENTRY is added: SENTRY
+  can reason and select a registered semantic tool, but context, identity,
+  policy, secrets, HA access, verification, and terminal outcomes stay inside
+  ANIMA.
+- HA-originated events already have the right durable path through the HA
+  adapter's Truth/Journal ingestion and the existing Attention rules. The
+  missing integration is a durable intelligence handoff, not a second HA
+  automation engine.
+- A standalone runtime import exposed a latent `ui_api`/`ui_runtime` cycle
+  when production database configuration was present. Loading the FastAPI
+  names after composition definitions keeps the SENTRY boundary importable
+  without changing the web application behavior.
+- Durable intelligence result status and lifecycle are different enums;
+  `PARTIAL`, `FAILED`, `UNAVAILABLE`, and `UNKNOWN_RESULT` require explicit
+  lifecycle mapping rather than value-casting.
 - Historical failure evidence remains useful after a bounded correction: H5T's task `FAILED / ValueError` is retained, while the current H5 Core target independently proves the corrected task mutation.

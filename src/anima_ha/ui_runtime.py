@@ -52,6 +52,12 @@ from anima_ha.home_assistant import (
     PostgresHAStore,
     home_assistant_manifest,
 )
+from anima_ha.intelligence import (
+    IntelligenceOrigin,
+    IntelligenceProviderMode,
+    IntelligenceRequestFactory,
+    PostgresIntelligenceStore,
+)
 from anima_ha.journal import PostgresEventJournal, PostgresRealityStore
 from anima_ha.plugins import (
     InvocationContext,
@@ -70,15 +76,8 @@ from anima_ha.policy import (
     PostgresPolicyStore,
     RequestOrigin,
 )
+from anima_ha.sentry_boundary import CoreSentryBoundary
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
-from anima_ha.ui_api import (
-    CommissionedIdentityResolver,
-    PrincipalMappingConflict,
-    PrincipalMappingRequired,
-    UICommandError,
-    UIEventBroadcaster,
-    UIIdentity,
-)
 
 
 def _identity(identity: UIIdentity) -> IdentityContext:
@@ -440,6 +439,88 @@ class CoreConversationPipeline:
         }
 
 
+class SentryConversationPipeline:
+    """Queue direct UI cognition for the configured SENTRY provider.
+
+    The browser request still creates the canonical journal event and the
+    normal Phase 7 ContextPacket.  SENTRY receives the packet only after a
+    durable, idempotent ANIMA request is created; there is no embedded-agent
+    fallback in this mode.
+    """
+
+    def __init__(
+        self,
+        *,
+        attention: Any,
+        context: Any,
+        journal: Any,
+        intelligence: Any,
+        tools: Callable[[], list[Any]],
+        profile: AttentionProfile | None = None,
+        consumer_name: str = "ui-sentry-conversation",
+    ) -> None:
+        self.attention = attention
+        self.context = context
+        self.journal = journal
+        self.intelligence = intelligence
+        self.tools = tools
+        self.profile = profile or default_attention_profile("phase13.sentry.v1")
+        self.consumer_name = consumer_name
+
+    def run(self, identity: UIIdentity, event: EventEnvelope) -> dict[str, Any]:
+        position = self.journal.position(event.event_id)
+        if position is None:
+            raise UICommandError("CONVERSATION_EVENT_UNAVAILABLE")
+        consumer = f"{self.consumer_name}:{event.event_id}"
+        self.attention.prime_consumer_before(self.profile, consumer, position - 1)
+        processed = self.attention.process(self.profile, consumer_name=consumer)
+        if processed.failure:
+            raise UICommandError("CONVERSATION_ATTENTION_UNAVAILABLE")
+        triggers = [
+            item
+            for item in self.attention.list_triggers(self.profile.profile_version)
+            if event.event_id in item.source_event_ids
+        ]
+        if not triggers:
+            raise UICommandError("CONVERSATION_TRIGGER_UNAVAILABLE")
+        trigger = max(triggers, key=lambda item: item.created_at)
+        packet = self.context.assemble(
+            trigger,
+            household_id=identity.household_id,
+            tools=self.tools(),
+            persist=True,
+        )
+        request = IntelligenceRequestFactory.for_trigger(
+            trigger.trigger_id,
+            household_id=identity.household_id,
+            origin=IntelligenceOrigin.DIRECT_UI_USER,
+            context_packet_id=packet.context_packet_id,
+            context_digest=packet.digest,
+            tools=self.tools(),
+            provider_id="sentry",
+            provider_version="1",
+            principal_id=identity.principal_id,
+            correlation_id=event.correlation_id,
+            causation_id=event.event_id,
+            metadata={"ui_request_id": event.event_id},
+        )
+        stored = self.intelligence.enqueue(request)
+        return {
+            "response": "SENTRY received the request and is reasoning through ANIMA.",
+            "disposition": "QUEUED_FOR_SENTRY",
+            "request_id": str(stored.request_id),
+            "trace": {
+                "pipeline": "journal_attention_context_sentry_queue",
+                "event_id": event.event_id,
+                "trigger_id": str(trigger.trigger_id),
+                "context_packet_id": str(packet.context_packet_id),
+                "correlation_id": event.correlation_id,
+                "causation_id": event.causation_id,
+                "attention_processed": processed.processed,
+            },
+        }
+
+
 @dataclass(slots=True)
 class CoreRuntime:
     """Already-constructed accepted Core dependencies for UI composition."""
@@ -456,8 +537,20 @@ class CoreRuntime:
     identity_resolver: CommissionedIdentityResolver
     action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
+    intelligence_store: PostgresIntelligenceStore | None = None
+    intelligence_provider: IntelligenceProviderMode = IntelligenceProviderMode.EMBEDDED_REFERENCE
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
+        if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
+            if self.intelligence_store is None:
+                raise UICommandError("SENTRY_INTELLIGENCE_STORE_UNAVAILABLE")
+            return SentryConversationPipeline(
+                attention=self.attention,
+                context=self.context,
+                journal=self.journal,
+                intelligence=self.intelligence_store,
+                tools=self.plugins.list_tools,
+            )  # type: ignore[return-value]
         return CoreConversationPipeline(
             attention=self.attention,
             context=self.context,
@@ -490,8 +583,21 @@ class CoreRuntime:
             agent=self.agent,
         )
 
+    def sentry_boundary(self) -> CoreSentryBoundary:
+        if self.intelligence_store is None:
+            raise UICommandError("SENTRY_INTELLIGENCE_STORE_UNAVAILABLE")
+        return CoreSentryBoundary(
+            manager=self.plugins,
+            policy_service=self.policy_service,
+            intelligence_store=self.intelligence_store,
+            action_executor=self.action_executor,
+            action_refresher=self.action_refresher,
+            action_verifier=self.action_verifier,
+            context_loader=lambda trigger_id: self.context.load(trigger_id),
+        )
 
-class PostgresCommissionedIdentityResolver(CommissionedIdentityResolver):
+
+class PostgresCommissionedIdentityResolver:
     """Resolve HA identities through commissioned graph provider references."""
 
     def __init__(self, graph: Any, provider_scope: str) -> None:
@@ -660,6 +766,10 @@ def build_postgres_core(
         action_executor=action_executor,
     )
     identity_resolver = PostgresCommissionedIdentityResolver(graph, provider_scope)
+    intelligence_provider = IntelligenceProviderMode(
+        os.environ.get("ANIMA_INTELLIGENCE_PROVIDER", "embedded_reference").strip()
+    )
+    intelligence_store = PostgresIntelligenceStore(database_url)
 
     def refresh(resources: tuple[UUID, ...]) -> Any:
         from anima_ha.action import TruthSnapshot
@@ -697,4 +807,20 @@ def build_postgres_core(
         truth,
         identity_resolver,
         action_refresher,
+        None,
+        intelligence_store,
+        intelligence_provider,
     )
+
+
+# Keep the standalone runtime importable by loading the FastAPI module only
+# after this composition module has defined its builders.  This matters for
+# the separate ANIMA↔SENTRY MCP process, which is not itself a web server.
+from anima_ha.ui_api import (  # noqa: E402  # isort: skip
+    CommissionedIdentityResolver,
+    PrincipalMappingConflict,
+    PrincipalMappingRequired,
+    UICommandError,
+    UIEventBroadcaster,
+    UIIdentity,
+)

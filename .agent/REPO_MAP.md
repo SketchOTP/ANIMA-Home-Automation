@@ -186,6 +186,22 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `ui/src/styles.css` and `ui/tests/ui.spec.ts` — measurable display-mode layout behavior and computed-geometry/order assertions.
 - `.agent/tasks/completed/ANIMA-HA-P12-BROWSER-ACCEPTANCE-EVIDENCE-CLOSURE-014H5/` — superseded H5 directive, evidence, and handoff; its incomplete browser journeys remain preserved as negative historical evidence.
 
+### Phase 13 SENTRY-ready intelligence platform
+
+- `src/anima_ha/intelligence.py` — durable intelligence request/result,
+  lifecycle, lease, fencing, and Attention-delivery contracts.
+- `src/anima_ha/sentry_boundary.py` — Core-owned typed SENTRY boundary for
+  sparse context, catalogue, semantic tools, Phase 9 actions, and results.
+- `src/anima_ha/sentry_mcp.py` — ANIMA-owned stdio MCP transport without SQL,
+  raw HA, secrets, shell, or arbitrary HTTP.
+- `src/anima_ha/sentry_bridge.py` — explicit Attention-to-SENTRY queue pump.
+- `src/anima_ha/db/migrations/0019_intelligence_provider.sql` — durable
+  request and append-only transition schema.
+- `integrations/sentry/anima-core/` — installable SENTRY compatibility bundle
+  that points at ANIMA Core without editing SENTRY's protected worktree.
+- `docs/SENTRY-ANIMA-INTEGRATION.md` — ownership, topology, setup, and
+  SenseGuard event-flow documentation.
+
 ## Known sensitive/high-risk areas
 
 - HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.

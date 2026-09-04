@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "anima_household_core": {
+      "command": "./scripts/launch_anima_core_mcp",
+      "args": [],
+      "cwd": ".",
+      "enabled": true,
+      "default_tools_approval_mode": "auto",
+      "env_vars": [
+        "PATH",
+        "ANIMA_DATABASE_URL",
+        "ANIMA_OPA_URL",
+        "ANIMA_HA_ACCESS_TOKEN",
+        "ANIMA_HA_WEBSOCKET_URL",
+        "ANIMA_HA_INSTANCE_ID",
+        "ANIMA_HA_PROVIDER_SCOPE",
+        "ANIMA_HA_TOKEN_SECRET_NAME",
+        "ANIMA_SENTRY_WORKER_ID"
+      ],
+      "startup_timeout_sec": 30,
+      "tool_timeout_sec": 180
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # ANIMA HA
 
-ANIMA HA is a local-first household intelligence prototype: a custom home interface in front of an event-driven cognition system, with deterministic authority around the model. Luna can reason and select semantic tools; it cannot redefine identity, policy, Truth, provider boundaries, or verification.
+ANIMA HA is the local-first household control plane for a connected Home Assistant installation. It keeps the event journal, Truth, household graph, policy, verified actions, durable tasks, external providers, and user-facing control surface in one authority boundary. SENTRY is the user-facing intelligence and voice layer; it reasons through ANIMA and never reaches Home Assistant directly.
 
 ![ANIMA HA desktop interface](docs/assets/anima-home-desktop.png)
 
@@ -31,7 +31,13 @@ flowchart TD
     J --> RM
 ```
 
-The interface is a client of Core, not a second agent or direct provider console. Conversation uses the same Journal, Attention, Context Broker, and AgentRuntime path as scheduled cognition. Direct home controls use the same Phase 5 → Phase 4 → Phase 9 boundary.
+The interface is a client of Core, not a second agent or direct provider console. SENTRY uses the same ANIMA Core boundary: HA events become Truth and Journal records, Attention creates durable intelligence requests, SENTRY claims a sparse ContextPacket, and every requested mutation returns through Phase 5 → Phase 4 → Phase 9. Direct home controls use that same path.
+
+## ANIMA ↔ SENTRY
+
+ANIMA is the household source of truth and execution authority. SENTRY owns conversation, voice, reasoning, and tool selection. The checked-in `integrations/sentry/anima-core` bundle exposes a typed stdio MCP surface for health, durable intelligence requests, sparse context, the registered semantic catalogue, governed tool invocation, and structured results. The boundary does not expose SQL, raw Home Assistant calls, secrets, arbitrary HTTP, shell, or policy editing.
+
+Run the explicit ANIMA Attention pump with `anima-sentry-bridge`, then configure SENTRY to load the bundled MCP server with `ANIMA_DATABASE_URL`, the commissioned Home Assistant settings, and a host-owned `ANIMA_SENTRY_WORKER_ID`. This makes HA-originated events—including the paired SenseGuard sensors—flow into ANIMA first, then into SENTRY as bounded reasoning work. SENTRY can ask ANIMA to read or change any capability that ANIMA has registered and policy permits; the terminal result is always ANIMA's observed result.
 
 ## Interface snapshots
 
@@ -47,11 +53,11 @@ These screenshots are captured from the tested local application with synthetic 
 
 - FastAPI/Uvicorn local interface with React, TypeScript, and Vite.
 - Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
-- Configured conversation composition into Attention, Context Broker, and AgentRuntime; task and local-calendar mutations use the Phase 5/4 policy path.
+- Configured conversation composition into Attention, Context Broker, and the selected intelligence provider; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
-- Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, and restricted external-content handling.
+- Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
 
 ## Safety and trust model
 
@@ -59,7 +65,7 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 
 ## Evidence
 
-Phases 0–11 are Architect accepted. Phase 12 implementation is complete and pending Architect acceptance. The [Authority state](.agent/CURRENT.md), [Phase 12 documentation](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md), and completed task packet distinguish deterministic contract tests, integrated PostgreSQL/OPA evidence, isolated Home Assistant evidence, live public synthetic provider evidence, and unperformed production commissioning.
+Phases 0–12 are Architect accepted. The active work is the SENTRY-ready intelligence platform: its ANIMA-side boundary is implemented and being validated. The [Authority state](.agent/CURRENT.md), [SENTRY integration guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish implemented contracts from host-level SENTRY service commissioning.
 
 ## Implemented Phase 0 through Phase 11 baseline
 
@@ -86,7 +92,7 @@ This checkpoint provides:
 - bounded external-by-intent capability adapters for weather, web/place/product discovery, recipes, local Calendar reads/event creation, and configured notifications, with fixed-host HTTPS egress, explicit untrusted-content normalization, local request auditing, and Phase 9 verification for external writes.
 - a shared locally hosted Phase 12 interface: React/TypeScript/Vite static assets served by FastAPI/Uvicorn, graph/Truth-backed semantic household view models, Home Assistant OAuth bootstrap with commissioned provider-reference identity resolution, hashed server-side sessions, CSRF/origin defenses, bounded SSE invalidations, and production Core command/conversation composition.
 
-Voice behavior, Phase 13 behavior, and production external-provider approval are not included. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses Open-Meteo, private SearXNG, OpenStreetMap Overpass, TheMealDB, UPCitemdb, the first-party local calendar, and ntfy, and no human-delivery claim is made.
+Direct SENTRY voice behavior remains owned by the SENTRY project. Retailer checkout/cart automation, browser/private endpoint access, Mem0, local embeddings, CEL, NATS, and policy-editing runtime APIs are not included. The Phase 6/9 integration is limited to an isolated HA test instance and low-risk virtual entities; Phase 11 uses Open-Meteo, private SearXNG, OpenStreetMap Overpass, TheMealDB, UPCitemdb, the first-party local calendar, and ntfy, and no human-delivery claim is made.
 
 ## Supported baseline
 

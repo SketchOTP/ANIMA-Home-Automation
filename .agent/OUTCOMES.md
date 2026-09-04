@@ -867,3 +867,22 @@ decision.
 - Implemented: durable continuation lifecycle/fencing/reclaim, pre-dispatch context/transcript/catalogue/runtime preflight, cumulative active-runtime accounting, exact approval policy-intent propagation, dedicated task/calendar projections, and test-only browser approval/rejection coverage.
 - Fresh evidence: 174 Python tests, Ruff, strict mypy, OPA 7/7, migrations, package build, frontend check/test/Vite build, 24 existing browser checks (12 executed and 12 intentional responsive skips), 2/2 dedicated H5V browser journeys, H5V PostgreSQL/OPA true-resume verifier, H5 Core verifier, diff-check, and public-safety scan passed.
 - Remaining evidence limits: browser denial/strong-auth, provider recovery, restricted browser lifecycle/storage, same-browser process restart/SSE, dirty task/calendar fixture, complete crash/concurrency accounting, and browser-visible isolated-HA outcomes remain unproven. This is an implementation/evidence checkpoint, not a Phase 12 acceptance claim.
+
+## ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B — ANIMA boundary slice
+
+- Date: 2026-09-04.
+- Disposition: implementation in progress; no Phase 13 acceptance claim.
+- Implemented the durable intelligence request/result schema, fenced
+  PostgreSQL claims, Attention-to-SENTRY queue pump, Core-owned SENTRY
+  boundary, stdio MCP transport, explicit bridge entry point, and installable
+  SENTRY compatibility bundle. The existing HA adapter remains the only HA
+  integration and all consequential tools still route through Phase 9.
+- Fresh local evidence: full pytest passed; Ruff and strict mypy passed;
+  migration `0019` applied once and was idempotent on repeat; a live local
+  PostgreSQL request completed enqueue → claim → provider-running → bounded
+  result; direct sentry-mode composition returned a SentryConversationPipeline
+  and available Core boundary.
+- The dirty SENTRY V0.4 working tree was not modified. Live SENTRY claim,
+  voice broadcast, and physical-household mutation remain unclaimed pending
+  host commissioning and compatibility validation. Phase 14/15 remain
+  unauthorized.
