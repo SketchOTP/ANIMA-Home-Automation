@@ -729,7 +729,12 @@ def build_postgres_core(
         instance_id = UUID(instance_value)
         if provider_scope != str(instance_id):
             raise ValueError("ANIMA_HA_PROVIDER_SCOPE must equal ANIMA_HA_INSTANCE_ID")
-        ha_config = HAInstanceConfig(instance_id, websocket_url, token_secret_name)
+        ha_config = HAInstanceConfig(
+            instance_id,
+            websocket_url,
+            token_secret_name,
+            ssl=websocket_url.lower().startswith("wss://"),
+        )
         ha_adapter = HomeAssistantAdapter(ha_config, truth, graph, PostgresHAStore(database_url))
         manifest = home_assistant_manifest(ha_config)
         ha_runtime = HomeAssistantPlugin(
