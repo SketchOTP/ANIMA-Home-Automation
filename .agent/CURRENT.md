@@ -22,6 +22,16 @@ SENTRY-baseline compatibility work. SENTRY's protected dirty working tree is
 not modified. Phase 14 resilience and Phase 15 demonstration remain
 unauthorized.
 
+## Architect pivot record
+
+The strategic change from standalone ANIMA intelligence to ANIMA as the
+household authority/platform for SENTRY is documented in
+`docs/ARCHITECT-PIVOT-ANIMA-SENTRY-PLATFORM.md`. SENTRY is the sole intended
+production intelligence and voice layer; ANIMA remains the source of household
+Truth and the only authority for policy, execution, observation and terminal
+results. Live SENTRY host, voice and physical-household evidence remains
+pending.
+
 ## Current authority result
 
 Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface

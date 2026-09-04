@@ -201,6 +201,9 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
   that points at ANIMA Core without editing SENTRY's protected worktree.
 - `docs/SENTRY-ANIMA-INTEGRATION.md` — ownership, topology, setup, and
   SenseGuard event-flow documentation.
+- `docs/ARCHITECT-PIVOT-ANIMA-SENTRY-PLATFORM.md` — architect-facing record of
+  the strategic pivot, ownership boundary, target signal flows, evidence
+  status, and remaining SENTRY integration gates.
 
 ## Known sensitive/high-risk areas
 
