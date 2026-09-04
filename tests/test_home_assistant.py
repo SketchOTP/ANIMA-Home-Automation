@@ -464,8 +464,12 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
         "read_state",
         "set_power",
     }
-    assert tools["permit_zigbee_join"].execution_boundary.value == "POLICY_GATED_INTERNAL"
-    assert tools["commission_device"].execution_boundary.value == "POLICY_GATED_INTERNAL"
+    permit_boundary = tools["permit_zigbee_join"].execution_boundary
+    commission_boundary = tools["commission_device"].execution_boundary
+    assert permit_boundary is not None
+    assert commission_boundary is not None
+    assert permit_boundary.value == "POLICY_GATED_INTERNAL"
+    assert commission_boundary.value == "POLICY_GATED_INTERNAL"
     assert all("call_service" not in tool.name for tool in manager.list_tools())
     household_id = uuid4()
     result = manager.invoke(
