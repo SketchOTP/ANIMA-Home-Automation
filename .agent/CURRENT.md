@@ -272,11 +272,11 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Next Architect decision point
 
-Review `ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V` after
-the final governed checkpoint and exact-head CI. Evidence must cover durable
-context/transcript reconstruction, real OPA, approval/rejection second turns,
-no tool replay, and the existing Phase 12 regression boundary. Phase 13
-remains unauthorized.
+Review `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` with its R1
+amendment after the exact-head hosted CI is verified. Evidence must cover the
+credential-isolated Core service, request fencing/catalogue binding, direct
+SENTRY interaction binding, device/SenseGuard integration, and real SENTRY
+host qualification. Phase 14 and Phase 15 remain unauthorized.
 
 ## Phase 12 publication state — historical 014H checkpoint
 

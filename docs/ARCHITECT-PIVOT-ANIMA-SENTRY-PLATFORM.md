@@ -3,7 +3,7 @@
 **Date:** 2026-09-04
 **Audience:** AI Architect / project authority
 **Repository:** `SketchOTP/ANIMA-Home-Automation`
-**Status:** Direction adopted; Phase 13 implementation and compatibility evidence remain in progress and pending Architect acceptance.
+**Status:** Direction adopted; Phase 13 R1 implementation is published and remains pending live SENTRY/physical qualification and Architect acceptance.
 
 ## Executive decision summary
 
@@ -397,7 +397,7 @@ This keeps the user experience broad while preserving:
 
 ### Phase 13 — SENTRY-ready intelligence platform
 
-The active phase builds and validates the replaceable intelligence-provider contract, durable request/result bridge, Attention delivery, ANIMA Core service boundary, SENTRY MCP/plugin package, identity/provenance translation, provider-routed UI and deployment compatibility.
+The active phase builds and validates the replaceable intelligence-provider contract, durable request/result bridge, Attention delivery, ANIMA Core service boundary, SENTRY MCP/plugin package, identity/provenance translation, provider-routed UI and deployment compatibility. The R1 increment publishes the credential-isolated client/service split, replay fencing, request-bound catalogues, direct-interaction binding, current HA registry metadata, and a typed SenseGuard policy. Real SENTRY host execution, physical SenseGuard triggering, and live household action remain qualification gates.
 
 The current ANIMA implementation is in this phase. It is not self-accepted.
 
@@ -458,7 +458,7 @@ No SENTRY credentials, HA tokens, private keys, household secrets or private run
 | SenseGuard alerts can interrupt SENTRY voice | TARGET / UNKNOWN | Preference and event architecture support the scenario, but live voice evidence is absent. |
 | SENTRY can ask ANIMA whether a guard is still tripped | TARGET / ARCHITECTURALLY SUPPORTED | It must use a fresh ANIMA read; live follow-up evidence is absent. |
 | Physical HA control through SENTRY is complete | UNKNOWN / NOT YET PROVEN | Requires representative host and isolated/physical HA evidence. |
-| Phase 13 is accepted | NO | It remains pending Architect review. |
+| Phase 13 is accepted | NO | R1 implementation is published; live SENTRY/physical evidence and Architect review remain pending. |
 | Phase 14/15 are authorized | NO | They remain future blocked scopes. |
 
 ## Final statement
