@@ -507,8 +507,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                     worker_id = request.claim_owner
                     response = {
                         "status": "PROVIDER_RUNNING"
-                        if worker_id
-                        and service.boundary.start_provider(request, worker_id)
+                        if worker_id and service.boundary.start_provider(request, worker_id)
                         else "CLAIM_LOST"
                     }
                 elif operation == "result":

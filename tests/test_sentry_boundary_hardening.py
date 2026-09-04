@@ -236,9 +236,7 @@ def test_identity_recording_persists_only_non_escalating_evidence() -> None:
     request = request_for(catalogue=())
     recorded: list[Any] = []
     policy = SimpleNamespace(record_evidence=recorded.append)
-    boundary = CoreSentryBoundary(
-        cast(Any, Manager([])), policy, cast(Any, MemoryStore(request))
-    )
+    boundary = CoreSentryBoundary(cast(Any, Manager([])), policy, cast(Any, MemoryStore(request)))
     context = boundary.record_sentry_identity(
         request,
         SentryIdentityEvidenceEnvelope(
