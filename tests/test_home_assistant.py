@@ -524,6 +524,26 @@ def test_discovered_device_commissions_from_registry_into_canonical_graph(
     assert len(store.objects) == 3
 
 
+def test_current_home_assistant_device_registry_fields_are_preserved(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    child = adapter._provider_object(
+        "device",
+        {
+            "id": "child-device",
+            "name": "SenseGuard child",
+            "parent_device_id": "parent-device",
+            "config_entry_id": "entry-2026",
+            "config_subentry_id": "subentry-2026",
+        },
+    )
+    assert child.metadata["parent_device_id"] == "parent-device"
+    assert child.metadata["config_entry_id"] == "entry-2026"
+    assert child.metadata["config_subentry_id"] == "subentry-2026"
+    assert child.metadata["is_child_device"] is True
+
+
 def test_verification_failure_is_not_gateway_success(
     adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
 ) -> None:

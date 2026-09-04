@@ -35,9 +35,9 @@ The interface is a client of Core, not a second agent or direct provider console
 
 ## ANIMA ↔ SENTRY
 
-ANIMA is the household source of truth and execution authority. SENTRY owns conversation, voice, reasoning, and tool selection. The checked-in `integrations/sentry/anima-core` bundle exposes a typed stdio MCP surface for health, durable intelligence requests, sparse context, the registered semantic catalogue, governed tool invocation, and structured results. The boundary does not expose SQL, raw Home Assistant calls, secrets, arbitrary HTTP, shell, or policy editing.
+ANIMA is the household source of truth and execution authority. SENTRY owns conversation, voice, reasoning, and tool selection. The checked-in `integrations/sentry/anima-household` bundle exposes a client-only typed MCP surface for health, durable intelligence requests, sparse context, the request-bound semantic catalogue, governed tool invocation, and structured results. The boundary does not expose SQL, raw Home Assistant calls, secrets, arbitrary HTTP, shell, or policy editing.
 
-Run the explicit ANIMA Attention pump with `anima-sentry-bridge`, then configure SENTRY to load the bundled MCP server with `ANIMA_DATABASE_URL`, the commissioned Home Assistant settings, and a host-owned `ANIMA_SENTRY_WORKER_ID`. This makes HA-originated events—including the paired SenseGuard sensors—flow into ANIMA first, then into SENTRY as bounded reasoning work. SENTRY can ask ANIMA to read or change any capability that ANIMA has registered and policy permits; the terminal result is always ANIMA's observed result.
+Run the explicit ANIMA Attention pump with `anima-sentry-bridge`, then run the ANIMA-owned Core service and configure SENTRY to load the bundled MCP client with only its authenticated endpoint, private client-token path, and worker label. PostgreSQL, OPA, Home Assistant, and provider credentials stay inside ANIMA. HA-originated events—including the paired SenseGuard sensors—flow into ANIMA first, then into SENTRY as bounded reasoning work. SENTRY can ask ANIMA to read or change any capability that ANIMA has registered and policy permits; the terminal result is always ANIMA's observed result.
 
 ## Interface snapshots
 

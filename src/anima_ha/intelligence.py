@@ -37,6 +37,7 @@ class IntelligenceProviderMode(StrEnum):
 
 class IntelligenceOrigin(StrEnum):
     DIRECT_UI_USER = "DIRECT_UI_USER"
+    DIRECT_SENTRY_INTERACTION = "DIRECT_SENTRY_INTERACTION"
     AUTONOMOUS_ATTENTION = "AUTONOMOUS_ATTENTION"
     DURABLE_TASK = "DURABLE_TASK"
     APPROVAL_RESOLUTION = "APPROVAL_RESOLUTION"
@@ -105,6 +106,8 @@ class IntelligenceRequest:
     lease_expires_at: datetime | None = None
     attempt_count: int = 0
     request_metadata: dict[str, Any] = field(default_factory=dict)
+    catalogue: tuple[dict[str, Any], ...] = ()
+    provider_invocation_started: bool = False
 
     def __post_init__(self) -> None:
         if not self.provider_id.strip() or not self.provider_version.strip():
@@ -116,6 +119,9 @@ class IntelligenceRequest:
         raw = json.dumps(self.request_metadata, sort_keys=True, separators=(",", ":"))
         if len(raw.encode()) > MAX_METADATA_BYTES:
             raise ValueError("request metadata exceeds bounded size")
+        if len(self.catalogue) > 128:
+            raise ValueError("request catalogue exceeds bounded size")
+        json.dumps(self.catalogue, sort_keys=True, separators=(",", ":"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,7 +180,13 @@ class ProviderHealth:
 class IntelligenceStore(Protocol):
     def enqueue(self, request: IntelligenceRequest) -> IntelligenceRequest: ...
 
-    def claim(self, worker_id: str, *, lease_seconds: int = 120) -> IntelligenceRequest | None: ...
+    def claim(
+        self,
+        worker_id: str,
+        *,
+        lease_seconds: int = 120,
+        provider_id: str | None = None,
+    ) -> IntelligenceRequest | None: ...
 
     def renew(
         self, request_id: UUID, worker_id: str, generation: int, *, lease_seconds: int = 120
@@ -202,6 +214,16 @@ def _digest(value: Any) -> str:
     ).hexdigest()
 
 
+def _catalogue_payload(tools: list[ToolDescriptor]) -> tuple[dict[str, Any], ...]:
+    """Freeze the exact Core-normalized catalogue at request creation time."""
+    payloads: list[dict[str, Any]] = []
+    for tool in tools:
+        payload = dict(tool.to_payload())
+        payload["schema_digest"] = _digest(tool.input_schema)
+        payloads.append(payload)
+    return tuple(payloads)
+
+
 def _request_from_row(row: dict[str, Any]) -> IntelligenceRequest:
     metadata = row.get("request_metadata") or {}
     if isinstance(metadata, str):
@@ -226,6 +248,8 @@ def _request_from_row(row: dict[str, Any]) -> IntelligenceRequest:
         lease_expires_at=row.get("lease_expires_at"),
         attempt_count=int(row["attempt_count"]),
         request_metadata=dict(metadata),
+        catalogue=tuple(row.get("request_catalogue") or ()),
+        provider_invocation_started=bool(row.get("provider_invocation_started", False)),
     )
 
 
@@ -249,8 +273,8 @@ class PostgresIntelligenceStore:
                     request_id, trigger_id, household_id, principal_id, origin,
                     correlation_id, causation_id, context_packet_id, context_digest,
                     catalogue_digest, provider_id, provider_version, idempotency_key,
-                    request_metadata
-                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb)
+                    request_metadata, request_catalogue
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb)
                 ON CONFLICT (idempotency_key) DO NOTHING
                 """,
                 (
@@ -268,6 +292,7 @@ class PostgresIntelligenceStore:
                     request.provider_version,
                     request.idempotency_key,
                     json.dumps(request.request_metadata, sort_keys=True),
+                    json.dumps(list(request.catalogue), sort_keys=True),
                 ),
             )
             cursor.execute(
@@ -280,18 +305,76 @@ class PostgresIntelligenceStore:
             connection.commit()
         return _request_from_row(row)
 
-    def claim(self, worker_id: str, *, lease_seconds: int = 120) -> IntelligenceRequest | None:
+    def claim(
+        self,
+        worker_id: str,
+        *,
+        lease_seconds: int = 120,
+        provider_id: str | None = None,
+    ) -> IntelligenceRequest | None:
         if not worker_id.strip() or lease_seconds < 1 or lease_seconds > 900:
             raise ValueError("invalid intelligence claim parameters")
+        if provider_id is not None and not provider_id.strip():
+            raise ValueError("provider_id cannot be blank")
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
+                WITH expired AS (
+                    SELECT request_id, lifecycle AS previous_lifecycle,
+                           fencing_generation, claim_owner
+                    FROM anima_intelligence_requests
+                    WHERE lifecycle IN ('PROVIDER_RUNNING', 'DELIVERED_TO_PROVIDER')
+                      AND provider_invocation_started
+                      AND lease_expires_at <= now()
+                    FOR UPDATE SKIP LOCKED
+                )
+                UPDATE anima_intelligence_requests AS request
+                SET lifecycle='UNKNOWN_RESULT', result_status='UNKNOWN_RESULT',
+                    result_metadata=jsonb_build_object(
+                        'reason', 'PROVIDER_LEASE_EXPIRED',
+                        'possible_prior_dispatch', true
+                    ), completed_at=now(), updated_at=now()
+                FROM expired
+                WHERE request.request_id=expired.request_id
+                RETURNING request.request_id, expired.previous_lifecycle,
+                          expired.fencing_generation, expired.claim_owner
+                """
+            )
+            expired_rows = cursor.fetchall()
+            for expired in expired_rows:
+                cursor.execute(
+                    """
+                    INSERT INTO anima_intelligence_transitions
+                        (request_id, from_lifecycle, to_lifecycle,
+                         fencing_generation, actor, metadata)
+                    VALUES (%s,%s,'UNKNOWN_RESULT',%s,%s,%s::jsonb)
+                    """,
+                    (
+                        expired["request_id"],
+                        expired["previous_lifecycle"],
+                        expired["fencing_generation"],
+                        expired["claim_owner"] or "anima.recovery",
+                        json.dumps(
+                            {
+                                "reason": "PROVIDER_LEASE_EXPIRED",
+                                "possible_prior_dispatch": True,
+                            },
+                            sort_keys=True,
+                        ),
+                    ),
+                )
+            provider_clause = "" if provider_id is None else "AND provider_id=%s"
+            cursor.execute(
+                f"""
                 WITH candidate AS (
                     SELECT request_id, lifecycle AS previous_lifecycle
                     FROM anima_intelligence_requests
                     WHERE (lifecycle = 'PENDING'
-                           OR (lifecycle IN ('CLAIMED','DELIVERED_TO_PROVIDER','PROVIDER_RUNNING')
+                           OR (lifecycle = 'CLAIMED' AND lease_expires_at <= now())
+                           OR (lifecycle = 'DELIVERED_TO_PROVIDER'
+                               AND NOT provider_invocation_started
                                AND lease_expires_at <= now()))
+                      {provider_clause}
                     ORDER BY created_at, request_id
                     FOR UPDATE SKIP LOCKED
                     LIMIT 1
@@ -305,7 +388,9 @@ class PostgresIntelligenceStore:
                 WHERE request.request_id=candidate.request_id
                 RETURNING request.*, candidate.previous_lifecycle
                 """,
-                (worker_id, lease_seconds),
+                (worker_id, lease_seconds)
+                if provider_id is None
+                else (provider_id, worker_id, lease_seconds),
             )
             row = cursor.fetchone()
             if row is None:
@@ -394,7 +479,11 @@ class PostgresIntelligenceStore:
             cursor.execute(
                 """
                 UPDATE anima_intelligence_requests
-                SET lifecycle=%s, updated_at=now(),
+                    SET lifecycle=%s, updated_at=now(),
+                        provider_invocation_started = CASE
+                            WHEN %s = 'PROVIDER_RUNNING' THEN true
+                            ELSE provider_invocation_started
+                        END,
                     completed_at=CASE WHEN %s IN (
                         'COMPLETED','NO_ACTION','FAILED','UNKNOWN_RESULT',
                         'RECOVERY_REQUIRED','CANCELLED'
@@ -402,7 +491,14 @@ class PostgresIntelligenceStore:
                 WHERE request_id=%s AND claim_owner=%s AND fencing_generation=%s
                   AND lease_expires_at > now()
                 """,
-                (lifecycle.value, lifecycle.value, request_id, worker_id, generation),
+                (
+                    lifecycle.value,
+                    lifecycle.value,
+                    lifecycle.value,
+                    request_id,
+                    worker_id,
+                    generation,
+                ),
             )
             if cursor.rowcount != 1:
                 connection.rollback()
@@ -522,7 +618,7 @@ class IntelligenceRequestFactory:
         causation_id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> IntelligenceRequest:
-        catalogue = [tool.to_payload() for tool in tools]
+        catalogue = _catalogue_payload(tools)
         catalogue_digest = _digest(catalogue)
         idempotency_key = f"intelligence:{provider_id}:{trigger_id}"
         request_id = uuid5(INTELLIGENCE_NAMESPACE, idempotency_key)
@@ -541,6 +637,7 @@ class IntelligenceRequestFactory:
             provider_version=provider_version,
             idempotency_key=idempotency_key,
             request_metadata=metadata or {},
+            catalogue=catalogue,
         )
 
 

@@ -56,17 +56,23 @@ The HA token value is supplied to ANIMA's existing secret broker; it is not
 placed in this document, the SENTRY prompt, a ContextPacket, or the Git
 repository.
 
-Start the two explicit processes:
+Start the ANIMA-owned Core service and Attention pump as separate processes:
 
 ```bash
+umask 077
+export ANIMA_SENTRY_SERVICE_TOKEN_FILE=/run/anima/sentry-client.token
+anima-core-service --socket /run/anima/core.sock \
+  --token-file "$ANIMA_SENTRY_SERVICE_TOKEN_FILE"
 anima-sentry-bridge
-ANIMA_DATABASE_URL="$ANIMA_DATABASE_URL" \
-ANIMA_SENTRY_WORKER_ID="$ANIMA_SENTRY_WORKER_ID" \
-  integrations/sentry/anima-core/scripts/launch_anima_core_mcp
 ```
 
-Load the bundled MCP server in SENTRY using the checked-in
-`integrations/sentry/anima-core/.mcp.json`. SENTRY should claim a request,
+The token file is a short-lived/revocable service credential created by the
+operator inside ANIMA's service boundary. It is not a Home Assistant token,
+database URL, OPA URL, or provider credential. The checked-in
+`integrations/sentry/anima-household/.mcp.json` gives SENTRY only the Core
+socket/loopback endpoint, private client-token path, and a worker label.
+
+Load that bundled MCP client in SENTRY. SENTRY should claim a request,
 read the exact sparse context, select from the returned catalogue, invoke
 semantic tools, and submit a bounded `RESPONSE`, `NO_ACTION`,
 `TOOL_ACTIVITY_COMPLETED`, `WAITING_CONFIRMATION`, `WAITING_STRONGER_AUTH`,
@@ -77,10 +83,11 @@ semantic tools, and submit a bounded `RESPONSE`, `NO_ACTION`,
 The paired `SenseGuard Kitchen` and `SenseGuard Basement` devices are already
 represented by Home Assistant's ZHA integration. Their `state_changed` events
 are normalized by ANIMA into Truth observations and Journal records. The
-Attention pump creates durable SENTRY work from those records. SENTRY can then
-compare the event and current state with the household's persisted preferences
-and return a notification decision. A follow-up question re-enters ANIMA's
-semantic read path and does not query HA directly.
+typed SenseGuard alert policy is the ANIMA-owned place to define resource,
+event, household-local time window, priority, guaranteed attention, delivery
+mode, and provenance. The Attention pump then creates durable SENTRY work
+from matching records. A follow-up question re-enters ANIMA's semantic read
+path and does not query HA directly.
 
 ## ANIMA device onboarding
 
@@ -97,8 +104,12 @@ capabilities appear in Home and retain the normal Phase 5 -> Phase 4 -> Phase
 
 ## Boundaries and current evidence
 
-The implementation is intentionally split into a durable queue, a Core-owned
-boundary, an MCP transport, and an explicit Attention pump. Existing HA,
+The implementation is intentionally split into a durable queue, an ANIMA-owned
+Core service, a client-only MCP transport, and an explicit Attention pump.
+The service owns PostgreSQL, OPA, Home Assistant, and provider credentials;
+the SENTRY-side package cannot import the ANIMA checkout. Requests persist the
+exact catalogue bound at creation, and an expired provider-running lease is
+terminalized as ambiguous instead of being blindly replayed. Existing HA,
 policy, action, task, calendar, provider, and UI tests remain the regression
 boundary. Host-level SENTRY installation and any real voice broadcast still
 require commissioning and must not be inferred from deterministic unit tests.

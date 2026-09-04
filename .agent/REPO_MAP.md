@@ -175,8 +175,9 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
   composition; the normal Playwright config excludes these tests.
 - `scripts/verify_phase12_h5v_ledger.py` — secret-free scenario ledger for the
   currently proven H5V subset.
-- `.agent/tasks/active/ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V/`
-  — active H5V directive/evidence packet.
+- `.agent/tasks/completed/ANIMA-HA-P12-TRUE-AGENT-RESUME-INTEGRATED-ACCEPTANCE-014H5V/`
+  — completed H5V packet; its negative evidence remains historical
+  carry-forward.
 
 ### Phase 12 H5 browser acceptance evidence
 
@@ -197,8 +198,9 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `src/anima_ha/sentry_bridge.py` — explicit Attention-to-SENTRY queue pump.
 - `src/anima_ha/db/migrations/0019_intelligence_provider.sql` — durable
   request and append-only transition schema.
-- `integrations/sentry/anima-core/` — installable SENTRY compatibility bundle
-  that points at ANIMA Core without editing SENTRY's protected worktree.
+- `integrations/sentry/anima-household/` — canonical installable SENTRY
+  client-only bundle; the legacy `anima-core/` path is a compatibility alias
+  and carries no ANIMA credentials or Core imports.
 - `docs/SENTRY-ANIMA-INTEGRATION.md` — ownership, topology, setup, and
   SenseGuard event-flow documentation.
 - `docs/ARCHITECT-PIVOT-ANIMA-SENTRY-PLATFORM.md` — architect-facing record of
@@ -218,6 +220,14 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
   discovery, room assignment, and subsequent semantic Home control.
 - `docs/PHASE-13-HA-DEVICE-CONTROL.md` — device-onboarding authority boundary
   and evidence limits.
+
+### Phase 13 R1 SENTRY boundary hardening
+
+- `src/anima_ha/sentry_service.py` — ANIMA-owned authenticated Unix-socket service; SENTRY receives no Core credentials.
+- `src/anima_ha/sentry_boundary.py` — request-bound catalogue, fencing, semantic invocation, and non-escalating SENTRY identity evidence.
+- `src/anima_ha/senseguard_alerts.py` and `src/anima_ha/db/migrations/0021_senseguard_alert_policy.sql` — typed canonical-resource SenseGuard alert policy.
+- `integrations/sentry/anima-household/` — standalone client-only MCP package and bounded host-turn orchestrator; it has no ANIMA Core imports.
+- `src/anima_ha/db/migrations/0020_sentry_boundary_hardening.sql` — durable request catalogue and provider-dispatch ambiguity markers.
 
 ## Known sensitive/high-risk areas
 

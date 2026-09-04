@@ -561,3 +561,11 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Published implementation checkpoint: `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
 - Final tested checkpoint: `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI `33818551425` passed on the exact SHA. Artifact `9917602062`, digest `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
 - Result: continuation core, real PostgreSQL/OPA approval/rejection, dedicated browser approval/rejection, full local validation, and hosted CI passed. The complete browser/restart/recovery acceptance matrix remains open; this amendment does not accept Phase 12.
+
+## ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1
+
+- Issued: 2026-09-04
+- Parent: `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B`; Phase 0–12 accepted, Phase 13 active, Phase 14/15 unauthorized.
+- Starting checkpoint: `8ee91b3ffa4af28a1dc6bb3d1bf0f0a41b90f5c9`; hosted CI `33919471594` passed.
+- Objective: remove SENTRY-side ANIMA/HA credentials, authenticate the ANIMA Core service, harden provider replay/fencing, bind capabilities to each request, add direct SENTRY/identity evidence boundaries, preserve the protected SENTRY tree, and qualify the device/SenseGuard continuation.
+- Current disposition: implementation/evidence in progress; local hardening tests pass; live SENTRY/physical/hosted evidence remains unclaimed. No Phase 14/15 behavior.

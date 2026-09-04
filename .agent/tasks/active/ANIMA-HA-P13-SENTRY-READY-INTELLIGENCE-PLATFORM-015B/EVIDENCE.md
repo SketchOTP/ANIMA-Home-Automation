@@ -14,8 +14,9 @@ Status: IMPLEMENTED LOCALLY — PENDING FULL COMPATIBILITY/ARCHITECT REVIEW
   catalogue, policy-gated tool invocation, and structured result submission.
   Consequential tools are converted to `ActionRequest` and routed through the
   existing Phase 9 coordinator.
-- Added `anima-sentry-mcp` and `anima-sentry-bridge` entry points plus the
-  installable `integrations/sentry/anima-core` compatibility bundle.
+- Added `anima-sentry-bridge` and the installable client-only
+  `integrations/sentry/anima-household` bundle; the legacy `anima-core` path is
+  retained only as a compatibility alias.
 - Added direct UI queue-mode composition via
   `ANIMA_INTELLIGENCE_PROVIDER=sentry`; the embedded AgentRuntime remains the
   explicit `embedded_reference` default for existing deterministic regressions.
@@ -48,3 +49,32 @@ Status: IMPLEMENTED LOCALLY — PENDING FULL COMPATIBILITY/ARCHITECT REVIEW
   this evidence file.
 
 Phase 14/15 and any Phase 13 voice implementation remain unauthorized.
+
+## R1 hardening evidence — current working checkpoint
+
+- ANIMA Core now has a separate Unix-socket service entry point. The SENTRY
+  MCP bundle is a dependency-light client and receives only a configured Core
+  endpoint, private service-token path, and worker label; it does not receive
+  ANIMA database, OPA, Home Assistant, or provider credentials and does not
+  import the ANIMA checkout.
+- Service tokens are read only from private non-symlink regular files. Token
+  rotation invalidates old authentication and previously issued binding
+  signatures. Bindings carry server-issued request, household, provider,
+  catalogue, correlation, expiry, and fencing identity.
+- Intelligence requests persist their exact normalized tool catalogue. SENTRY
+  catalogue and invocation paths enforce the original tool/version/schema
+  intersection with current availability. Stale fencing generation cannot
+  invoke or submit a result.
+- Expired provider-delivered/running work with recorded possible dispatch is
+  terminalized as `UNKNOWN_RESULT` with an auditable transition; it is not
+  reclaimed for blind replay. SENTRY claims are provider-scoped.
+- The HA registry adapter preserves current singular `config_entry_id` /
+  `config_subentry_id` and sparse `parent_device_id` child-device metadata.
+- Added an ANIMA-owned typed SenseGuard policy with household-local time-window
+  matching, canonical resource scope, guaranteed-attention metadata, delivery
+  mode, provenance, and optimistic-version PostgreSQL storage.
+
+Focused R1 tests, full pytest, Ruff, and strict mypy pass locally. Real SENTRY
+host/voice execution, physical SenseGuard triggering, live HA action, and
+hosted exact-head CI remain unclaimed until the protected SENTRY host is
+commissioned without modifying its dirty worktree.

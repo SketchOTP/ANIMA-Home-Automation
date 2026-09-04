@@ -2,6 +2,13 @@
 
 Status: ACTIVE — implementation in progress.
 
+Amendment: `ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1`.
+This amendment hardens the Core-owned service boundary, provider replay and
+fencing, request-bound capability catalogues, direct SENTRY interaction and
+identity evidence, the protected SENTRY client package, current HA registry
+normalization, and the typed SenseGuard alert policy. Phase 14/15 remain
+unauthorized.
+
 This packet records the owner-authorized platform integration. ANIMA remains
 the household authority, Truth/policy owner, executor, observer, and source of
 terminal action outcomes. SENTRY is the production intelligence, persona,

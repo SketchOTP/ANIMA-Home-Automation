@@ -606,10 +606,34 @@ class HomeAssistantAdapter:
         )
         metadata_keys = {
             "area": {"name", "floor_id", "aliases"},
-            "device": {"name", "name_by_user", "area_id", "via_device_id", "config_entries"},
+            # HA 2026.8 uses singular config_entry_id/config_subentry_id and
+            # HA 2026.9 may return child-device records with sparse fields.
+            # Keep both the current shape and legacy data as bounded metadata;
+            # canonical commissioning still derives authority from ANIMA.
+            "device": {
+                "name",
+                "name_by_user",
+                "area_id",
+                "via_device_id",
+                "parent_device_id",
+                "config_entry_id",
+                "config_subentry_id",
+                "config_entries",
+            },
             "entity": {"name", "original_name", "device_id", "area_id", "platform", "disabled_by"},
         }[kind]
         metadata = {key: item.get(key) for key in sorted(metadata_keys) if key in item}
+        if kind == "device":
+            # Older HA snapshots exposed config_entries as a list. Preserve a
+            # deterministic singular projection when the new field is absent.
+            entries = item.get("config_entries")
+            if (
+                "config_entry_id" not in metadata
+                and isinstance(entries, list)
+                and len(entries) == 1
+            ):
+                metadata["config_entry_id"] = entries[0]
+            metadata["is_child_device"] = bool(item.get("parent_device_id"))
         return HAProviderObject(
             kind,
             external_id,

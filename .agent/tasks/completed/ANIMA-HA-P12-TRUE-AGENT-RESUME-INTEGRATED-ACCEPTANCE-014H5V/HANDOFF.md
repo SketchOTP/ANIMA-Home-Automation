@@ -1,5 +1,9 @@
 # H5V-R1 handoff
 
+Packet disposition: COMPLETED after the subsequent Architect acceptance of
+Phase 12. The limitations recorded below remain historical carry-forward
+evidence and are preserved for the Phase 13 boundary work.
+
 H5V-R1 implementation checkpoint:
 `8bcff850a56b0bd8b3a70cc4d837e1268e12716f`.
 The follow-up CI configuration checkpoint is
@@ -16,7 +20,8 @@ rejection. The continuation hardening also binds the original tool catalogue
 and runtime identity, preflights durable context/transcript state before
 consuming approval, and enforces owner/fence checks for recovery.
 
-Phase 12 remains `CONTINUE` and is not self-accepted. The required browser
+At the time of this handoff Phase 12 remained `CONTINUE` and was not
+self-accepted. The required browser
 denial/strong-auth, provider recovery, restricted browser lifecycle,
 same-browser process restart/SSE, complete crash/concurrency ledger, dirty
 task/calendar evidence, and browser-visible isolated-HA journeys remain

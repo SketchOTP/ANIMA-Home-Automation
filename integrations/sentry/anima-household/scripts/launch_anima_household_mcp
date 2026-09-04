@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+package_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+runtime="${ANIMA_PYTHON:-$(command -v python3)}"
+export PYTHONPATH="${package_root}${PYTHONPATH:+:${PYTHONPATH}}"
+exec "${runtime}" "${package_root}/anima_household_mcp.py"

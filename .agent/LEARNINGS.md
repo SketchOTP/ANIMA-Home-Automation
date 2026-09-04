@@ -234,3 +234,11 @@ Any future history rewrite proposal, remote migration, or change to the reposito
   `PARTIAL`, `FAILED`, `UNAVAILABLE`, and `UNKNOWN_RESULT` require explicit
   lifecycle mapping rather than value-casting.
 - Historical failure evidence remains useful after a bounded correction: H5T's task `FAILED / ValueError` is retained, while the current H5 Core target independently proves the corrected task mutation.
+
+### Phase 13 R1 boundary hardening
+
+- A SENTRY MCP package must be a client of an ANIMA-owned service; passing ANIMA database, HA, OPA, or provider configuration into the SENTRY process would collapse the authority boundary.
+- Possible provider dispatch is not safely replayable merely because a lease expired. Persisting an invocation-started marker and terminalizing ambiguous expired work as `UNKNOWN_RESULT` is safer than reclaiming it.
+- A request catalogue digest is insufficient by itself. The exact normalized catalogue must be retained and intersected with current compatible availability before SENTRY can list or invoke a tool.
+- Home Assistant registry normalization must preserve current singular config-entry fields and sparse child-device parent references; commissioning authority remains ANIMA-owned.
+- SenseGuard alert policy is a typed trigger-to-attention decision. SENTRY still decides response/action content after receiving the durable request; alert policy must not become a raw HA automation editor.

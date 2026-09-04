@@ -905,3 +905,11 @@ decision.
   and Vite production build. Physical pairing and real-household behavior are
   not claimed until the existing isolated HA evidence path is run with the
   operator-commissioned instance.
+
+## ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1 — boundary hardening
+
+- Date: 2026-09-04; starting governed checkpoint: `8ee91b3ffa4af28a1dc6bb3d1bf0f0a41b90f5c9` (hosted CI `33919471594` passed).
+- Disposition: bounded implementation in progress; no Phase 13 acceptance claim.
+- Implemented locally: ANIMA-owned Unix-socket Core service, client-only `anima-household` bundle, private credential-file checks and rotation, server-issued request/household/provider/fencing bindings, provider-scoped claiming, no-blind-replay handling for possible provider dispatch, request-bound catalogue enforcement, current HA child-device/config-entry metadata, and typed SenseGuard alert-policy storage/matching.
+- Fresh local evidence: full pytest, Ruff, strict mypy, focused boundary, current HA registry, and SenseGuard policy tests pass. The protected dirty SENTRY V0.4 tree was not modified.
+- Evidence limits: no live SENTRY host turn, physical SenseGuard trigger, voice broadcast, or live household action is claimed. Phase 14/15 remain unauthorized.

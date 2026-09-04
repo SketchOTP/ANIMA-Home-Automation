@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "anima_household": {
-      "command": "../anima-household/scripts/launch_anima_household_mcp",
+      "command": "./scripts/launch_anima_household_mcp",
       "args": [],
       "cwd": ".",
       "enabled": true,

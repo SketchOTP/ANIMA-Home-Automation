@@ -12,15 +12,17 @@ Make SENTRY the sole production intelligence and user interaction layer while
 ANIMA remains the whole-home authority and verified control plane. The ANIMA
 side now contains the durable intelligence request/result boundary, Attention
 handoff, Core-owned SENTRY MCP surface, and explicit queue/claim processes.
-Phase 13 is active under directive 015B; Phase 14/15 remain unauthorized.
+Phase 13 is active under directive 015B and amendment 015B-R1; Phase 14/15
+remain unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` — the SENTRY-ready
-platform boundary, durable provider handoff, Attention delivery, and clean
-SENTRY-baseline compatibility work. SENTRY's protected dirty working tree is
-not modified. Phase 14 resilience and Phase 15 demonstration remain
-unauthorized.
+`ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` as amended by
+`ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1` — the
+credential-isolated Core service/client boundary, replay fencing, request-bound
+catalogue, direct SENTRY binding, device commissioning, and SenseGuard alert
+continuation. SENTRY's protected dirty working tree is not modified. Phase
+14/15 remain unauthorized.
 
 ## Architect pivot record
 
@@ -36,7 +38,7 @@ pending.
 
 Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface
 work is historical accepted baseline. Phase 13 is the only active
-implementation scope under 015B and remains pending fresh compatibility and
+implementation scope under 015B-R1 and remains pending fresh compatibility and
 host-commissioning evidence; this file does not self-accept it.
 
 ## Phase 13 HA device-control slice — 2026-09-04
@@ -59,7 +61,7 @@ host-commissioning evidence; this file does not self-accept it.
   commissioning are run; this does not authorize Phase 14, Phase 15, or raw HA
   administration.
 
-## H5V-R1 current result — 2026-09-03
+## H5V-R1 result — historical completed Phase 12 packet — 2026-09-03
 
 - The published H5V-R1 implementation adds continuation lifecycle migration
   `0017_continuation_lifecycle` plus compatibility migration `0018`, durable
@@ -79,13 +81,14 @@ host-commissioning evidence; this file does not self-accept it.
   `58636eaec87a9ad4ddd0958b916a4d74b2d9fe74`; hosted CI `33818551425` passed
   on the exact latter SHA and published artifact `9917602062` with digest
   `sha256:257886d0b85f485bc2b103cdfc55b159618a00bb6c72f46f14f8b0352237464b`.
-- H5V-R1 is not yet accepted. Real PostgreSQL/OPA approve/reject continuation,
+- At the contemporaneous H5V-R1 handoff, real PostgreSQL/OPA approve/reject continuation,
   two dedicated browser approval/rejection journeys, full Python/static/
   frontend/package validation, and the existing Core evidence passed. Browser
   denial/strong-auth, provider recovery, restricted lifecycle, same-browser
   process restart/SSE, complete crash/concurrency ledger, dirty-data and
-  browser-visible isolated-HA journeys remain unproven. Phase 12 remains
-  `CONTINUE` pending Architect review.
+  browser-visible isolated-HA journeys remained unproven. A subsequent
+  Architect decision accepted Phase 12 while preserving those limitations as
+  historical carry-forward evidence.
 
 ## H5U current result — historical 2026-09-03
 
@@ -231,14 +234,18 @@ The repository's former H5 pointer below is retained as historical context only:
 
 ## Current blockers
 
-- H5V implementation is published at
+- Historical H5V implementation was published at
   `d3c8beacef23e20e69a6cafd31eae1b7e6a9edb2` with exact-head hosted CI
   `33777520224` passed. Local real-OPA/PostgreSQL continuation evidence also
   passes. Dedicated browser confirmation/rejection and same-browser
   restart/SSE continuation evidence remain open; this governance checkpoint
-  records that bounded implementation state without self-accepting Phase 12.
+  records that bounded implementation state without self-accepting Phase 12;
+  later Architect acceptance of Phase 12 is recorded at the top of this file.
 - Real Home Assistant OAuth commissioning, physical-home behavior, production TLS, native ARM64/Pi execution, and live Luna credentials remain unclaimed. The local target proves real PostgreSQL/OPA/Core composition with only a scripted model adapter and reports HA as an explicit commissioning gate.
-- Phase 12 remains `CONTINUE — H5V IMPLEMENTATION/EVIDENCE IN PROGRESS`; Phase 13 voice, checkout, compensation, and other successor behavior remain unauthorized.
+- At the time of this historical checkpoint Phase 12 was `CONTINUE — H5V
+  IMPLEMENTATION/EVIDENCE IN PROGRESS`; later Architect acceptance is current.
+  Phase 13 voice, checkout, compensation, and other successor behavior remain
+  unauthorized.
 
 ## Latest accepted evidence
 

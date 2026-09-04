@@ -12,3 +12,10 @@
 The implementation will preserve the accepted Journal, Truth, Graph, memory,
 policy, Tool Gateway, Phase 9, durable-task, external-content, and UI
 boundaries.
+
+R1 completion emphasis: ANIMA owns the PostgreSQL/OPA/HA credentials and
+serves SENTRY over a private authenticated socket; the SENTRY package remains
+client-only. Provider-running requests are never blindly reclaimed, and every
+SENTRY request uses the catalogue frozen at request creation. Device registry
+normalization covers current HA child-device/config-entry records, while the
+typed SenseGuard policy remains the only alert configuration surface.

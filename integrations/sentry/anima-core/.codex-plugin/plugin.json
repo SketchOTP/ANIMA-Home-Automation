@@ -1,7 +1,7 @@
 {
-  "name": "anima-household-core",
-  "version": "0.1.0",
-  "description": "Connect SENTRY to the ANIMA household authority through typed Core tools.",
+  "name": "anima-household-legacy-alias",
+  "version": "0.2.0",
+  "description": "Compatibility alias for the credential-isolated anima-household client.",
   "author": {"name": "SketchOTP"},
   "license": "MIT",
   "keywords": ["anima", "home-automation", "sentry", "mcp"],

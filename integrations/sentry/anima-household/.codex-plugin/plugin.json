@@ -1,0 +1,17 @@
+{
+  "name": "anima-household",
+  "version": "0.2.0",
+  "description": "Authenticated client for the ANIMA household authority service.",
+  "author": {"name": "SketchOTP"},
+  "license": "MIT",
+  "keywords": ["anima", "home-automation", "sentry", "mcp"],
+  "interface": {
+    "displayName": "ANIMA Household",
+    "shortDescription": "Governed household state and actions",
+    "longDescription": "SENTRY selects semantic operations; ANIMA owns household identity, policy, HA access and verification.",
+    "developerName": "SketchOTP",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  },
+  "mcpServers": "./.mcp.json"
+}

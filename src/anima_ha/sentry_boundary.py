@@ -13,7 +13,7 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from uuid import UUID, uuid5
 
@@ -34,7 +34,14 @@ from anima_ha.plugins import (
     PluginManager,
     ToolDescriptor,
 )
-from anima_ha.policy import Assurance, IdentityContext, PolicyContext, RequestOrigin
+from anima_ha.policy import (
+    Assurance,
+    EvidenceType,
+    IdentityContext,
+    IdentityEvidence,
+    PolicyContext,
+    RequestOrigin,
+)
 
 SENTRY_BOUNDARY_VERSION = "1"
 _INVOCATION_NAMESPACE = UUID("8ed25308-c6a7-45ee-85ff-c6d4e572a58f")
@@ -42,6 +49,48 @@ _INVOCATION_NAMESPACE = UUID("8ed25308-c6a7-45ee-85ff-c6d4e572a58f")
 
 class SentryBoundaryError(RuntimeError):
     """A request could not be served by the trusted Core boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class SentryIdentityEvidenceEnvelope:
+    """Untrusted SENTRY observations translated into ANIMA evidence classes."""
+
+    endpoint_id: str
+    profile_state: str
+    confidence: int
+    observed_at: datetime
+    local_proximity: bool = False
+    spoken_identity_claim: str | None = None
+    state: str = "recognized"
+
+    def to_anima_evidence(self, household_id: UUID, principal_id: UUID | None) -> IdentityEvidence:
+        observed = self.observed_at.astimezone(UTC)
+        # Recognition, proximity, and voice are never allowed to mint
+        # AUTHENTICATED or STRONG_AUTHENTICATED evidence.
+        return IdentityEvidence(
+            evidence_id=uuid5(
+                _INVOCATION_NAMESPACE, f"sentry-evidence:{self.endpoint_id}:{observed.isoformat()}"
+            ),
+            household_id=household_id,
+            claimed_principal_id=principal_id,
+            evidence_type=(
+                EvidenceType.LOCAL_PROXIMITY
+                if self.local_proximity
+                else EvidenceType.OTHER_PROVIDER_EVIDENCE
+            ),
+            issuer="sentry",
+            issued_at=observed,
+            observed_at=observed,
+            expires_at=observed + timedelta(minutes=5),
+            assurance=Assurance.RECOGNIZED,
+            strength=min(max(self.confidence, 0), 50),
+            provenance=f"sentry:{self.profile_state}:{self.state}",
+            reference=self.endpoint_id[:256],
+            metadata={
+                "voice_claim_present": self.spoken_identity_claim is not None,
+                "sentry_state": self.state,
+            },
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +112,7 @@ class SentryBoundaryHealth:
 def _origin(value: IntelligenceOrigin) -> RequestOrigin:
     return {
         IntelligenceOrigin.DIRECT_UI_USER: RequestOrigin.DIRECT_USER,
+        IntelligenceOrigin.DIRECT_SENTRY_INTERACTION: RequestOrigin.DIRECT_USER,
         IntelligenceOrigin.AUTONOMOUS_ATTENTION: RequestOrigin.AUTONOMOUS_AGENT,
         IntelligenceOrigin.DURABLE_TASK: RequestOrigin.DURABLE_SYSTEM_TASK,
         IntelligenceOrigin.APPROVAL_RESOLUTION: RequestOrigin.DIRECT_USER,
@@ -103,7 +153,9 @@ class CoreSentryBoundary:
         return SentryBoundaryHealth("anima-core", "available")
 
     def claim_request(self, worker_id: str) -> IntelligenceRequest | None:
-        return self.intelligence_store.claim(worker_id)
+        # A SENTRY worker can claim only requests explicitly addressed to the
+        # SENTRY provider; it must never consume another provider's queue.
+        return self.intelligence_store.claim(worker_id, provider_id="sentry")
 
     def renew_request(self, request: IntelligenceRequest, worker_id: str) -> bool:
         if request.claim_owner != worker_id:
@@ -130,13 +182,74 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("CONTEXT_HOUSEHOLD_MISMATCH")
         return packet
 
-    def catalogue(self) -> list[dict[str, Any]]:
-        return [tool.to_payload() for tool in self.manager.list_tools() if tool.availability]
+    @staticmethod
+    def _schema_digest(schema: dict[str, Any]) -> str:
+        return hashlib.sha256(
+            json.dumps(schema, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+
+    def catalogue(self, request: IntelligenceRequest) -> list[dict[str, Any]]:
+        """Return only tools frozen for this request and still compatible."""
+        current = {tool.tool_id: tool for tool in self.manager.list_tools()}
+        result: list[dict[str, Any]] = []
+        for original in request.catalogue:
+            tool_id = str(original.get("tool_id", ""))
+            tool = current.get(tool_id)
+            expected_schema = str(original.get("schema_digest", ""))
+            compatible = (
+                tool is not None
+                and tool.availability
+                and tool.plugin_id == original.get("plugin_id")
+                and tool.version == original.get("version")
+                and self._schema_digest(tool.input_schema) == expected_schema
+            )
+            if compatible:
+                assert tool is not None
+                payload = tool.to_payload()
+                payload["schema_digest"] = expected_schema
+                result.append(payload)
+            else:
+                unavailable = dict(original)
+                unavailable["availability"] = False
+                unavailable["unavailable_reason"] = "DISABLED_OR_INCOMPATIBLE"
+                result.append(unavailable)
+        return result
+
+    def _assert_active(self, request: IntelligenceRequest) -> None:
+        current = self.intelligence_store.get(request.request_id)
+        if current is None or current.claim_owner is None:
+            raise SentryBoundaryError("INTELLIGENCE_REQUEST_NOT_FOUND")
+        if (
+            current.claim_owner != request.claim_owner
+            or current.fencing_generation != request.fencing_generation
+            or current.lifecycle
+            not in {
+                IntelligenceLifecycle.CLAIMED,
+                IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
+                IntelligenceLifecycle.PROVIDER_RUNNING,
+            }
+            or current.lease_expires_at is None
+            or current.lease_expires_at <= datetime.now(UTC)
+        ):
+            raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
 
     def _tool(self, tool_id: str) -> ToolDescriptor:
         tool = next((item for item in self.manager.list_tools() if item.tool_id == tool_id), None)
         if tool is None or not tool.availability:
             raise SentryBoundaryError("TOOL_UNAVAILABLE")
+        return tool
+
+    def _request_tool(self, request: IntelligenceRequest, tool_id: str) -> ToolDescriptor:
+        bound = next((item for item in request.catalogue if item.get("tool_id") == tool_id), None)
+        if bound is None:
+            raise SentryBoundaryError("TOOL_NOT_BOUND_TO_REQUEST")
+        tool = self._tool(tool_id)
+        if (
+            tool.plugin_id != bound.get("plugin_id")
+            or tool.version != bound.get("version")
+            or self._schema_digest(tool.input_schema) != bound.get("schema_digest")
+        ):
+            raise SentryBoundaryError("TOOL_BINDING_INCOMPATIBLE")
         return tool
 
     def invoke_tool(
@@ -156,7 +269,8 @@ class CoreSentryBoundary:
         """
         if ordinal < 1:
             raise SentryBoundaryError("INVALID_TOOL_ORDINAL")
-        tool = self._tool(tool_id)
+        self._assert_active(request)
+        tool = self._request_tool(request, tool_id)
         identity = _identity(request)
         origin = _origin(request.origin)
         digest = hashlib.sha256(
@@ -244,6 +358,7 @@ class CoreSentryBoundary:
         worker_id: str,
         result: IntelligenceResult,
     ) -> bool:
+        self._assert_active(request)
         if request.claim_owner != worker_id:
             return False
         return self.intelligence_store.record_result(
@@ -294,7 +409,7 @@ class SentryBridgeWorker:
             result = self.provider.run(
                 request,
                 self.boundary.request_context(request),
-                self.boundary.catalogue(),
+                self.boundary.catalogue(request),
                 self.boundary,
             )
         except Exception as exc:

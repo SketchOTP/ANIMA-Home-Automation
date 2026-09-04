@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
-runtime="${ANIMA_PYTHON:-${repo_root}/.venv/bin/python}"
-if [[ ! -x "${runtime}" ]]; then
-  runtime="$(command -v python3)"
-fi
-export PYTHONPATH="${repo_root}/src${PYTHONPATH:+:${PYTHONPATH}}"
-exec "${runtime}" -m anima_ha.sentry_mcp
+package_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../anima-household" && pwd)"
+exec "${package_root}/scripts/launch_anima_household_mcp" "$@"

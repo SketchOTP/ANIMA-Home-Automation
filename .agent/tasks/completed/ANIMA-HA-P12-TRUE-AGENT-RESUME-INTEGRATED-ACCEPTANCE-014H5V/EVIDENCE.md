@@ -1,5 +1,9 @@
 # H5V evidence
 
+Packet state: COMPLETED. Architect subsequently accepted the Phase 12
+baseline; the unrun browser/recovery items below remain preserved as negative
+evidence and are not silently promoted by that acceptance.
+
 Status: in progress. This file is intentionally not a completion claim.
 
 Current implementation work adds `anima_agent_continuations` and extends the

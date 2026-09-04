@@ -20,6 +20,16 @@ jobs:
         run: python -m pip install --disable-pip-version-check "uv==0.12.7"
       - name: Run deterministic validation
         run: ./scripts/validate.sh
+      - name: Run Phase 13 SENTRY boundary validation
+        run: |
+          set -euo pipefail
+          uv run --locked pytest -q tests/test_sentry_boundary_hardening.py tests/test_senseguard_alerts.py
+          uv run --locked mypy src tests
+          python -m compileall -q integrations/sentry/anima-household
+          if rg -n 'ANIMA_(DATABASE_URL|HA_ACCESS_TOKEN|HA_WEBSOCKET_URL|OPA_URL)' integrations/sentry/anima-household integrations/sentry/anima-core; then
+            echo 'SENTRY bundle contains ANIMA-owned credentials.' >&2
+            exit 1
+          fi
       - name: Start Core services for integrated UI validation
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
