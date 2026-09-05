@@ -250,14 +250,12 @@ def main() -> int:
         first = coordinator.execute(action)
         if first.record.status != ActionStatus.VERIFICATION_FAILED:
             raise AssertionError(
-                "expected verification failure, "
-                f"got {first.record.status}: {first.record.detail}"
+                f"expected verification failure, got {first.record.status}: {first.record.detail}"
             )
         service_calls = sum(connection.service_calls for connection in connections)
         if service_calls != 1 or gateway.calls != 1:
             raise AssertionError(
-                "expected one real dispatch, "
-                f"service={service_calls}, gateway={gateway.calls}"
+                f"expected one real dispatch, service={service_calls}, gateway={gateway.calls}"
             )
         for connection in connections:
             connection.hide_state = False
