@@ -63,3 +63,10 @@ green. The protected SENTRY V0.4 tree remains untouched.
 Current verdict: `PARTIAL — ANIMA-SIDE INTEGRATION HARDENED; PENDING ARCHITECT
 ACCEPTANCE`. Live/shadow SENTRY, physical SenseGuard, voice, and live HA
 evidence remain unclaimed resource/commissioning gates.
+
+## R3 exact-head publication
+
+Implementation/final governed head: `da9b6de2aceb34e36a51c400dcf8b090e010115d`.
+Exact hosted CI `33933037033` passed on that head. Artifact `9959297861` was
+published as `phase12-h5-evidence-da9b6de2aceb34e36a51c400dcf8b090e010115d`.
+This remains a partial Phase 13 result and does not self-accept the phase.

@@ -337,3 +337,13 @@ UI, and voice remain out of scope.
   Phase 13 remains pending Architect acceptance because the protected SENTRY
   host, physical SenseGuard trigger, and voice path were not available for live
   qualification. Phase 14/15 remain unauthorized.
+
+## R3 exact-head hosted validation — 2026-09-04
+
+- Head `da9b6de2aceb34e36a51c400dcf8b090e010115d` passed hosted CI
+  `33933037033` on the exact head; artifact `9959297861` was published.
+- The hosted targets covered the existing deterministic boundary, Core/UI,
+  frontend, container, safety, and evidence checks. Live/shadow SENTRY,
+  physical SenseGuard, voice, and live household mutation remain unclaimed.
+- Phase 13 remains `CONTINUE` and is not self-accepted; Phase 14/15 remain
+  unauthorized.

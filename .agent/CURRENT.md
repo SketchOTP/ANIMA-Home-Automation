@@ -55,8 +55,10 @@ qualification; this file does not self-accept it.
   Attention-to-SENTRY bridge with duplicate alert suppression. Unrelated event
   types are rejected.
 - Focused/full tests, Ruff, strict mypy, compileall, and diff-check pass.
-  Live/shadow SENTRY, physical SenseGuard, and voice evidence remain explicit
-  unclaimed gates; Phase 13 is not accepted.
+  Exact-head hosted CI `33933037033` also passes on implementation head
+  `da9b6de2aceb34e36a51c400dcf8b090e010115d`; artifact `9959297861` was
+  published. Live/shadow SENTRY, physical SenseGuard, and voice evidence
+  remain explicit unclaimed gates; Phase 13 is not accepted.
 
 ## Phase 13 HA device-control slice — 2026-09-04
 

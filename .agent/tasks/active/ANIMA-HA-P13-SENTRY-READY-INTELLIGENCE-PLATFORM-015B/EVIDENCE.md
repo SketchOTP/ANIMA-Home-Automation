@@ -45,8 +45,10 @@ Status: IMPLEMENTED LOCALLY — PENDING FULL COMPATIBILITY/ARCHITECT REVIEW
 - The protected dirty SENTRY V0.4 working tree was intentionally not modified.
 - No live household mutation, notification broadcast, or voice behavior is
   claimed by this packet.
-- Hosted CI, final publication, and Architect acceptance are not claimed in
-  this evidence file.
+- The implementation head `da9b6de2aceb34e36a51c400dcf8b090e010115d` passed
+  exact-head hosted CI `33933037033`; artifact `9959297861` was published.
+  This is implementation evidence only and does not claim Architect
+  acceptance.
 
 Phase 14/15 and any Phase 13 voice implementation remain unauthorized.
 
@@ -141,3 +143,14 @@ SENTRY voice path, or live-household mutation was available from the protected
 dirty SENTRY environment. Those remain explicit `EXTERNAL_RESOURCE_GATE` /
 `NOT RUN` evidence, not implementation claims. Phase 14 and Phase 15 remain
 unauthorized; this packet does not self-accept Phase 13.
+
+## R3 exact-head hosted validation
+
+- Exact tested head: `da9b6de2aceb34e36a51c400dcf8b090e010115d`.
+- Hosted CI `33933037033` passed on the exact head.
+- Artifact `9959297861` (`phase12-h5-evidence-da9b6de2aceb34e36a51c400dcf8b090e010115d`).
+- Completed targets included deterministic validation, Phase 13 boundary
+  validation, Core/UI validation, H5 targets, public-safety scanning, UI
+  container health, frontend validation, and evidence publication.
+- This does not claim live/shadow SENTRY, physical SenseGuard, voice, or live
+  household mutation. Phase 14/15 remain unauthorized.

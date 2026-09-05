@@ -931,3 +931,16 @@ decision.
 - Not claimed: live/shadow SENTRY Codex/Luna turn, physical SenseGuard trigger,
   voice delivery, live household mutation, or exact hosted CI for this new
   working tree. Phase 14/15 remain unauthorized.
+
+### R3 exact-head hosted validation — 2026-09-04
+
+- Implementation/final governed head: `da9b6de2aceb34e36a51c400dcf8b090e010115d`.
+- Hosted CI `33933037033` passed on the exact head. The run completed
+  deterministic validation, Phase 13 boundary validation, Core/UI validation,
+  H5 targets, public-safety scanning, UI container health, frontend validation,
+  and evidence publication.
+- Artifact `9959297861` (`phase12-h5-evidence-da9b6de2aceb34e36a51c400dcf8b090e010115d`).
+- Result remains `PARTIAL — ANIMA-SIDE INTEGRATION HARDENED; PENDING ARCHITECT
+  ACCEPTANCE`; no live/shadow SENTRY host turn, physical SenseGuard trigger,
+  voice delivery, or live household mutation is claimed. Phase 14/15 remain
+  unauthorized.

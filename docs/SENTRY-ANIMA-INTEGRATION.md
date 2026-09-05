@@ -150,3 +150,12 @@ R3 local evidence is deterministic and regression-protected. The protected
 dirty SENTRY V0.4 host was not modified, and live/shadow SENTRY, physical
 SenseGuard, and voice evidence remain explicitly unclaimed until commissioning
 is available.
+
+## R3 exact-head hosted validation
+
+The R3 implementation head `da9b6de2aceb34e36a51c400dcf8b090e010115d` passed
+hosted CI `33933037033` on the exact GitHub head. Artifact `9959297861` was
+published. This confirms the repository's deterministic boundary, Core/UI,
+frontend, container, safety, and evidence targets. It does not elevate the
+remaining live/shadow SENTRY, physical SenseGuard, voice, or live household
+mutation gates, and Phase 13 remains pending Architect acceptance.
