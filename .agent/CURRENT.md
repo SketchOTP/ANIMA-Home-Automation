@@ -498,3 +498,23 @@ with local-platform continuity, complete in-flight process restart coverage,
 broader external-content/restricted-content attack coverage, and ARM64 replay
 runtime evidence beyond the import smoke. R1 backup/restore remains accepted
 carry-forward evidence.
+
+## Phase 14 R2 exact-head checkpoint — 2026-09-05
+
+The current exact governed head is `0283b648620e18ae4b771b9099673ec4d81eac88`,
+matching `origin/main`. Hosted CI `33991073890` passed on that exact SHA in
+9m36s. Artifact `9976506229` is reviewable.
+
+This checkpoint makes the real SENTRY provider-crash verifier robust on an
+accumulated qualification database: it runs the genuine queue-level expired
+provider reclaim, proves the tested request becomes `UNKNOWN_RESULT`, and
+does not misattribute unrelated pending SENTRY work to the scenario. Local
+real-store SENTRY outage, bridge restart, Journal/Truth replay, and three-class
+plugin isolation checks also passed.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. The active
+packet remains under `.agent/tasks/active/`; Phase 15 is unauthorized and
+unimplemented. Remaining software-controllable closure is the full approval/
+continuation crash matrix, broader action/manual-reality proof, complete
+SENTRY/HA/plugin/process in-flight restart coverage, wider external-content
+coverage, and ARM64 replay/runtime evidence beyond the current hosted smoke.

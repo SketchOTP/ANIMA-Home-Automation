@@ -392,3 +392,28 @@ coverage, broader external-content/restricted-content attack coverage, and
 ARM64 replay/runtime evidence beyond the import smoke. R1 backup/restore is
 retained as accepted carry-forward evidence. Native Pi 5 remains an external
 gate only.
+
+## R2 exact-head harness correction and hosted qualification - 2026-09-05
+
+- PASS / exact governed head: `0283b648620e18ae4b771b9099673ec4d81eac88`;
+  `main == origin/main`; hosted CI `33991073890` passed in 9m36s. Artifact
+  `9976506229` was published.
+- The SENTRY provider-crash target was corrected to use the real queue-level
+  expired-provider reclaim pass while asserting against its own request ID.
+  This keeps recovery semantics unchanged, makes the target deterministic on
+  accumulated stores, and proves the child-process callback reached only after
+  durable `PROVIDER_RUNNING`; recovery is `UNKNOWN_RESULT` with zero second
+  provider callbacks. Unrelated pending SENTRY work, when present, is not
+  counted as this scenario's reclaim.
+- Local reruns also passed SENTRY outage/local-platform continuity, SENTRY
+  bridge restart idempotency, Journal/Truth/Attention replay, and three-class
+  PostgreSQL plugin isolation. The exact hosted run passed the configured
+  validation workflow, including actual backup/restore, clean-store replay,
+  ARM64 image/runtime smoke, process continuity, frontend/container checks,
+  and safety scans.
+- Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this packet
+  remains active. The correction does not claim completion of the remaining
+  full continuation/action crash matrix, broader action/manual-reality matrix,
+  complete in-flight SENTRY/HA/plugin/process coverage, wider external-content
+  coverage, or ARM64 replay/runtime beyond the hosted smoke. Phase 15 remains
+  unauthorized and unimplemented.

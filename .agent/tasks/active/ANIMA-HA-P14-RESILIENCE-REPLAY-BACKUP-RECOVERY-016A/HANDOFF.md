@@ -160,3 +160,20 @@ matrix, or ARM64 replay/runtime beyond import smoke.
 Disposition: `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. The active packet
 is not moved to completed. Phase 15 was not implemented. R1 backup/restore
 remains carry-forward evidence and native Pi 5 remains an external gate.
+
+## Latest exact-head correction checkpoint
+
+The current governed head is `0283b648620e18ae4b771b9099673ec4d81eac88`,
+matching `origin/main`, with exact-head hosted CI `33991073890` passing and
+artifact `9976506229` published. The SENTRY provider-crash qualification now
+uses the genuine queue-level expired-provider recovery while asserting the
+tested request directly, so accumulated prior pending work cannot create a
+false failure. The request reaches durable `PROVIDER_RUNNING` before the child
+provider callback, then recovers to `UNKNOWN_RESULT` without a second callback.
+
+This is a narrow Phase 14 qualification correction. Phase 14 remains
+`CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; the task packet remains active.
+Full approval/continuation crash coverage, broader action/manual-change proof,
+complete in-flight SENTRY/HA/plugin/process coverage, broader external-content
+coverage, and ARM64 replay/runtime beyond smoke remain open. Phase 15 remains
+unauthorized and unimplemented.
