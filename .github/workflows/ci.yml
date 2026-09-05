@@ -219,6 +219,11 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build ARM64 UI image
         run: docker buildx build --platform linux/arm64 -f Dockerfile.ui -t anima-ui:phase14-arm64 --load .
+      - name: Run ARM64 runtime smoke
+        run: |
+          set -euo pipefail
+          docker run --rm --platform linux/arm64 anima-ui:phase14-arm64 \
+            python -c 'import anima_ha; print("ANIMA_ARM64_RUNTIME_IMPORT_PASS")'
       - name: Build and health-check UI container
         env:
           ANIMA_DB_PASSWORD: anima_dev_only

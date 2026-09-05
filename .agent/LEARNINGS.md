@@ -270,6 +270,18 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 
 ### Phase 14 initial resilience work
 
+### Phase 14 R2 hosted qualification
+
+- A real Compose outage test must provide every required variable from the
+  whole Compose file, even when targeting a single service; missing
+  `SEARXNG_SECRET` caused two honest harness failures before the OPA test ran.
+- A fail-closed test must attach the real PostgreSQL policy audit store; a
+  `POLICY_DENIED` result without durable `POLICY_UNAVAILABLE` evidence is not
+  sufficient proof of OPA outage behavior.
+- Exact hosted CI `33983789113` passed on `631d6de...`, but service continuity,
+  provider-crash, and image-build evidence must not be promoted to the full
+  in-flight restart or ARM64 replay claims.
+
 - Destructive evidence needs one canonical scenario shape spanning durable
   state, Truth versions, identity/policy, event ordering, provider lifecycle,
   action state, observations, availability, terminal state, side-effect count,

@@ -451,6 +451,27 @@ continuity checks. It remains explicitly a service-continuity slice and does
 not claim the full in-flight process matrix. Phase 14 remains CONTINUE and
 Phase 15 remains unauthorized.
 
+## Phase 14 R2 latest governed checkpoint — 2026-09-05
+
+The current exact governed head is `631d6de89ca6591ade1afe273aa1fe2c98a4d352`;
+hosted CI `33983789113` passed on that exact SHA and published artifact
+`9974663615`. The checkpoint adds real OPA outage fail-closed evidence
+(`POLICY_DENIED`, durable `POLICY_UNAVAILABLE`, zero provider dispatch) and
+hosted execution of the real isolated-HA Phase 9 opposing-request race. It
+retains the R2 real-store ledger, 250-task/250-calendar stable pagination,
+clean-store replay/diff detection, event/Truth/Attention replay, plugin and
+external-content isolation, HA outage/no-redispatch, SENTRY bridge/provider
+crash, service continuity, and ARM64 image-build evidence.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. The active
+Phase 14 packet remains under `.agent/tasks/active/`; Phase 15 is unauthorized
+and unimplemented. Remaining software-controllable work is the full approval/
+continuation crash matrix, SENTRY outage/local-platform continuity, complete
+in-flight process restart coverage, broader external attack/restricted-content
+coverage, and ARM64 replay/runtime beyond image build. R1 backup/restore is
+retained as real accepted carry-forward evidence and is not falsely relabeled
+as a new R2 run.
+
 Hosted CI `33980726478` on `59a72fe...` reached the process matrix but exposed
 a workflow-ordering defect: the preceding UI health-check cleanup stopped the
 UI container before inspection. The workflow now keeps UI alive through the

@@ -260,6 +260,14 @@ GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is 
 
 ### Phase 14 resilience/replay/restore
 
+- `scripts/verify_phase14_opa_outage_r2.py` - real Compose OPA outage,
+  PostgreSQL policy-audit, zero-dispatch fail-closed target.
+- `scripts/verify_phase9_action_execution.py` - real isolated-HA Phase 9
+  opposing-request lock/verification/idempotency target now run in Phase 14
+  hosted validation.
+- `.github/workflows/ci.yml` - Phase 14 R2 hosted matrix, including ARM64
+  runtime import smoke after the ARM64 UI image build.
+
 - src/anima_ha/resilience.py - canonical bounded scenario/result ledger,
   explicit test-only one-shot fault injector, deterministic replay comparator,
   and secret-free backup/restore safety metadata.

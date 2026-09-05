@@ -126,3 +126,21 @@ The initial hosted attempt (`33980726478` on `59a72fe...`) exposed a workflow
 ordering defect: the UI health-check cleanup trap stopped the UI before the
 restart matrix began. That attempt is retained as a harness failure, and the
 workflow now keeps UI alive through the matrix with always-run cleanup.
+
+## Current exact hosted handoff checkpoint
+
+The exact hosted checkpoint is `631d6de89ca6591ade1afe273aa1fe2c98a4d352`,
+CI `33983789113` (PASS), artifact `9974663615`. This checkpoint adds and
+passes the real OPA outage fail-closed target and the real isolated-HA Phase 9
+opposing-request concurrency target. It preserves the R2 real-store ledger,
+clean-store replay, event/plugin, external attack, HA outage, SENTRY bridge/
+provider crash, service restart, 250/250 pagination, and ARM64 image evidence.
+
+The honest disposition remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`.
+The active packet is not moved to completed and Phase 15 is not started. Open
+software targets are the full approval/continuation crash matrix, SENTRY outage
+with local-platform continuity, complete in-flight process restart coverage,
+broader attack/restricted-content coverage, and ARM64 replay/runtime evidence.
+R1 backup/restore remains accepted carry-forward evidence. The local checkout's
+Docker bind-mount failure on the GVFS/SFTP path is an environment limitation;
+hosted CI is the authoritative execution source.

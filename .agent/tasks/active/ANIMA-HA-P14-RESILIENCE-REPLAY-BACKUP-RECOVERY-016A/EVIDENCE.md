@@ -323,3 +323,43 @@ UI health-check step's cleanup trap had already stopped the UI container. This
 was a workflow-ordering defect, not a process-recovery result. The workflow is
 corrected to keep UI running through the matrix and stop it afterward with an
 always-run cleanup step; the failed attempt is retained as harness evidence.
+
+## R2 exact hosted qualification checkpoint - 2026-09-05
+
+- PASS / exact governed head: `631d6de89ca6591ade1afe273aa1fe2c98a4d352`.
+  Hosted CI `33983789113` passed all configured validation, real-store,
+  isolated-HA, SENTRY bridge/provider, external-content, replay, process,
+  container, frontend, safety, and ARM64-image targets. Artifact `9974663615`
+  (`phase12-h5-evidence-631d6de89ca6591ade1afe273aa1fe2c98a4d352`) was
+  published. Key artifact file digests include
+  `phase14-opa-outage-r2.json` =
+  `c4a90cd36aaadd2116f1fe052bcd97be659540690b8167aa00ba3e3ab158487e` and
+  `phase14-r2-real-store.json` =
+  `abeab186bfe90241c242b5d5dcef4e05d2c70c3376194673cc8ae8a869dee917`.
+- PASS / `POSTGRES_PROCESS`: `OPA_OUTAGE_FAIL_CLOSED` stopped and restored
+  the real Compose OPA service. The action ended `POLICY_DENIED`, the durable
+  policy audit reason was `POLICY_UNAVAILABLE`, and provider dispatch count was
+  zero. The existing isolated-HA Phase 9 harness also passed with real
+  opposing requests: Alex's `on` completed after observed verification, Sam's
+  concurrent `off` returned `RESOURCE_BUSY`, and replay produced no second
+  dispatch.
+- The prior exact-head run `33982491397` on `da930ed...` remains retained as
+  an earlier pass; the failed `33983161135` and `33983378308` attempts remain
+  harness-failure evidence only. They do not alter the current result.
+
+## R2 current carry-forward reconciliation
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this packet
+is still active and Phase 15 remains unauthorized. R2 now has real hosted
+evidence for provider fencing/crash, action recovery, approval ownership race,
+OPA outage fail-closed, isolated-HA outage/no-redispatch, Phase 9 concurrency,
+event/Truth/Attention replay, three-class plugin isolation, external failure
+and attack handling, 250-record stable pagination, clean-store replay with
+machine-readable divergence detection, bridge restart, service continuity,
+and the ARM64 UI image build. The remaining software-controllable closure
+items are explicit rather than inferred: full approval/continuation crash-window
+coverage, SENTRY outage/local-platform continuity, the complete in-flight
+process restart matrix, broader external-content/restricted attack coverage,
+and ARM64 replay/runtime beyond the image-build evidence. R1's real backup/
+restore evidence remains valid carry-forward but was not relabeled as a new R2
+execution. Native Pi 5 hardware remains an external gate only.

@@ -963,6 +963,22 @@ decision.
   path; changing it is a SENTRY-side protected-tree decision.
 - No Phase 14/15 behavior, ANIMA voice stack, or self-acceptance was added.
 
+## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 - hosted incremental qualification
+
+- Starting governed checkpoint: `979560442bf412c440f0c3f1399b830dd3d6acf0`.
+- Current governed checkpoint: `631d6de89ca6591ade1afe273aa1fe2c98a4d352`.
+- Exact hosted CI `33983789113` passed; artifact `9974663615` was published.
+- Real hosted additions include OPA outage fail-closed with durable
+  `POLICY_UNAVAILABLE` audit and zero dispatch, plus the isolated-HA Phase 9
+  concurrent opposing-request race. Earlier R2 real-store, action recovery,
+  event/plugin, external attack/failure, replay, HA outage, SENTRY crash/
+  bridge restart, service restart, 250-record pagination, and ARM64 image
+  results remain preserved.
+- Disposition: `CONTINUE - FINAL DESTRUCTIVE CLOSURE REQUIRED`. This is not
+  Phase 14 acceptance. Approval/continuation crash windows, SENTRY outage
+  continuity, the complete in-flight process matrix, broader external-content
+  coverage, and ARM64 replay/runtime remain open. Phase 15 was not implemented.
+
 ## ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A - initial execution
 
 - Issued: 2026-09-05 after Architect acceptance of Phase 13.
