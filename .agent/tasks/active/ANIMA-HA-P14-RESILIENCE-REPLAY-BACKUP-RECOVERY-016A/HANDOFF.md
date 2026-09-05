@@ -115,3 +115,9 @@ transition, then the child terminated before result submission. Lease recovery
 produced `UNKNOWN_RESULT`, returned no reclaimable work, and invoked no second
 provider callback. This is deterministic provider-crash evidence and does not
 claim a live SENTRY model turn. Phase 14 remains `CONTINUE`.
+
+The next hosted increment also runs the actual Compose process restart matrix
+for PostgreSQL, OPA, SearXNG, and the ANIMA UI. It records container
+start-identity changes, service health recovery, and Journal continuity. This
+is service-continuity evidence only; the complete in-flight process matrix
+remains open.

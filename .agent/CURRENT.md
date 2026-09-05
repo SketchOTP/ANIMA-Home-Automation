@@ -444,3 +444,9 @@ The isolated-HA outage and SENTRY provider-crash targets are queued for the next
 exact-head hosted run. Phase 14 remains `CONTINUE`; full process/restart,
 approval-continuation, and ARM64 runtime matrices remain open. Phase 15 remains
 unauthorized and unimplemented.
+
+The current uncommitted increment adds the actual Compose process restart target
+for PostgreSQL, OPA, SearXNG, and ANIMA UI, with service health and Journal
+continuity checks. It remains explicitly a service-continuity slice and does
+not claim the full in-flight process matrix. Phase 14 remains CONTINUE and
+Phase 15 remains unauthorized.

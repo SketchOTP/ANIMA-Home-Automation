@@ -305,3 +305,14 @@ the complete in-flight HA/process restart matrix or SENTRY provider outage.
 The new target and the isolated-HA outage target are queued for the next exact
 head hosted run. The full SENTRY provider outage and process matrix remain
 open.
+
+## R2 service process restart matrix - 2026-09-05
+
+- ADDED / POSTGRES_PROCESS: `scripts/verify_phase14_process_matrix_r2.py`
+  restarts the actual Compose PostgreSQL, OPA, SearXNG, and ANIMA UI services
+  independently. It captures container identity/start time before and after
+  each restart, waits for the service-specific health condition, and checks
+  PostgreSQL Journal continuity.
+- This target is intentionally continuity evidence for service processes; it
+  does not claim the pending/claimed/provider-running/confirmation in-flight
+  matrix, which remains open.

@@ -47,7 +47,7 @@ jobs:
           ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
         run: |
           set -euo pipefail
-          docker compose up -d db opa
+          docker compose up -d db opa searxng
           db_id="$(docker compose ps -q db)"
           opa_id="$(docker compose ps -q opa)"
           for attempt in {1..30}; do
@@ -202,6 +202,17 @@ jobs:
           docker compose ps
           docker compose logs --no-color ui
           curl --fail --silent http://127.0.0.1:18091/healthz >/dev/null
+      - name: Run Phase 14 process restart matrix
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
+          ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
+          ANIMA_OPA_URL: http://127.0.0.1:18181
+          ANIMA_UI_PORT: 18091
+        run: |
+          set -euo pipefail
+          uv run --locked python scripts/verify_phase14_process_matrix_r2.py \
+            | tee /tmp/anima-p14-evidence/phase14-process-matrix-r2.json
       - uses: actions/setup-node@v5
         with:
           node-version: "24.20.0"
