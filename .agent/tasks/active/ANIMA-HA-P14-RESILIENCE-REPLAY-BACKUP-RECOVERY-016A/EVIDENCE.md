@@ -140,3 +140,33 @@ Phase 14 remains `CONTINUE` and is not accepted. R1's accepted real backup/resto
 - `PROCESS_RESTART_AND_ARM64`: OPEN for the complete process matrix and runtime/replay qualification; hosted CI separately exercises the ARM64 image build, while native Pi 5 remains an external gate.
 
 This reconciliation supersedes the earlier generic `Still open` summary above only where R2 explicitly records a closure; no open target is promoted by inference.
+
+## R2 supplemental qualification - 2026-09-05
+
+- PASSED / POSTGRES_OPA_CORE: the real PostgreSQL approval ownership race was
+  rerun by `scripts/verify_phase14_approval_r2.py`. Concurrent APPROVE and
+  REJECT claims produced exactly one durable winner, with zero provider
+  dispatches. The target uses the existing PostgreSQL pending-approval store
+  and challenge issuer; it is not a contract-only fixture.
+- PASSED / REAL_BACKUP_RESTORE: a fresh custom-format PostgreSQL dump was
+  created from the isolated Phase 14 database using the pinned PostgreSQL
+  client in the database container. Dump SHA-256 was
+  `1d3f26f0e8dd90707191afe821944142c632c1b7b21392d67d753207b8fa807f`.
+  Restore into a clean `pgvector/pgvector:pg16-bookworm` container completed
+  successfully; restored counts were 1910 journal, 142 truth, 1256 tasks, and
+  1255 calendar records. The restore container was removed after validation.
+- PASSED / POSTGRES_OPA_CORE: PostgreSQL and OPA were independently restarted
+  and returned healthy; journal query continuity remained available after the
+  restarts. This is bounded service restart evidence, not the complete
+  in-flight process matrix.
+- PASSED / POSTGRES_OPA_CORE: the accepted H5U confirmation and H5V resume
+  targets were rerun against disposable PostgreSQL/OPA. Approval continuation
+  produced one action dispatch and SUCCEEDED; rejection produced no provider
+  dispatch. These remain carry-forward continuation evidence, while the full
+  crash-window matrix remains open.
+
+The approval race is now included in hosted CI after the R2 real-store target.
+The complete Phase 14 destructive closure is still open: SENTRY bridge and
+provider restarts, HA outage/no-redispatch, three-class plugin isolation,
+external-content attacks, full process restart coverage, clean-store replay
+coverage, and ARM64 runtime/replay qualification remain to be executed.

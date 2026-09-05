@@ -37,3 +37,14 @@ source modification was performed.
 Verdict: `CONTINUE — FINAL DESTRUCTIVE QUALIFICATION PARTIALLY EXECUTED`.
 
 The structural task/calendar defect is repaired with stable cursor pagination and a real 250/250 PostgreSQL traversal. The R2 real-store ledger passes 13 scenarios and is stored in `R2_REAL_STORE_LEDGER.json`. Phase 14 remains active because the approval/action crash windows, HA/SENTRY outage and restart matrices, plugin isolation, external-content attack matrix, clean-store replay set, and ARM64 runtime/replay remain open. Phase 15 remains unauthorized and unimplemented.
+
+## R2 supplemental qualification
+
+The real PostgreSQL approval ownership race now passes through the existing
+pending-approval store and challenge issuer: concurrent approval and rejection
+has one durable winner and zero provider dispatches. A fresh custom-format
+PostgreSQL dump restored into a clean pinned PostgreSQL container with journal,
+Truth, task, and calendar continuity. PostgreSQL and OPA restart checks also
+returned healthy with journal continuity. The full Phase 14 exit gate remains
+CONTINUE; these results do not claim completion of the remaining crash,
+outage, plugin, attack, process-matrix, replay, or ARM64 runtime targets.
