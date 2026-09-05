@@ -170,6 +170,7 @@ jobs:
       - name: Run Phase 14 SENTRY outage and local-platform continuity qualification
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
           ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
         run: |
           set -euo pipefail
@@ -271,6 +272,15 @@ jobs:
           set -euo pipefail
           uv run --locked python scripts/verify_phase14_process_matrix_r2.py \
             | tee /tmp/anima-p14-evidence/phase14-process-matrix-r2.json
+      - name: Run Phase 14 in-flight PostgreSQL restart qualification
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
+          ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
+        run: |
+          set -euo pipefail
+          uv run --locked python scripts/verify_phase14_inflight_restart_r2.py \
+            | tee /tmp/anima-p14-evidence/phase14-inflight-restart-r2.json
       - name: Stop UI after process restart matrix
         if: always()
         env:
