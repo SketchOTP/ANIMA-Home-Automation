@@ -320,6 +320,8 @@ class CoreSentryHTTPService:
         principal: SentryServicePrincipal | None = None,
     ) -> dict[str, Any]:
         effective_worker = principal.client_id if principal is not None else worker_id
+        if principal is not None and "SENTRY_PROVIDER" not in principal.allowed_origins:
+            raise ServiceAuthError("SENTRY provider work is not allowed")
         request = self.boundary.claim_request(
             effective_worker, household_id=principal.household_id if principal else None
         )
@@ -352,28 +354,22 @@ class CoreSentryHTTPService:
         """Create and bind a new direct request, independent of Attention."""
         if "DIRECT_SENTRY_INTERACTION" not in principal.allowed_origins:
             raise ServiceAuthError("direct SENTRY interaction is not allowed")
+        envelope: SentryIdentityEvidenceEnvelope | None = None
+        mapped: UUID | None = None
+        identity_context = None
         refs: tuple[str, ...] = ()
         if identity_observation:
-            refs = (
-                hashlib.sha256(
-                    json.dumps(identity_observation, sort_keys=True).encode()
-                ).hexdigest(),
+            observed_value = identity_observation.get("observed_at")
+            observed_at = (
+                datetime.fromisoformat(str(observed_value))
+                if observed_value is not None
+                else datetime.now(UTC)
             )
-        request = self.boundary.create_direct_request(
-            household_id=principal.household_id,
-            sentry_request_id=sentry_request_id,
-            source_surface=source_surface,
-            user_text=user_text,
-            identity_evidence_refs=refs,
-        )
-        if identity_observation:
             envelope = SentryIdentityEvidenceEnvelope(
                 endpoint_id=str(identity_observation.get("endpoint_id", "sentry"))[:256],
                 profile_state=str(identity_observation.get("profile_state", "unknown"))[:64],
                 confidence=int(identity_observation.get("confidence", 0)),
-                observed_at=datetime.fromisoformat(
-                    str(identity_observation.get("observed_at", datetime.now(UTC).isoformat()))
-                ),
+                observed_at=observed_at,
                 local_proximity=bool(identity_observation.get("local_proximity", False)),
                 spoken_identity_claim=(
                     str(identity_observation["spoken_identity_claim"])
@@ -389,7 +385,20 @@ class CoreSentryHTTPService:
                 if self.profile_principal_resolver is not None
                 else None
             )
-            self.boundary.record_sentry_identity(request, envelope, profile_principal_id=mapped)
+            evidence, identity_context = self.boundary.persist_sentry_identity(
+                principal.household_id, envelope, profile_principal_id=mapped
+            )
+            refs = (str(evidence.evidence_id),)
+        request = self.boundary.create_direct_request(
+            household_id=principal.household_id,
+            sentry_request_id=sentry_request_id,
+            source_surface=source_surface,
+            user_text=user_text,
+            identity_evidence_refs=refs,
+            principal_id=identity_context.principal_id if identity_context else None,
+            service_client_id=principal.client_id,
+            identity_context=identity_context,
+        )
         claimed = self.boundary.claim_specific_request(
             request.request_id, str(principal.client_id), principal.household_id
         )
@@ -551,6 +560,21 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         return
 
 
+def _profile_mapping(raw: str) -> dict[str, UUID]:
+    """Load a bounded, server-owned SENTRY profile mapping."""
+    if not raw.strip():
+        return {}
+    value = json.loads(raw)
+    if not isinstance(value, dict) or len(value) > 128:
+        raise RuntimeError("SENTRY profile mapping must be a bounded object")
+    result: dict[str, UUID] = {}
+    for profile, principal in value.items():
+        if not isinstance(profile, str) or not profile.strip() or len(profile) > 128:
+            raise RuntimeError("SENTRY profile mapping key is invalid")
+        result[profile] = UUID(str(principal))
+    return result
+
+
 def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) -> None:
     def token_loader() -> str:
         return read_credential_file(token_path)
@@ -581,11 +605,27 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
     )
     principal_registry = PostgresSentryPrincipalRegistry(database_url)
     principal_registry.register(principal)
+    profile_mapping = _profile_mapping(os.environ.get("ANIMA_SENTRY_PROFILE_PRINCIPAL_MAP", ""))
+
+    def profile_principal_resolver(household_id: UUID, profile_id: str) -> UUID | None:
+        if household_id != principal.household_id:
+            return None
+        candidate = profile_mapping.get(profile_id)
+        if candidate is None:
+            return None
+        if not any(
+            household.canonical_id == household_id
+            for household in core.graph.households_for_member(candidate)
+        ):
+            return None
+        return candidate
+
     server.service = CoreSentryHTTPService(
         core.sentry_boundary(),
         token_loader,
         service_principal=principal,
         principal_registry=principal_registry,
+        profile_principal_resolver=profile_principal_resolver,
     )
     try:
         server.serve_forever()

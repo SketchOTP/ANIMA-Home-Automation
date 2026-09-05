@@ -569,3 +569,16 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Starting checkpoint: `8ee91b3ffa4af28a1dc6bb3d1bf0f0a41b90f5c9`; hosted CI `33919471594` passed.
 - Objective: remove SENTRY-side ANIMA/HA credentials, authenticate the ANIMA Core service, harden provider replay/fencing, bind capabilities to each request, add direct SENTRY/identity evidence boundaries, preserve the protected SENTRY tree, and qualify the device/SenseGuard continuation.
 - Current disposition: implementation/evidence in progress; local hardening tests pass; live SENTRY/physical/hosted evidence remains unclaimed. No Phase 14/15 behavior.
+
+## ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3
+
+- Issued: 2026-09-04. Parent: `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B`;
+  Phase 0–12 accepted, Phase 13 active, Phase 14/15 unauthorized.
+- Starting governed checkpoint: `3112180fdefd7a6e199fc16376ca5790a7ba2158`;
+  prior hosted CI `33929370701` passed on that exact SHA.
+- Scope: fix direct SENTRY idempotency/evidence/origin scoping and wire the
+  typed SenseGuard policy to normalized HA events without modifying the
+  protected SENTRY tree or adding live/voice/Phase 14/15 behavior.
+- Current disposition: ANIMA-side correction implemented; local validation
+  passes; live/shadow SENTRY, physical SenseGuard, and voice evidence remain
+  explicit gates. Phase 13 is not accepted.

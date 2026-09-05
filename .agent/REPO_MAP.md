@@ -229,6 +229,18 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - `integrations/sentry/anima-household/` — standalone client-only MCP package and bounded host-turn orchestrator; it has no ANIMA Core imports.
 - `src/anima_ha/db/migrations/0020_sentry_boundary_hardening.sql` — durable request catalogue and provider-dispatch ambiguity markers.
 
+### Phase 13 R3 integration qualification
+
+- `src/anima_ha/sentry_service.py` and `src/anima_ha/sentry_boundary.py` —
+  household/client-scoped direct requests, server-persisted SENTRY evidence
+  references, and origin-bound service operations.
+- `src/anima_ha/home_assistant.py`, `src/anima_ha/senseguard_alerts.py`, and
+  `src/anima_ha/ui_runtime.py` — normalized HA event callback, typed
+  SenseGuard policy routing, deterministic guaranteed alert deduplication, and
+  Core composition wiring into the existing Attention bridge.
+- `tests/test_sentry_boundary_hardening.py` — R3 direct identity/origin and
+  SenseGuard routing evidence.
+
 ## Known sensitive/high-risk areas
 
 - HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.

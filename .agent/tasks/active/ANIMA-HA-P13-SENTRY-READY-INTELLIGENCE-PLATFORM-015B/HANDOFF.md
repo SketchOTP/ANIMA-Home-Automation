@@ -51,3 +51,15 @@ alert policy. Local focused/full validation is green. The remaining evidence
 limits are the protected SENTRY host turn, physical SenseGuard trigger and
 voice delivery, live HA execution, and hosted exact-head publication. Phase
 14/15 remain unauthorized and Phase 13 is not self-accepted.
+
+## R3 qualification handoff
+
+R3 adds household/client-scoped direct SENTRY idempotency, actual persisted
+identity-evidence references, server-owned profile mapping with Graph
+membership checks, consistent direct/provider origin enforcement, and the
+normalized HA SenseGuard event router. Focused and full local validation are
+green. The protected SENTRY V0.4 tree remains untouched.
+
+Current verdict: `PARTIAL — ANIMA-SIDE INTEGRATION HARDENED; PENDING ARCHITECT
+ACCEPTANCE`. Live/shadow SENTRY, physical SenseGuard, voice, and live HA
+evidence remain unclaimed resource/commissioning gates.

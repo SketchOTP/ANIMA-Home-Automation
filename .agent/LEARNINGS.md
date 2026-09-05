@@ -242,3 +242,15 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - A request catalogue digest is insufficient by itself. The exact normalized catalogue must be retained and intersected with current compatible availability before SENTRY can list or invoke a tool.
 - Home Assistant registry normalization must preserve current singular config-entry fields and sparse child-device parent references; commissioning authority remains ANIMA-owned.
 - SenseGuard alert policy is a typed trigger-to-attention decision. SENTRY still decides response/action content after receiving the durable request; alert policy must not become a raw HA automation editor.
+
+### Phase 13 R3 integration qualification
+
+- Direct SENTRY idempotency must include the server-registered client and
+  household in addition to provider and SENTRY request ID; a globally stable
+  request ID is not sufficient for cross-household isolation.
+- An identity-evidence reference is trustworthy only when it points to the
+  actual persisted ANIMA evidence record created before the request, not merely
+  to an observation copied into request metadata.
+- Normalized HA events need an explicit typed-event mapping before SenseGuard
+  policy matching. Passing the policy's own event type into `matches()` can
+  make every resource observation appear to match.

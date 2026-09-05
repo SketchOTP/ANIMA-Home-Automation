@@ -327,3 +327,13 @@ UI, and voice remain out of scope.
 - H5V-R1 adds continuation lifecycle/fencing/recovery, original catalogue/runtime binding, pre-dispatch durable preflight, cumulative active-runtime accounting, exact policy-intent propagation, dedicated management projections, and test-only browser approval/rejection tests.
 - Local evidence: 174 Python tests, Ruff, strict mypy, OPA 7/7, migrations, H5V Core/true-resume verifiers, frontend checks/tests/build, existing browser matrix, dedicated H5V browser 2/2, package build, diff-check, and public-safety scan passed.
 - Remaining evidence is explicitly open: complete browser denial/strong-auth/provider/restricted/restart/SSE journeys, dirty task/calendar fixture, crash/concurrency ledger, and browser-visible isolated-HA outcomes. This record does not self-accept Phase 12.
+
+## ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3 — 2026-09-04
+
+- Architect continuation retained the R2 SENTRY boundary while requiring
+  household/client-scoped direct interaction identity, persisted evidence-ID
+  binding, consistent origin enforcement, and actual SenseGuard event routing.
+- The ANIMA-side correction is implemented and locally regression-protected.
+  Phase 13 remains pending Architect acceptance because the protected SENTRY
+  host, physical SenseGuard trigger, and voice path were not available for live
+  qualification. Phase 14/15 remain unauthorized.

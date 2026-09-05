@@ -10,8 +10,8 @@
 
 ## Current pointers
 
-- Current stage: PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — 015B-R1; CONTINUE
-- Active directive: ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1 — credential-isolated, replay-safe, request-scoped SENTRY household authority boundary
+- Current stage: PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — 015B-R3; CONTINUE
+- Active directive: ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3 — direct SENTRY identity scoping and normalized SenseGuard-to-Attention integration
 - Active task packet: `.agent/tasks/active/ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B/`
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
 - Last completed outcome: H5U implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d`; hosted CI `33746353829` passed on that exact SHA. Final governed closure checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7`; hosted CI `33747181905` passed on that exact SHA.

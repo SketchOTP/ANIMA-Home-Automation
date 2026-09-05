@@ -12,11 +12,13 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import psycopg
 from psycopg.rows import dict_row
+
+from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 
 
 class SenseGuardPolicyError(ValueError):
@@ -184,6 +186,124 @@ class PostgresSenseGuardAlertPolicyStore:
                 raise SenseGuardPolicyError("SENSEGUARD_POLICY_VERSION_CONFLICT")
             connection.commit()
         return policy
+
+    def list_enabled(self, household_id: UUID) -> list[SenseGuardAlertPolicy]:
+        """Read the active typed policies for one household."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT * FROM anima_senseguard_alert_policies
+                   WHERE household_id=%s AND enabled ORDER BY policy_id""",
+                (household_id,),
+            )
+            rows = cursor.fetchall()
+        policies: list[SenseGuardAlertPolicy] = []
+        for row in rows:
+            resource_ids = row["resource_ids"]
+            if isinstance(resource_ids, str):
+                resource_ids = json.loads(resource_ids)
+            policies.append(
+                SenseGuardAlertPolicy(
+                    policy_id=UUID(str(row["policy_id"])),
+                    household_id=UUID(str(row["household_id"])),
+                    resource_ids=tuple(UUID(str(item)) for item in resource_ids),
+                    event_type=str(row["event_type"]),
+                    timezone=str(row["timezone"]),
+                    start_local=row["start_local"],
+                    end_local=row["end_local"],
+                    priority=int(row["priority"]),
+                    guaranteed_attention=bool(row["guaranteed_attention"]),
+                    delivery_mode=str(row["delivery_mode"]),
+                    enabled=bool(row["enabled"]),
+                    creator_principal_id=(
+                        UUID(str(row["creator_principal_id"]))
+                        if row.get("creator_principal_id")
+                        else None
+                    ),
+                    version=int(row["version"]),
+                )
+            )
+        return policies
+
+
+class SenseGuardEventRouter:
+    """Turn normalized HA SenseGuard events into durable attention events."""
+
+    def __init__(
+        self,
+        *,
+        household_id: UUID,
+        policy_store: PostgresSenseGuardAlertPolicyStore,
+        resource_resolver: Any,
+        event_sink: Any,
+        dispatch_attention: Any | None = None,
+    ) -> None:
+        self.household_id = household_id
+        self.policy_store = policy_store
+        self.resource_resolver = resource_resolver
+        self.event_sink = event_sink
+        self.dispatch_attention = dispatch_attention
+
+    def handle(self, event: EventEnvelope) -> list[EventEnvelope]:
+        external_id = str(event.metadata.get("external_id", ""))
+        if not external_id:
+            return []
+        resource_id = self.resource_resolver(external_id)
+        if resource_id is None:
+            return []
+        normalized_event_type = str(
+            event.metadata.get(
+                "senseguard_event_type",
+                "senseguard.event" if event.event_type == "truth.observation" else event.event_type,
+            )
+        )
+        alerts: list[EventEnvelope] = []
+        for policy in self.policy_store.list_enabled(self.household_id):
+            if not policy.matches(
+                resource_id=resource_id,
+                event_type=normalized_event_type,
+                occurred_at=event.occurred_at,
+            ):
+                continue
+            metadata = policy.attention_metadata(
+                event_id=event.event_id,
+                resource_id=resource_id,
+                occurred_at=event.occurred_at,
+            )
+            alert = EventEnvelope.create(
+                event_id=str(
+                    uuid5(
+                        NAMESPACE_URL,
+                        f"anima:senseguard-alert:{policy.policy_id}:{event.event_id}",
+                    )
+                ),
+                source_event_id=event.event_id,
+                event_type=policy.event_type,
+                source="anima:senseguard-policy",
+                subject_key=f"senseguard/{resource_id}",
+                occurred_at=event.occurred_at,
+                correlation_id=event.correlation_id,
+                causation_id=event.event_id,
+                payload={
+                    "canonical_resource_id": str(resource_id),
+                    "source_event_id": event.event_id,
+                    "occurred_at": event.occurred_at.isoformat(),
+                    "event_type": policy.event_type,
+                },
+                importance=(
+                    EventImportance.CRITICAL if policy.priority >= 90 else EventImportance.IMPORTANT
+                ),
+                delivery_class=(
+                    DeliveryClass.GUARANTEED
+                    if policy.guaranteed_attention
+                    else DeliveryClass.BEST_EFFORT
+                ),
+                metadata={"household_id": str(self.household_id), **metadata},
+            )
+            appended = self.event_sink.append(alert)
+            if not appended.deduplicated and self.dispatch_attention is not None:
+                self.dispatch_attention()
+            alerts.append(alert)
+        return alerts
 
 
 def new_senseguard_policy(

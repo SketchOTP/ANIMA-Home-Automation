@@ -132,3 +132,21 @@ one configured household and the `sentry` provider. The client cannot choose a
 household, role, assurance, or provider. SENTRY identity observations are
 translated into short-lived `RECOGNIZED` evidence only; unknown, ambiguous, or
 expired observations cannot name a principal or authenticate a request.
+
+## R3 integration qualification
+
+Direct interaction identity is scoped to the registered SENTRY client and
+household, and direct observations are stored as ANIMA `IdentityEvidence`
+before the request is created. The request carries the real persisted evidence
+ID and a bounded aggregated context; SENTRY recognition remains evidence only.
+
+Incoming non-snapshot Home Assistant state events are passed to the typed
+SenseGuard router. It resolves the canonical resource, applies the configured
+household-local event/time-window policy, appends one deterministic guaranteed
+attention event, and hands it to the existing SENTRY Attention bridge.
+Unrelated event types are rejected and repeated delivery is deduplicated.
+
+R3 local evidence is deterministic and regression-protected. The protected
+dirty SENTRY V0.4 host was not modified, and live/shadow SENTRY, physical
+SenseGuard, and voice evidence remain explicitly unclaimed until commissioning
+is available.

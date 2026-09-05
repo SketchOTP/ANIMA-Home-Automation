@@ -12,6 +12,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from anima_ha.events import EventEnvelope
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
     IntelligenceOrigin,
@@ -27,6 +28,7 @@ from anima_ha.plugins import (
     Idempotency,
     ToolDescriptor,
 )
+from anima_ha.senseguard_alerts import SenseGuardEventRouter, new_senseguard_policy
 from anima_ha.sentry_boundary import (
     CoreSentryBoundary,
     SentryBoundaryError,
@@ -330,3 +332,140 @@ def test_expired_or_ambiguous_sentry_observation_cannot_name_a_principal() -> No
     ).to_anima_evidence(HOUSEHOLD, uuid4())
     assert evidence.claimed_principal_id is None
     assert evidence.metadata["usable_for_principal_candidate"] is False
+
+
+def test_direct_request_identity_is_scoped_to_household_and_client() -> None:
+    first = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="same-id",
+        household_id=HOUSEHOLD,
+        service_client_id="client-a",
+        source_surface="gtk",
+        user_text="status",
+        tools=[],
+    )
+    replay = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="same-id",
+        household_id=HOUSEHOLD,
+        service_client_id="client-a",
+        source_surface="gtk",
+        user_text="status",
+        tools=[],
+    )
+    other_household = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="same-id",
+        household_id=uuid4(),
+        service_client_id="client-a",
+        source_surface="gtk",
+        user_text="status",
+        tools=[],
+    )
+    other_client = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="same-id",
+        household_id=HOUSEHOLD,
+        service_client_id="client-b",
+        source_surface="gtk",
+        user_text="status",
+        tools=[],
+    )
+    assert first.request_id == replay.request_id
+    assert first.idempotency_key == replay.idempotency_key
+    assert first.request_id != other_household.request_id
+    assert first.request_id != other_client.request_id
+
+
+def test_service_claim_requires_provider_origin() -> None:
+    principal = SentryServicePrincipal.from_secret(
+        client_id=WORKER,
+        household_id=HOUSEHOLD,
+        provider_id="sentry",
+        token="t" * 48,
+    )
+    restricted = replace(principal, allowed_origins=("DIRECT_SENTRY_INTERACTION",))
+    service = CoreSentryHTTPService(
+        cast(Any, SimpleNamespace()),
+        lambda: "t" * 48,
+        service_principal=restricted,
+    )
+    with pytest.raises(ServiceAuthError, match="provider work"):
+        service.claim_and_bind(WORKER, "queue-1", "gtk", restricted)
+
+
+def test_direct_request_can_bind_actual_persisted_evidence_reference() -> None:
+    recorded: list[Any] = []
+    policy = SimpleNamespace(record_evidence=recorded.append)
+    store = MemoryStore(request_for(catalogue=()))
+    boundary = CoreSentryBoundary(cast(Any, Manager([])), policy, cast(Any, store))
+    envelope = SentryIdentityEvidenceEnvelope(
+        endpoint_id="office",
+        profile_state="recognized",
+        confidence=90,
+        observed_at=datetime.now(UTC),
+    )
+    evidence, context = boundary.persist_sentry_identity(
+        HOUSEHOLD, envelope, profile_principal_id=uuid4()
+    )
+    request = IntelligenceRequestFactory.for_direct_sentry_interaction(
+        sentry_request_id="evidence-1",
+        household_id=HOUSEHOLD,
+        service_client_id=WORKER,
+        source_surface="gtk",
+        user_text="status",
+        tools=[],
+        principal_id=context.principal_id,
+        identity_evidence_refs=(str(evidence.evidence_id),),
+        identity_context=context.to_payload(),
+    )
+    assert recorded[0].evidence_id == evidence.evidence_id
+    assert request.request_metadata["identity_evidence_refs"] == [str(evidence.evidence_id)]
+    assert request.principal_id == context.principal_id
+
+
+def test_senseguard_router_emits_deterministic_guaranteed_alert_once() -> None:
+    resource_id = uuid4()
+    policy = new_senseguard_policy(
+        HOUSEHOLD, (resource_id,), start_local="00:00", end_local="05:00"
+    )
+
+    class Policies:
+        def list_enabled(self, household_id: UUID) -> list[Any]:
+            return [policy] if household_id == HOUSEHOLD else []
+
+    class Sink:
+        def __init__(self) -> None:
+            self.events: list[Any] = []
+
+        def append(self, event: Any) -> Any:
+            duplicate = any(item.event_id == event.event_id for item in self.events)
+            if not duplicate:
+                self.events.append(event)
+            return SimpleNamespace(deduplicated=duplicate)
+
+    sink = Sink()
+    dispatched: list[bool] = []
+    router = SenseGuardEventRouter(
+        household_id=HOUSEHOLD,
+        policy_store=cast(Any, Policies()),
+        resource_resolver=lambda external_id: (
+            resource_id if external_id == "binary.guard" else None
+        ),
+        event_sink=sink,
+        dispatch_attention=lambda: dispatched.append(True),
+    )
+    event = EventEnvelope.create(
+        event_id="ha-event-1",
+        event_type="truth.observation",
+        source="provider:home_assistant:test",
+        subject_key="provider/home_assistant/test/entity/binary.guard",
+        occurred_at=datetime(2026, 9, 4, 4, 3, tzinfo=UTC),
+        payload={"state": "on"},
+        metadata={"external_id": "binary.guard"},
+    )
+    first = router.handle(event)
+    second = router.handle(event)
+    assert len(first) == len(second) == 1
+    assert first[0].event_id == second[0].event_id
+    assert len(sink.events) == 1
+    assert dispatched == [True]
+
+    unrelated = replace(event, event_type="calendar.event")
+    assert router.handle(unrelated) == []

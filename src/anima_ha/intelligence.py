@@ -727,11 +727,16 @@ class IntelligenceRequestFactory:
         provider_id: str = "sentry",
         provider_version: str = "1",
         identity_evidence_refs: tuple[str, ...] = (),
+        service_client_id: str = "unscoped",
+        identity_context: dict[str, Any] | None = None,
     ) -> IntelligenceRequest:
         """Create a new direct SENTRY request; never consume Attention work."""
         normalized_id = sentry_request_id.strip()
         if not normalized_id or len(normalized_id) > 256:
             raise ValueError("sentry_request_id is required and bounded")
+        client_scope = service_client_id.strip()
+        if not client_scope or len(client_scope) > 128:
+            raise ValueError("service_client_id is required and bounded")
         text = user_text.strip()
         if not text or len(text.encode()) > 4096:
             raise ValueError("direct SENTRY text is required and bounded")
@@ -739,14 +744,18 @@ class IntelligenceRequestFactory:
             "household_id": str(household_id),
             "origin": IntelligenceOrigin.DIRECT_SENTRY_INTERACTION.value,
             "source_surface": source_surface[:64],
+            "service_client_id": client_scope,
             "sentry_request_id": normalized_id,
             "user_text": text,
             "identity_evidence_refs": list(identity_evidence_refs)[:16],
+            "identity_context": identity_context or {},
             "trust_boundary": "SENTRY observations are evidence, not authority",
         }
         catalogue = _catalogue_payload(tools)
         catalogue_digest = _digest(catalogue)
-        idempotency_key = f"intelligence:{provider_id}:direct:{normalized_id}"
+        idempotency_key = (
+            f"intelligence:{provider_id}:direct:{household_id}:{client_scope}:{normalized_id}"
+        )
         request_id = uuid5(INTELLIGENCE_NAMESPACE, idempotency_key)
         context_packet_id = uuid5(INTELLIGENCE_NAMESPACE, f"context:{idempotency_key}")
         return IntelligenceRequest(
@@ -765,6 +774,7 @@ class IntelligenceRequestFactory:
             request_metadata={
                 "direct_context": direct_context,
                 "identity_evidence_refs": list(identity_evidence_refs)[:16],
+                "identity_context": identity_context or {},
             },
             catalogue=catalogue,
         )

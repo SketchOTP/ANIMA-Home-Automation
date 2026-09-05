@@ -108,3 +108,36 @@ Focused R1 tests, full pytest, Ruff, and strict mypy pass locally. Real SENTRY
 host/voice execution, physical SenseGuard triggering, live HA action, and
 hosted exact-head CI remain unclaimed until the protected SENTRY host is
 commissioned without modifying its dirty worktree.
+
+## R3 integration qualification — 2026-09-04
+
+- Starting governed checkpoint: `3112180fdefd7a6e199fc16376ca5790a7ba2158`;
+  prior hosted CI `33929370701` passed on that exact head.
+- Direct SENTRY idempotency is scoped by provider, household, registered
+  service-client identity, and SENTRY request ID. The model cannot supply the
+  household, provider, role, assurance, or authoritative idempotency identity.
+- Direct identity observations are persisted through the ANIMA policy evidence
+  store before direct request creation. The durable request binds the actual
+  `IdentityEvidence.evidence_id`; profile mapping is server-owned and checked
+  against household Graph membership. SENTRY observations remain at most
+  `RECOGNIZED` and never mint authentication.
+- `DIRECT_SENTRY_INTERACTION` and `SENTRY_PROVIDER` origin permissions are
+  enforced at their respective intake boundaries. The client worker label is
+  not an authority claim.
+- Normalized non-snapshot HA events now pass through an ANIMA-owned callback.
+  `SenseGuardEventRouter` resolves canonical resources, matches the typed
+  household-local policy and normalized event type, emits a deterministic
+  guaranteed alert event, and dispatches the existing Attention bridge once
+  per logical alert. Ordinary unrelated event types are rejected.
+- New focused evidence covers household/client-scoped request identity,
+  persisted evidence-ID binding, origin rejection, deterministic SenseGuard
+  alert deduplication, and unrelated-event rejection. Full pytest, Ruff, strict
+  mypy, compileall, and `git diff --check` pass locally.
+
+## R3 evidence limits
+
+No live/shadow SENTRY Codex/Luna host turn, physical SenseGuard trigger,
+SENTRY voice path, or live-household mutation was available from the protected
+dirty SENTRY environment. Those remain explicit `EXTERNAL_RESOURCE_GATE` /
+`NOT RUN` evidence, not implementation claims. Phase 14 and Phase 15 remain
+unauthorized; this packet does not self-accept Phase 13.

@@ -913,3 +913,21 @@ decision.
 - Implemented locally: ANIMA-owned Unix-socket Core service, client-only `anima-household` bundle, private credential-file checks and rotation, server-issued request/household/provider/fencing bindings, provider-scoped claiming, no-blind-replay handling for possible provider dispatch, request-bound catalogue enforcement, current HA child-device/config-entry metadata, and typed SenseGuard alert-policy storage/matching.
 - Fresh local evidence: full pytest, Ruff, strict mypy, focused boundary, current HA registry, and SenseGuard policy tests pass. The protected dirty SENTRY V0.4 tree was not modified.
 - Evidence limits: no live SENTRY host turn, physical SenseGuard trigger, voice broadcast, or live household action is claimed. Phase 14/15 remain unauthorized.
+
+## ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3 — bounded continuation
+
+- Date: 2026-09-04. Starting governed checkpoint:
+  `3112180fdefd7a6e199fc16376ca5790a7ba2158`; prior hosted CI
+  `33929370701` passed on that exact SHA.
+- Disposition: `CONTINUE — ANIMA-SIDE HARDENING RETAINED; PHASE 13 NOT
+  ACCEPTED`.
+- Implemented: direct request idempotency scoped by provider/household/client/
+  SENTRY request; persisted SENTRY identity-evidence binding with server-owned
+  Graph membership mapping; direct/provider origin checks; and normalized HA
+  SenseGuard event routing into deterministic guaranteed Attention alerts.
+- Validation: focused boundary/SenseGuard tests and full pytest passed; Ruff,
+  strict mypy, compileall, and `git diff --check` passed. Protected SENTRY V0.4
+  worktree remains untouched.
+- Not claimed: live/shadow SENTRY Codex/Luna turn, physical SenseGuard trigger,
+  voice delivery, live household mutation, or exact hosted CI for this new
+  working tree. Phase 14/15 remain unauthorized.

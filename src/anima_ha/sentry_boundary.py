@@ -74,7 +74,8 @@ class SentryIdentityEvidenceEnvelope:
         # AUTHENTICATED or STRONG_AUTHENTICATED evidence.
         return IdentityEvidence(
             evidence_id=uuid5(
-                _INVOCATION_NAMESPACE, f"sentry-evidence:{self.endpoint_id}:{observed.isoformat()}"
+                _INVOCATION_NAMESPACE,
+                f"sentry-evidence:{household_id}:{self.endpoint_id}:{observed.isoformat()}",
             ),
             household_id=household_id,
             claimed_principal_id=principal_id if evidence_usable else None,
@@ -239,6 +240,9 @@ class CoreSentryBoundary:
         source_surface: str,
         user_text: str,
         identity_evidence_refs: tuple[str, ...] = (),
+        principal_id: UUID | None = None,
+        service_client_id: str = "unscoped",
+        identity_context: IdentityContext | None = None,
     ) -> IntelligenceRequest:
         """Create direct SENTRY work without consuming autonomous Attention."""
         request = IntelligenceRequestFactory.for_direct_sentry_interaction(
@@ -247,9 +251,26 @@ class CoreSentryBoundary:
             source_surface=source_surface,
             user_text=user_text,
             tools=self.manager.list_tools(),
+            principal_id=principal_id,
             identity_evidence_refs=identity_evidence_refs,
+            service_client_id=service_client_id,
+            identity_context=identity_context.to_payload() if identity_context else None,
         )
         return self.intelligence_store.enqueue(request)
+
+    def persist_sentry_identity(
+        self,
+        household_id: UUID,
+        envelope: SentryIdentityEvidenceEnvelope,
+        *,
+        profile_principal_id: UUID | None = None,
+    ) -> tuple[IdentityEvidence, IdentityContext]:
+        """Persist one bounded SENTRY observation before request creation."""
+        evidence = envelope.to_anima_evidence(household_id, profile_principal_id)
+        recorder = getattr(self.policy_service, "record_evidence", None)
+        if callable(recorder):
+            recorder(evidence)
+        return evidence, IdentityAggregator().aggregate(household_id, [evidence])
 
     def record_sentry_identity(
         self,
@@ -259,11 +280,10 @@ class CoreSentryBoundary:
         profile_principal_id: UUID | None = None,
     ) -> IdentityContext:
         """Persist bounded SENTRY evidence and aggregate it without escalation."""
-        evidence = envelope.to_anima_evidence(request.household_id, profile_principal_id)
-        recorder = getattr(self.policy_service, "record_evidence", None)
-        if callable(recorder):
-            recorder(evidence)
-        return IdentityAggregator().aggregate(request.household_id, [evidence])
+        _evidence, context = self.persist_sentry_identity(
+            request.household_id, envelope, profile_principal_id=profile_principal_id
+        )
+        return context
 
     @staticmethod
     def _schema_digest(schema: dict[str, Any]) -> str:

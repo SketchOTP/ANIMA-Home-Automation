@@ -9,6 +9,12 @@ identity evidence, the protected SENTRY client package, current HA registry
 normalization, and the typed SenseGuard alert policy. Phase 14/15 remain
 unauthorized.
 
+R3 continuation: `ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3`.
+This closes direct-request identity scoping, persisted SENTRY identity-evidence
+binding, origin enforcement, and the normalized HA SenseGuard-to-guaranteed-
+attention route. It does not claim live SENTRY, physical SenseGuard, or voice
+evidence.
+
 This packet records the owner-authorized platform integration. ANIMA remains
 the household authority, Truth/policy owner, executor, observer, and source of
 terminal action outcomes. SENTRY is the production intelligence, persona,

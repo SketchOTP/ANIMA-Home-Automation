@@ -57,6 +57,7 @@ from anima_ha.intelligence import (
     IntelligenceProviderMode,
     IntelligenceRequestFactory,
     PostgresIntelligenceStore,
+    SentryAttentionBridge,
 )
 from anima_ha.journal import PostgresEventJournal, PostgresRealityStore
 from anima_ha.plugins import (
@@ -75,6 +76,10 @@ from anima_ha.policy import (
     PolicyService,
     PostgresPolicyStore,
     RequestOrigin,
+)
+from anima_ha.senseguard_alerts import (
+    PostgresSenseGuardAlertPolicyStore,
+    SenseGuardEventRouter,
 )
 from anima_ha.sentry_boundary import CoreSentryBoundary
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
@@ -855,10 +860,12 @@ def build_postgres_core(
         return TruthSnapshot(values)
 
     action_refresher = refresh if ha_adapter is not None else None
-    return CoreRuntime(
+    attention = PostgresAttentionService(database_url)
+    context = ContextBroker(database_url)
+    runtime = CoreRuntime(
         journal,
-        PostgresAttentionService(database_url),
-        ContextBroker(database_url),
+        attention,
+        context,
         policy_service,
         agent,
         plugins,
@@ -872,6 +879,42 @@ def build_postgres_core(
         intelligence_provider,
         ha_adapter,
     )
+    household_value = (
+        os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()
+        or os.environ.get("ANIMA_SENTRY_HOUSEHOLD_ID", "").strip()
+    )
+    if ha_adapter is not None and household_value and intelligence_store is not None:
+        household_id = UUID(household_value)
+        policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
+
+        def resolve_resource(external_id: str) -> UUID | None:
+            node = graph.resolve_provider_reference(
+                "home_assistant", provider_scope, "entity", external_id
+            )
+            if node is None or node.kind not in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+                return None
+            return node.canonical_id
+
+        def dispatch_attention() -> None:
+            SentryAttentionBridge(
+                attention=attention,
+                context=context,
+                store=intelligence_store,
+                # SenseGuard alerts are already classified as guaranteed
+                # attention.  Do not apply the broad SENTRY profile here or
+                # every ordinary HA state observation would trigger cognition.
+                profile=AttentionProfile("phase13.senseguard.v1", ()),
+            ).run_once(household_id=household_id, tools=plugins.list_tools())
+
+        router = SenseGuardEventRouter(
+            household_id=household_id,
+            policy_store=policy_store,
+            resource_resolver=resolve_resource,
+            event_sink=journal,
+            dispatch_attention=dispatch_attention,
+        )
+        ha_adapter.set_normalized_event_callback(router.handle)
+    return runtime
 
 
 # Keep the standalone runtime importable by loading the FastAPI module only

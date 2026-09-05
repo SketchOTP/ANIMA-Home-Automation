@@ -535,8 +535,11 @@ class HomeAssistantAdapter:
         reality: PostgresRealityStore,
         graph: PostgresHouseholdGraph,
         store: PostgresHAStore,
+        *,
+        normalized_event_callback: Callable[[EventEnvelope], Any] | None = None,
     ) -> None:
         self.config, self.reality, self.graph, self.store = config, reality, graph, store
+        self._normalized_event_callback = normalized_event_callback
         self.connection: HAConnection | None = None
         self.status = HAAdapterStatus(HAHealth.STARTING)
         self._enabled = False
@@ -729,7 +732,17 @@ class HomeAssistantAdapter:
     def _ingest_state(self, state: dict[str, Any], *, snapshot: bool) -> None:
         if not state.get("entity_id"):
             return
-        self.reality.ingest(self.normalize_state_event(state, snapshot=snapshot))
+        event = self.normalize_state_event(state, snapshot=snapshot)
+        self.reality.ingest(event)
+        callback = self._normalized_event_callback
+        if callback is not None and not snapshot:
+            callback(event)
+
+    def set_normalized_event_callback(
+        self, callback: Callable[[EventEnvelope], Any] | None
+    ) -> None:
+        """Attach an ANIMA-owned consumer after Core composition is complete."""
+        self._normalized_event_callback = callback
 
     def _apply_snapshot(self, snapshot: HADiscoverySnapshot) -> None:
         if snapshot.version != self.config.expected_version:
