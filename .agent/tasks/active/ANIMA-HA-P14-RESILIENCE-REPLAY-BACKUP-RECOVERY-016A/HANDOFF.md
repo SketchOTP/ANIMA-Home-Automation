@@ -215,3 +215,21 @@ publication does not close the remaining approval/continuation, ambiguous
 action/manual-reality, full in-flight SENTRY/HA/plugin/process,
 external-content, or deeper ARM64 replay/runtime gates. Native Pi 5 remains
 an external gate. Phase 15 was not implemented.
+
+## Durable continuation exact-head qualification
+
+The current head is `d9de9a11abc21700a93abb5c0297bf1a382ed70a`, matching
+`origin/main`, with exact-head CI `33994352076` passing. Artifact `9977709643`
+was published with digest
+`sha256:19ba41615602200f9a15db47248442094019b107e8d7a34b7246eec52c49d536`.
+The real PostgreSQL/process scenario
+`CONTINUATION_POST_ACTION_DURABLE_NO_DUPLICATE_RESULT` passed: the child
+crashed after durable action success and before continuation completion, a
+wrong principal was rejected, and correct recovery returned `SUCCEEDED` with
+one total dispatch and zero recovery redispatches.
+
+Disposition remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this is a
+narrow crash-window closure, not Phase 14 acceptance. The remaining approval/
+continuation, ambiguous action/HA, full in-flight SENTRY/HA/plugin/process,
+external-content, and deeper ARM64 replay/runtime work remains open. Phase 15
+was not implemented.

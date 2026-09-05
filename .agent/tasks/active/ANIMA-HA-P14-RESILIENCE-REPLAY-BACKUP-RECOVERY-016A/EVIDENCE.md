@@ -437,6 +437,24 @@ gate only.
   external-content, or ARM64 replay/runtime gates. Phase 15 remains
   unauthorized.
 
+## Durable continuation exact-head qualification
+
+- Published head: `d9de9a11abc21700a93abb5c0297bf1a382ed70a`, matching
+  `origin/main`; exact-head CI `33994352076` passed. Artifact `9977709643`,
+  digest
+  `sha256:19ba41615602200f9a15db47248442094019b107e8d7a34b7246eec52c49d536`.
+- Real PostgreSQL/process result: `PASS`,
+  `CONTINUATION_POST_ACTION_DURABLE_NO_DUPLICATE_RESULT`, evidence level
+  `POSTGRES_PROCESS_OPA`. The child crashed after the action store durably
+  recorded `SUCCEEDED` and before continuation completion. A wrong principal
+  could not resume the approved continuation; the correct recovery reused the
+  terminal action. Total dispatches were exactly one and recovery dispatches
+  were zero.
+- This closes only the exercised post-action durable-result window. The full
+  Phase 14 approval/continuation matrix, ambiguous action/HA, in-flight
+  SENTRY/HA/plugin/process, external-content, and deeper ARM64 replay/runtime
+  closure remain open. Phase 15 remains unauthorized.
+
 ## Exact-head hosted publication
 
 - Published head: `75a8a9b94b89cbc53be577e935b1cfb2552eff5f`, matching

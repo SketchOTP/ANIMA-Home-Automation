@@ -562,3 +562,18 @@ publication does not claim completion of the remaining approval/continuation,
 ambiguous action/manual-reality, full in-flight SENTRY/HA/plugin/process,
 broader external-content, or ARM64 replay/runtime breadth. Native Pi 5 remains
 an external gate. Phase 15 is unauthorized and unimplemented.
+
+## Phase 14 durable continuation qualification — 2026-09-05
+
+The approval/continuation increment is published at
+`d9de9a11abc21700a93abb5c0297bf1a382ed70a`, matching `origin/main`.
+Exact-head hosted CI `33994352076` passed. Artifact `9977709643` has digest
+`sha256:19ba41615602200f9a15db47248442094019b107e8d7a34b7246eec52c49d536`.
+
+The real PostgreSQL process-boundary scenario
+`CONTINUATION_POST_ACTION_DURABLE_NO_DUPLICATE_RESULT` passed: a child process
+crashed after the governed action reached durable `SUCCEEDED` and before
+continuation completion; the wrong principal was rejected; correct recovery
+reused the terminal action with exactly one dispatch and zero recovery
+redispatches. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`.
+Phase 15 remains unauthorized and unimplemented.
