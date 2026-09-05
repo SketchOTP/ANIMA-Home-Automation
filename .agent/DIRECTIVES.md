@@ -601,3 +601,24 @@ Append new directives at the bottom; never rewrite an accepted historical direct
   existing `SENTRY/tools/sentry_mcp_server.py`. Fixing that requires
   protected SENTRY-side authority. Result:
   `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+
+## ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A
+
+- Issued: 2026-09-05
+- Parent: Architect-accepted Phase 13 SENTRY-ready household authority
+  platform; Phase 14 active; Phase 15 unauthorized.
+- Starting checkpoint: ANIMA
+  f0456d24fa09ed6873e882c89a9dce759f73a619, prior CI 33938497635. Accepted
+  isolated SENTRY launcher patch
+  00aa9ac3a35b7b012581160b961e01a9480bbbdf, CI 33939908542.
+- Objective: prove failure, restart, duplicate, concurrency, outage, replay,
+  backup, and restore correctness without duplicate effects, fabricated
+  success, privilege escalation, or silent uncertainty.
+- Scope: canonical scenario ledger, test-only fault injection, provider and
+  approval crash windows, fencing, event ordering, HA/OPA/plugin/SENTRY outage,
+  restricted content, large histories, pg_dump/restore, deterministic replay,
+  process restart, and ARM64 portability. No Phase 15 demonstration or new
+  foundational service.
+- Initial status: ACTIVE; baseline full pytest passed 214 tests. Final
+  implementation, exact-head CI, complete destructive matrix, and Architect
+  acceptance remain open.

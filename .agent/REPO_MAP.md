@@ -257,3 +257,14 @@ The `src/anima_ha/db` area owns ordered migrations. Phase 1 journal/truth behavi
 - HA, Codex OAuth, and external-provider credentials remain runtime-owned secrets; none is persisted or exposed to Luna. HA IDs and external provider IDs remain references; only bounded low-risk virtual HA actions and synthetic/public external traffic are evidenced. Phase 8 reprojects Phase 7 packets, rejects direct Codex capability events, and sends requested tools only through Phase 5/4. Physical/high-risk actions, commercial production external-provider use, and semantic embedding services require separate authorization. Phase 9 live coordinator evidence is isolated virtual/demo x86-64 and does not establish physical-home behavior. Phase 5 subprocesses are not malicious-code sandboxes.
 
 GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is not exhaustive; update it when repository structure or understanding changes materially and is verified.
+
+### Phase 14 resilience/replay/restore
+
+- src/anima_ha/resilience.py - canonical bounded scenario/result ledger,
+  explicit test-only one-shot fault injector, deterministic replay comparator,
+  and secret-free backup/restore safety metadata.
+- tests/test_resilience.py - focused schema, fault-injection, replay-regression,
+  append-only ledger, and restore-safety tests.
+- scripts/verify_phase14_resilience.py - deterministic Phase 14 contract target;
+  it reports the scenarios it actually executes and names unrun infrastructure
+  rather than promoting it to success.

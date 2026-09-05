@@ -267,3 +267,16 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Protected cross-project source cannot be repaired implicitly. Preserve the
   exact failure and return an Architect decision when compatibility requires a
   change in the protected SENTRY tree.
+
+### Phase 14 initial resilience work
+
+- Destructive evidence needs one canonical scenario shape spanning durable
+  state, Truth versions, identity/policy, event ordering, provider lifecycle,
+  action state, observations, availability, terminal state, side-effect count,
+  and recovery behavior.
+- Test fault injection must require explicit construction in test code and
+  fail closed when invoked without that test-only construction. It must not be
+  configurable through browser, MCP, model input, or ordinary runtime config.
+- Restored PostgreSQL history does not make physical HA Truth current; the safe
+  restore posture is UNKNOWN_UNTIL_REOBSERVED and executed effects must never
+  be replayed.

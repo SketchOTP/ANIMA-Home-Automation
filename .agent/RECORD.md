@@ -365,3 +365,15 @@ UI, and voice remain out of scope.
   `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
 - Phase 14/15 and ANIMA voice remain unauthorized; this record does not
   self-accept Phase 13.
+
+## ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A - active
+
+- On 2026-09-05 Architect accepted Phase 13 and authorized the bounded Phase 14
+  resilience/replay/backup/recovery directive.
+- The Phase 13 packet was moved from active to completed, preserving its
+  negative evidence. The Phase 14 packet is now the current active packet.
+- Starting ANIMA SHA is f0456d24fa09ed6873e882c89a9dce759f73a619 with prior exact
+  CI 33938497635. The protected SENTRY compatibility patch is
+  00aa9ac3a35b7b012581160b961e01a9480bbbdf with CI 33939908542.
+- No Phase 15 behavior, ANIMA voice, new provider, broker, database, or
+  workflow engine is authorized.

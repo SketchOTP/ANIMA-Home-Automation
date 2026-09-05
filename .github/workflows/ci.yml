@@ -32,6 +32,14 @@ jobs:
           fi
       - name: Run actual MCP runtime certification
         run: uv run --locked python scripts/verify_phase13_mcp_runtime.py
+      - name: Run Phase 14 deterministic resilience contracts
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/anima-p14-evidence
+          uv run --locked python scripts/verify_phase14_resilience.py \
+            --output /tmp/anima-p14-evidence/phase14-resilience.json \
+            | tee /tmp/anima-p14-evidence/phase14-resilience.stdout.json
+
       - name: Start Core services for integrated UI validation
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -133,6 +141,7 @@ jobs:
           if-no-files-found: warn
           path: |
             /tmp/anima-h5-evidence/
+            /tmp/anima-p14-evidence/
             ui/playwright-report/
             ui/test-results/
       - name: Stop Core services

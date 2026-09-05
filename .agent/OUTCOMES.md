@@ -962,3 +962,17 @@ decision.
   `sentry-office` launcher exits on its incorrect `SENTRY/integrations/tools`
   path; changing it is a SENTRY-side protected-tree decision.
 - No Phase 14/15 behavior, ANIMA voice stack, or self-acceptance was added.
+
+## ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A - initial execution
+
+- Issued: 2026-09-05 after Architect acceptance of Phase 13.
+- Starting ANIMA head: f0456d24fa09ed6873e882c89a9dce759f73a619; exact prior CI
+  33938497635 passed and origin/main matched.
+- Accepted isolated SENTRY launcher patch:
+  00aa9ac3a35b7b012581160b961e01a9480bbbdf; CI 33939908542 passed.
+- Existing full pytest baseline at the starting checkpoint: 214 tests passed.
+- Scope: resilience, replay, backup, restore, outage, concurrency, duplicate
+  and stale-state evidence only. Phase 15 remains unauthorized.
+- Initial implementation adds a canonical bounded scenario model, explicit
+  test-only one-shot fault injection, deterministic replay comparison, and
+  secret-free restore metadata. Final evidence remains in progress.

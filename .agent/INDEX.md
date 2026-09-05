@@ -10,41 +10,27 @@
 
 ## Current pointers
 
-- Current stage: PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — 015B-R4; CONTINUE
-- Active directive: ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4 — actual MCP/SENTRY runtime certification
-- Active task packet: `.agent/tasks/active/ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B/`
-- Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
-- Last completed outcome: H5U implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d`; hosted CI `33746353829` passed on that exact SHA. Final governed closure checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7`; hosted CI `33747181905` passed on that exact SHA.
-- Last state sync: 2026-09-04; Phase 0–12 are Architect accepted. Phase 13 is
-  the active bounded continuation; Phase 14/15 remain unauthorized.
+- Current stage: PHASE 14 RESILIENCE, REPLAY, BACKUP AND RECOVERY - 016A; ACTIVE
+- Active directive: ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A
+- Active task packet: .agent/tasks/active/ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A/
+- Last accepted outcome: Phase 13 SENTRY-ready household authority platform,
+  ANIMA f0456d24fa09ed6873e882c89a9dce759f73a619, CI 33938497635; isolated
+  SENTRY launcher compatibility patch 00aa9ac3a35b7b012581160b961e01a9480bbbdf,
+  CI 33939908542
+- Last completed outcome: Phase 13 SENTRY-ready platform; Phase 14 is the only
+  active ANIMA scope and Phase 15 remains unauthorized.
+- Last state sync: 2026-09-05; Phases 0-13 are Architect accepted. Phase 14
+  is active; Phase 15 remains unauthorized.
 
-## Current Phase 13 R4 result
+## Phase 14 initial state
 
-- ANIMA implementation head `20e3e0763328ed327c7d80d73264344d6054339f` passed
-  exact-head hosted CI `33938016240`; artifact `9960893002` was published.
-- Actual installed MCP certification passes direct and queued flows, schemas,
-  provider-start ordering, read, governed mutation, result submission, and
-  terminal status. The protected SENTRY V0.4 tree is unchanged.
-- R4 is blocked at coexistence certification because the protected
-  `sentry-office` launcher resolves a nonexistent `SENTRY/integrations/tools`
-  path. Phase 13 remains CONTINUE and is not self-accepted.
-
-## Current qualification result
-
-- Best Buy's official Products API and terms were rechecked. Products API is
-  active, requires an ordinary API key, documents `50,000/day` and `5/sec`,
-  and keeps Commerce API invite-only and out of scope.
-- Best Buy terms limit Content storage/cache to 72 hours. ANIMA's current
-  PostgreSQL agent tool-request table durably stores the full sanitized result
-  with no expiry/purge mechanism. Best Buy therefore cannot be integrated
-  under this bounded directive without an Architect-authorized retention
-  change.
-- Result: Phase 11 is Architect accepted. Phase 12 is authorized; the current
-  integration delta composes the production UI through the existing Journal,
-  Attention, Context Broker, AgentRuntime, Tool Gateway, policy, task,
-  calendar, and action-coordinator boundaries. Phase 12 is Architect accepted;
-  Phase 13 is the active bounded continuation and Phase 14/15 remain
-  unauthorized.
+- Starting ANIMA head f0456d24fa09ed6873e882c89a9dce759f73a619 matched origin/main
+  and was clean. Existing pytest baseline passed 214 tests.
+- The Phase 13 packet was moved into completed history without deleting its
+  negative/resource-gate evidence.
+- The Phase 14 packet is the only current implementation pointer. The
+  canonical scenario model and deterministic replay/restore safety metadata
+  are in progress; final Phase 14 acceptance is not claimed.
 
 ## Mandatory kernel
 

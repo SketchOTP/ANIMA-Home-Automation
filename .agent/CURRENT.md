@@ -1,49 +1,55 @@
 # Current Project State
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 ## Current stage
 
-PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — R4 COMPATIBILITY CERTIFICATION
+PHASE 14 RESILIENCE, REPLAY, BACKUP AND RECOVERY - 016A
 
 ## Current objective
 
-Make SENTRY the sole production intelligence and user interaction layer while
-ANIMA remains the whole-home authority and verified control plane. The ANIMA
-side now contains the durable intelligence request/result boundary, Attention
-handoff, Core-owned SENTRY MCP surface, and explicit queue/claim processes.
-Phase 13 is active under directive 015B and amendments 015B-R1/R2/R3/R4; Phase
-14/15 remain unauthorized.
+Prove that the accepted ANIMA household-authority platform preserves authority,
+verification, privacy, deterministic recovery, and exactly-once side-effect
+boundaries across failure, duplication, concurrency, outage, replay, and
+backup/restore. Phases 0-13 are Architect accepted. Phase 15 remains
+unauthorized.
 
 ## Active directive
 
-`ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` as amended by
-`ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1` and
-`ANIMA-HA-P13-SENTRY-LIVE-INTEGRATION-FINAL-ACCEPTANCE-015B-R2` and
-`ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3` and
-`ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4` — the
-credential-isolated Core service/client boundary, provider-start fencing,
-request-bound catalogue, household-scoped direct SENTRY requests, identity
-evidence translation, device commissioning, and SenseGuard alert continuation.
-SENTRY's protected dirty working tree is not modified. Phase 14/15 remain
-unauthorized.
-
-## Architect pivot record
-
-The strategic change from standalone ANIMA intelligence to ANIMA as the
-household authority/platform for SENTRY is documented in
-`docs/ARCHITECT-PIVOT-ANIMA-SENTRY-PLATFORM.md`. SENTRY is the sole intended
-production intelligence and voice layer; ANIMA remains the source of household
-Truth and the only authority for policy, execution, observation and terminal
-results. Live SENTRY host, voice and physical-household evidence remains
-pending.
+ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A - build one canonical
+machine-readable destructive-scenario ledger, exercise existing lifecycle,
+action, task, calendar, HA, plugin, OPA, SENTRY, replay, restart, and restore
+boundaries, and report unrun infrastructure honestly. No new broker, database,
+workflow engine, provider, or household feature is authorized.
 
 ## Current authority result
 
-Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface
-work is historical accepted baseline. Phase 13 is the only active
-implementation scope under 015B-R4 and remains pending Architect acceptance;
-this file does not self-accept it.
+Phase 13 is Architect accepted at ANIMA
+f0456d24fa09ed6873e882c89a9dce759f73a619 with exact-head CI 33938497635.
+The accepted isolated SENTRY launcher compatibility patch is
+00aa9ac3a35b7b012581160b961e01a9480bbbdf with CI 33939908542. Phase 14 is
+active and not self-accepted. Phase 15 is unauthorized and unimplemented.
+
+## Phase 14 initial execution - 2026-09-05
+
+- Starting governed head: f0456d24fa09ed6873e882c89a9dce759f73a619; origin/main
+  matched and the worktree was clean before the Phase 14 packet was created.
+- Existing full pytest baseline passed at the starting checkpoint: 214 tests.
+- Phase 13 packet was reconciled from active to completed. Historical R4
+  negative evidence and resource limits were preserved.
+- The canonical Phase 14 scenario/replay model and explicit test-only fault
+  injector are now being added. Deterministic focused validation is pending.
+- The protected SENTRY V0.4 worktree remains outside this repository and is not
+  modified by Phase 14.
+
+## Evidence boundary
+
+Only executed scenarios may be marked PASSED. Missing PostgreSQL, HA, SENTRY,
+or ARM64 infrastructure remains NOT RUN, NOT APPLICABLE, BLOCKED, or an
+explicit external gate. No secrets, restricted provider content, or household
+private data may enter committed evidence. Phase 15 behavior is absent.
+
+## Preserved historical state
 
 ## Phase 13 R4 runtime compatibility certification — 2026-09-05
 
