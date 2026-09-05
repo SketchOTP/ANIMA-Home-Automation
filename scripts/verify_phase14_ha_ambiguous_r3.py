@@ -245,26 +245,30 @@ def main() -> int:
         settled = adapter.set_power(resource_id, False, capability_id)
         if settled.observed_state != "off":
             raise AssertionError(f"could not establish off state: {settled}")
+        for connection in connections:
+            connection.service_calls = 0
         first = coordinator.execute(action)
         if first.record.status != ActionStatus.VERIFICATION_FAILED:
             raise AssertionError(
                 "expected verification failure, "
                 f"got {first.record.status}: {first.record.detail}"
             )
-        wrapped = connections[-1]
-        if wrapped.service_calls != 1 or gateway.calls != 1:
+        service_calls = sum(connection.service_calls for connection in connections)
+        if service_calls != 1 or gateway.calls != 1:
             raise AssertionError(
                 "expected one real dispatch, "
-                f"service={wrapped.service_calls}, gateway={gateway.calls}"
+                f"service={service_calls}, gateway={gateway.calls}"
             )
-        wrapped.hide_state = False
+        for connection in connections:
+            connection.hide_state = False
         actual = adapter.read_state(resource_id, capability_id)
         if actual["state"] != "on":
             raise AssertionError(f"real HA state did not change after service dispatch: {actual}")
         second = coordinator.execute(action)
         if not second.duplicate or second.record.status != ActionStatus.VERIFICATION_FAILED:
             raise AssertionError("replay did not preserve verification failure")
-        if wrapped.service_calls != 1 or gateway.calls != 1:
+        service_calls = sum(connection.service_calls for connection in connections)
+        if service_calls != 1 or gateway.calls != 1:
             raise AssertionError("verification failure was redispatched")
         print(
             json.dumps(
@@ -276,7 +280,7 @@ def main() -> int:
                     "second_status": second.record.status.value,
                     "real_ha_state_after_fault": actual["state"],
                     "gateway_dispatches": gateway.calls,
-                    "ha_service_calls": wrapped.service_calls,
+                    "ha_service_calls": service_calls,
                     "phase15": False,
                 },
                 sort_keys=True,
