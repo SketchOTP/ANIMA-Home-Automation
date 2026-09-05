@@ -497,3 +497,19 @@ gate only.
 Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this closes
 only the real isolated-HA possible-dispatch/no-retry slice. Phase 15 remains
 unauthorized and unimplemented.
+
+## HA manual-change race qualification - 2026-09-05
+
+- PASS / exact governed head: `10830755f2f449b5c2a64b1f095f52a1fafb04d4`;
+  hosted CI `33996868220` passed. Artifact `9978452041`, digest
+  `sha256:1bc74e5ebf694e7107b6eec706aa31e912a400a1adb44fb9f605cc186de495b9`.
+- PASS / `ISOLATED_HA_POSTGRES_OPA`: after one real ANIMA-governed HA
+  dispatch, a test-only external actor changed the same isolated resource
+  back to `off` and the harness waited for that state to be observable. The
+  authoritative result was `VERIFICATION_FAILED`. Replay preserved that
+  terminal status without another governed dispatch; machine output recorded
+  one manual external change and one action-period service dispatch.
+
+This closes only the exercised manual-reality race slice. Phase 14 remains
+`CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; Phase 15 remains unauthorized
+and unimplemented.

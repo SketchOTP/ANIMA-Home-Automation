@@ -195,6 +195,18 @@ approval/continuation, ambiguous action/HA, SENTRY/HA/plugin/process,
 external-content, and ARM64 replay/runtime closure remains required. Phase 15
 was not implemented.
 
+## HA manual-change race checkpoint
+
+Published head: `10830755f2f449b5c2a64b1f095f52a1fafb04d4`, matching
+`origin/main`. Exact-head hosted CI `33996868220` passed. Artifact `9978452041`
+was published with digest
+`sha256:1bc74e5ebf694e7107b6eec706aa31e912a400a1adb44fb9f605cc186de495b9`.
+
+The real isolated-HA manual-reality scenario passed: an external state change
+after governed dispatch caused authoritative `VERIFICATION_FAILED`, and replay
+did not redispatch. This is a bounded race result; Phase 14 remains
+`CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. Phase 15 was not implemented.
+
 ## Isolated HA ambiguous-dispatch checkpoint
 
 Published head: `2a0bb87eb140883f7ccb824c1344767f07d47b38`, matching

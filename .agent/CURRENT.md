@@ -593,3 +593,18 @@ returned the same terminal result without a second gateway or HA dispatch.
 The local workstation lacked an OPA listener, so its fail-closed local result
 is not claimed as evidence. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE
 CLOSURE REQUIRED`; Phase 15 remains unauthorized and unimplemented.
+
+## Phase 14 HA manual-change race qualification — 2026-09-05
+
+The corrected exact head is `10830755f2f449b5c2a64b1f095f52a1fafb04d4`, matching
+`origin/main`. Hosted CI `33996868220` passed. Artifact `9978452041` was
+published with digest
+`sha256:1bc74e5ebf694e7107b6eec706aa31e912a400a1adb44fb9f605cc186de495b9`.
+
+The real isolated-HA harness also covers an external state change after
+ANIMA dispatch: one governed HA dispatch followed by one external manual
+change produced `VERIFICATION_FAILED`; replay returned the same terminal
+failure without another governed dispatch. This is a bounded manual-reality
+race qualification, not full Phase 14 acceptance. Phase 14 remains
+`CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; Phase 15 remains unauthorized
+and unimplemented.
