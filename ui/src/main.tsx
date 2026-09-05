@@ -29,7 +29,7 @@ const allPages = async <T,>(path: string): Promise<T[]> => {
   let cursor: string | null = null;
   do {
     const separator = path.includes("?") ? "&" : "?";
-    const page = await api<{ items: T[]; next_cursor: string | null }>(
+    const page: { items: T[]; next_cursor: string | null } = await api<{ items: T[]; next_cursor: string | null }>(
       `${path}${separator}limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     );
     items.push(...page.items);
