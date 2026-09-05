@@ -436,3 +436,26 @@ gate only.
   approval, action ambiguity, event breadth, SENTRY/HA/process matrix,
   external-content, or ARM64 replay/runtime gates. Phase 15 remains
   unauthorized.
+
+## Exact-head hosted publication
+
+- Published head: `75a8a9b94b89cbc53be577e935b1cfb2552eff5f`, matching
+  `origin/main`.
+- Hosted CI `33993069173`: `PASS` on that exact head. Artifact `9977351837`,
+  digest
+  `sha256:b287820e12898642f5e23b780d3c99c6fad596a579cd777eea85420c0cd021bf`.
+- The run passed the configured Phase 14 real-store, backup/restore, OPA,
+  isolated-HA, SENTRY, plugin, external-content, replay, restart, ARM64,
+  frontend/container, H5, safety, and artifact-publication targets. The
+  out-of-process plugin result is present as
+  `PLUGIN_PROCESS_RESTART_AND_FAILURE_ISOLATION` at
+  `POSTGRES_MCP_PROCESS`.
+- The immediately preceding head `f713be8...` failed only in ARM64 runtime
+  smoke because `grep -q` closed a pipeline while the replay process was
+  still writing (`broken pipe`). The workflow was corrected to capture stdout
+  before checking the marker; the corrected exact-head run passed ARM64 replay.
+- This is a publication checkpoint, not Phase 14 acceptance. Approval/action
+  ambiguity, event/action breadth, full in-flight process coverage,
+  external-content breadth, and deeper ARM64 replay/runtime evidence remain
+  open; native Pi 5 remains an explicit external gate. Phase 15 remains
+  unauthorized.

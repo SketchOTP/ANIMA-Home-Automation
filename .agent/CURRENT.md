@@ -541,3 +541,24 @@ approval/continuation crash matrix, ambiguous action/manual-reality and HA
 no-redispatch breadth, full SENTRY/HA/plugin/process in-flight coverage,
 broader external-content coverage, and ARM64 replay/runtime beyond the hosted
 qualification now running.
+
+## Phase 14 exact-head publication — 2026-09-05
+
+The plugin-process increment and ARM64 smoke correction are published at
+`75a8a9b94b89cbc53be577e935b1cfb2552eff5f`, matching `origin/main`.
+Exact-head hosted CI `33993069173` passed. Reviewable artifact `9977351837`
+has digest
+`sha256:b287820e12898642f5e23b780d3c99c6fad596a579cd777eea85420c0cd021bf`.
+
+The run passed the configured deterministic, PostgreSQL/OPA, isolated-HA,
+SENTRY, plugin, external-content, replay, restart, ARM64, UI/container,
+frontend, H5, safety, and artifact-publication checks. The preceding exact
+head `f713be8...` failure is retained as harness evidence: ARM64 replay output
+was piped to `grep -q`, causing a broken pipe after the match. The workflow now
+captures stdout before checking it, and the corrected run passed ARM64 replay.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this
+publication does not claim completion of the remaining approval/continuation,
+ambiguous action/manual-reality, full in-flight SENTRY/HA/plugin/process,
+broader external-content, or ARM64 replay/runtime breadth. Native Pi 5 remains
+an external gate. Phase 15 is unauthorized and unimplemented.

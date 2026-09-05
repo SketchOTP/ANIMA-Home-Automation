@@ -194,3 +194,24 @@ not a Phase 14 completion claim. The active packet remains active; the full
 approval/continuation, ambiguous action/HA, SENTRY/HA/plugin/process,
 external-content, and ARM64 replay/runtime closure remains required. Phase 15
 was not implemented.
+
+## Exact-head hosted publication
+
+The current governed head is `75a8a9b94b89cbc53be577e935b1cfb2552eff5f`,
+matching `origin/main`. Exact-head CI `33993069173` passed. Artifact
+`9977351837` was published with digest
+`sha256:b287820e12898642f5e23b780d3c99c6fad596a579cd777eea85420c0cd021bf`.
+The run passed the configured real-store, backup/restore, OPA, isolated-HA,
+SENTRY, out-of-process plugin, external-content, replay, restart, ARM64,
+frontend/container, H5, safety, and artifact-publication targets.
+
+The prior `f713be8...` exact-head ARM64 failure is retained as a harness
+correction record: `grep -q` closed the replay-output pipe after finding the
+marker, causing a broken pipe. The corrected workflow captures the output in
+a file and then checks it; the current run passed the ARM64 replay contract.
+
+Disposition remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. This
+publication does not close the remaining approval/continuation, ambiguous
+action/manual-reality, full in-flight SENTRY/HA/plugin/process,
+external-content, or deeper ARM64 replay/runtime gates. Native Pi 5 remains
+an external gate. Phase 15 was not implemented.
