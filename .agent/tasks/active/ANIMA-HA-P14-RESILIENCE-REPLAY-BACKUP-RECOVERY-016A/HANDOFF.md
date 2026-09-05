@@ -97,3 +97,12 @@ the real `anima_ha.sentry_bridge --once` process before and after a process
 restart; one durable SENTRY request remained, with no model invocation and no
 embedded fallback. Full provider-running/model and in-flight process
 recovery remain open.
+
+## R2 isolated HA outage increment
+
+The real isolated-HA outage target passed: an action whose latest-state refresh
+ran while HA was disconnected became `UNKNOWN_RESULT` with zero dispatches;
+after adapter reconnect, replay returned the durable result without dispatch
+and a fresh state read remained `off`. This closes only the exercised
+no-redispatch boundary; the full in-flight process and SENTRY provider outage
+matrices remain open.

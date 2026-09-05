@@ -274,3 +274,18 @@ process-restart or SENTRY/HA outage matrices.
 The target is included in hosted CI on the next pushed head. Full SENTRY
 provider-running ambiguity, model outage, and in-flight process coverage
 remain open.
+
+## R2 isolated HA outage - 2026-09-05
+
+- PASSED / ISOLATED_HA_POSTGRES_OPA: `scripts/verify_phase14_ha_outage_r2.py`
+  used a newly provisioned Home Assistant container, the real HA adapter,
+  PluginManager, ActionExecutionCoordinator, PostgreSQL action store/resource
+  lock, and live OPA. After establishing an observed `off` state, HA was
+  stopped before a governed `on` action. The coordinator recorded
+  `UNKNOWN_RESULT` before provider dispatch (`provider_dispatches=0`).
+- PASSED: HA restarted and the adapter reconnected to `ONLINE`; replaying the
+  same action returned the durable unknown result with `duplicate=true`, still
+  at zero dispatches, and the fresh observed state remained `off`.
+
+This closes the exercised HA outage/no-redispatch boundary. It does not close
+the complete in-flight HA/process restart matrix or SENTRY provider outage.

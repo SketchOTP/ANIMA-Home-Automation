@@ -429,3 +429,9 @@ actual bridge process creates one durable request from a unique guaranteed
 event, and a restarted bridge does not create a duplicate. No model or
 embedded fallback was used. Phase 14 remains `CONTINUE`; full SENTRY provider,
 HA outage, in-flight process, and ARM64 runtime matrices remain open.
+
+The isolated Home Assistant outage target now passes locally and is wired into
+CI: a disconnected latest-state refresh yields `UNKNOWN_RESULT` with zero
+dispatches, reconnect restores `ONLINE`, and replay does not redispatch. This
+closes the exercised HA no-redispatch boundary only; Phase 14 remains
+`CONTINUE` for full in-flight process and SENTRY-provider outage coverage.
