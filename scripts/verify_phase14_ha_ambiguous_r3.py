@@ -284,9 +284,16 @@ def main() -> int:
 
         for connection in connections:
             connection.service_calls = 0
-            connection.manual_change = True
+            connection.manual_change = False
             connection.manual_changes = 0
             connection.hide_state = False
+        reset = adapter.set_power(resource_id, False, capability_id)
+        if reset.observed_state != "off":
+            raise AssertionError(f"could not reset state for manual-change race: {reset}")
+        for connection in connections:
+            connection.service_calls = 0
+            connection.manual_change = True
+            connection.manual_changes = 0
         manual_action = ActionRequest.create(
             action_id=uuid4(),
             action_intent_id=uuid4(),
