@@ -59,3 +59,10 @@ The real service-restart target also passes: PostgreSQL and OPA were restarted
 as actual Compose services, returned healthy, and preserved journal continuity.
 This is idle continuity evidence only; the in-flight restart matrix remains
 open.
+
+The real action-recovery target passes through PostgreSQL, OPA, and the action
+coordinator: pre-dispatch recovery is safe, started/possibly-dispatched work
+is not retried, verification mismatch is reported as
+`VERIFICATION_FAILED`, and durable success is idempotent. The remaining
+approval continuation, HA, SENTRY, plugin, and in-flight process matrices are
+still open.

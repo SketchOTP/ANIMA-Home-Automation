@@ -201,3 +201,18 @@ bridge/provider restart, and process-level recovery remain open.
 This target is included in hosted CI. It covers idle service continuity only;
 the required in-flight Core, SENTRY bridge, HA, plugin, approval, verification,
 and due-task restart states remain open.
+
+## R2 action recovery qualification - 2026-09-05
+
+- PASSED / POSTGRES_OPA_CORE: `scripts/verify_phase14_action_recovery_r2.py`
+  exercised the real PostgreSQL action store with the actual coordinator and
+  OPA policy client. A planned pre-dispatch crash recovered as
+  `RECOVERY_REQUIRED` without dispatch; an executing/started crash recovered as
+  `UNKNOWN_RESULT` without dispatch; connector acknowledgement followed by a
+  mismatching fresh Truth observation produced `VERIFICATION_FAILED`; a
+  possibly-dispatched provider failure produced `UNKNOWN_RESULT`; and a
+  durable `SUCCEEDED` action was not dispatched again on replay.
+
+The action-recovery target is included in hosted CI. Full approval continuation
+crash windows, manual-change races, HA outage/no-redispatch, and process-level
+in-flight restart coverage remain open.
