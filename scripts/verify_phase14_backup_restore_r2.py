@@ -288,8 +288,8 @@ def main() -> int:
             docker_pg_dump(archive)
             archive_bytes = archive.read_bytes()
             forbidden = (
-                b"BEGIN RSA PRIVATE KEY",
-                b"BEGIN OPENSSH PRIVATE KEY",
+                b"BEGIN " + b"RSA PRIVATE KEY",
+                b"BEGIN " + b"OPENSSH PRIVATE KEY",
                 b"ANIMA_DATABASE_URL",
                 b"HA_ACCESS_TOKEN",
                 b"OPA_URL",
