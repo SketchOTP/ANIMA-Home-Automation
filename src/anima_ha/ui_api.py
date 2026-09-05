@@ -753,7 +753,7 @@ class PostgresHouseholdReadModel:
                 FROM anima_durable_tasks
                 WHERE household_id=%s
                 ORDER BY next_run_at, task_id
-                LIMIT 50
+                LIMIT 100
                 """,
                 (identity.household_id,),
             )
@@ -776,7 +776,7 @@ class PostgresHouseholdReadModel:
                 FROM anima_calendar_events
                 WHERE household_id=%s
                 ORDER BY start_at, event_id
-                LIMIT 50
+                LIMIT 100
                 """,
                 (identity.household_id,),
             )

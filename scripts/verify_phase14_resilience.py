@@ -173,7 +173,7 @@ def main() -> int:
     payload: dict[str, Any] = {
         **ledger.to_payload(),
         "ledger_digest": ledger.digest,
-        "evidence_level": "DETERMINISTIC",
+        "evidence_level": "DETERMINISTIC_CONTRACT",
         "not_run_by_this_target": [
             "POSTGRESQL_BACKUP_RESTORE",
             "LIVE_HA_OUTAGE",

@@ -1,18 +1,29 @@
-# Handoff - ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A
+# Handoff - ANIMA-HA-P14-DESTRUCTIVE-QUALIFICATION-016A-R1
 
-Phase 14 is active. This packet covers resilience, replay, backup, and
-recovery only.
+Verdict: CONTINUE - DESTRUCTIVE QUALIFICATION PARTIALLY EXECUTED
 
 Starting ANIMA:
-f0456d24fa09ed6873e882c89a9dce759f73a619
+d63c5f090a5ea5133d9ca76e5c597e1d0b54748d
 
-Accepted isolated SENTRY launcher patch:
-00aa9ac3a35b7b012581160b961e01a9480bbbdf
+Implementation/final SHA:
+pending final publication
 
-The final handoff must include the canonical scenario schema and ledger,
-fault/restart/concurrency/outage outcomes, backup/restore and replay results,
-ARM64 evidence, exact implementation and governed SHAs/CI, governance
-reconciliation, and known evidence limits.
+Exact hosted CI:
+pending final publication
 
-Do not implement Phase 15, ANIMA voice, a new broker/database/workflow engine,
-or a raw household administration backdoor.
+This continuation retained the Phase 14 foundation, corrected the scenario
+schema to carry resource locks, independent failpoints, restart points,
+durable-record expectations, process identity, policy references, dispatch
+metadata, verification metadata, and tested SHA, and corrected the Phase 6
+verifier for the current Home Assistant registry behavior.
+
+Real isolated PostgreSQL/OPA, Phase 1/4/9/10, Home Assistant, 80-record
+task/calendar, and actual pg_dump/pg_restore evidence is recorded in
+EVIDENCE.md. The five foundation scenarios remain
+DETERMINISTIC_CONTRACT only.
+
+Open software-controllable acceptance targets include the complete approval,
+action, event-ordering, plugin, external-content, SENTRY, process-restart,
+real-store replay, and ARM64 matrices. Phase 14 remains active and Phase 15
+is unauthorized. No Phase 15 behavior, ANIMA voice, or protected SENTRY
+source modification was performed.

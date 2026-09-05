@@ -29,7 +29,9 @@ from anima_ha.plugins import (
 
 MAX_CALENDAR_DESCRIPTION = 4_000
 MAX_CALENDAR_LOCATION = 500
-MAX_CALENDAR_RESULTS = 50
+# Keep calendar reads bounded while allowing the Phase 14 read model to retain
+# relevant active/upcoming records in households with a larger history.
+MAX_CALENDAR_RESULTS = 100
 
 
 class CalendarError(RuntimeError):

@@ -42,6 +42,34 @@ active and not self-accepted. Phase 15 is unauthorized and unimplemented.
 - The protected SENTRY V0.4 worktree remains outside this repository and is not
   modified by Phase 14.
 
+## Phase 14 destructive qualification update - 2026-09-05
+
+- Real disposable PostgreSQL/OPA environment: PostgreSQL 16/pgvector and OPA
+  were migrated and exercised on isolated ports 55433/18182. No credentials
+  or private household data were published.
+- Real PostgreSQL lifecycle passed: pre-provider crash reclaim, provider-start
+  ambiguity with no blind replay, durable result without model rerun, concurrent
+  claim winner, and stale-fence rejection across provider writes.
+- Real Phase 1 PostgreSQL replay/projection passed; real Phase 4 OPA passed;
+  real Phase 9 isolated Home Assistant action/idempotency/concurrency passed;
+  real Phase 10 durable-task scheduling/lease recovery/fresh context passed.
+- Real HA harness passed against Home Assistant 2026.8.2 after a bounded
+  current-registry compatibility correction. It covered discovery, canonical
+  mapping, state truth, OPA deny/confirmation/strong-auth gates, verified
+  action, deliberate verification failure, reconnect/reconcile, auth failure,
+  plugin restore, PostgreSQL restart, and secret non-persistence.
+- Real 80-task/80-calendar history passed, including task lifecycle, calendar
+  optimistic versioning, stale conflict, and versioned cancellation.
+- Actual pg_dump/pg_restore passed into a clean pinned PostgreSQL container.
+  Dump SHA-256 is
+  f044742805867bad15df32cb8c88cb273597b99bc200677d87d6ec3844a6a10c;
+  the bundle scan found no raw credential markers. Restored physical Truth
+  remains UNKNOWN_UNTIL_REOBSERVED and executed effects are not replayed.
+- These results are destructive/isolated evidence, not Phase 14 acceptance.
+  Provider/action crash-window continuation, full process restart matrix,
+  SENTRY outage/restart, plugin isolation, external-content attack matrix,
+  real-store replay regression, and ARM64 execution remain open.
+
 ## Evidence boundary
 
 Only executed scenarios may be marked PASSED. Missing PostgreSQL, HA, SENTRY,

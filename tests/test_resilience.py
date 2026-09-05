@@ -78,6 +78,20 @@ def test_canonical_scenario_contains_all_required_fields() -> None:
         "expected_terminal_state",
         "expected_side_effect_count",
         "expected_recovery_behavior",
+        "resource_lock_state",
+        "provider_failpoint",
+        "model_failpoint",
+        "tool_failpoint",
+        "action_failpoint",
+        "external_content_trust_class",
+        "restart_points",
+        "expected_durable_record_ids",
+        "expected_durable_record_digests",
+        "tested_sha",
+        "process_identity",
+        "policy_references",
+        "dispatch_metadata",
+        "verification_metadata",
     } <= payload.keys()
 
 

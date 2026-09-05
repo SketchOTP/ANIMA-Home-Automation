@@ -375,6 +375,22 @@ class GateProbeHomeAssistantPlugin(HomeAssistantPlugin):
     def stop(self) -> None:
         self.started = False
 
+    def list_tools(self) -> list[dict[str, Any]]:
+        manifest = home_assistant_manifest(self.adapter.config)
+        return [
+            item
+            for item in (
+                {
+                    "name": "read_state",
+                    "input_schema": manifest.tools[3]["input_schema"],
+                },
+                {
+                    "name": "set_power",
+                    "input_schema": manifest.tools[4]["input_schema"],
+                },
+            )
+        ]
+
 
 def wait_for(predicate: Any, timeout: float = 10.0) -> None:
     deadline = time.monotonic() + timeout
@@ -452,9 +468,14 @@ def main() -> int:
         )
         enabled = manager.enable(manifest.plugin_id)
         assert enabled.enabled and adapter.status.health == HAHealth.ONLINE
-        assert {tool.name for tool in manager.list_tools(plugin_id=manifest.plugin_id)} == {
+        tool_names = {tool.name for tool in manager.list_tools(plugin_id=manifest.plugin_id)}
+        assert {"read_state", "set_power"} <= tool_names
+        assert tool_names <= {
             "read_state",
             "set_power",
+            "commission_device",
+            "permit_zigbee_join",
+            "refresh_inventory",
         }
         assert all("call_service" not in tool.name for tool in manager.list_tools())
         inventory = adapter.provider_inventory()
@@ -570,7 +591,10 @@ def main() -> int:
         )
         assert denied.outcome == InvocationOutcome.POLICY_DENIED
 
-        base_tools = list(manifest.tools)
+        base_tools = [
+            next(item for item in manifest.tools if item["name"] == "read_state"),
+            next(item for item in manifest.tools if item["name"] == "set_power"),
+        ]
         gate_cases = (
             (
                 "confirmation",
@@ -588,12 +612,18 @@ def main() -> int:
             ),
         )
         for suffix, risk, semantic, expected, gate_identity in gate_cases:
+            gate_plugin_id = f"anima.provider.home-assistant.gate-{suffix}"
             gate_manifest = replace(
                 manifest,
-                plugin_id=f"anima.provider.home-assistant.gate-{suffix}",
+                plugin_id=gate_plugin_id,
                 tools=(
-                    base_tools[0],
-                    {**base_tools[1], "risk_class": risk, "semantic_action": semantic},
+                    {**base_tools[0], "tool_id": f"{gate_plugin_id}.read_state"},
+                    {
+                        **base_tools[1],
+                        "tool_id": f"{gate_plugin_id}.set_power",
+                        "risk_class": risk,
+                        "semantic_action": semantic,
+                    },
                 ),
             )
             gate_plugin = GateProbeHomeAssistantPlugin(adapter, connection_factory)

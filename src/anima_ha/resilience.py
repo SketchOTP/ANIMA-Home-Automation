@@ -95,6 +95,20 @@ class FailureScenario:
     expected_terminal_state: str
     expected_side_effect_count: int
     expected_recovery_behavior: str
+    resource_lock_state: Mapping[str, Any] = field(default_factory=dict)
+    provider_failpoint: str | None = None
+    model_failpoint: str | None = None
+    tool_failpoint: str | None = None
+    action_failpoint: str | None = None
+    external_content_trust_class: str = "NONE"
+    restart_points: tuple[str, ...] = ()
+    expected_durable_record_ids: tuple[str, ...] = ()
+    expected_durable_record_digests: tuple[str, ...] = ()
+    tested_sha: str = ""
+    process_identity: Mapping[str, Any] = field(default_factory=dict)
+    policy_references: tuple[str, ...] = ()
+    dispatch_metadata: Mapping[str, Any] = field(default_factory=dict)
+    verification_metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.scenario_id.strip():
@@ -120,6 +134,20 @@ class FailureScenario:
             "expected_terminal_state": self.expected_terminal_state,
             "expected_side_effect_count": self.expected_side_effect_count,
             "expected_recovery_behavior": self.expected_recovery_behavior,
+            "resource_lock_state": dict(self.resource_lock_state),
+            "provider_failpoint": self.provider_failpoint,
+            "model_failpoint": self.model_failpoint,
+            "tool_failpoint": self.tool_failpoint,
+            "action_failpoint": self.action_failpoint,
+            "external_content_trust_class": self.external_content_trust_class,
+            "restart_points": list(self.restart_points),
+            "expected_durable_record_ids": list(self.expected_durable_record_ids),
+            "expected_durable_record_digests": list(self.expected_durable_record_digests),
+            "tested_sha": self.tested_sha,
+            "process_identity": dict(self.process_identity),
+            "policy_references": list(self.policy_references),
+            "dispatch_metadata": dict(self.dispatch_metadata),
+            "verification_metadata": dict(self.verification_metadata),
         }
 
     @property
@@ -138,7 +166,7 @@ class ScenarioResult:
     recovery_behavior: str = ""
     detail: str = ""
     trace: tuple[Mapping[str, Any], ...] = ()
-    evidence_level: str = "DETERMINISTIC"
+    evidence_level: str = "DETERMINISTIC_CONTRACT"
 
     def __post_init__(self) -> None:
         if self.side_effect_count < 0:
