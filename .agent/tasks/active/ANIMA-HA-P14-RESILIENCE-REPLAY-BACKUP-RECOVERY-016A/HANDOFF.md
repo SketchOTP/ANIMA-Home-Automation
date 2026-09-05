@@ -195,6 +195,22 @@ approval/continuation, ambiguous action/HA, SENTRY/HA/plugin/process,
 external-content, and ARM64 replay/runtime closure remains required. Phase 15
 was not implemented.
 
+## Isolated HA ambiguous-dispatch checkpoint
+
+Published head: `2a0bb87eb140883f7ccb824c1344767f07d47b38`, matching
+`origin/main`. Exact-head hosted CI `33995910836` passed. Artifact `9978159486`
+was published with digest
+`sha256:23ae7c69bcd17dc5abe5e9c3d4950fc3f3004c8eedcc1996c581d72e6dc7a619`.
+
+Scenario `POSSIBLE_DISPATCH_VERIFICATION_FAILED_NO_RETRY` passed at
+`ISOLATED_HA_POSTGRES_OPA`: real HA dispatch occurred once, deliberate stale
+observation produced authoritative `VERIFICATION_FAILED`, and replay returned
+the durable failure without redispatch. The baseline counter correction and
+the local absent-OPA limitation are recorded in the evidence packet.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; Phase 15 was
+not implemented.
+
 ## Exact-head hosted publication
 
 The current governed head is `75a8a9b94b89cbc53be577e935b1cfb2552eff5f`,

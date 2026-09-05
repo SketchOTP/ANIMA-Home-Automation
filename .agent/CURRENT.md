@@ -577,3 +577,19 @@ continuation completion; the wrong principal was rejected; correct recovery
 reused the terminal action with exactly one dispatch and zero recovery
 redispatches. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`.
 Phase 15 remains unauthorized and unimplemented.
+
+## Phase 14 ambiguous isolated-HA dispatch qualification — 2026-09-05
+
+The exact pushed head is `2a0bb87eb140883f7ccb824c1344767f07d47b38`, matching
+`origin/main`. Hosted CI `33995910836` passed on that exact head. Artifact
+`9978159486` was published with digest
+`sha256:23ae7c69bcd17dc5abe5e9c3d4950fc3f3004c8eedcc1996c581d72e6dc7a619`.
+
+Scenario `POSSIBLE_DISPATCH_VERIFICATION_FAILED_NO_RETRY` passed: a real
+isolated Home Assistant service call changed the device, a test-only
+observation seam hid the resulting state so Phase 9 produced
+`VERIFICATION_FAILED`, and replaying the same PostgreSQL idempotency key
+returned the same terminal result without a second gateway or HA dispatch.
+The local workstation lacked an OPA listener, so its fail-closed local result
+is not claimed as evidence. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE
+CLOSURE REQUIRED`; Phase 15 remains unauthorized and unimplemented.

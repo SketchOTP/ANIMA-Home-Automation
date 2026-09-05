@@ -477,3 +477,23 @@ gate only.
   external-content breadth, and deeper ARM64 replay/runtime evidence remain
   open; native Pi 5 remains an explicit external gate. Phase 15 remains
   unauthorized.
+
+## Isolated HA ambiguous-dispatch qualification - 2026-09-05
+
+- PASS / exact governed head: `2a0bb87eb140883f7ccb824c1344767f07d47b38`;
+  hosted CI `33995910836` passed. Artifact `9978159486`, digest
+  `sha256:23ae7c69bcd17dc5abe5e9c3d4950fc3f3004c8eedcc1996c581d72e6dc7a619`.
+- PASS / `ISOLATED_HA_POSTGRES_OPA`: the real isolated Home Assistant service
+  call dispatched once and changed the device, while a test-only observation
+  wrapper forced post-dispatch verification to remain stale. The authoritative
+  Phase 9 result was `VERIFICATION_FAILED`; replaying the durable idempotency
+  key returned that terminal result with one total gateway call and one total
+  HA service call.
+- The first hosted attempt is retained as harness evidence because it counted
+  the baseline state-establishing `turn_off` call. The corrected harness resets
+  counters after baseline setup. The local run lacked OPA and is not claimed as
+  a pass.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this closes
+only the real isolated-HA possible-dispatch/no-retry slice. Phase 15 remains
+unauthorized and unimplemented.
