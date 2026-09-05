@@ -316,3 +316,10 @@ open.
 - This target is intentionally continuity evidence for service processes; it
   does not claim the pending/claimed/provider-running/confirmation in-flight
   matrix, which remains open.
+
+The first hosted attempt on `59a72fe6352f819dd008ee83da6b357ac283dea3`
+(`33980726478`) reached this target but failed during setup because the prior
+UI health-check step's cleanup trap had already stopped the UI container. This
+was a workflow-ordering defect, not a process-recovery result. The workflow is
+corrected to keep UI running through the matrix and stop it afterward with an
+always-run cleanup step; the failed attempt is retained as harness evidence.

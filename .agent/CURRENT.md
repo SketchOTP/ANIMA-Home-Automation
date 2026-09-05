@@ -450,3 +450,9 @@ for PostgreSQL, OPA, SearXNG, and ANIMA UI, with service health and Journal
 continuity checks. It remains explicitly a service-continuity slice and does
 not claim the full in-flight process matrix. Phase 14 remains CONTINUE and
 Phase 15 remains unauthorized.
+
+Hosted CI `33980726478` on `59a72fe...` reached the process matrix but exposed
+a workflow-ordering defect: the preceding UI health-check cleanup stopped the
+UI container before inspection. The workflow now keeps UI alive through the
+matrix and stops it in an always-run cleanup step; this failed attempt remains
+retained as harness evidence. Phase 14 remains CONTINUE.

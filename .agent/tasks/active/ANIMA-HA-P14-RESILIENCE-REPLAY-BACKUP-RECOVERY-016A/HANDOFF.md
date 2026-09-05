@@ -121,3 +121,8 @@ for PostgreSQL, OPA, SearXNG, and the ANIMA UI. It records container
 start-identity changes, service health recovery, and Journal continuity. This
 is service-continuity evidence only; the complete in-flight process matrix
 remains open.
+
+The initial hosted attempt (`33980726478` on `59a72fe...`) exposed a workflow
+ordering defect: the UI health-check cleanup trap stopped the UI before the
+restart matrix began. That attempt is retained as a harness failure, and the
+workflow now keeps UI alive through the matrix with always-run cleanup.
