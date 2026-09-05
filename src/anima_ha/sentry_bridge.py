@@ -23,9 +23,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Pump ANIMA Attention into SENTRY")
     parser.add_argument("--once", action="store_true", help="process one Attention cycle")
     parser.add_argument("--interval", type=float, default=1.0)
+    parser.add_argument("--consumer-name", default="sentry-attention")
     args = parser.parse_args()
     if args.interval <= 0 or args.interval > 60:
         parser.error("--interval must be between 0 and 60 seconds")
+    if not args.consumer_name.strip() or len(args.consumer_name) > 128:
+        parser.error("--consumer-name must be 1-128 characters")
     database_url = os.environ.get("ANIMA_DATABASE_URL", "").strip()
     household_value = os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()
     if not database_url or not household_value:
@@ -42,7 +45,11 @@ def main() -> int:
         profile=default_attention_profile("phase13.sentry.v1"),
     )
     while True:
-        bridge.run_once(household_id=household_id, tools=core.plugins.list_tools())
+        bridge.run_once(
+            household_id=household_id,
+            tools=core.plugins.list_tools(),
+            consumer_name=args.consumer_name,
+        )
         if args.once:
             return 0
         time.sleep(args.interval)

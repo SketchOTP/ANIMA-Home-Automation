@@ -88,3 +88,12 @@ fingerprints matched at
 intentional terminal-state change was detected as a machine-readable
 divergence. This is real-store replay evidence; the remaining Phase 14
 process, SENTRY/HA outage, and ARM64 runtime matrices remain open.
+
+## R2 SENTRY bridge restart increment
+
+The actual ANIMA Attention bridge process now has a bounded isolated consumer
+option for test qualification. A unique guaranteed event was processed by
+the real `anima_ha.sentry_bridge --once` process before and after a process
+restart; one durable SENTRY request remained, with no model invocation and no
+embedded fallback. Full provider-running/model and in-flight process
+recovery remain open.

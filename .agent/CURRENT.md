@@ -423,3 +423,9 @@ healthy, with durable failure audits. Phase 14 remains `CONTINUE`; this does
 not close the remaining HA/SENTRY outage, full in-flight process, clean-store
 replay, or ARM64 runtime matrices. Phase 15 remains unauthorized.
 The clean-store replay increment is published at `25c5d4f1f239a265afef335aa8d1a698e5cea835` pending exact-head CI. Two fresh pinned PostgreSQL environments ran the real 13-scenario R2 verifier with matching durable behavior fingerprints, and the replay comparator detected a deliberate expected divergence. This closes only that replay subset; Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
+
+The next current increment adds bounded SENTRY bridge restart evidence: the
+actual bridge process creates one durable request from a unique guaranteed
+event, and a restarted bridge does not create a duplicate. No model or
+embedded fallback was used. Phase 14 remains `CONTINUE`; full SENTRY provider,
+HA outage, in-flight process, and ARM64 runtime matrices remain open.

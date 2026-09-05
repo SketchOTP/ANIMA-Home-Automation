@@ -257,3 +257,20 @@ replay requirements.
 This target is included in hosted CI on the next pushed head. It materially
 closes the clean-store replay subset but does not claim the full Phase 14
 process-restart or SENTRY/HA outage matrices.
+
+## R2 SENTRY bridge restart - 2026-09-05
+
+- PASSED / POSTGRES_PROCESS: `scripts/verify_phase14_sentry_bridge_restart_r2.py`
+  appended a unique guaranteed user event, started the actual
+  `anima_ha.sentry_bridge --once` process, verified one durable SENTRY
+  intelligence request, then restarted the bridge process against the same
+  PostgreSQL store. The second pass left the request count at one, proving
+  Attention/request idempotency across this bridge restart boundary.
+- The bridge now accepts a bounded `--consumer-name` for isolated test
+  consumers; the default remains `sentry-attention`. No model was invoked and
+  no embedded AgentRuntime fallback was used, so this is bridge-process
+  restart evidence rather than live SENTRY model evidence.
+
+The target is included in hosted CI on the next pushed head. Full SENTRY
+provider-running ambiguity, model outage, and in-flight process coverage
+remain open.
