@@ -120,6 +120,11 @@ jobs:
           set -euo pipefail
           uv run --locked python scripts/verify_phase14_events_plugins_r2.py \
             | tee /tmp/anima-p14-evidence/phase14-events-plugins-r2.json
+      - name: Run Phase 14 clean-store replay qualification
+        run: |
+          set -euo pipefail
+          uv run --locked python scripts/verify_phase14_clean_replay_r2.py \
+            | tee /tmp/anima-p14-evidence/phase14-clean-replay-r2.json
       - name: Run Phase 12 H5 evidence targets
         env:
           ANIMA_DB_PASSWORD: anima_dev_only

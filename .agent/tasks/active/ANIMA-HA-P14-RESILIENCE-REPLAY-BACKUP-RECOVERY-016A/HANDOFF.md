@@ -78,3 +78,13 @@ notification-side-effect failures leave an unrelated healthy plugin available,
 with durable `plugin.failed` audit records. This is a bounded real-store
 increment; Phase 14 remains `CONTINUE` until the remaining outage, SENTRY,
 process, replay, and ARM64 runtime matrices are executed.
+
+## R2 clean-store replay increment
+
+Two independent disposable pinned PostgreSQL environments each received all
+22 migrations and the real 13-scenario R2 store verifier. Durable behavior
+fingerprints matched at
+`06b1ed74d115f5fdc7ca2b2847fc134e0f5131cb6067724a2df7fea5ffcac806`, and an
+intentional terminal-state change was detected as a machine-readable
+divergence. This is real-store replay evidence; the remaining Phase 14
+process, SENTRY/HA outage, and ARM64 runtime matrices remain open.

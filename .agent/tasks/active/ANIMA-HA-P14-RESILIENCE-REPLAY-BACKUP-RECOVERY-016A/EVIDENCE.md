@@ -239,3 +239,21 @@ This closes the exercised real event-deduplication/projection-restart and
 three-class plugin-isolation slices, but does not close the remaining HA
 outage/no-redispatch, SENTRY restart, full process matrix, or clean-store
 replay requirements.
+
+## R2 clean-store replay - 2026-09-05
+
+- PASSED / REAL_STORE_REPLAY: `scripts/verify_phase14_clean_replay_r2.py`
+  created two independent disposable PostgreSQL 16/pgvector containers,
+  applied all 22 repository migrations in each, and ran the existing
+  PostgreSQL-backed 13-scenario R2 verifier from a fresh database twice.
+  Normalized durable behavior fingerprints matched with digest
+  `06b1ed74d115f5fdc7ca2b2847fc134e0f5131cb6067724a2df7fea5ffcac806`.
+- PASSED: the replay comparator detected a deliberate expected terminal-state
+  divergence for `PROVIDER_PRESTART_CRASH_RECLAIM` as a machine-readable
+  difference. UUIDs and timestamps were excluded from the comparison; the
+  scenario behavior, transitions, recovery classification, side-effect
+  counts, and evidence level were compared.
+
+This target is included in hosted CI on the next pushed head. It materially
+closes the clean-store replay subset but does not claim the full Phase 14
+process-restart or SENTRY/HA outage matrices.
