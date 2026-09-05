@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -101,6 +102,13 @@ class StaleVerificationConnection:
         if self.manual_change:
             self.real.call_service(domain, "turn_off", target)
             self.manual_changes += 1
+            entity_id = str(target["entity_id"])
+            deadline = time.monotonic() + 1.0
+            while time.monotonic() < deadline:
+                state = self.real.get_state(entity_id)
+                if state is not None and state.get("state") == "off":
+                    break
+                time.sleep(0.05)
         self.hide_state = True
         return result
 
