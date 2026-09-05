@@ -66,3 +66,15 @@ is not retried, verification mismatch is reported as
 `VERIFICATION_FAILED`, and durable success is idempotent. The remaining
 approval continuation, HA, SENTRY, plugin, and in-flight process matrices are
 still open.
+
+## R2 event and plugin increment
+
+The real PostgreSQL event/plugin verifier passes duplicate event and source-ID
+deduplication, out-of-order Truth resolution by source sequence, journal
+append-before-projection recovery with one observation, and duplicate
+guaranteed SenseGuard-style Attention with one trigger. It also passes
+three-class plugin failure isolation: Home Assistant, external-read, and
+notification-side-effect failures leave an unrelated healthy plugin available,
+with durable `plugin.failed` audit records. This is a bounded real-store
+increment; Phase 14 remains `CONTINUE` until the remaining outage, SENTRY,
+process, replay, and ARM64 runtime matrices are executed.

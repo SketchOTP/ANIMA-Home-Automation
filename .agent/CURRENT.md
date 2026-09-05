@@ -408,3 +408,17 @@ This file is a mutable snapshot. Do not use it to erase historical outcomes or d
 ## Phase 14 R2 current state — 2026-09-05
 
 Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE QUALIFICATION PARTIALLY EXECUTED`. Starting governed checkpoint was `979560442bf412c440f0c3f1399b830dd3d6acf0`; the current implementation checkpoint is `616964f395f9808ac3453b3eddc8cb8b84372767`. The real-store R2 ledger passes 13 scenarios, including stable cursor pagination over 250 tasks and 250 calendar records and real-store replay/diff checks. R1's accepted real PostgreSQL/OPA/isolated-HA/backup evidence is retained. Approval/action continuation, outage/restart, plugin, external-content, clean-store replay, and ARM64 runtime evidence remain open. Phase 15 is unauthorized and unimplemented.
+
+## Phase 14 R2 latest increment — 2026-09-05
+
+The current governed continuation head is `e41394cd0dc275cedad9bc5e7a8e7194b8d1c301`.
+It adds `scripts/verify_phase14_events_plugins_r2.py` and runs it in hosted CI.
+Real PostgreSQL Journal/Truth/Attention evidence now covers duplicate event and
+source-ID collapse, out-of-order source-sequence resolution, append-before-
+projection recovery with one observation, and duplicate guaranteed
+SenseGuard-style Attention with one trigger. Real PluginManager/PostgreSQL
+evidence covers independent failure of Home Assistant, external-read, and
+notification-side-effect plugin classes while an unrelated plugin remains
+healthy, with durable failure audits. Phase 14 remains `CONTINUE`; this does
+not close the remaining HA/SENTRY outage, full in-flight process, clean-store
+replay, or ARM64 runtime matrices. Phase 15 remains unauthorized.

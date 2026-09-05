@@ -216,3 +216,26 @@ and due-task restart states remain open.
 The action-recovery target is included in hosted CI. Full approval continuation
 crash windows, manual-change races, HA outage/no-redispatch, and process-level
 in-flight restart coverage remain open.
+
+## R2 event replay and plugin isolation - 2026-09-05
+
+- PASSED / POSTGRES_JOURNAL_TRUTH_ATTENTION: the new
+  `scripts/verify_phase14_events_plugins_r2.py` ran against the real
+  PostgreSQL stores. Duplicate event IDs and duplicate source IDs collapsed
+  to one journal record. An out-of-order pair resolved to the higher source
+  sequence, independent of journal arrival order.
+- PASSED / POSTGRES_JOURNAL_TRUTH_ATTENTION: a durable journal append was
+  followed by projector reconstruction and pending projection; the unique
+  observation was persisted exactly once. A duplicate guaranteed
+  SenseGuard-style event produced one Attention trigger.
+- PASSED / POSTGRES_JOURNAL_TRUTH_ATTENTION: three separately registered
+  failing plugin classes (Home Assistant, external read, and notification
+  side-effect) entered `FAILED`, while an unrelated healthy plugin remained
+  `HEALTHY` and retained its tool. `plugin.failed` audit events were durable
+  in the PostgreSQL journal.
+
+The target is now included in the hosted CI workflow on the next pushed head.
+This closes the exercised real event-deduplication/projection-restart and
+three-class plugin-isolation slices, but does not close the remaining HA
+outage/no-redispatch, SENTRY restart, full process matrix, or clean-store
+replay requirements.
