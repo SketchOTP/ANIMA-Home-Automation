@@ -189,3 +189,15 @@ coverage, and ARM64 runtime/replay qualification remain to be executed.
 The external target is now included in hosted CI. HA adapter outage,
 notification-side-effect outage, full plugin lifecycle isolation, SENTRY
 bridge/provider restart, and process-level recovery remain open.
+
+## R2 service-restart qualification - 2026-09-05
+
+- PASSED / POSTGRES_OPA_CORE: `scripts/verify_phase14_service_restart_r2.py`
+  restarted the actual PostgreSQL and OPA Compose services, waited for both
+  health checks, and queried the real journal afterward. Container identities
+  remained stable while service start timestamps advanced; journal continuity
+  remained available with 1924 records before and after the restart.
+
+This target is included in hosted CI. It covers idle service continuity only;
+the required in-flight Core, SENTRY bridge, HA, plugin, approval, verification,
+and due-task restart states remain open.

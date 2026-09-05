@@ -54,3 +54,8 @@ adapter path: timeout, malformed response, and 5xx failures are explicit;
 hostile/restricted content remains untrusted/restricted; audit records contain
 no raw sentinel; and Overpass remains available when SearXNG fails. This does
 not close HA, notification, SENTRY, or full process isolation scenarios.
+
+The real service-restart target also passes: PostgreSQL and OPA were restarted
+as actual Compose services, returned healthy, and preserved journal continuity.
+This is idle continuity evidence only; the in-flight restart matrix remains
+open.
