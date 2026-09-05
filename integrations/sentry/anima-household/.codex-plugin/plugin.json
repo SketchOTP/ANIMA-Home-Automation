@@ -5,6 +5,7 @@
   "author": {"name": "SketchOTP"},
   "license": "MIT",
   "keywords": ["anima", "home-automation", "sentry", "mcp"],
+  "skills": "./skills/",
   "interface": {
     "displayName": "ANIMA Household",
     "shortDescription": "Governed household state and actions",

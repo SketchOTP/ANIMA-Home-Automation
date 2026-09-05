@@ -5,9 +5,18 @@ from __future__ import annotations
 from typing import Any
 
 from anima_household_client import AnimaHouseholdClient
-from mcp.server import MCPServer
 
-server = MCPServer(name="anima_household", version="0.2.0")
+try:
+    # MCP 2.x renamed the v1 FastMCP server to MCPServer.
+    from mcp.server import MCPServer as _MCPServer
+
+    server = _MCPServer(name="anima_household", version="0.2.0")
+except ImportError:
+    # SENTRY's currently installed host runtime still exposes the v1 name.
+    from mcp.server.fastmcp import FastMCP as _MCPServer
+
+    server = _MCPServer(name="anima_household")
+
 _CLIENT: AnimaHouseholdClient | None = None
 _INTERACTION: dict[str, str] = {}
 

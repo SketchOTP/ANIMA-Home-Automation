@@ -156,9 +156,7 @@ class AnimaHouseholdClient:
         return self.call("/v1/requests/renew", {"request_id": request_id, "binding": binding})
 
     def provider_start(self, request_id: str, binding: str) -> dict[str, Any]:
-        return self.call(
-            f"/v1/requests/{request_id}/provider-start", {"binding": binding}
-        )
+        return self.call(f"/v1/requests/{request_id}/provider-start", {"binding": binding})
 
     def status(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/status", {"binding": binding})
