@@ -96,6 +96,7 @@ jobs:
       - name: Run Phase 14 PostgreSQL and OPA restart continuity
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
           ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
           ANIMA_OPA_URL: http://127.0.0.1:18181
         run: |
