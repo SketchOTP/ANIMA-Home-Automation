@@ -141,6 +141,10 @@ def main() -> int:
         assert len(first_behavior) >= 5
         assert first_behavior == second_behavior
         matched_digest = digest(first_behavior)
+        first_durable = first["durable_record_fingerprints"]
+        second_durable = second["durable_record_fingerprints"]
+        assert first_durable == second_durable
+        durable_digest = digest(first_durable)
 
         intentional = [dict(item) for item in second_behavior]
         intentional[0] = {**intentional[0], "terminal_state": "INTENTIONAL_EXPECTED_DIFF"}
@@ -157,6 +161,8 @@ def main() -> int:
             "fresh_runs": 2,
             "scenario_count": len(first_behavior),
             "matched_behavior_digest": matched_digest,
+            "matched_durable_record_digest": durable_digest,
+            "durable_record_fingerprints": first_durable,
             "intentional_diff_detected": differences,
             "migration_count": first["migration_count"],
             "postgres_image": POSTGRES_IMAGE.split("@", 1)[0],

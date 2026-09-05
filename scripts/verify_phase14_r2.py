@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -700,6 +701,83 @@ def verify_replay_digests(ledger: ScenarioLedger, definitions: list[dict[str, An
     )
 
 
+def durable_record_fingerprints() -> dict[str, dict[str, Any]]:
+    """Return normalized digests of the run's durable records.
+
+    UUIDs and timestamps are intentionally normalized so two fresh replay
+    stores can be compared without treating run identity as behavior. The
+    record counts and table-specific structural fields remain part of each
+    digest, so a status-only comparison cannot pass after durable data drifts.
+    """
+
+    def normalize(value: Any) -> Any:
+        encoded = json.dumps(value, sort_keys=True, default=str)
+        encoded = encoded.replace(str(RUN_ID), "<run>")
+        encoded = re.sub(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            "<uuid>",
+            encoded,
+            flags=re.IGNORECASE,
+        )
+        encoded = re.sub(
+            r"\d{4}-\d{2}-\d{2}T[^\" ]+",
+            "<timestamp>",
+            encoded,
+        )
+        return json.loads(encoded)
+
+    scopes: dict[str, list[dict[str, Any]]] = {}
+    with _connect() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT event_type, source, source_sequence, importance, delivery_class,
+                   payload, metadata
+            FROM anima_event_journal
+            WHERE source='phase14-r2' AND metadata->>'run_id'=%s
+            ORDER BY journal_position
+            """,
+            (str(RUN_ID),),
+        )
+        scopes["journal"] = [dict(row) for row in cursor.fetchall()]
+        cursor.execute(
+            """
+            SELECT status, value, confidence, evidence_kind
+            FROM anima_truth_state
+            WHERE truth_key=%s
+            """,
+            (f"phase14-r2/{RUN_ID}/resource",),
+        )
+        scopes["truth"] = [dict(row) for row in cursor.fetchall()]
+        cursor.execute(
+            """
+            SELECT task_type, title, status, recurrence_version, misfire_policy
+            FROM anima_durable_tasks
+            WHERE title LIKE %s
+            ORDER BY title
+            """,
+            (f"Phase14 task {RUN_ID}%",),
+        )
+        scopes["tasks"] = [dict(row) for row in cursor.fetchall()]
+        cursor.execute(
+            """
+            SELECT title, status, version
+            FROM anima_calendar_events
+            WHERE title LIKE %s
+            ORDER BY title
+            """,
+            (f"Phase14 calendar {RUN_ID}%",),
+        )
+        scopes["calendar"] = [dict(row) for row in cursor.fetchall()]
+    output: dict[str, dict[str, Any]] = {}
+    for name, rows in scopes.items():
+        normalized = normalize(rows)
+        output[name] = {
+            "record_count": len(rows),
+            "digest": _digest(normalized),
+        }
+    return output
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
@@ -716,6 +794,7 @@ def main() -> int:
         "tested_sha": TESTED_SHA,
         "evidence_level": "POSTGRES_OPA_CORE",
         "scenario_definitions": definitions,
+        "durable_record_fingerprints": durable_record_fingerprints(),
         "external_resource_gates": ["EXTERNAL_RESOURCE_GATE_NATIVE_PI5"],
         "r1_contract_scenarios": "retained separately as DETERMINISTIC_CONTRACT",
     }
