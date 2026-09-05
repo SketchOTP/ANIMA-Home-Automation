@@ -5,11 +5,14 @@ Verdict: CONTINUE - DESTRUCTIVE QUALIFICATION PARTIALLY EXECUTED
 Starting ANIMA:
 d63c5f090a5ea5133d9ca76e5c597e1d0b54748d
 
-Implementation/final SHA:
-pending final publication
+Implementation/evidence checkpoint:
+d3701184439f084c591044eff7f3c36d91f4b1f7
 
-Exact hosted CI:
-pending final publication
+Hosted CI on that exact checkpoint:
+33958140497 - PASS
+Artifact 9967105897; digest sha256:6d838a098beb157b05e3d881887cfe5600644110031927645e67025d94fcc9f5
+
+The final governance head and its exact CI are recorded in the Codex handoff and authority readback after this packet update.
 
 This continuation retained the Phase 14 foundation, corrected the scenario
 schema to carry resource locks, independent failpoints, restart points,
