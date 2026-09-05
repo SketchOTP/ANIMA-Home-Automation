@@ -106,3 +106,12 @@ after adapter reconnect, replay returned the durable result without dispatch
 and a fresh state read remained `off`. This closes only the exercised
 no-redispatch boundary; the full in-flight process and SENTRY provider outage
 matrices remain open.
+
+## R2 SENTRY provider crash increment
+
+The real PostgreSQL SENTRY bridge boundary was exercised in a child process.
+The provider callback was reached only after the durable `PROVIDER_RUNNING`
+transition, then the child terminated before result submission. Lease recovery
+produced `UNKNOWN_RESULT`, returned no reclaimable work, and invoked no second
+provider callback. This is deterministic provider-crash evidence and does not
+claim a live SENTRY model turn. Phase 14 remains `CONTINUE`.

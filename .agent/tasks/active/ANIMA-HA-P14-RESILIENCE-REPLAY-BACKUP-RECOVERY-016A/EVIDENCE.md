@@ -289,3 +289,19 @@ remain open.
 
 This closes the exercised HA outage/no-redispatch boundary. It does not close
 the complete in-flight HA/process restart matrix or SENTRY provider outage.
+
+## R2 SENTRY provider crash boundary - 2026-09-05
+
+- PASSED / POSTGRES_PROCESS: `scripts/verify_phase14_sentry_provider_crash_r2.py`
+  ran the actual `SentryBridgeWorker`, `CoreSentryBoundary`, and PostgreSQL
+  intelligence store in a child process. The durable transition to
+  `PROVIDER_RUNNING` was present before the deterministic provider callback
+  started; the child then terminated before submitting a result.
+- PASSED: after the lease was expired, the real store classified the request as
+  `UNKNOWN_RESULT`; no reclaimer claim was returned and no second provider
+  callback occurred. This is provider-started crash/no-blind-replay evidence,
+  not live Codex/SENTRY model evidence.
+
+The new target and the isolated-HA outage target are queued for the next exact
+head hosted run. The full SENTRY provider outage and process matrix remain
+open.

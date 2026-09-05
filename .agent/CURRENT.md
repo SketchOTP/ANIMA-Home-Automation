@@ -435,3 +435,12 @@ CI: a disconnected latest-state refresh yields `UNKNOWN_RESULT` with zero
 dispatches, reconnect restores `ONLINE`, and replay does not redispatch. This
 closes the exercised HA no-redispatch boundary only; Phase 14 remains
 `CONTINUE` for full in-flight process and SENTRY-provider outage coverage.
+
+The latest local Phase 14 increment adds a real PostgreSQL SENTRY provider-crash
+target. The actual `SentryBridgeWorker` and `CoreSentryBoundary` persist
+`PROVIDER_RUNNING` before the deterministic provider callback; a child-process
+loss then recovers to `UNKNOWN_RESULT` with no reclaim and no second callback.
+The isolated-HA outage and SENTRY provider-crash targets are queued for the next
+exact-head hosted run. Phase 14 remains `CONTINUE`; full process/restart,
+approval-continuation, and ARM64 runtime matrices remain open. Phase 15 remains
+unauthorized and unimplemented.
