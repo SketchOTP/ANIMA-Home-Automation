@@ -170,3 +170,22 @@ The complete Phase 14 destructive closure is still open: SENTRY bridge and
 provider restarts, HA outage/no-redispatch, three-class plugin isolation,
 external-content attacks, full process restart coverage, clean-store replay
 coverage, and ARM64 runtime/replay qualification remain to be executed.
+
+## R2 external failure qualification - 2026-09-05
+
+- PASSED / POSTGRES_OPA_CORE: `scripts/verify_phase14_external_r2.py` drove the
+  existing bounded SearXNG adapter through timeout, malformed JSON, and HTTP
+  5xx responses. Each failed explicitly; none became a successful result.
+- PASSED / POSTGRES_OPA_CORE: hostile provider text remained
+  `EXTERNAL_UNTRUSTED`, and a UPCitemdb-like result remained
+  `EPHEMERAL_RESTRICTED`. The hostile/restricted sentinel appeared only in
+  the in-memory provider result; the six persisted `external.request.audit`
+  events contained no raw sentinel and retained only accepted request digests
+  and metadata.
+- PASSED / POSTGRES_OPA_CORE: a SearXNG 5xx did not prevent an independent
+  Overpass adapter from returning a normalized place result. This is provider
+  independence evidence, not the complete three-class plugin outage matrix.
+
+The external target is now included in hosted CI. HA adapter outage,
+notification-side-effect outage, full plugin lifecycle isolation, SENTRY
+bridge/provider restart, and process-level recovery remain open.

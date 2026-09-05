@@ -48,3 +48,9 @@ Truth, task, and calendar continuity. PostgreSQL and OPA restart checks also
 returned healthy with journal continuity. The full Phase 14 exit gate remains
 CONTINUE; these results do not claim completion of the remaining crash,
 outage, plugin, attack, process-matrix, replay, or ARM64 runtime targets.
+
+The external failure qualification also passes on the real journal-backed
+adapter path: timeout, malformed response, and 5xx failures are explicit;
+hostile/restricted content remains untrusted/restricted; audit records contain
+no raw sentinel; and Overpass remains available when SearXNG fails. This does
+not close HA, notification, SENTRY, or full process isolation scenarios.
