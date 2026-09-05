@@ -85,6 +85,15 @@ jobs:
           set -euo pipefail
           uv run --locked python scripts/verify_phase14_approval_r2.py \
             | tee /tmp/anima-p14-evidence/phase14-approval-race.json
+      - name: Run Phase 14 approval continuation process-crash qualification
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
+          ANIMA_OPA_URL: http://127.0.0.1:18181
+        run: |
+          set -euo pipefail
+          uv run --locked python scripts/verify_phase14_approval_crash_r2.py \
+            | tee /tmp/anima-p14-evidence/phase14-approval-crash-r2.json
       - name: Run Phase 14 external failure and isolation qualification
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
