@@ -992,3 +992,22 @@ decision.
 - Initial implementation adds a canonical bounded scenario model, explicit
   test-only one-shot fault injection, deterministic replay comparison, and
   secret-free restore metadata. Final evidence remains in progress.
+
+## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 - latest exact hosted checkpoint
+
+- Current ANIMA head: `194079699b9c55e5e4311fd5a0454729ecd4cac3`; `origin/main`
+  matches. Exact hosted CI `33984850396` passed on this head.
+- Reviewable artifact: `9974957442` (`phase12-h5-evidence-194079699...`).
+- Selected artifact evidence: OPA outage
+  `c4a90cd36aaadd2116f1fe052bcd97be659540690b8167aa00ba3e3ab158487e`;
+  real-store ledger
+  `c0670fd42946cd472d8cfbc4faf1112f677f9e4b27f5fc54241fbbd906c6d0f2`;
+  process matrix
+  `d3087fa5c06e485629601d54240d64dd9b52ab42d3a53e3a5377205c2ce75b4a`.
+- The hosted run passed the corrected ARM64 runtime import smoke in addition to
+  the ARM64 image build. This is software qualification only; native Pi 5 is
+  still an external gate.
+- Disposition: `CONTINUE - FINAL DESTRUCTIVE CLOSURE REQUIRED`. R2 evidence is
+  real for the named targets but does not close the full approval/continuation,
+  SENTRY-outage, in-flight restart, broader attack/restricted-content, or
+  ARM64 replay-runtime matrix. Phase 15 was not implemented.

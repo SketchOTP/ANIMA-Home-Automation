@@ -363,3 +363,32 @@ process restart matrix, broader external-content/restricted attack coverage,
 and ARM64 replay/runtime beyond the image-build evidence. R1's real backup/
 restore evidence remains valid carry-forward but was not relabeled as a new R2
 execution. Native Pi 5 hardware remains an external gate only.
+
+## R2 latest exact hosted publication checkpoint
+
+The current governed head is `194079699b9c55e5e4311fd5a0454729ecd4cac3`, and
+`origin/main` matches it. Exact-head hosted CI `33984850396` passed. Artifact
+`9974957442` is the current reviewable output. Selected evidence hashes are:
+
+- `phase14-opa-outage-r2.json`:
+  `c4a90cd36aaadd2116f1fe052bcd97be659540690b8167aa00ba3e3ab158487e`;
+- `phase14-r2-real-store.json`:
+  `c0670fd42946cd472d8cfbc4faf1112f677f9e4b27f5fc54241fbbd906c6d0f2`;
+- `phase14-process-matrix-r2.json`:
+  `d3087fa5c06e485629601d54240d64dd9b52ab42d3a53e3a5377205c2ce75b4a`.
+
+This exact run passed the corrected `linux/arm64` runtime import smoke after
+the ARM64 UI image build. It also passed the real OPA outage target, where
+`POLICY_UNAVAILABLE` produced `POLICY_DENIED` with zero provider dispatch, the
+13-scenario real-store ledger, and the service-continuity process matrix. This
+supersedes `631d6de...` as the current hosted checkpoint without removing its
+historical evidence.
+
+The honest disposition remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`.
+The active packet remains active and Phase 15 remains unauthorized. Open
+software-controllable work is the complete approval/continuation crash matrix,
+SENTRY outage with local-platform continuity, full in-flight process restart
+coverage, broader external-content/restricted-content attack coverage, and
+ARM64 replay/runtime evidence beyond the import smoke. R1 backup/restore is
+retained as accepted carry-forward evidence. Native Pi 5 remains an external
+gate only.

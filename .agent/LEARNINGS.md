@@ -292,3 +292,10 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Restored PostgreSQL history does not make physical HA Truth current; the safe
   restore posture is UNKNOWN_UNTIL_REOBSERVED and executed effects must never
   be replayed.
+- A container image with an application entrypoint can consume an intended
+  runtime-smoke command; ARM64 validation must explicitly override the
+  entrypoint when invoking the interpreter. The corrected hosted smoke passed
+  on `194079699...` in CI `33984850396`.
+- After workflow-only validation changes, the exact pushed head and exact-head
+  CI must be recorded together; earlier green checkpoints remain historical
+  evidence and must not be presented as the final governed run.

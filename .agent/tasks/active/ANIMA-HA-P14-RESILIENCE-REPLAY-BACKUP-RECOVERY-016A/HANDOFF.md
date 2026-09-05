@@ -144,3 +144,19 @@ broader attack/restricted-content coverage, and ARM64 replay/runtime evidence.
 R1 backup/restore remains accepted carry-forward evidence. The local checkout's
 Docker bind-mount failure on the GVFS/SFTP path is an environment limitation;
 hosted CI is the authoritative execution source.
+
+## Latest exact governed handoff checkpoint
+
+The current head is `194079699b9c55e5e4311fd5a0454729ecd4cac3`, matching
+`origin/main`, with exact-head CI `33984850396` passing. Artifact `9974957442`
+is reviewable. The run includes the corrected ARM64 runtime-import smoke as
+well as the real OPA outage, real-store replay, event/plugin isolation, HA
+outage/no-redispatch, SENTRY bridge/provider crash, service continuity, and
+250-record pagination evidence. It does not claim the remaining full
+approval/continuation crash matrix, SENTRY outage/local-platform continuity,
+complete in-flight process restart matrix, broader attack/restricted-content
+matrix, or ARM64 replay/runtime beyond import smoke.
+
+Disposition: `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. The active packet
+is not moved to completed. Phase 15 was not implemented. R1 backup/restore
+remains carry-forward evidence and native Pi 5 remains an external gate.

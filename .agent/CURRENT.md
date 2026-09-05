@@ -477,3 +477,24 @@ a workflow-ordering defect: the preceding UI health-check cleanup stopped the
 UI container before inspection. The workflow now keeps UI alive through the
 matrix and stops it in an always-run cleanup step; this failed attempt remains
 retained as harness evidence. Phase 14 remains CONTINUE.
+
+## Latest exact hosted checkpoint
+
+The current governed implementation head is
+`194079699b9c55e5e4311fd5a0454729ecd4cac3`, matching `origin/main`. Exact-head
+CI `33984850396` passed. Artifact `9974957442` is the current reviewable
+artifact. It includes the real OPA outage fail-closed target, isolated-HA
+Phase 9 concurrency, real-store replay and divergence detection, event/Truth/
+Attention and plugin isolation, HA outage/no-redispatch, SENTRY bridge/provider
+crash evidence, service continuity, 250-record pagination, and the corrected
+`linux/arm64` runtime import smoke. The prior `631d6de...` checkpoint remains
+historical evidence, not the current head.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. The active
+packet remains under `.agent/tasks/active/`; Phase 15 is unauthorized and
+unimplemented. Native Pi 5 hardware remains an external gate. Remaining
+software closure is the full approval/continuation crash matrix, SENTRY outage
+with local-platform continuity, complete in-flight process restart coverage,
+broader external-content/restricted-content attack coverage, and ARM64 replay
+runtime evidence beyond the import smoke. R1 backup/restore remains accepted
+carry-forward evidence.
