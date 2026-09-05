@@ -214,6 +214,9 @@ jobs:
             | tee /tmp/anima-p14-evidence/phase14-process-matrix-r2.json
       - name: Stop UI after process restart matrix
         if: always()
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
         run: docker compose stop ui
       - uses: actions/setup-node@v5
         with:
