@@ -72,6 +72,8 @@ class StaleVerificationConnection:
         self.real = real
         self.hide_state = False
         self.service_calls = 0
+        self.manual_change = False
+        self.manual_changes = 0
 
     @property
     def version(self) -> str | None:
@@ -96,6 +98,9 @@ class StaleVerificationConnection:
     def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any:
         self.service_calls += 1
         result = self.real.call_service(domain, service, target)
+        if self.manual_change:
+            self.real.call_service(domain, "turn_off", target)
+            self.manual_changes += 1
         self.hide_state = True
         return result
 
@@ -268,6 +273,51 @@ def main() -> int:
         service_calls = sum(connection.service_calls for connection in connections)
         if service_calls != 1 or gateway.calls != 1:
             raise AssertionError("verification failure was redispatched")
+
+        for connection in connections:
+            connection.service_calls = 0
+            connection.manual_change = True
+            connection.manual_changes = 0
+            connection.hide_state = False
+        manual_action = ActionRequest.create(
+            action_id=uuid4(),
+            action_intent_id=uuid4(),
+            idempotency_key=f"phase14-ha-manual-change-{uuid4()}",
+            household_id=household_id,
+            tool=set_power,
+            arguments={
+                "resource_id": str(resource_id),
+                "capability_id": str(capability_id),
+                "desired_on": True,
+            },
+            identity=identity,
+            policy_service=policy,
+            policy_context=PolicyContext(principal_role="owner"),
+            refresher=refresh,
+            verifier=verify,
+            origin=RequestOrigin.DIRECT_USER,
+        )
+        manual_first = coordinator.execute(manual_action)
+        if manual_first.record.status != ActionStatus.VERIFICATION_FAILED:
+            raise AssertionError(
+                "manual change did not remain a governed verification failure: "
+                f"{manual_first.record.status}"
+            )
+        manual_service_calls = sum(connection.service_calls for connection in connections)
+        manual_changes = sum(connection.manual_changes for connection in connections)
+        if manual_service_calls != 1 or manual_changes != 1:
+            raise AssertionError(
+                "manual change accounting was unexpected: "
+                f"action_service={manual_service_calls}, manual={manual_changes}"
+            )
+        manual_replay = coordinator.execute(manual_action)
+        if (
+            not manual_replay.duplicate
+            or manual_replay.record.status != ActionStatus.VERIFICATION_FAILED
+        ):
+            raise AssertionError("manual-change replay did not preserve terminal failure")
+        if sum(connection.service_calls for connection in connections) != 1:
+            raise AssertionError("manual-change replay redispatched the governed action")
         print(
             json.dumps(
                 {
@@ -279,6 +329,9 @@ def main() -> int:
                     "real_ha_state_after_fault": actual["state"],
                     "gateway_dispatches": gateway.calls,
                     "ha_service_calls": service_calls,
+                    "manual_change_terminal_status": manual_first.record.status.value,
+                    "manual_change_dispatches": manual_service_calls,
+                    "manual_external_changes": manual_changes,
                     "phase15": False,
                 },
                 sort_keys=True,
