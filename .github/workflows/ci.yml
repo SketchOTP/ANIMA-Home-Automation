@@ -222,8 +222,9 @@ jobs:
       - name: Run ARM64 runtime smoke
         run: |
           set -euo pipefail
-          docker run --rm --platform linux/arm64 anima-ui:phase14-arm64 \
-            python -c 'import anima_ha; print("ANIMA_ARM64_RUNTIME_IMPORT_PASS")'
+          docker run --rm --platform linux/arm64 --entrypoint python \
+            anima-ui:phase14-arm64 \
+            -c 'import anima_ha; print("ANIMA_ARM64_RUNTIME_IMPORT_PASS")'
       - name: Build and health-check UI container
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
