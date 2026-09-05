@@ -466,3 +466,20 @@ No SENTRY credentials, HA tokens, private keys, household secrets or private run
 The project has moved from “build an assistant inside ANIMA” to “make ANIMA the trusted household operating substrate for SENTRY.” The pivot is intentional, bounded and consistent with the existing implementation: SENTRY supplies intelligence and interaction; ANIMA supplies household truth, policy, execution and verification; Home Assistant remains the provider system.
 
 The shortest defensible next step is not another assistant architecture. It is to validate the existing ANIMA/SENTRY boundary on the real SENTRY host with the commissioned HA installation, beginning with durable request claiming, a SenseGuard event, a representative SENTRY reasoning turn, a factual notification/follow-up, and one low-risk governed action. Until that evidence exists, the correct status is **SENTRY-ready platform implemented in ANIMA; live integrated operation pending qualification**.
+
+## R4 runtime compatibility certification — 2026-09-05
+
+The R4 bounded increment qualifies the client-only `anima-household` package
+through the installed MCP runtime. MCP 2.1.1/Python 3.12.3 evidence passes
+initialize, `tools/list`, schemas, direct and queued request paths,
+provider-start ordering, semantic read, governed mutation, result submission,
+and terminal status. Codex CLI `0.153.1` also loaded the package and completed
+an `anima_health` call in a disposable shadow profile without ANIMA
+credentials.
+
+The phase remains `CONTINUE`: the protected SENTRY V0.4 `sentry-office`
+launcher exits before initialization because it resolves
+`SENTRY/integrations/tools/sentry_mcp_server.py` while the server is at
+`SENTRY/tools/sentry_mcp_server.py`. The protected SENTRY tree was not changed;
+fixing this sibling-runtime defect requires an Architect-authorized SENTRY-side
+change. Phase 14/15 and ANIMA voice remain unauthorized.

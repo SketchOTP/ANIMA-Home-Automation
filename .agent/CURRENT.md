@@ -4,7 +4,7 @@ Last updated: 2026-09-04
 
 ## Current stage
 
-PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — IMPLEMENTATION IN PROGRESS
+PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — R4 COMPATIBILITY CERTIFICATION
 
 ## Current objective
 
@@ -12,15 +12,16 @@ Make SENTRY the sole production intelligence and user interaction layer while
 ANIMA remains the whole-home authority and verified control plane. The ANIMA
 side now contains the durable intelligence request/result boundary, Attention
 handoff, Core-owned SENTRY MCP surface, and explicit queue/claim processes.
-Phase 13 is active under directive 015B and amendments 015B-R1/R2/R3; Phase 14/15
-remain unauthorized.
+Phase 13 is active under directive 015B and amendments 015B-R1/R2/R3/R4; Phase
+14/15 remain unauthorized.
 
 ## Active directive
 
 `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B` as amended by
 `ANIMA-HA-P13-SENTRY-BOUNDARY-HARDENING-LIVE-COMMISSIONING-015B-R1` and
 `ANIMA-HA-P13-SENTRY-LIVE-INTEGRATION-FINAL-ACCEPTANCE-015B-R2` and
-`ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3` — the
+`ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3` and
+`ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4` — the
 credential-isolated Core service/client boundary, provider-start fencing,
 request-bound catalogue, household-scoped direct SENTRY requests, identity
 evidence translation, device commissioning, and SenseGuard alert continuation.
@@ -41,8 +42,29 @@ pending.
 
 Phases 0–12 are Architect accepted. The previous Phase 12 browser/interface
 work is historical accepted baseline. Phase 13 is the only active
-implementation scope under 015B-R3 and remains pending real/shadow SENTRY host
-qualification; this file does not self-accept it.
+implementation scope under 015B-R4 and remains pending Architect acceptance;
+this file does not self-accept it.
+
+## Phase 13 R4 runtime compatibility certification — 2026-09-05
+
+- Starting governed head: `1d82cb992482b6460d65eb88ac53f0ef013bfda9`; prior
+  exact-head CI `33933528405` passed.
+- Implementation/final published head: `20e3e0763328ed327c7d80d73264344d6054339f`;
+  exact-head hosted CI `33938016240` passed and artifact `9960893002` was
+  published.
+- The client-only `anima-household` bundle now adapts to MCP 2.x `MCPServer`
+  and MCP 1.x `FastMCP`, declares the minimal ANIMA boundary skill, and has an
+  actual stdio MCP certification harness in hosted CI. Pinned evidence is
+  Python 3.12.3 / MCP 2.1.1, with 10 listed tools and successful direct and
+  queued read/mutation/result paths.
+- Actual Codex CLI shadow loading and an `anima_health` call succeeded with a
+  disposable profile and no ANIMA credentials. The protected SENTRY V0.4 tree
+  remains unchanged, but its existing `sentry-office` launcher fails before
+  initialization because it resolves `SENTRY/integrations/tools` instead of
+  `SENTRY/tools`. Fixing that requires protected SENTRY-side authority.
+- Result: `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+  Phase 14/15 remain unauthorized; no ANIMA voice, Phase 14, or Phase 15
+  behavior was implemented.
 
 ## Phase 13 R3 integration qualification — 2026-09-04
 

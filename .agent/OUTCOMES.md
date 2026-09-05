@@ -944,3 +944,21 @@ decision.
   ACCEPTANCE`; no live/shadow SENTRY host turn, physical SenseGuard trigger,
   voice delivery, or live household mutation is claimed. Phase 14/15 remain
   unauthorized.
+
+## ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4 — 2026-09-05
+
+- Disposition: `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+- Implemented MCP 1.x/2.x server compatibility, resident ANIMA boundary skill,
+  and hosted actual-stdio runtime certification. Pinned runtime evidence is
+  Python `3.12.3` / MCP `2.1.1`, protocol `2025-11-25`, server
+  `anima_household`, 10 tools, direct and queued paths, schema validation,
+  provider-start-before-callback, read, governed mutation, result, and
+  terminal completion.
+- Exact implementation head `20e3e0763328ed327c7d80d73264344d6054339f` and
+  exact hosted CI `33938016240` passed; artifact `9960893002` was published.
+- Actual Codex CLI `0.153.1` shadow loading and `anima_health` succeeded with a
+  disposable profile and no ANIMA credentials. The protected SENTRY tree was
+  unchanged. Coexistence cannot be certified because the protected
+  `sentry-office` launcher exits on its incorrect `SENTRY/integrations/tools`
+  path; changing it is a SENTRY-side protected-tree decision.
+- No Phase 14/15 behavior, ANIMA voice stack, or self-acceptance was added.

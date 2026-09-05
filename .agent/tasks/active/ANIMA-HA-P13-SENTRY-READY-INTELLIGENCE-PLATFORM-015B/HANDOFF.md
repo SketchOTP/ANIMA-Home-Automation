@@ -64,6 +64,27 @@ Current verdict: `PARTIAL — ANIMA-SIDE INTEGRATION HARDENED; PENDING ARCHITECT
 ACCEPTANCE`. Live/shadow SENTRY, physical SenseGuard, voice, and live HA
 evidence remain unclaimed resource/commissioning gates.
 
+## R4 runtime compatibility certification handoff
+
+- Starting head: `1d82cb992482b6460d65eb88ac53f0ef013bfda9`; implementation/final
+  published head for this bounded increment:
+  `20e3e0763328ed327c7d80d73264344d6054339f`.
+- Exact hosted CI `33938016240` passed on that head; artifact `9960893002` was
+  published. Local/full validation also passed: 198 pytest tests, strict mypy,
+  focused Ruff, actual MCP stdio harness, package build, and diff-check.
+- Actual MCP 2.1.1/Python 3.12.3 direct and queued flows passed initialize,
+  tools/list, schema validation, context, request-bound tools, provider-start,
+  read, governed mutation, result submission, and terminal status. Codex CLI
+  `0.153.1` shadow loading and `anima_health` succeeded without ANIMA
+  credentials.
+- The certification is blocked at protected-plugin coexistence: the current
+  SENTRY `sentry-office` launcher resolves the wrong server path and exits
+  before initialization. SENTRY source was not modified. Exact decision needed:
+  authorize a SENTRY-side launcher correction, or accept that coexistence gate
+  as a SENTRY-owned follow-up.
+- Verdict: `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+  No Phase 14/15 behavior and no ANIMA voice stack were implemented.
+
 ## R3 exact-head publication
 
 Implementation/final governed head: `da9b6de2aceb34e36a51c400dcf8b090e010115d`.

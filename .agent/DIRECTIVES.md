@@ -582,3 +582,22 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Current disposition: ANIMA-side correction implemented; local validation
   passes; live/shadow SENTRY, physical SenseGuard, and voice evidence remain
   explicit gates. Phase 13 is not accepted.
+
+## ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4
+
+- Issued: 2026-09-05. Parent: `ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B`;
+  Phase 0–12 accepted, Phase 13 active, Phase 14/15 unauthorized.
+- Starting governed checkpoint: `1d82cb992482b6460d65eb88ac53f0ef013bfda9`;
+  prior hosted CI `33933528405` passed on that exact SHA.
+- Scope: qualify the actual installed MCP/SENTRY runtime for the client-only
+  `anima-household` bundle, including direct/queued request paths, schemas,
+  provider-start ordering, representative read/mutation/result flows,
+  reversible coexistence, and protected-tree preservation.
+- Implementation head: `20e3e0763328ed327c7d80d73264344d6054339f`; exact-head
+  hosted CI `33938016240` passed; artifact `9960893002` was published.
+- Current disposition: ANIMA MCP runtime compatibility passes, but the
+  protected `sentry-office` launcher exits before initialization because it
+  resolves `SENTRY/integrations/tools/sentry_mcp_server.py` instead of the
+  existing `SENTRY/tools/sentry_mcp_server.py`. Fixing that requires
+  protected SENTRY-side authority. Result:
+  `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.

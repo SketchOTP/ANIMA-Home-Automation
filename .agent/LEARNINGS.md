@@ -254,3 +254,16 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Normalized HA events need an explicit typed-event mapping before SenseGuard
   policy matching. Passing the policy's own event type into `matches()` can
   make every resource observation appear to match.
+
+### Phase 13 R4 MCP runtime compatibility
+
+- MCP host compatibility must be tested through the installed client/session,
+  not inferred from a server import. The installed SENTRY host uses MCP 1.x
+  naming (`FastMCP`), while ANIMA's pinned runtime uses MCP 2.x (`MCPServer`);
+  a bounded import adapter preserves one semantic server.
+- A client-only plugin can be compatible while a sibling protected plugin
+  prevents coexistence. The exact launcher path and process exit must be
+  qualified separately from manifest/server-name collision checks.
+- Protected cross-project source cannot be repaired implicitly. Preserve the
+  exact failure and return an Architect decision when compatibility requires a
+  change in the protected SENTRY tree.

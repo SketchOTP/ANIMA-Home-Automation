@@ -10,13 +10,24 @@
 
 ## Current pointers
 
-- Current stage: PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — 015B-R3; CONTINUE
-- Active directive: ANIMA-HA-P13-SENTRY-INTEGRATION-QUALIFICATION-015B-R3 — direct SENTRY identity scoping and normalized SenseGuard-to-Attention integration
+- Current stage: PHASE 13 SENTRY-READY INTELLIGENCE PLATFORM — 015B-R4; CONTINUE
+- Active directive: ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4 — actual MCP/SENTRY runtime certification
 - Active task packet: `.agent/tasks/active/ANIMA-HA-P13-SENTRY-READY-INTELLIGENCE-PLATFORM-015B/`
 - Last accepted outcome: Phase 11 external capabilities (Architect accepted at `918365ce7c6145780112a808411d750fb0e289eb`, CI `33562645002`)
 - Last completed outcome: H5U implementation checkpoint `dbb4720882b25ad1d840c2c270191227f0c4ea1d`; hosted CI `33746353829` passed on that exact SHA. Final governed closure checkpoint `b2049f306416a1d0cd4f61cd370d0686c5bec2d7`; hosted CI `33747181905` passed on that exact SHA.
 - Last state sync: 2026-09-04; Phase 0–12 are Architect accepted. Phase 13 is
   the active bounded continuation; Phase 14/15 remain unauthorized.
+
+## Current Phase 13 R4 result
+
+- ANIMA implementation head `20e3e0763328ed327c7d80d73264344d6054339f` passed
+  exact-head hosted CI `33938016240`; artifact `9960893002` was published.
+- Actual installed MCP certification passes direct and queued flows, schemas,
+  provider-start ordering, read, governed mutation, result submission, and
+  terminal status. The protected SENTRY V0.4 tree is unchanged.
+- R4 is blocked at coexistence certification because the protected
+  `sentry-office` launcher resolves a nonexistent `SENTRY/integrations/tools`
+  path. Phase 13 remains CONTINUE and is not self-accepted.
 
 ## Current qualification result
 

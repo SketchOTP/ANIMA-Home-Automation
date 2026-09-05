@@ -159,3 +159,27 @@ published. This confirms the repository's deterministic boundary, Core/UI,
 frontend, container, safety, and evidence targets. It does not elevate the
 remaining live/shadow SENTRY, physical SenseGuard, voice, or live household
 mutation gates, and Phase 13 remains pending Architect acceptance.
+
+## R4 runtime compatibility certification — 2026-09-05
+
+The client-only `anima-household` bundle is compatible with the two MCP server
+API shapes encountered in the qualified environments: MCP 2.x exposes
+`MCPServer`, while the installed SENTRY host exposes the legacy `FastMCP` name.
+The bundle selects the available server class without changing its semantic
+catalogue. It declares a small resident skill that keeps ANIMA authoritative
+for Truth, identity, policy, execution, observation, and terminal results.
+
+The actual installed MCP client/session and stdio transport passed initialize,
+`tools/list`, object-schema validation, direct interaction creation, queued
+request claiming, sparse context, request-bound tools, provider-start before
+provider calls, one semantic read, one governed mutation, bounded result
+submission, and terminal status. Hosted exact-head CI `33938016240` runs this
+certification as `scripts/verify_phase13_mcp_runtime.py`.
+
+R4 is not accepted: the protected SENTRY V0.4 `sentry-office` launcher exits
+before MCP initialization because it resolves
+`SENTRY/integrations/tools/sentry_mcp_server.py`; the protected server is at
+`SENTRY/tools/sentry_mcp_server.py`. ANIMA did not modify that protected dirty
+tree. This is recorded as
+`NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`, not as a
+successful coexistence claim. Phase 14/15 and ANIMA voice remain unauthorized.

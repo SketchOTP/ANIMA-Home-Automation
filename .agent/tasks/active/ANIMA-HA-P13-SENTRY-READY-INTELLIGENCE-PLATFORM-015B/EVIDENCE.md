@@ -52,6 +52,53 @@ Status: IMPLEMENTED LOCALLY — PENDING FULL COMPATIBILITY/ARCHITECT REVIEW
 
 Phase 14/15 and any Phase 13 voice implementation remain unauthorized.
 
+## R4 runtime compatibility certification — 2026-09-05
+
+### Implementation
+
+- Added MCP runtime compatibility for the installed SENTRY host: MCP 2.x
+  `MCPServer` and MCP 1.x `FastMCP` are selected without changing the semantic
+  ANIMA surface.
+- Added the minimal resident `anima-household-agent` skill and declared it in
+  the plugin manifest. It reinforces ANIMA authority, request-bound tools,
+  terminal verification, and fresh follow-up reads without creating a second
+  persona.
+- Added `scripts/verify_phase13_mcp_runtime.py`, which uses the actual installed
+  MCP client/session and stdio transport against a local deterministic contract
+  fixture. It is run in hosted CI.
+
+### Actual MCP evidence
+
+- Pinned runtime: Python `3.12.3`, MCP `2.1.1`, protocol `2025-11-25`, server
+  `anima_household`; 10 tools listed and all schemas validated.
+- Direct path: `DIRECT_SENTRY_INTERACTION`, household-bound context, two
+  request-bound tools, provider start before two provider calls, read and
+  governed mutation `SUCCEEDED`, result `RECORDED`, terminal `COMPLETED`.
+- Queued path: `AUTONOMOUS_ATTENTION`, same bounded context and terminal flow;
+  the direct request is not consumed by the queued path. Four fixture provider
+  calls were observed and no ANIMA credentials were used.
+- Actual Codex CLI `0.153.1` shadow loading was exercised with a disposable
+  `CODEX_HOME`; `anima_household` initialized, listed its tools, and completed
+  an `anima_health` call through the configured MCP client. The disposable
+  shadow profile was removed after the probe.
+
+### Compatibility limit and disposition
+
+- `sentry-office` and `anima-household` have distinct manifest/server names,
+  but the protected SENTRY office launcher currently exits before MCP
+  initialization: it resolves
+  `/srv/ATLAS/100_ACTIVE/Projects/SENTRY/integrations/tools/sentry_mcp_server.py`,
+  while the protected server is at
+  `/srv/ATLAS/100_ACTIVE/Projects/SENTRY/tools/sentry_mcp_server.py`.
+- The protected SENTRY checkout remains at HEAD
+  `5441cf35f9a08aaa8f1d2926c17672b4f105d0f7` with its pre-existing dirty files;
+  no file was changed by ANIMA work. Correcting the launcher would be a
+  SENTRY-side protected-tree change and is outside this authorization.
+- R4 result: `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+  The ANIMA-side compatibility increment passed exact-head hosted CI
+  `33938016240`; artifact `9960893002` was published. Phase 14/15 and ANIMA
+  voice remain unauthorized.
+
 ## R2 implementation continuation
 
 - Added an explicit `provider-start` boundary. The client turn and the

@@ -347,3 +347,21 @@ UI, and voice remain out of scope.
   physical SenseGuard, voice, and live household mutation remain unclaimed.
 - Phase 13 remains `CONTINUE` and is not self-accepted; Phase 14/15 remain
   unauthorized.
+
+## ANIMA-HA-P13-SENTRY-RUNTIME-COMPATIBILITY-CERTIFICATION-015B-R4 — 2026-09-05
+
+- R4 qualifies the actual installed MCP/SENTRY runtime without modifying the
+  protected SENTRY V0.4 source. ANIMA implementation head
+  `20e3e0763328ed327c7d80d73264344d6054339f` passed exact-head hosted CI
+  `33938016240`; artifact `9960893002` was published.
+- Actual MCP 2.1.1/Python 3.12.3 stdio evidence passes direct and queued
+  request flows, schemas, provider-start ordering, read, governed mutation,
+  result submission, and terminal status. Codex CLI `0.153.1` shadow loading
+  and `anima_health` succeeded without ANIMA credentials.
+- The protected SENTRY office launcher remains incompatible: it points to
+  `SENTRY/integrations/tools/sentry_mcp_server.py`, but the server is at
+  `SENTRY/tools/sentry_mcp_server.py`. Because fixing that requires protected
+  SENTRY-side authority, the result is
+  `NEEDS_ARCHITECT_DECISION — PHASE13_RUNTIME_COMPATIBILITY_BLOCKED`.
+- Phase 14/15 and ANIMA voice remain unauthorized; this record does not
+  self-accept Phase 13.
