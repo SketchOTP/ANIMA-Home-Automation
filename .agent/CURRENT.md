@@ -608,3 +608,22 @@ failure without another governed dispatch. This is a bounded manual-reality
 race qualification, not full Phase 14 acceptance. Phase 14 remains
 `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; Phase 15 remains unauthorized
 and unimplemented.
+
+## Phase 14 clustered qualification matrix — 2026-09-05
+
+The current exact code head is `cc8b0107ca9615750a580a41fc95dcbdc3722f74`,
+matching `origin/main`; hosted CI `33998136623` passed and published artifact
+`9978800620`. The new real PostgreSQL approval reauthorization scenario
+`POLICY_CHANGE_BEFORE_APPROVAL_NO_DISPATCH` passed: the initial action reached
+`REQUIRE_CONFIRMATION`, the policy evaluator changed before approval
+consumption, current reauthorization returned `POLICY_DENIED`, and provider
+dispatches remained zero. The durable approval row and two policy evaluations
+were observed.
+
+The clustered matrix is recorded in
+`docs/PHASE-14-QUALIFICATION-MATRIX.md`. It deliberately classifies the
+provider, Journal/Truth/Attention, plugin, and backup/history slices as
+verified only within their exercised boundaries; approval/continuation,
+HA-action reality, outage/process, external-content, and deeper ARM64 families
+remain partial or open. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE
+REQUIRED`; Phase 15 remains unauthorized and unimplemented.

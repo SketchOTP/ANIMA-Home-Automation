@@ -513,3 +513,26 @@ unauthorized and unimplemented.
 This closes only the exercised manual-reality race slice. Phase 14 remains
 `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; Phase 15 remains unauthorized
 and unimplemented.
+
+## Policy reauthorization qualification - 2026-09-05
+
+- PASS / exact governed code head: `cc8b0107ca9615750a580a41fc95dcbdc3722f74`;
+  hosted CI `33998136623` passed; artifact `9978800620` was published.
+- PASS / `POSTGRES_ACTION_POLICY`: `POLICY_CHANGE_BEFORE_APPROVAL_NO_DISPATCH`
+  created a real PostgreSQL confirmation row under an initial
+  `REQUIRE_CONFIRMATION` decision. Before the approved continuation was
+  consumed, the test-only policy transition returned
+  `POLICY_DENIED`; the coordinator performed two policy evaluations and the
+  provider dispatch count remained zero. The approval outcome remained
+  durably recorded. This does not modify the Phase 4 Rego bundle.
+
+## Phase 14 clustered matrix
+
+The current consolidated status is recorded in
+`docs/PHASE-14-QUALIFICATION-MATRIX.md`. Provider lifecycle/fencing,
+Journal/Truth/Attention/SenseGuard replay, plugin isolation, backup/restore,
+and 250-record history traversal are verified within their exercised slices.
+Approval/continuation, HA action reality, outage/process, external-content,
+and deeper ARM64 families remain partial or open. The matrix is a planning and
+evidence reconciliation record, not Phase 14 acceptance. Phase 15 remains
+unauthorized and unimplemented.

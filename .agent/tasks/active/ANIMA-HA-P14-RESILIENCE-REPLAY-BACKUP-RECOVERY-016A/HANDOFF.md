@@ -207,6 +207,20 @@ after governed dispatch caused authoritative `VERIFICATION_FAILED`, and replay
 did not redispatch. This is a bounded race result; Phase 14 remains
 `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`. Phase 15 was not implemented.
 
+## Policy reauthorization and clustered closure checkpoint
+
+The exact code head `cc8b0107ca9615750a580a41fc95dcbdc3722f74` passed hosted CI
+`33998136623` with artifact `9978800620`. The real PostgreSQL policy-transition
+scenario `POLICY_CHANGE_BEFORE_APPROVAL_NO_DISPATCH` passed: approval was
+requested, current policy changed before continuation, reauthorization denied
+the action, and zero provider dispatch occurred.
+
+`docs/PHASE-14-QUALIFICATION-MATRIX.md` now groups the remaining work by shared
+runtime. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED` until
+the partial approval/action, outage/process, external-content, and ARM64
+families are closed and replayed at one final head. Phase 15 remains
+unauthorized and unimplemented.
+
 ## Isolated HA ambiguous-dispatch checkpoint
 
 Published head: `2a0bb87eb140883f7ccb824c1344767f07d47b38`, matching
