@@ -7,6 +7,7 @@ database rows, policy internals, or raw event payloads.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -39,6 +40,8 @@ SESSION_ABSOLUTE_TTL = timedelta(hours=8)
 SESSION_IDLE_TTL = timedelta(minutes=30)
 MAX_CONVERSATION_CHARS = 4_000
 MAX_SSE_BUFFER = 64
+UI_PAGE_SIZE = 50
+UI_MAX_PAGE_SIZE = 100
 OAUTH_STATE_TTL = timedelta(minutes=10)
 DEFAULT_HOUSEHOLD_ID = UUID("00000000-0000-0000-0000-000000000012")
 DEFAULT_PRINCIPAL_ID = UUID("00000000-0000-0000-0000-000000000013")
@@ -340,6 +343,53 @@ def validate_ui_preferences(value: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _encode_page_cursor(sort_value: str, item_id: str) -> str:
+    payload = json.dumps({"sort": sort_value, "id": item_id}, separators=(",", ":"))
+    return base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def _decode_page_cursor(value: str | None) -> tuple[str, str] | None:
+    if value is None:
+        return None
+    if len(value) > 512:
+        raise ValueError("cursor is too long")
+    try:
+        padded = value + "=" * (-len(value) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+        sort_value, item_id = payload["sort"], payload["id"]
+    except (KeyError, TypeError, ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("cursor is invalid") from exc
+    if not isinstance(sort_value, str) or not isinstance(item_id, str):
+        raise ValueError("cursor is invalid")
+    return sort_value, item_id
+
+
+def _page_limit(value: int) -> int:
+    if not 1 <= value <= UI_MAX_PAGE_SIZE:
+        raise ValueError("page size is out of bounds")
+    return value
+
+
+def _page(items: list[dict[str, Any]], cursor: str | None, limit: int) -> dict[str, Any]:
+    bounded = _page_limit(limit)
+    start = 0
+    if cursor is not None:
+        for index, item in enumerate(items):
+            if item.get("_cursor") == cursor:
+                start = index + 1
+                break
+        else:
+            raise ValueError("cursor is invalid")
+    selected = items[start : start + bounded]
+    next_cursor = selected[-1].get("_cursor") if start + bounded < len(items) and selected else None
+    return {
+        "items": [
+            {key: value for key, value in item.items() if key != "_cursor"} for item in selected
+        ],
+        "next_cursor": next_cursor,
+    }
+
+
 class HouseholdReadModel(Protocol):
     def bootstrap(self, identity: UIIdentity) -> dict[str, Any]: ...
 
@@ -347,7 +397,15 @@ class HouseholdReadModel(Protocol):
 
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def tasks_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]: ...
+
     def calendar(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
+    def calendar_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]: ...
 
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
@@ -588,8 +646,28 @@ class DemoHouseholdReadModel:
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
         return [dict(item) for item in self._tasks]
 
+    def tasks_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity
+        items = [
+            {**dict(item), "_cursor": _encode_page_cursor(str(index), str(item["task_id"]))}
+            for index, item in enumerate(self._tasks)
+        ]
+        return _page(items, cursor, limit)
+
     def calendar(self, identity: UIIdentity) -> list[dict[str, Any]]:
         return [dict(item) for item in self._calendar]
+
+    def calendar_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity
+        items = [
+            {**dict(item), "_cursor": _encode_page_cursor(str(index), str(item["event_id"]))}
+            for index, item in enumerate(self._calendar)
+        ]
+        return _page(items, cursor, limit)
 
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
         return [
@@ -666,9 +744,23 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def tasks_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity, cursor
+        _page_limit(limit)
+        return {"items": [], "next_cursor": None}
+
     def calendar(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
+
+    def calendar_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity, cursor
+        _page_limit(limit)
+        return {"items": [], "next_cursor": None}
 
     def activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
@@ -746,19 +838,34 @@ class PostgresHouseholdReadModel:
         }
 
     def tasks(self, identity: UIIdentity) -> list[dict[str, Any]]:
-        with self._connect() as connection, connection.cursor() as cursor:
-            cursor.execute(
-                """
+        return list(self.tasks_page(identity, limit=UI_MAX_PAGE_SIZE)["items"])
+
+    def tasks_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        bounded = _page_limit(limit)
+        decoded = _decode_page_cursor(cursor)
+        where = "household_id=%s"
+        params: list[Any] = [identity.household_id]
+        if decoded is not None:
+            sort_value, item_id = decoded
+            where += " AND (next_run_at, task_id) > (%s, %s)"
+            params.extend([sort_value, item_id])
+        with self._connect() as connection, connection.cursor() as db_cursor:
+            db_cursor.execute(
+                f"""
                 SELECT task_id, title, status, next_run_at
                 FROM anima_durable_tasks
-                WHERE household_id=%s
+                WHERE {where}
                 ORDER BY next_run_at, task_id
-                LIMIT 100
+                LIMIT %s
                 """,
-                (identity.household_id,),
+                (*params, bounded + 1),
             )
-            rows = cursor.fetchall()
-        return [
+            rows = list(db_cursor.fetchall())
+        has_more = len(rows) > bounded
+        rows = rows[:bounded]
+        items = [
             {
                 "task_id": str(row["task_id"]),
                 "title": str(row["title"]),
@@ -767,21 +874,42 @@ class PostgresHouseholdReadModel:
             }
             for row in rows
         ]
+        next_cursor = (
+            _encode_page_cursor(rows[-1]["next_run_at"].isoformat(), str(rows[-1]["task_id"]))
+            if has_more and rows
+            else None
+        )
+        return {"items": items, "next_cursor": next_cursor}
 
     def calendar(self, identity: UIIdentity) -> list[dict[str, Any]]:
-        with self._connect() as connection, connection.cursor() as cursor:
-            cursor.execute(
-                """
+        return list(self.calendar_page(identity, limit=UI_MAX_PAGE_SIZE)["items"])
+
+    def calendar_page(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        bounded = _page_limit(limit)
+        decoded = _decode_page_cursor(cursor)
+        where = "household_id=%s"
+        params: list[Any] = [identity.household_id]
+        if decoded is not None:
+            sort_value, item_id = decoded
+            where += " AND (start_at, event_id) > (%s, %s)"
+            params.extend([sort_value, item_id])
+        with self._connect() as connection, connection.cursor() as db_cursor:
+            db_cursor.execute(
+                f"""
                 SELECT event_id, title, start_at, end_at, status, version
                 FROM anima_calendar_events
-                WHERE household_id=%s
+                WHERE {where}
                 ORDER BY start_at, event_id
-                LIMIT 100
+                LIMIT %s
                 """,
-                (identity.household_id,),
+                (*params, bounded + 1),
             )
-            rows = cursor.fetchall()
-        return [
+            rows = list(db_cursor.fetchall())
+        has_more = len(rows) > bounded
+        rows = rows[:bounded]
+        items = [
             {
                 "event_id": str(row["event_id"]),
                 "title": str(row["title"]),
@@ -792,6 +920,12 @@ class PostgresHouseholdReadModel:
             }
             for row in rows
         ]
+        next_cursor = (
+            _encode_page_cursor(rows[-1]["start_at"].isoformat(), str(rows[-1]["event_id"]))
+            if has_more and rows
+            else None
+        )
+        return {"items": items, "next_cursor": next_cursor}
 
     def home(self, identity: UIIdentity) -> dict[str, Any]:
         from anima_ha.graph import NodeKind
@@ -1724,7 +1858,12 @@ def create_app(
 
     @app.get("/api/v1/tasks")
     async def tasks(request: Request) -> dict[str, Any]:
-        return {"items": svc.read_model.tasks(current_identity(request))}
+        try:
+            limit = int(request.query_params.get("limit", str(UI_PAGE_SIZE)))
+            cursor = request.query_params.get("cursor")
+            return svc.read_model.tasks_page(current_identity(request), cursor=cursor, limit=limit)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_TASK_PAGE") from exc
 
     @app.post("/api/v1/tasks")
     async def create_task(
@@ -1785,7 +1924,14 @@ def create_app(
 
     @app.get("/api/v1/calendar")
     async def calendar(request: Request) -> dict[str, Any]:
-        return {"items": svc.read_model.calendar(current_identity(request))}
+        try:
+            limit = int(request.query_params.get("limit", str(UI_PAGE_SIZE)))
+            cursor = request.query_params.get("cursor")
+            return svc.read_model.calendar_page(
+                current_identity(request), cursor=cursor, limit=limit
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_CALENDAR_PAGE") from exc
 
     @app.post("/api/v1/calendar")
     async def create_calendar(

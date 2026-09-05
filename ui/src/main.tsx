@@ -24,6 +24,19 @@ const api = async <T,>(path: string, options?: RequestInit): Promise<T> => {
   if (!response.ok) { const body = (await response.json().catch(() => ({}))) as { detail?: string }; throw new Error(body.detail ?? "ANIMA could not complete that request"); }
   return response.json() as Promise<T>;
 };
+const allPages = async <T,>(path: string): Promise<T[]> => {
+  const items: T[] = [];
+  let cursor: string | null = null;
+  do {
+    const separator = path.includes("?") ? "&" : "?";
+    const page = await api<{ items: T[]; next_cursor: string | null }>(
+      `${path}${separator}limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    );
+    items.push(...page.items);
+    cursor = page.next_cursor;
+  } while (cursor);
+  return items;
+};
 function StatusPill({ status }: { status: Status | string }) { return <span className={`status status-${status.toLowerCase().replaceAll("/", "-")}`}>{status.replaceAll("_", " ")}</span>; }
 function Card({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) { return <section className={`card ${className}`}><div className="card-heading"><h2>{title}</h2></div>{children}</section>; }
 function OutcomeNotice({ outcome }: { outcome: MutationOutcome | null }) { if (!outcome) return null; const tone = outcome.status === "SUCCEEDED" ? "success" : ["DENIED", "REQUIRE_CONFIRMATION", "REQUIRE_STRONGER_AUTH"].includes(outcome.status) ? "warning" : "error"; return <div className={`notice outcome ${tone}`} role="status" aria-live="polite"><strong>{outcome.status.replaceAll("_", " ")}</strong><span>{outcome.detail ?? outcome.reason ?? outcome.operation}</span></div>; }
@@ -73,7 +86,7 @@ function inputDate(value: string) { const date = new Date(value); const offset =
 function TaskCalendar({ mutate }: { mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
   const [title, setTitle] = useState(""); const [when, setWhen] = useState(""); const [note, setNote] = useState(""); const [eventTitle, setEventTitle] = useState(""); const [start, setStart] = useState(""); const [end, setEnd] = useState(""); const [editing, setEditing] = useState<string | null>(null); const [editTitle, setEditTitle] = useState(""); const [editStart, setEditStart] = useState(""); const [editEnd, setEditEnd] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]); const [calendar, setCalendar] = useState<CalendarEvent[]>([]);
-  const reload = async () => { const [taskResult, calendarResult] = await Promise.all([api<{ items: Task[] }>("/api/v1/tasks"), api<{ items: CalendarEvent[] }>("/api/v1/calendar")]); setTasks(taskResult.items); setCalendar(calendarResult.items); };
+  const reload = async () => { const [taskItems, calendarItems] = await Promise.all([allPages<Task>("/api/v1/tasks"), allPages<CalendarEvent>("/api/v1/calendar")]); setTasks(taskItems); setCalendar(calendarItems); };
   useEffect(() => { void reload(); }, []);
   const runMutation = async (path: string, payload?: Record<string, unknown>) => { const result = await mutate(path, payload); await reload(); return result; };
   const edit = (event: CalendarEvent) => { setEditing(event.event_id); setEditTitle(event.title); setEditStart(inputDate(event.start_at)); setEditEnd(inputDate(event.end_at)); };
