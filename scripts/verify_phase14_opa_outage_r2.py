@@ -25,12 +25,13 @@ from scripts.verify_phase14_action_recovery_r2 import (  # noqa: E402
 from anima_ha.action import ActionStatus, TruthSnapshot  # noqa: E402
 
 
-def compose(*args: str) -> None:
+def compose(*args: str) -> str:
     project = os.environ.get("ANIMA_COMPOSE_PROJECT", "")
     command = ["docker", "compose"]
     if project:
         command.extend(("-p", project))
-    subprocess.run([*command, *args], check=True, capture_output=True, text=True)
+    result = subprocess.run([*command, *args], check=True, capture_output=True, text=True)
+    return result.stdout.strip()
 
 
 def opa_ready() -> bool:
@@ -59,7 +60,21 @@ def main() -> int:
     )
     stopped = False
     try:
-        compose("stop", "opa")
+        compose("up", "-d", "opa")
+        wait_for_opa()
+        stop = subprocess.run(
+            ["docker", "compose", "stop", "opa"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if stop.returncode != 0:
+            container_id = compose("ps", "-q", "opa")
+            if not container_id:
+                raise RuntimeError(
+                    f"unable to stop OPA: {stop.stderr.strip() or stop.stdout.strip()}"
+                )
+            subprocess.run(["docker", "stop", container_id], check=True, capture_output=True)
         stopped = True
         outcome = coordinator.execute(action)
         assert outcome.record.status == ActionStatus.POLICY_DENIED
