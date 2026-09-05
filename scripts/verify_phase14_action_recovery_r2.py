@@ -28,6 +28,7 @@ from anima_ha.policy import (
     OpaPolicyClient,
     PolicyContext,
     PolicyService,
+    PostgresPolicyStore,
     RequestOrigin,
 )
 
@@ -54,7 +55,9 @@ def request(
     key: str, *, gateway: Gateway, refresher: Any
 ) -> tuple[ActionExecutionCoordinator, ActionRequest]:
     identity = IdentityContext(HOUSEHOLD_ID, uuid4(), Assurance.RECOGNIZED)
-    policy = PolicyService(OpaPolicyClient(OPA_URL))
+    policy = PolicyService(
+        OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL)
+    )
     coordinator = ActionExecutionCoordinator(
         gateway,
         PostgresActionStore(DATABASE_URL),
