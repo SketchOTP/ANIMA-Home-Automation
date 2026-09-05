@@ -184,11 +184,17 @@ def main() -> int:
     assert trace[-2:] == ["DELIVERED_TO_PROVIDER", "PROVIDER_RUNNING"], trace
 
     expire(stored.request_id)
-    assert store.claim(
+    # The queue-level reclaim pass durably reconciles every expired started
+    # request before selecting new work.  It is intentionally used here
+    # rather than a specific claim: claim_specific() correctly refuses an
+    # expired provider-running request, while an accumulated qualification
+    # database may also contain unrelated pending SENTRY work.
+    reclaimer = store.claim(
         "phase14-sentry-reclaimer",
         provider_id="sentry",
         household_id=HOUSEHOLD_ID,
-    ) is None
+    )
+    assert reclaimer is None or reclaimer.request_id != stored.request_id
     recovered = store.get(stored.request_id)
     assert recovered is not None
     assert recovered.lifecycle == IntelligenceLifecycle.UNKNOWN_RESULT
@@ -205,7 +211,7 @@ def main() -> int:
                 "model_callback_started": True,
                 "pre_crash_lifecycle": "PROVIDER_RUNNING",
                 "recovered_lifecycle": recovered.lifecycle.value,
-                "reclaim_result": "NONE",
+                "reclaim_result": "NONE" if reclaimer is None else "UNRELATED_PENDING_WORK",
                 "provider_invocations_after_recovery": 0,
                 "embedded_agent_runtime": False,
                 "phase15": False,
