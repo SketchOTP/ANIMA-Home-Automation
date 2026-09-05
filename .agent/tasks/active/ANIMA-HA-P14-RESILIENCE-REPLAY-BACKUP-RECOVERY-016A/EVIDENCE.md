@@ -417,3 +417,22 @@ gate only.
   complete in-flight SENTRY/HA/plugin/process coverage, wider external-content
   coverage, or ARM64 replay/runtime beyond the hosted smoke. Phase 15 remains
   unauthorized and unimplemented.
+
+## Out-of-process plugin qualification increment
+
+- The pushed implementation head is `f713be88e844a8d4d663e32f7289b14a5190f0da`.
+  It adds a test-only stdio MCP fixture and exercises the production
+  `PluginManager` with `McpRuntime(RuntimeKind.MCP_STDIO)`, rather than an
+  in-process callback substitute.
+- Local result: `PASS`, scenario
+  `PLUGIN_PROCESS_RESTART_AND_FAILURE_ISOLATION`, evidence level
+  `POSTGRES_MCP_PROCESS`. The healthy child was invoked, disabled/re-enabled,
+  and replaced with a distinct process identity. A failing child exited with
+  a nonzero status; its plugin became `FAILED`, its tools were removed, a
+  durable `plugin.failed` audit was written, and the independent healthy
+  plugin remained `HEALTHY`.
+- Hosted exact-head CI `33992570340` is in progress on this head. This is a
+  bounded plugin-process result only; it does not close the remaining Phase 14
+  approval, action ambiguity, event breadth, SENTRY/HA/process matrix,
+  external-content, or ARM64 replay/runtime gates. Phase 15 remains
+  unauthorized.

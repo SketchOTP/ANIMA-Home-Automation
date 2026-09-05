@@ -177,3 +177,20 @@ Full approval/continuation crash coverage, broader action/manual-change proof,
 complete in-flight SENTRY/HA/plugin/process coverage, broader external-content
 coverage, and ARM64 replay/runtime beyond smoke remain open. Phase 15 remains
 unauthorized and unimplemented.
+
+## Out-of-process plugin qualification increment
+
+The pushed head is `f713be88e844a8d4d663e32f7289b14a5190f0da`. The new
+test-only stdio MCP fixture was exercised through the production
+`PluginManager` and `McpRuntime`, not a synthetic in-process callback. The
+healthy plugin was invoked, disabled/re-enabled with a different child PID,
+and then kept healthy while a separate child process failed. The failing
+plugin became `FAILED`, exposed no tools, and produced a durable failure audit.
+Scenario: `PLUGIN_PROCESS_RESTART_AND_FAILURE_ISOLATION`; evidence:
+`POSTGRES_MCP_PROCESS`; local result: `PASS`.
+
+Hosted exact-head CI `33992570340` is running on this head. This increment is
+not a Phase 14 completion claim. The active packet remains active; the full
+approval/continuation, ambiguous action/HA, SENTRY/HA/plugin/process,
+external-content, and ARM64 replay/runtime closure remains required. Phase 15
+was not implemented.

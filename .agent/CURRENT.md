@@ -518,3 +518,26 @@ unimplemented. Remaining software-controllable closure is the full approval/
 continuation crash matrix, broader action/manual-reality proof, complete
 SENTRY/HA/plugin/process in-flight restart coverage, wider external-content
 coverage, and ARM64 replay/runtime evidence beyond the current hosted smoke.
+
+## Phase 14 out-of-process plugin qualification checkpoint — 2026-09-05
+
+The current pushed increment is `f713be88e844a8d4d663e32f7289b14a5190f0da`
+(`test: qualify out-of-process plugin recovery`), matching `origin/main`.
+Hosted CI `33992570340` is the exact-head run in progress; its preceding
+validation, real-store, SENTRY, HA, OPA, frontend, and H5 steps have passed.
+
+The increment adds a test-only stdio MCP fixture and a real production
+`PluginManager`/`McpRuntime` qualification. A healthy plugin was invoked,
+disabled/re-enabled with a changed child PID, and a failing child process was
+isolated while the healthy plugin remained `HEALTHY`; the durable failure audit
+was present. Local evidence is `PLUGIN_PROCESS_RESTART_AND_FAILURE_ISOLATION`
+at `POSTGRES_MCP_PROCESS`. This is a narrow out-of-process plugin boundary
+result, not completion of the remaining Phase 14 matrices.
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; the active
+packet remains active, Phase 15 is unauthorized and unimplemented, and native
+Pi 5 remains an external gate. Open software work remains the complete
+approval/continuation crash matrix, ambiguous action/manual-reality and HA
+no-redispatch breadth, full SENTRY/HA/plugin/process in-flight coverage,
+broader external-content coverage, and ARM64 replay/runtime beyond the hosted
+qualification now running.

@@ -263,8 +263,8 @@ jobs:
             -v "$GITHUB_WORKSPACE/scripts/verify_phase14_resilience.py:/tmp/verify_phase14_resilience.py:ro" \
             anima-ui:phase14-arm64 \
             /tmp/verify_phase14_resilience.py \
-            --output /tmp/anima-arm64-replay.json \
-            | grep -q 'DETERMINISTIC_CONTRACT'
+            --output /tmp/anima-arm64-replay.json >/tmp/anima-arm64-replay.stdout
+          grep -q 'DETERMINISTIC_CONTRACT' /tmp/anima-arm64-replay.stdout
           echo 'ANIMA_ARM64_REPLAY_CONTRACT_PASS'
       - name: Build and health-check UI container
         env:
