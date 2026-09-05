@@ -275,3 +275,18 @@ narrow crash-window closure, not Phase 14 acceptance. The remaining approval/
 continuation, ambiguous action/HA, full in-flight SENTRY/HA/plugin/process,
 external-content, and deeper ARM64 replay/runtime work remains open. Phase 15
 was not implemented.
+
+## SENTRY process lifecycle checkpoint
+
+Published head: `62533e8673a25ece7079595bd73bb3a650cb1d8c`, matching
+`origin/main`. Exact-head CI `33998969482` passed. Artifact `9979026256`,
+digest
+`sha256:7cab468a7a6915bad3a94fcd103104a4759583f3c368aa751a496bfe3b305225`.
+
+The real PostgreSQL process matrix
+`SENTRY_PROCESS_LIFECYCLE_MATRIX_NO_BLIND_REPLAY` passed across pre-claim,
+post-claim, provider-started, and durable-result child-process exits. It
+proved safe reclaim only before provider work began, `UNKNOWN_RESULT` after
+provider start, and no new claim after a durable result. No model or embedded
+AgentRuntime ran. This remains a partial Phase 14 checkpoint; the active
+packet stays active and Phase 15 remains unauthorized.

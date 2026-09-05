@@ -627,3 +627,24 @@ verified only within their exercised boundaries; approval/continuation,
 HA-action reality, outage/process, external-content, and deeper ARM64 families
 remain partial or open. Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE
 REQUIRED`; Phase 15 remains unauthorized and unimplemented.
+
+## Phase 14 SENTRY process lifecycle matrix — 2026-09-05
+
+The exact code head `62533e8673a25ece7079595bd73bb3a650cb1d8c` matches
+`origin/main`; hosted CI `33998969482` passed on that exact head. Artifact
+`9979026256` was published with digest
+`sha256:7cab468a7a6915bad3a94fcd103104a4759583f3c368aa751a496bfe3b305225`.
+
+The new `POSTGRES_PROCESS` scenario
+`SENTRY_PROCESS_LIFECYCLE_MATRIX_NO_BLIND_REPLAY` used four real child
+processes against PostgreSQL: pre-claim work was reclaimed, post-claim work
+was reclaimed, provider-started work became `UNKNOWN_RESULT` without replay,
+and a durable result completed without a new claim. The recorded child PIDs
+are evidence of process boundaries; no model or embedded AgentRuntime was
+used, and provider replays remained zero.
+
+This closes the exercised SENTRY lifecycle slice only. Phase 14 remains
+`CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; approval/action continuation,
+the full outage/restart matrix, external-content closure, final real-store
+replay, and deeper ARM64 runtime evidence remain open. Phase 15 remains
+unauthorized and unimplemented.

@@ -498,6 +498,24 @@ Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE CLOSURE REQUIRED`; this closes
 only the real isolated-HA possible-dispatch/no-retry slice. Phase 15 remains
 unauthorized and unimplemented.
 
+## SENTRY process lifecycle matrix
+
+- PASS / exact governed code head:
+  `62533e8673a25ece7079595bd73bb3a650cb1d8c`; hosted CI `33998969482` passed
+  on that exact head. Artifact `9979026256`, digest
+  `sha256:7cab468a7a6915bad3a94fcd103104a4759583f3c368aa751a496bfe3b305225`.
+- PASS / `POSTGRES_PROCESS`:
+  `SENTRY_PROCESS_LIFECYCLE_MATRIX_NO_BLIND_REPLAY` ran four real child
+  processes against the production PostgreSQL intelligence store. A child
+  that exited before claim was safely claimable; post-claim loss was
+  reclaimable; provider-started loss became `UNKNOWN_RESULT` with no claim;
+  and a durable response completed without a new claim. Machine output
+  captured child PIDs, `provider_replays=0`, and
+  `embedded_agent_runtime_fallback=false`.
+- This is a shared-runtime process-boundary result, not completion of the
+  remaining approval/action, outage/restart, external-content, final replay,
+  or deeper ARM64 Phase 14 families. Phase 15 remains unauthorized.
+
 ## HA manual-change race qualification - 2026-09-05
 
 - PASS / exact governed head: `10830755f2f449b5c2a64b1f095f52a1fafb04d4`;
