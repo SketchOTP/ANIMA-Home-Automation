@@ -1,0 +1,1027 @@
+{
+  "evidence_level": "POSTGRES_OPA_CORE",
+  "external_resource_gates": [
+    "EXTERNAL_RESOURCE_GATE_NATIVE_PI5"
+  ],
+  "ledger_digest": "9fad635e2322485c953a687d8de4c5c9fa5a9be389cf6f46284f6de1e9ff5074",
+  "r1_contract_scenarios": "retained separately as DETERMINISTIC_CONTRACT",
+  "results": [
+    {
+      "detail": "request_id=a9662cc8-86a2-55c0-acf3-6f03797e9f50; winner=r2-prestart-reclaimer",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "reclaim_before_provider_start",
+      "scenario_id": "PROVIDER_PRESTART_CRASH_RECLAIM",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "CLAIMED",
+      "trace": [],
+      "transitions": [
+        "PENDING",
+        "CLAIMED",
+        "CLAIMED"
+      ]
+    },
+    {
+      "detail": "request_id=6826ecb4-489a-5689-a34a-7c4848e39c47; lifecycle=UNKNOWN_RESULT",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "no_blind_replay",
+      "scenario_id": "PROVIDER_STARTED_CRASH_NO_REPLAY",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "UNKNOWN_RESULT",
+      "trace": [],
+      "transitions": [
+        "PENDING",
+        "CLAIMED",
+        "PROVIDER_RUNNING",
+        "UNKNOWN_RESULT"
+      ]
+    },
+    {
+      "detail": "request_id=6681e2c7-b89a-530b-87dc-7d1a3bf30a87; provider_invocations=1",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "reuse_durable_result",
+      "scenario_id": "PROVIDER_RESULT_DURABLE_NO_RERUN",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "COMPLETED",
+      "trace": [],
+      "transitions": [
+        "PENDING",
+        "CLAIMED",
+        "PROVIDER_RUNNING",
+        "COMPLETED"
+      ]
+    },
+    {
+      "detail": "request_id=6e7c89cd-4670-53d9-a4e6-ca0924db551e; winner=r2-concurrent-a",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "loser_observes_no_claim",
+      "scenario_id": "CONCURRENT_CLAIMS_ONE_WINNER",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "CLAIMED",
+      "trace": [],
+      "transitions": [
+        "PENDING",
+        "CLAIMED"
+      ]
+    },
+    {
+      "detail": "request_id=8777e58c-8ee9-5220-8f2d-6c10cade5e8b; stale_worker=r2-wrong-worker",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "retain_current_owner",
+      "scenario_id": "STALE_FENCE_ALL_PROVIDER_WRITES_REJECTED",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "CLAIMED",
+      "trace": [],
+      "transitions": [
+        "PENDING",
+        "CLAIMED",
+        "REJECT_RENEW",
+        "REJECT_TRANSITION",
+        "REJECT_RESULT"
+      ]
+    },
+    {
+      "detail": "journal_count=1845; projected=14",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "source_and_event_dedup",
+      "scenario_id": "HA_DUPLICATE_EVENT_DEDUP",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "KNOWN",
+      "trace": [],
+      "transitions": [
+        "APPEND",
+        "DEDUPLICATED",
+        "PROJECT",
+        "RESOLVE"
+      ]
+    },
+    {
+      "detail": "truth_key=phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource; value_digest=3e72db8d0d44c0ad58f16576f902c91b5f797c6f08209bae880175092458b809",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "reconciler_keeps_newer_sequence",
+      "scenario_id": "HA_OUT_OF_ORDER_TRUTH",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "KNOWN_NEW",
+      "trace": [],
+      "transitions": [
+        "SEQUENCE_1",
+        "SEQUENCE_2",
+        "RESOLVE_NEWER"
+      ]
+    },
+    {
+      "detail": "profile=phase14.r2.00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4; trigger_id=1229f4f2-256e-5bb9-94d0-3d8da4f69455",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "attention_idempotency_key",
+      "scenario_id": "ATTENTION_DUPLICATE_DEDUP",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "ONE_TRIGGER",
+      "trace": [],
+      "transitions": [
+        "ALARM_APPEND",
+        "ALARM_DEDUPLICATED",
+        "ATTENTION_PROCESS",
+        "ONE_TRIGGER"
+      ]
+    },
+    {
+      "detail": "source_event_id=alarm-00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4; effective_triggers=1",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "same_source_event_id_is_idempotent",
+      "scenario_id": "SENSEGUARD_DUPLICATE_DEDUP",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "ONE_LOGICAL_EVENT",
+      "trace": [],
+      "transitions": [
+        "NORMALIZE",
+        "JOURNAL_DEDUP",
+        "ATTENTION_DEDUP"
+      ]
+    },
+    {
+      "detail": "tasks=250; calendar=250; page_size=37; unique_ids=true",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "stable_tuple_cursor",
+      "scenario_id": "TASK_CALENDAR_250_RECORD_PAGINATION",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "ALL_RECORDS_DISCOVERABLE",
+      "trace": [
+        {
+          "name": "task_first",
+          "value": "d631fab9-706b-54f8-98c1-e4f0c6d34e1e"
+        },
+        {
+          "name": "task_last",
+          "value": "b3bcb05a-e0ce-5712-93c0-3d61a125272b"
+        },
+        {
+          "name": "event_first",
+          "value": "4e2ea5bd-0925-518f-ae84-4691ee958aba"
+        },
+        {
+          "name": "event_last",
+          "value": "244e3cbe-1951-5a60-8eab-910672d02fa4"
+        }
+      ],
+      "transitions": [
+        "PAGE_1",
+        "PAGE_N",
+        "NO_NEXT_CURSOR"
+      ]
+    },
+    {
+      "detail": "event_id=ff56946f-a053-4d14-b59e-0a7938bf81e2; version=2; winners=1",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "stale_writer_rejected",
+      "scenario_id": "CALENDAR_CONCURRENT_VERSION_WINNER",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "ONE_VERSION_WINNER",
+      "trace": [],
+      "transitions": [
+        "VERSION_1",
+        "ONE_UPDATE",
+        "STALE_UPDATE_REJECTED",
+        "VERSION_2"
+      ]
+    },
+    {
+      "detail": "before_digest=787d9b3f0ba3d1d126e2f1e4d1ba35868d199fbe7d6f62d9f9e1a454ef1cdab6; after_digest=787d9b3f0ba3d1d126e2f1e4d1ba35868d199fbe7d6f62d9f9e1a454ef1cdab6; replayed=1846",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "rebuild_truth_projection",
+      "scenario_id": "REAL_STORE_REPLAY_MATCH",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "MATCHED",
+      "trace": [],
+      "transitions": [
+        "SNAPSHOT",
+        "TRUNCATE_PROJECTION",
+        "REBUILD",
+        "COMPARE"
+      ]
+    },
+    {
+      "detail": "different_fields=['truth']; machine_readable=true",
+      "evidence_level": "POSTGRES_OPA_CORE",
+      "recovery_behavior": "halt_on_expected_divergence",
+      "scenario_id": "REAL_STORE_REPLAY_DIFF_DETECTED",
+      "side_effect_count": 0,
+      "status": "PASSED",
+      "terminal_state": "DIFF_DETECTED",
+      "trace": [],
+      "transitions": [
+        "EXPECTED_SNAPSHOT",
+        "CONTROLLED_EXPECTATION_CHANGE",
+        "DIFF"
+      ]
+    }
+  ],
+  "scenario_count": 13,
+  "scenario_definitions": [
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "reclaim_before_provider_start",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "CLAIMED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "PROVIDER_PRESTART_CRASH_RECLAIM",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "no_blind_replay",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "UNKNOWN_RESULT",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "PROVIDER_STARTED_CRASH_NO_REPLAY",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "reuse_durable_result",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "COMPLETED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "PROVIDER_RESULT_DURABLE_NO_RERUN",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "loser_observes_no_claim",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "CLAIMED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "CONCURRENT_CLAIMS_ONE_WINNER",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "retain_current_owner",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "CLAIMED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "STALE_FENCE_ALL_PROVIDER_WRITES_REJECTED",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "source_and_event_dedup",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "KNOWN",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "HA_DUPLICATE_EVENT_DEDUP",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "reconciler_keeps_newer_sequence",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "KNOWN_NEW",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "HA_OUT_OF_ORDER_TRUTH",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "attention_idempotency_key",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "ONE_TRIGGER",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "ATTENTION_DUPLICATE_DEDUP",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "same_source_event_id_is_idempotent",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "ONE_LOGICAL_EVENT",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "SENSEGUARD_DUPLICATE_DEDUP",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "stable_tuple_cursor",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "ALL_RECORDS_DISCOVERABLE",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "TASK_CALENDAR_250_RECORD_PAGINATION",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "stale_writer_rejected",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "ONE_VERSION_WINNER",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "CALENDAR_CONCURRENT_VERSION_WINNER",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "rebuild_truth_projection",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "MATCHED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "REAL_STORE_REPLAY_MATCH",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    },
+    {
+      "action_failpoint": null,
+      "dispatch_metadata": {
+        "dispatch_count": 0
+      },
+      "events_ordering": [
+        {
+          "ordering": "journal_position",
+          "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+        }
+      ],
+      "expected_durable_record_digests": [],
+      "expected_durable_record_ids": [],
+      "expected_recovery_behavior": "halt_on_expected_divergence",
+      "expected_side_effect_count": 0,
+      "expected_terminal_state": "DIFF_DETECTED",
+      "external_content_trust_class": "EXTERNAL_UNTRUSTED",
+      "fault_point": null,
+      "ha_provider_observations": {
+        "phase14-r2/resource": "observed"
+      },
+      "initial_durable_state": {
+        "lifecycle": "PENDING",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "intelligence_provider_state": {
+        "provider": "sentry",
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "model_failpoint": null,
+      "plugin_availability": {
+        "core": "available"
+      },
+      "policy_references": [
+        "phase14-r2-real-store"
+      ],
+      "principal_evidence_policy": {
+        "policy": "current",
+        "principal": "00000000-0000-0000-0000-000000000013"
+      },
+      "process_identity": {
+        "verifier_pid": 1084473
+      },
+      "provider_failpoint": null,
+      "resource_lock_state": {
+        "run_id": "00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4"
+      },
+      "restart_points": [],
+      "scenario_id": "REAL_STORE_REPLAY_DIFF_DETECTED",
+      "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767",
+      "tool_action_state": {
+        "dispatches": 0
+      },
+      "tool_failpoint": null,
+      "truth_versions": {
+        "phase14-r2/00c0a864-53e6-4cfb-acfc-5e7a1ee34fa4/resource": 1
+      },
+      "verification_metadata": {
+        "terminal_authority": "durable_store"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "tested_sha": "616964f395f9808ac3453b3eddc8cb8b84372767"
+}

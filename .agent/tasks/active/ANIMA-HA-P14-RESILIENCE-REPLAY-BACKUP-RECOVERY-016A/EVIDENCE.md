@@ -112,3 +112,31 @@ qualification.
 
 Phase 14 is not accepted. No claim of complete resilience or backup/restore
 qualification is made from the open targets.
+
+## R2 real-store qualification - 2026-09-05
+
+- PASSED / POSTGRES_OPA_CORE: `scripts/verify_phase14_r2.py` executed against the disposable PostgreSQL 16/pgvector store on the exact implementation head `616964f395f9808ac3453b3eddc8cb8b84372767`. The 13-scenario ledger is `R2_REAL_STORE_LEDGER.json`, SHA-256 `579643f2545dcda5feb92a3f7d74f984b978a8911b8e0437892882ff5c636092`.
+- PASSED: provider pre-start reclaim, provider-started ambiguity to `UNKNOWN_RESULT`, durable result without rerun, one concurrent claim winner, and stale-fence rejection across renew/transition/result.
+- PASSED: real Journal duplicate suppression, newer Truth sequence selection, duplicate guaranteed Attention/SenseGuard trigger suppression, and real-store replay digest equality plus deliberate machine-readable divergence detection.
+- PASSED: 250 task and 250 calendar records were traversed with stable timestamp/UUID cursor pagination at page size 37; all 500 IDs were unique and discoverable. Concurrent calendar optimistic-version update produced one winner and rejected the stale writer.
+- PASSED / local: full pytest, Ruff, strict mypy, Python package build, frontend TypeScript/tests/Vite build, Phase 4 OPA integration, Phase 5 plugin integration, and the new R2 ledger. Hosted CI for this implementation head is recorded separately after completion.
+- PASSED / hosted configuration: the workflow now includes the R2 real-store target and a QEMU-backed `linux/arm64` UI image build. The local host lacks ARM64 emulation, so the local attempt is recorded only as an environment failure, not as a pass.
+
+## R2 status and carry-forward
+
+Phase 14 remains `CONTINUE` and is not accepted. R1's accepted real backup/restore, isolated-HA Phase 9, Phase 6 HA, OPA, and durable-task evidence remains carry-forward. The following R2-required software-controlled matrices remain open unless independently rerun: approval/continuation crash windows; full action/manual-change concurrency; HA outage with no redispatch; SENTRY bridge/provider restart and outage; three-class plugin failure isolation; external-content attack matrix; complete process restart matrix; five-scenario real-store replay from clean state; and ARM64 runtime/replay beyond image build. Native Pi 5 remains an external gate only after software qualification. Phase 15 was not implemented.
+
+## R2 carry-forward defect disposition
+
+- `PROVIDER_AMBIGUITY`: CLOSED for the exercised real PostgreSQL provider lifecycle; full SENTRY bridge restart coverage remains open.
+- `APPROVAL_CONTINUATION_CRASH_WINDOWS`: OPEN; not rerun by the R2 target.
+- `PHASE9_ACTION_MANUAL_CHANGE_CONCURRENCY`: OPEN for the full R2 matrix; the accepted R1 isolated-HA lock/verification evidence is retained.
+- `EVENT_DUPLICATION_ORDERING`: CLOSED for the exercised Journal/Truth/Attention/SenseGuard duplicate and newer-sequence cases; restart-between-append-and-projection remains open.
+- `HA_OUTAGE_NO_REDISPATCH`: OPEN; R1 reconnect/reconciliation evidence is retained but the explicit outage/no-redispatch matrix was not rerun here.
+- `PLUGIN_ISOLATION`: PARTIAL; the accepted Phase 5 plugin failure/restore evidence is retained, but the three-class R2 outage matrix remains open.
+- `EXTERNAL_CONTENT_ATTACKS`: OPEN; no new R2 attack matrix was executed.
+- `TASK_CALENDAR_BOUNDED_READS`: CLOSED for the fixed defect; stable cursor pagination passed over 250 tasks and 250 calendar records.
+- `BACKUP_RESTORE`: RETAINED from accepted R1 real `pg_dump`/`pg_restore`; the R2 run did not falsely relabel that prior evidence as a new execution.
+- `PROCESS_RESTART_AND_ARM64`: OPEN for the complete process matrix and runtime/replay qualification; hosted CI separately exercises the ARM64 image build, while native Pi 5 remains an external gate.
+
+This reconciliation supersedes the earlier generic `Still open` summary above only where R2 explicitly records a closure; no open target is promoted by inference.

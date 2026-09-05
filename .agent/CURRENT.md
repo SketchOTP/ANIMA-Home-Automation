@@ -403,3 +403,8 @@ It is superseded for current implementation and gate decisions by
 - Historical Phase 11 implementation checkpoint `558c689cac96f3bddbd636b4d1b9e20d055b221d`; hosted CI `33458814906` passed on that exact SHA.
 
 This file is a mutable snapshot. Do not use it to erase historical outcomes or decisions.
+
+
+## Phase 14 R2 current state — 2026-09-05
+
+Phase 14 remains `CONTINUE — FINAL DESTRUCTIVE QUALIFICATION PARTIALLY EXECUTED`. Starting governed checkpoint was `979560442bf412c440f0c3f1399b830dd3d6acf0`; the current implementation checkpoint is `616964f395f9808ac3453b3eddc8cb8b84372767`. The real-store R2 ledger passes 13 scenarios, including stable cursor pagination over 250 tasks and 250 calendar records and real-store replay/diff checks. R1's accepted real PostgreSQL/OPA/isolated-HA/backup evidence is retained. Approval/action continuation, outage/restart, plugin, external-content, clean-store replay, and ARM64 runtime evidence remain open. Phase 15 is unauthorized and unimplemented.
