@@ -18,6 +18,7 @@ from uuid import uuid4
 
 import psycopg
 
+from anima_ha.attention import PostgresAttentionService, default_attention_profile
 from anima_ha.db.migrate import migrate
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.journal import PostgresEventJournal
@@ -61,6 +62,9 @@ def main() -> int:
     if not DATABASE_URL:
         raise RuntimeError("ANIMA_DATABASE_URL is required")
     migrate(DATABASE_URL, 5)
+    PostgresAttentionService(DATABASE_URL).register_profile(
+        default_attention_profile("phase13.sentry.v1")
+    )
     journal = PostgresEventJournal(DATABASE_URL)
     source_event_id = f"phase14-sentry-bridge-{uuid4()}"
     event = EventEnvelope.create(
