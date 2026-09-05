@@ -276,6 +276,19 @@ def _run(decision: str) -> dict[str, Any]:
     )
     if resumed is None or resumed.episode.episode_id != waiting.episode.episode_id:
         raise AssertionError("continuation did not resume the original episode")
+    # A completed continuation is terminal.  Replaying the same approval
+    # callback must not reconstruct a second model turn or provider effect.
+    resumed_again = agent.resume_confirmation(
+        approval[0].approval_id,
+        identity=identity,
+        decision=decision,
+        policy_context=request.policy_context,
+        tool_resolver=lambda tool_id: tool if tool_id == tool.tool_id else None,
+        tools=(tool,),
+        policy_service=policy,
+    )
+    if resumed_again is not None:
+        raise AssertionError("terminal continuation was replayed")
     if len(adapter.prompts) != 2:
         raise AssertionError(f"expected two model turns, got {len(adapter.prompts)}")
     with psycopg.connect(DATABASE_URL) as connection, connection.cursor() as cursor:
