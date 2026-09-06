@@ -1141,3 +1141,14 @@ decision.
   preserve the sanitized Event Journal projection, and cannot issue concurrent
   duplicate page loads. No new persistence, provider, acknowledgment, or
   human-receipt claim was added. Phase 15 remains unauthorized.
+
+## Device observability governance reconciliation - 2026-09-06
+
+- The documentation-only head `688356a876e230360a4925d844cd37c6752f8041`
+  reconciles the device-observability publication with its terminal hosted
+  validation. Exact-head CI `34047315770` passed and published artifact
+  `9993666377`; the artifact endpoint exposed no digest.
+- No runtime behavior changed. The device-observability/governed-control
+  increment remains implementation-verified and pending independent Architect
+  acceptance. Phase 14 is accepted in the current repository state, and Phase
+  15 remains unauthorized and unimplemented.

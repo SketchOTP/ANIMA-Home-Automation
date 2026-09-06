@@ -34,3 +34,11 @@ TypeScript check, frontend unit tests, and production Vite build pass in the
 pinned project toolchains. Exact-head hosted CI `34046105692` passed on the
 published descendant `86f0cea4a5ef65b06ec5b8071789b960183b2730`; independent
 Architect acceptance remains pending.
+
+## Governance reconciliation
+
+Documentation-only descendant `688356a876e230360a4925d844cd37c6752f8041`
+records the terminal exact-head validation of this increment: hosted CI
+`34047315770` passed on that exact SHA and published artifact `9993666377`.
+The artifact endpoint exposed no digest. No runtime behavior changed and
+independent Architect acceptance remains pending.

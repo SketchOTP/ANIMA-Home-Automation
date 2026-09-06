@@ -23,6 +23,16 @@ plane usable through ANIMA without the Home Assistant frontend. Phases 0-14
 are Architect accepted; Phase 15 remains unauthorized until separately
 authorized by the goal-wide completion audit.
 
+## Latest repository publication - 2026-09-06
+
+The current repository head is the documentation-only reconciliation commit
+`688356a876e230360a4925d844cd37c6752f8041`, with `main == origin/main` and a
+clean tree. Exact-head hosted CI `34047315770` passed on that SHA and
+published artifact `9993666377`. The artifact endpoint exposed no digest.
+This publication changes no runtime behavior; it records terminal validation
+of the existing device-observability increment. Independent Architect
+acceptance remains pending. Phase 15 remains unauthorized and unimplemented.
+
 ## Latest owner-facing device increment - 2026-09-06
 
 The current product increment is device observability and governed control.
