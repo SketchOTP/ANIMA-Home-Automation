@@ -421,6 +421,8 @@ class HouseholdReadModel(Protocol):
 
     def backups(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def scenes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
@@ -493,6 +495,12 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def scene_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -555,6 +563,14 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"backup.{operation}")
+
+    def scene_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"scene.{operation}")
+
+    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+        return self._unavailable(f"scene.apply.{scene_id}")
 
 
 class ConversationIngress(Protocol):
@@ -771,6 +787,10 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def scenes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return dict(self._settings)
@@ -882,6 +902,10 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def scenes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return validate_ui_preferences({})
@@ -905,6 +929,7 @@ class PostgresHouseholdReadModel:
         alert_policy_store: Any | None = None,
         notification_route_store: Any | None = None,
         backup_coordinator: Any | None = None,
+        scene_store: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -914,6 +939,7 @@ class PostgresHouseholdReadModel:
         self.alert_policy_store = alert_policy_store
         self.notification_route_store = notification_route_store
         self.backup_coordinator = backup_coordinator
+        self.scene_store = scene_store
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1389,6 +1415,11 @@ class PostgresHouseholdReadModel:
             for record in self.backup_coordinator.list_for_household(identity.household_id)
         ]
 
+    def scenes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.scene_store is None:
+            return []
+        return [scene.to_payload() for scene in self.scene_store.list(identity.household_id)]
+
     def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
         if not providers:
             return None
@@ -1545,6 +1576,18 @@ class DemoCommandGateway:
         del identity, payload
         self.events.publish("capabilities.changed")
         return {"status": "UNAVAILABLE", "operation": f"backup.{operation}"}
+
+    def scene_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        self.events.publish("capabilities.changed")
+        return {"status": "SUCCEEDED", "operation": f"scene.{operation}", "result": payload}
+
+    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+        del identity
+        self.events.publish("home.invalidated")
+        return {"status": "UNAVAILABLE", "operation": "scene.apply", "scene_id": scene_id}
 
 
 class JournalConversationIngress:
@@ -1894,6 +1937,7 @@ def create_app(
                 alert_policy_store=core_runtime.alert_policy_store,
                 notification_route_store=core_runtime.notification_route_store,
                 backup_coordinator=core_runtime.backup_coordinator,
+                scene_store=core_runtime.scene_store,
             )
         svc = UIService(
             config=config,
@@ -2116,6 +2160,39 @@ def create_app(
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_UI_PREFERENCES") from exc
+
+    @app.get("/api/v1/scenes")
+    async def scenes(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.scenes(current_identity(request))}
+
+    @app.post("/api/v1/scenes")
+    async def save_scene(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        operation = "update" if body.payload.get("scene_id") else "create"
+        try:
+            return svc.commands.scene_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.post("/api/v1/scenes/{scene_id}/apply")
+    async def apply_scene(
+        scene_id: str,
+        request: Request,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.apply_scene(svc.identity_from_session(session), scene_id)
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/api/v1/calendar")
     async def calendar(request: Request) -> dict[str, Any]:

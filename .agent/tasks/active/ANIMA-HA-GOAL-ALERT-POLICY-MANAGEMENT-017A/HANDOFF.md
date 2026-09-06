@@ -117,3 +117,17 @@ The hosted workflow passed the existing Phase 0-14/SENTRY suites, backup
 management validation, ARM64 image/runtime checks, Docker UI validation, H5
 evidence targets, and public-safety scan. The implementation does not claim
 restore through the browser or current physical state after restore.
+
+## Declarative scenes follow-on
+
+Implementation adds a household-scoped, versioned `anima.scenes` capability
+and authenticated Scenes UI. Owners can compose up to 16 commissioned power
+resources into a named preset and apply it through the existing per-device
+Core control path. Every step remains behind PluginManager, OPA, Phase 9
+locking, fresh observation, and verification; a later failure is surfaced as
+`PARTIAL` and stops the sequence.
+
+Static and frontend focused checks pass locally. The local SFTP checkout lacks
+a usable Python pytest interpreter, so no local pytest claim is made. Hosted
+exact-head qualification is required before Architect review. No raw HA
+automation editor, provider credential, or Phase 15 behavior was added.

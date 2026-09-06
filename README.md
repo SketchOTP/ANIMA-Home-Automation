@@ -58,6 +58,7 @@ These screenshots are captured from the tested local application with synthetic 
 - ANIMA-owned household topology and device onboarding from the local UI: create or rename rooms/zones in Spaces, open a bounded ZHA pairing window, refresh the commissioned HA registry, place a discovered device in an ANIMA room, and expose only its normalized semantic capabilities. Power controls continue through the Phase 5/4/9 path.
 - ANIMA-owned commissioned-device lifecycle from the same Devices view: rename a device, move it between existing rooms/zones, or retire it from ANIMA’s canonical model. These mutations preserve the Home Assistant registry and remain household-scoped, policy-gated Graph operations.
 - ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
+- ANIMA-owned declarative scenes from the Scenes view: compose a bounded preset from commissioned power resources, save it with optimistic versioning, and apply each step through the same verified policy/action path as a direct control.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Server-owned PostgreSQL backup snapshots and integrity validation are available from the authenticated Backups view. Archive paths, credentials, household scope, and restore authority remain inside Core.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly. Owners can configure typed SenseGuard alert policies and the server-owned notification route from ANIMA.
@@ -70,8 +71,8 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 ## Evidence
 
 Phases 0–14 are Architect accepted. Current work is goal-wide owner-facing
-management-plane convergence, currently covering typed SenseGuard alert-policy
-and commissioned-device lifecycle management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
+management-plane convergence, currently covering typed SenseGuard alert-policy,
+commissioned-device lifecycle, backup, notification-route, and scene management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
 guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish
 accepted platform contracts from the current bounded product increment. Phase 15
 remains unauthorized.

@@ -92,6 +92,7 @@ from anima_ha.policy import (
     PostgresPolicyStore,
     RequestOrigin,
 )
+from anima_ha.scenes import SCENES_MANIFEST, PostgresSceneStore, SceneError, SceneNativePlugin
 from anima_ha.senseguard_alerts import (
     SENSEGUARD_ALERT_MANIFEST,
     PostgresSenseGuardAlertPolicyStore,
@@ -195,6 +196,7 @@ class CoreUICommandGateway:
     control_capability_resolver: Callable[[UUID], UUID | None] | None = None
     agent: AgentRuntime | None = None
     home_assistant_adapter: HomeAssistantAdapter | None = None
+    scene_store: PostgresSceneStore | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -250,6 +252,7 @@ class CoreUICommandGateway:
                 "anima.calendar": "calendar.changed",
                 "anima.senseguard-alerts": "alerts.changed",
                 "anima.provider.home-assistant": "home.invalidated",
+                "anima.scenes": "home.invalidated",
             }.get(plugin_prefix, "capabilities.changed")
             self.events.publish(event_name)
         return _safe_result(result)
@@ -322,6 +325,54 @@ class CoreUICommandGateway:
         # Household scope is carried in the trusted InvocationContext.  The
         # browser may identify a backup to inspect, but never its household.
         return self._invoke(identity, BACKUP_MANIFEST.plugin_id, name, payload)
+
+    def scene_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {"create": "create_scene", "update": "update_scene"}
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_SCENE_OPERATION")
+        return self._invoke(identity, SCENES_MANIFEST.plugin_id, name, payload)
+
+    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+        """Apply a preset through the existing verified single-device action path.
+
+        Scenes are deliberately not a raw HA batch service.  Each step is an
+        ordinary Core control with its own policy, lock, fresh observation, and
+        terminal result.  A later non-success therefore stops the sequence and
+        is surfaced as PARTIAL/that governed outcome rather than hidden.
+        """
+        if self.scene_store is None:
+            raise UICommandError("CORE_SCENE_STORE_UNAVAILABLE")
+        try:
+            scene = self.scene_store.get(identity.household_id, UUID(scene_id))
+        except (ValueError, SceneError) as exc:
+            raise UICommandError("SCENE_NOT_FOUND") from exc
+        if not scene.enabled:
+            return {"status": "FAILED", "operation": "scene.apply", "detail": "scene is disabled"}
+        results: list[dict[str, Any]] = []
+        for index, step in enumerate(scene.steps, start=1):
+            result = self.control(
+                identity,
+                str(step.resource_id),
+                {"desired_on": step.desired_on},
+            )
+            results.append({"step": index, "resource_id": str(step.resource_id), **result})
+            if result.get("status") != "SUCCEEDED":
+                status = result.get("status", "UNKNOWN_RESULT")
+                return {
+                    "status": "PARTIAL" if index > 1 else status,
+                    "operation": "scene.apply",
+                    "detail": f"scene stopped at step {index}",
+                    "result": {"scene_id": str(scene.scene_id), "steps": results},
+                }
+        return {
+            "status": "SUCCEEDED",
+            "operation": "scene.apply",
+            "detail": f"applied {len(results)} verified scene step(s)",
+            "result": {"scene_id": str(scene.scene_id), "steps": results},
+        }
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -707,6 +758,7 @@ class CoreRuntime:
     alert_policy_store: PostgresSenseGuardAlertPolicyStore | None = None
     notification_route_store: PostgresNotificationRouteStore | None = None
     backup_coordinator: BackupCoordinator | None = None
+    scene_store: PostgresSceneStore | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -750,6 +802,7 @@ class CoreRuntime:
             control_capability_resolver=resolve_power_capability,
             agent=self.agent,
             home_assistant_adapter=self.home_assistant_adapter,
+            scene_store=self.scene_store,
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -879,6 +932,7 @@ def build_postgres_core(
         database_url,
         os.environ.get("ANIMA_BACKUP_DIR", "/var/lib/anima/backups"),
     )
+    scene_store = PostgresSceneStore(database_url)
 
     def alert_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
         node = graph.get_node(resource_id)
@@ -923,6 +977,27 @@ def build_postgres_core(
     register_and_enable(
         BACKUP_MANIFEST,
         NativeRuntime(BackupNativePlugin(backup_coordinator)),
+        persist_choice=False,
+    )
+
+    def scene_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
+        node = graph.get_node(resource_id)
+        if node is None or node.kind not in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+            return False
+        if not any(
+            resource_id == resource.canonical_id
+            for place in graph.places_in_household(household_id)
+            for resource in graph.resources_in_place(place.canonical_id)
+        ):
+            return False
+        return any(
+            str(capability.metadata.get("capability_type", "")).startswith("power.")
+            for capability in graph.resource_capabilities(resource_id)
+        )
+
+    register_and_enable(
+        SCENES_MANIFEST,
+        NativeRuntime(SceneNativePlugin(scene_store, scene_resource_is_commissioned)),
         persist_choice=False,
     )
 
@@ -1062,6 +1137,7 @@ def build_postgres_core(
         alert_policy_store,
         notification_route_store,
         backup_coordinator,
+        scene_store,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()

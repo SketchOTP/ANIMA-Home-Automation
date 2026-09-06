@@ -178,6 +178,28 @@ Hosted qualification passed on the exact implementation head:
   (`phase12-h5-evidence-240f29563e9a6326eb004bef367f3bd715624464`).
 - Artifact digest: `sha256:4c30e740e4f4995f4959adbb7e1ebddc4269c7b2b7632edc461d9a41034d8a34`.
 
+## Declarative scene-management follow-on
+
+The current goal increment adds the first reusable Scenes workflow. The
+`anima.scenes` capability stores household-scoped, versioned definitions with
+at most 16 canonical commissioned power resources. Scene resources are
+validated by Core against the current Graph; the caller cannot provide a Home
+Assistant entity, service, host, or credential.
+
+The authenticated Scenes view supports create, edit, and apply. Applying a
+scene calls the existing Core `control()` path once per step, so every step is
+independently policy-gated, resource-locked, refreshed from current Truth, and
+verified by Phase 9. A failed later step returns bounded `PARTIAL` evidence and
+stops rather than claiming an atomic batch success.
+
+Implementation is represented by `src/anima_ha/scenes.py`, migration
+`0024_scenes.sql`, the `/api/v1/scenes` routes, and the React Scenes view.
+Deterministic coverage proves household scope, commissioned-resource
+validation, duplicate-resource rejection, and stale-version rejection.
+This follow-on is complete pending hosted qualification and Architect review;
+raw Home Assistant automation editing and advanced non-power scenes remain
+outside this slice. Phase 15 remains unauthorized.
+
 The hosted run passed deterministic validation, the existing Phase 0-14 and
 SENTRY checks, ARM64/container validation, H5 targets, and the public-safety
 scan. This remains implementation evidence pending independent Architect

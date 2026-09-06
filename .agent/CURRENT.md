@@ -25,6 +25,22 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing scene-management increment - 2026-09-06
+
+- The bounded Scenes view now lets the owner create and edit household-scoped,
+  versioned presets containing commissioned power resources and `desired_on`
+  states. Applying a scene runs each step through the existing Core control
+  path, including PluginManager, OPA, Phase 9 locking, fresh observation, and
+  verification; partial application stops and is reported honestly.
+- PostgreSQL migration `0024_scenes.sql` and `anima.scenes` keep definitions
+  declarative. No raw Home Assistant entity, service, credential, arbitrary
+  automation payload, or second execution path was added.
+- Focused compileall, Ruff, TypeScript, Vite build, and diff checks pass. The
+  local Python pytest interpreter is unavailable in this SFTP checkout; full
+  regression and container qualification remain hosted-CI evidence.
+- This is implementation evidence pending independent Architect acceptance.
+  Phase 15 remains unauthorized.
+
 ## Latest owner-facing recovery increment - 2026-09-06
 
 - The bounded management-plane slice adds Core-owned PostgreSQL backup

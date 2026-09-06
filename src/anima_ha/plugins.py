@@ -307,6 +307,8 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
         "anima.calendar.cancel_event",
         "anima.provider.home-assistant.permit_zigbee_join",
         "anima.provider.home-assistant.commission_device",
+        "anima.scenes.create_scene",
+        "anima.scenes.update_scene",
     }
 )
 
@@ -325,6 +327,7 @@ def _core_execution_boundary(
                 "builtin:anima_ha.tasks",
                 "builtin:anima_ha.calendar",
                 "builtin:anima_ha.home_assistant",
+                "builtin:anima_ha.scenes",
             }
         ):
             return ExecutionBoundary.POLICY_GATED_INTERNAL
