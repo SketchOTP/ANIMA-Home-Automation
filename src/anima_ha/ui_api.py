@@ -7,10 +7,12 @@ database rows, policy internals, or raw event payloads.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 import secrets
 import time
@@ -23,7 +25,7 @@ from typing import Any, Protocol
 from uuid import UUID, uuid4
 
 import psycopg
-from aiohttp import ClientSession, ClientTimeout, WSMsgType
+from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType
 from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,6 +33,12 @@ from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
+from anima_ha.ha_connection_setup import (
+    HAConnectionStore,
+    HASetupError,
+    VerifiedHAOwner,
+    commission_owner,
+)
 from anima_ha.live_results import PostgresSentryLiveResultBus
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOrigin
 from anima_ha.preferences import preference_payloads
@@ -71,6 +79,12 @@ def _now() -> datetime:
 
 def _hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _session_csrf(secret_hash: str) -> str:
+    # Stable across tabs/reloads, distinct per authenticated session. No raw
+    # session cookie is exposed and Origin validation remains mandatory.
+    return hmac.new(secret_hash.encode(), b"anima-ui-csrf-v1", hashlib.sha256).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -245,10 +259,11 @@ class UIIdentity:
     principal_id: UUID
     ha_user_id: str
     evidence: IdentityEvidence
+    display_name: str = "Household member"
 
     def to_payload(self) -> dict[str, Any]:
         return {
-            "display_name": "Household member",
+            "display_name": self.display_name,
             "assurance": Assurance.AUTHENTICATED.value,
             "evidence": EvidenceType.AUTHENTICATED_SESSION.value,
         }
@@ -1864,7 +1879,10 @@ class JournalConversationIngress:
         if self.events:
             self.events.publish("conversation.completed")
         return {
-            "request_id": request_id,
+            # A queued intelligence request has a different identity from the
+            # journal event. The browser polls that durable request, while the
+            # event/correlation identity remains in the pipeline trace.
+            "request_id": str(result.get("request_id", request_id)),
             "episode_id": str(result.get("episode_id", uuid4())),
             "response": response,
             "disposition": str(result.get("disposition", "RESPONSE_ONLY")),
@@ -1948,6 +1966,95 @@ class HomeAssistantOAuth:
                     raise UIAuthError("HOME_ASSISTANT_USER_ID_MISSING")
                 return user_id
 
+    async def connect_owner(self, code: str, store: HAConnectionStore) -> VerifiedHAOwner:
+        """Exchange owner consent for a server-held dedicated integration credential."""
+        if not self.config.ha_base_url or not self.config.ha_client_id:
+            raise UIAuthError("HOME_ASSISTANT_OAUTH_UNAVAILABLE")
+        base = self.config.ha_base_url.rstrip("/")
+        async with ClientSession(timeout=ClientTimeout(total=30)) as session:
+            async with session.post(
+                base + "/auth/token",
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "client_id": self.config.ha_client_id,
+                },
+                allow_redirects=False,
+            ) as response:
+                if response.status != 200:
+                    raise UIAuthError("HOME_ASSISTANT_OAUTH_EXCHANGE_FAILED")
+                tokens = await response.json()
+            token = tokens.get("access_token")
+            if not isinstance(token, str) or not token:
+                raise UIAuthError("HOME_ASSISTANT_OAUTH_TOKEN_MISSING")
+            try:
+                async with session.ws_connect(base + "/api/websocket", receive_timeout=10) as ws:
+                    if (await ws.receive_json()).get("type") != "auth_required":
+                        raise UIAuthError("HOME_ASSISTANT_AUTH_HANDSHAKE_FAILED")
+                    await ws.send_json({"type": "auth", "access_token": token})
+                    if (await ws.receive_json()).get("type") != "auth_ok":
+                        raise UIAuthError("HOME_ASSISTANT_AUTH_REJECTED")
+
+                    async def command(number: int, operation: str, **fields: Any) -> Any:
+                        await ws.send_json({"id": number, "type": operation, **fields})
+                        result = await ws.receive_json()
+                        if result.get("id") != number or result.get("success") is not True:
+                            raise UIAuthError("HOME_ASSISTANT_SETUP_REQUEST_FAILED")
+                        return result.get("result")
+
+                    user = await command(1, "auth/current_user")
+                    if not isinstance(user, dict) or user.get("is_owner") is not True:
+                        raise UIAuthError("HOME_ASSISTANT_OWNER_REQUIRED")
+                    user_id = user.get("id")
+                    if not isinstance(user_id, str) or not user_id:
+                        raise UIAuthError("HOME_ASSISTANT_USER_ID_MISSING")
+                    existing = store.read()
+                    if existing is not None and (
+                        existing["user_id"] != user_id
+                        or existing["base_url"] != base
+                        or existing["instance_id"] != os.environ.get("ANIMA_HA_INSTANCE_ID", "")
+                    ):
+                        raise UIAuthError("HA_CONNECTION_ALREADY_COMMISSIONED")
+                    config = await command(2, "get_config")
+                    if not isinstance(config, dict):
+                        raise UIAuthError("HOME_ASSISTANT_SETUP_REQUEST_FAILED")
+                    credential = (
+                        existing["token"]
+                        if existing
+                        else await command(
+                            3,
+                            "auth/long_lived_access_token",
+                            client_name="ANIMA household connection",
+                            lifespan=365,
+                        )
+                    )
+                    if not isinstance(credential, str) or not 32 <= len(credential) <= 8192:
+                        raise UIAuthError("HOME_ASSISTANT_OAUTH_TOKEN_MISSING")
+                    return VerifiedHAOwner(
+                        user_id,
+                        str(user.get("name", "Owner"))[:120],
+                        str(config.get("location_name", "My home"))[:120],
+                        str(config.get("time_zone", "UTC"))[:100],
+                        credential,
+                    )
+            finally:
+                # Dispose of this short-lived OAuth grant; the dedicated integration
+                # credential is the only credential retained by ANIMA.
+                refresh_token = tokens.get("refresh_token")
+                if isinstance(refresh_token, str) and refresh_token:
+                    try:
+                        async with session.post(
+                            base + "/auth/token",
+                            data={
+                                "action": "revoke",
+                                "token": refresh_token,
+                            },
+                            allow_redirects=False,
+                        ) as revoked:
+                            await revoked.read()
+                    except (ClientError, OSError, TimeoutError):
+                        pass
+
 
 class UIService:
     def __init__(
@@ -1994,6 +2101,101 @@ class UIService:
         )
         self.oauth = HomeAssistantOAuth(self.config)
         self._oauth_states: dict[str, tuple[str, datetime]] = {}
+        self._oauth_connection_states: set[str] = set()
+        self._connection_lock = asyncio.Lock()
+        self._owner_boundary: Any | None = None
+        self.owner_boundary_status = "NOT_CONFIGURED"
+
+    def start_owner_boundary(self) -> None:
+        directory = os.environ.get("ANIMA_OWNER_BOUNDARY_DIR", "")
+        if not directory or self._owner_boundary is not None or self.core_runtime is None:
+            return
+        from anima_ha.ha_connection_setup import configured_connection
+        from anima_ha.owner_boundary import OwnerBoundary
+
+        try:
+            connection = configured_connection()
+            if connection is None:
+                self.owner_boundary_status = "HA_SETUP_REQUIRED"
+                return
+            group = os.environ.get("ANIMA_OWNER_BOUNDARY_GROUP", "")
+            self._owner_boundary = OwnerBoundary(
+                self.core_runtime,
+                UUID(connection["household_id"]),
+                os.environ["ANIMA_DATABASE_URL"],
+                Path(directory),
+                socket_group=int(group) if group else None,
+            )
+            self.owner_boundary_status = "READY"
+        except Exception as exc:
+            # A provider-boundary outage must not take away direct household UI.
+            self.owner_boundary_status = "UNAVAILABLE"
+            logging.getLogger(__name__).warning(
+                "Owner provider boundary unavailable: %s", type(exc).__name__
+            )
+
+    def close_owner_boundary(self) -> None:
+        if self._owner_boundary is not None:
+            self._owner_boundary.close()
+            self._owner_boundary = None
+
+    def connection_status(self, identity: UIIdentity | None = None) -> dict[str, Any]:
+        adapter = getattr(self.core_runtime, "home_assistant_adapter", None)
+        configured = adapter is not None
+        state = adapter.status.health.value if adapter is not None else "SETUP_REQUIRED"
+        source = "uncommissioned"
+        if identity is not None and self.core_runtime is not None:
+            household = self.core_runtime.graph.get_node(identity.household_id)
+            source = (
+                str(household.metadata.get("source", "qualification_or_manual"))
+                if household
+                else "unknown"
+            )
+        return {
+            "configured": configured,
+            "connected": state == "ONLINE",
+            "state": state,
+            "can_connect": bool(
+                os.environ.get("ANIMA_HA_CONNECTION_FILE") and self.config.ha_base_url
+            ),
+            "setup_required": not configured,
+            "household_source": source,
+            "assistant_service": self.owner_boundary_status,
+        }
+
+    def rebuild_connected_core(self) -> None:
+        """Recompose after first owner setup, preserving sessions and UI invalidations."""
+        from anima_ha.ui_runtime import build_postgres_core
+
+        database_url = os.environ.get("ANIMA_DATABASE_URL", "")
+        if not database_url:
+            raise UIAuthError("HOUSEHOLD_DATABASE_UNAVAILABLE")
+        if getattr(self.core_runtime, "home_assistant_adapter", None) is not None:
+            return
+        core = build_postgres_core(database_url, opa_url=self.config.opa_url)
+        self.core_runtime = core
+        self.identity_resolver = core.identity_resolver
+        self.commands = core.commands(self.events)
+        self.conversation = JournalConversationIngress(
+            event_sink=core.journal,
+            events=self.events,
+            pipeline=core.conversation(self.events),
+            fallback_enabled=False,
+        )
+        self.read_model = PostgresHouseholdReadModel(
+            database_url,
+            graph=core.graph,
+            truth=core.truth.projection,
+            plugins=core.plugins,
+            alert_policy_store=core.alert_policy_store,
+            notification_route_store=core.notification_route_store,
+            backup_coordinator=core.backup_coordinator,
+            scene_store=core.scene_store,
+            automation_store=core.automation_store,
+            memory_service=core.memory_service,
+        )
+        self.events.publish("home.invalidated")
+        self.start_owner_boundary()
 
     def conversation_result(self, identity: UIIdentity, request_id: str) -> dict[str, Any]:
         """Return one household-scoped SENTRY result without durable text."""
@@ -2085,14 +2287,21 @@ class UIService:
             strength=70,
             provenance="ha_oauth_user_lookup",
         )
-        return UIIdentity(household_id, principal_id, ha_user_id, evidence)
+        node = self.core_runtime.graph.get_node(principal_id) if self.core_runtime else None
+        return UIIdentity(
+            household_id,
+            principal_id,
+            ha_user_id,
+            evidence,
+            str(node.name)[:120] if node else "Household member",
+        )
 
     def issue_session(
         self, identity: UIIdentity, device_label: str | None = None
     ) -> tuple[str, str]:
         session_id = uuid4()
         secret = secrets.token_urlsafe(32)
-        csrf = secrets.token_urlsafe(32)
+        csrf = _session_csrf(_hash(secret))
         now = _now()
         record = SessionRecord(
             session_id,
@@ -2163,7 +2372,14 @@ class UIService:
                 strength=70,
                 provenance="commissioned_graph_identity",
             )
-            return UIIdentity(household_id, principal_id, ha_user_id or "", evidence)
+            node = self.core_runtime.graph.get_node(principal_id) if self.core_runtime else None
+            return UIIdentity(
+                household_id,
+                principal_id,
+                ha_user_id or "",
+                evidence,
+                str(node.name)[:120] if node else "Household member",
+            )
         for ha_user_id, value in self.ha_user_map.items():
             if value == (record.household_id, record.principal_id):
                 return self.map_ha_user(ha_user_id)
@@ -2228,6 +2444,8 @@ def create_app(
         svc = service
     app = FastAPI(title="ANIMA local interface", version=UI_VERSION, docs_url=None, redoc_url=None)
     app.state.ui_service = svc
+    app.router.add_event_handler("startup", svc.start_owner_boundary)
+    app.router.add_event_handler("shutdown", svc.close_owner_boundary)
     if svc.sentry_results is not None:
         app.router.add_event_handler("shutdown", svc.sentry_results.close)
 
@@ -2269,7 +2487,10 @@ def create_app(
         expected_origin = f"{request.url.scheme}://{request.headers.get('host', '')}"
         if not origin or origin != expected_origin:
             raise HTTPException(status_code=403, detail="ORIGIN_REJECTED")
-        if not x_anima_csrf or not hmac.compare_digest(session.csrf_hash, _hash(x_anima_csrf)):
+        if not x_anima_csrf or not (
+            hmac.compare_digest(_session_csrf(session.secret_hash), x_anima_csrf)
+            or hmac.compare_digest(session.csrf_hash, _hash(x_anima_csrf))
+        ):
             raise HTTPException(status_code=403, detail="CSRF_REJECTED")
 
     @app.get("/healthz")
@@ -2277,8 +2498,12 @@ def create_app(
         return {"status": "ok", "service": "anima-ui", "version": UI_VERSION}
 
     @app.get("/auth/login")
-    async def login() -> Response:
+    async def login(connect: bool = False) -> Response:
         state = svc.create_oauth_state()
+        if connect:
+            if not os.environ.get("ANIMA_HA_CONNECTION_FILE") or svc.config.test_auth_enabled:
+                raise HTTPException(status_code=503, detail="HA_OWNER_SETUP_UNAVAILABLE")
+            svc._oauth_connection_states.add(state)
         nonce = svc.oauth_nonce(state)
         if svc.config.test_auth_enabled:
             response = RedirectResponse(f"/auth/callback?code=anima-test-code&state={state}")
@@ -2311,6 +2536,8 @@ def create_app(
 
     @app.get("/auth/callback")
     async def callback(request: Request, code: str, state: str) -> Response:
+        connect = state in svc._oauth_connection_states
+        svc._oauth_connection_states.discard(state)
         if not svc.consume_oauth_state(state, request.cookies.get(UI_OAUTH_NONCE_COOKIE)):
             raise HTTPException(status_code=400, detail="OAUTH_STATE_REJECTED")
         if svc.config.test_auth_enabled and code == "anima-test-code":
@@ -2324,9 +2551,26 @@ def create_app(
             response.headers["X-Anima-CSRF"] = csrf
             return response
         try:
-            ha_user_id = await svc.oauth.resolve_user_id(code)
+            if connect:
+                async with svc._connection_lock:
+                    store = HAConnectionStore(Path(os.environ["ANIMA_HA_CONNECTION_FILE"]))
+                    owner = await svc.oauth.connect_owner(code, store)
+                    if svc.core_runtime is None:
+                        raise UIAuthError("HOUSEHOLD_DATABASE_UNAVAILABLE")
+                    await asyncio.to_thread(
+                        commission_owner,
+                        svc.core_runtime.graph,
+                        store,
+                        owner,
+                        instance_id=UUID(os.environ["ANIMA_HA_INSTANCE_ID"]),
+                        base_url=svc.config.ha_base_url or "",
+                    )
+                    await asyncio.to_thread(svc.rebuild_connected_core)
+                    ha_user_id = owner.user_id
+            else:
+                ha_user_id = await svc.oauth.resolve_user_id(code)
             identity = svc.map_ha_user(ha_user_id)
-        except UIAuthError as exc:
+        except (UIAuthError, HASetupError) as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
         cookie, csrf = svc.issue_session(identity, "browser")
         response = RedirectResponse("/")
@@ -2352,24 +2596,19 @@ def create_app(
     async def bootstrap(request: Request) -> dict[str, Any]:
         session = current_session(request)
         identity = svc.identity_from_session(session)
-        csrf = secrets.token_urlsafe(32)
-        svc.sessions.save(
-            SessionRecord(
-                session.session_id,
-                session.secret_hash,
-                session.household_id,
-                session.principal_id,
-                session.created_at,
-                session.last_seen_at,
-                session.expires_at,
-                _hash(csrf),
-                session.device_label,
-                session.revoked_at,
-            )
-        )
+        csrf = _session_csrf(session.secret_hash)
         result = svc.read_model.bootstrap(identity)
         result["csrf_token"] = csrf
         return result
+
+    @app.get("/api/v1/setup/status")
+    async def setup_status() -> dict[str, Any]:
+        connection = svc.connection_status()
+        return {"state": connection["state"], "available": connection["can_connect"]}
+
+    @app.get("/api/v1/connection")
+    async def connection_status(request: Request) -> dict[str, Any]:
+        return svc.connection_status(current_identity(request))
 
     @app.get("/api/v1/home")
     async def home(request: Request) -> dict[str, Any]:
@@ -2812,4 +3051,12 @@ def main() -> None:
     import uvicorn
 
     config = UIConfig.from_environment()
-    uvicorn.run("anima_ha.ui_api:app", host=config.bind_host, port=config.bind_port, reload=False)
+    # Typed Core audit remains enabled. Raw access logs would retain OAuth codes
+    # from callback query strings, which are authentication secrets.
+    uvicorn.run(
+        "anima_ha.ui_api:app",
+        host=config.bind_host,
+        port=config.bind_port,
+        reload=False,
+        access_log=False,
+    )

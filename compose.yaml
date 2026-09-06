@@ -64,6 +64,8 @@ services:
       dockerfile: Dockerfile.ui
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    group_add:
+      - "${ANIMA_OWNER_BOUNDARY_GROUP:-10001}"
     environment:
       ANIMA_ENV: ${ANIMA_ENV:-development}
       ANIMA_DATABASE_URL: postgresql://${ANIMA_DB_USER:-anima}:${ANIMA_DB_PASSWORD:?set ANIMA_DB_PASSWORD in .env}@db:5432/${ANIMA_DB_NAME:-anima}
@@ -81,14 +83,20 @@ services:
       ANIMA_HA_OAUTH_CLIENT_ID: ${ANIMA_HA_OAUTH_CLIENT_ID:-}
       ANIMA_HA_OAUTH_REDIRECT_URI: ${ANIMA_HA_OAUTH_REDIRECT_URI:-}
       ANIMA_HA_INSTANCE_ID: ${ANIMA_HA_INSTANCE_ID:-}
+      ANIMA_HA_EXPECTED_VERSION: ${ANIMA_HA_EXPECTED_VERSION:-2026.8.2}
       ANIMA_HA_PROVIDER_SCOPE: ${ANIMA_HA_PROVIDER_SCOPE:-}
       ANIMA_HA_WEBSOCKET_URL: ${ANIMA_HA_WEBSOCKET_URL:-}
       ANIMA_HA_TOKEN_SECRET_NAME: ${ANIMA_HA_TOKEN_SECRET_NAME:-HA_ACCESS_TOKEN}
+      ANIMA_HA_CONNECTION_FILE: /var/lib/anima/connection/home-assistant.json
+      ANIMA_OWNER_BOUNDARY_DIR: /var/lib/anima/provider-boundary
+      ANIMA_OWNER_BOUNDARY_GROUP: ${ANIMA_OWNER_BOUNDARY_GROUP:-}
       HA_ACCESS_TOKEN: ${HA_ACCESS_TOKEN:-}
     ports:
       - "127.0.0.1:${ANIMA_UI_PORT:-18090}:8090"
     volumes:
       - anima_ha_backup_data:/var/lib/anima/backups
+      - anima_ha_connection_data:/var/lib/anima/connection
+      - ${ANIMA_OWNER_BOUNDARY_HOST_DIR:-anima_ha_provider_data}:/var/lib/anima/provider-boundary
     depends_on:
       db:
         condition: service_healthy
@@ -104,3 +112,5 @@ services:
 volumes:
   anima_ha_postgres_data:
   anima_ha_backup_data:
+  anima_ha_connection_data:
+  anima_ha_provider_data:

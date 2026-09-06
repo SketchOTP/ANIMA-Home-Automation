@@ -50,6 +50,7 @@ from anima_ha.journal import PostgresRealityStore
 from anima_ha.plugins import (
     CORE_VERSION,
     MANIFEST_VERSION,
+    InvocationContext,
     PluginManifest,
     PluginValidationError,
     ProviderExecutionContext,
@@ -1464,6 +1465,16 @@ class HomeAssistantPlugin:
             for item in self.adapter.graph.places_in_household(household_id)
         ):
             raise PluginValidationError("destination is not in the commissioned household")
+
+    def invoke_with_invocation_context(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        timeout: float,
+        invocation_context: InvocationContext,
+    ) -> Any:
+        """Route trusted UI/Core calls through the household management boundary."""
+        return self.invoke_for_household(name, arguments, timeout, invocation_context.household_id)
 
     def invoke_for_household(
         self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID

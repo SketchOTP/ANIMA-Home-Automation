@@ -313,11 +313,30 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
 )
 
 
+_TRUSTED_SPACE_TOOL_SOURCES = {
+    "anima.household-spaces.create_space": "builtin:anima_ha.household_spaces",
+    "anima.household-spaces.rename_space": "builtin:anima_ha.household_spaces",
+    "anima.household-spaces.move_space": "builtin:anima_ha.household_spaces",
+    "anima.household-spaces.remove_space": "builtin:anima_ha.household_spaces",
+}
+
+
 def _core_execution_boundary(
     manifest: PluginManifest, name: str, item: dict[str, Any]
 ) -> ExecutionBoundary:
     """Normalize authority in Core; raw plugin metadata cannot lower it."""
     tool_id = f"{manifest.plugin_id}.{name}"
+    if tool_id in _TRUSTED_SPACE_TOOL_SOURCES:
+        # Graph-only builtins still pass PluginManager and PolicyService. Pair
+        # each exact ID with its source; do not enlarge the older cross-product
+        # allowlist or lower HA/provider/notification execution boundaries.
+        if (
+            manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
+            and manifest.trust_class == TrustClass.TRUSTED_NATIVE
+            and manifest.source == _TRUSTED_SPACE_TOOL_SOURCES[tool_id]
+        ):
+            return ExecutionBoundary.POLICY_GATED_INTERNAL
+        return ExecutionBoundary.COORDINATED_CONSEQUENTIAL
     if tool_id in _TRUSTED_INTERNAL_TOOL_IDS:
         if (
             manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE

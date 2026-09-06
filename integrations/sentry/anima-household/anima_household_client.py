@@ -13,12 +13,153 @@ import socket
 import stat
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+
+_SERVICE_CODES = frozenset(
+    {
+        "NOT_FOUND",
+        "INTELLIGENCE_REQUEST_NOT_FOUND",
+        "INTELLIGENCE_CLAIM_LOST",
+        "TOOL_UNAVAILABLE",
+        "TOOL_NOT_BOUND_TO_REQUEST",
+        "TOOL_BINDING_INCOMPATIBLE",
+        "INVALID_TOOL_ORDINAL",
+        "ACTION_COORDINATOR_UNAVAILABLE",
+        "TRUSTED_ACTION_SPEC_UNAVAILABLE",
+        "CONTEXT_BOUNDARY_UNAVAILABLE",
+        "CONTEXT_TRIGGER_UNAVAILABLE",
+        "CONTEXT_PACKET_UNAVAILABLE",
+        "CONTEXT_HOUSEHOLD_MISMATCH",
+        "INTELLIGENCE_RESULT_CLAIM_LOST",
+        "DIRECT_INTERACTION_CLAIM_FAILED",
+    }
+)
+# Exact literal messages from the service contract, never arbitrary error text.
+_SERVICE_MESSAGES = {
+    "invalid interaction binding": "INVALID_BINDING",
+    "interaction binding expired": "BINDING_EXPIRED",
+    "interaction binding does not match request": "BINDING_MISMATCH",
+    "interaction binding required": "BINDING_REQUIRED",
+    "service authentication failed": "AUTHENTICATION_FAILED",
+    "service principal provider is not allowed": "PROVIDER_NOT_ALLOWED",
+    "service principal is revoked or rotated": "PRINCIPAL_REVOKED",
+    "service principal is not active": "PRINCIPAL_INACTIVE",
+    "service principal household mismatch": "HOUSEHOLD_MISMATCH",
+    "SENTRY provider work is not allowed": "PROVIDER_WORK_NOT_ALLOWED",
+    "request body exceeds limit": "REQUEST_LIMIT",
+    "request body must be an object": "INVALID_REQUEST_OBJECT",
+}
+_TRANSPORT_CODES = frozenset(
+    {
+        "TIMEOUT",
+        "REMOTE_DISCONNECTED",
+        "CONNECTION_REFUSED",
+        "CONNECTION_RESET",
+        "SOCKET_NOT_FOUND",
+        "HTTP_PROTOCOL_ERROR",
+        "OS_ERROR",
+        "TRANSPORT_ERROR",
+        "REDIRECT_REJECTED",
+        "RESPONSE_LIMIT",
+        "INVALID_JSON",
+        "INVALID_RESPONSE",
+        "REQUEST_LIMIT",
+    }
+)
 
 
 class AnimaHouseholdError(RuntimeError):
-    pass
+    def __init__(
+        self,
+        message: str,
+        *,
+        http_status: int | None = None,
+        service_code: str | None = None,
+        transport_code: str | None = None,
+    ):
+        super().__init__(message)
+        self.http_status = http_status
+        self.service_code = service_code
+        self.transport_code = transport_code
+
+    def safe_diagnostics(self) -> dict[str, Any]:
+        fields: dict[str, Any] = {}
+        if type(self.http_status) is int and 100 <= self.http_status <= 599:
+            fields["http_status"] = self.http_status
+        if self.service_code in _SERVICE_CODES | set(_SERVICE_MESSAGES.values()) | {"UNCLASSIFIED"}:
+            fields["service_code"] = self.service_code
+        if self.transport_code in _TRANSPORT_CODES:
+            fields["transport_code"] = self.transport_code
+        return fields
+
+
+def _transport_error(exc: Exception) -> AnimaHouseholdError:
+    # URLError.reason may be a nested exception or a string. Only inspect type.
+    cause = exc.reason if isinstance(exc, URLError) else exc
+    code = next(
+        (
+            label
+            for cls, label in (
+                (TimeoutError, "TIMEOUT"),
+                (http.client.RemoteDisconnected, "REMOTE_DISCONNECTED"),
+                (ConnectionRefusedError, "CONNECTION_REFUSED"),
+                (ConnectionResetError, "CONNECTION_RESET"),
+                (FileNotFoundError, "SOCKET_NOT_FOUND"),
+                (http.client.HTTPException, "HTTP_PROTOCOL_ERROR"),
+                (OSError, "OS_ERROR"),
+            )
+            if isinstance(cause, cls)
+        ),
+        "TRANSPORT_ERROR",
+    )
+    return AnimaHouseholdError("ANIMA transport unavailable", transport_code=code)
+
+
+def _decode_response(raw: bytes, status: int) -> dict[str, Any]:
+    if len(raw) > 64 * 1024:
+        raise AnimaHouseholdError(
+            "ANIMA response exceeds transport limit",
+            http_status=status,
+            transport_code="RESPONSE_LIMIT",
+        )
+    try:
+        value = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise AnimaHouseholdError(
+            "ANIMA service returned invalid JSON",
+            http_status=status,
+            transport_code="INVALID_JSON",
+        ) from None
+    if not isinstance(value, dict):
+        raise AnimaHouseholdError(
+            "ANIMA service returned an invalid response",
+            http_status=status,
+            transport_code="INVALID_RESPONSE",
+        )
+    if status >= 300 or "error" in value:
+        error = value.get("error")
+        code = "UNCLASSIFIED"
+        if isinstance(error, str):
+            code = error if error in _SERVICE_CODES else _SERVICE_MESSAGES.get(error, code)
+        raise AnimaHouseholdError(
+            "ANIMA service rejected request",
+            http_status=status,
+            service_code=code,
+        )
+    return value
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(
+        self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str
+    ) -> None:
+        raise AnimaHouseholdError(
+            "ANIMA service redirects are not allowed",
+            http_status=code,
+            transport_code="REDIRECT_REJECTED",
+        )
 
 
 def _token(path_value: str) -> str:
@@ -56,10 +197,30 @@ class AnimaHouseholdClient:
         self.timeout = timeout
         if not self.endpoint or not self.token_file:
             raise AnimaHouseholdError("ANIMA service endpoint and client token are required")
+        parsed = urlsplit(self.endpoint)
+        if parsed.scheme in {"http", "https"}:
+            if (
+                parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+                or parsed.path not in {"", "/"}
+                or not parsed.hostname
+            ):
+                raise AnimaHouseholdError("ANIMA service endpoint must be an origin")
+            if parsed.scheme == "http" and parsed.hostname not in {"127.0.0.1", "::1", "localhost"}:
+                raise AnimaHouseholdError("plain HTTP requires a loopback endpoint or SSH tunnel")
+        elif parsed.scheme or not Path(self.endpoint).is_absolute():
+            raise AnimaHouseholdError("ANIMA socket path must be absolute")
         self.token = _token(self.token_file)
 
     def call(self, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         body = json.dumps(payload or {}, sort_keys=True, separators=(",", ":")).encode()
+        if len(body) > 64 * 1024:
+            raise AnimaHouseholdError(
+                "ANIMA request exceeds transport limit",
+                transport_code="REQUEST_LIMIT",
+            )
         headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
@@ -70,33 +231,37 @@ class AnimaHouseholdClient:
             url = self.endpoint.rstrip("/") + path
             request = Request(url, data=body, headers=headers, method="POST")
             try:
-                with urlopen(request, timeout=self.timeout) as response:
-                    raw = response.read(64 * 1024)
+                with build_opener(ProxyHandler({}), _NoRedirect()).open(
+                    request, timeout=self.timeout
+                ) as response:
+                    status = response.status
+                    raw = response.read(64 * 1024 + 1)
+            except HTTPError as exc:
+                try:
+                    status = exc.code
+                    raw = exc.read(64 * 1024 + 1)
+                except Exception as read_exc:
+                    raise _transport_error(read_exc) from None
+                finally:
+                    exc.close()
+            except AnimaHouseholdError:
+                raise
             except Exception as exc:
-                raise AnimaHouseholdError("ANIMA service unavailable") from exc
+                raise _transport_error(exc) from None
         else:
             connection = _UnixConnection(self.endpoint, self.timeout)
             try:
                 connection.request("POST", path, body=body, headers=headers)
                 response = connection.getresponse()
-                raw = response.read(64 * 1024)
-                if response.status >= 400:
-                    raise AnimaHouseholdError(f"ANIMA service rejected request: {response.status}")
+                status = response.status
+                raw = response.read(64 * 1024 + 1)
             except AnimaHouseholdError:
                 raise
             except Exception as exc:
-                raise AnimaHouseholdError("ANIMA service unavailable") from exc
+                raise _transport_error(exc) from None
             finally:
                 connection.close()
-        try:
-            value = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise AnimaHouseholdError("ANIMA service returned invalid JSON") from exc
-        if not isinstance(value, dict):
-            raise AnimaHouseholdError("ANIMA service returned an invalid response")
-        if "error" in value:
-            raise AnimaHouseholdError(str(value["error"]))
-        return value
+        return _decode_response(raw, status)
 
     def open_interaction(self, sentry_request_id: str, source_surface: str) -> dict[str, Any]:
         return self.call(

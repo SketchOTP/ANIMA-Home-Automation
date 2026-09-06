@@ -6,6 +6,36 @@ Last updated: 2026-09-06
 
 GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
 
+## Current owner increment — 026A — 2026-09-06
+
+The active request is real owner connection, graphical management across all
+fifteen UI sections, and bounded Codex-assisted household setup. The starting
+head was `11265fb6a9d84c7b4a0cf1d9dae99a570c32d7ed`; its hosted run
+`34063086056` failed a stale frontend authentication-copy assertion. Older
+publication/current-head statements below are historical checkpoints, not the
+026A publication record.
+
+The actual owner is now commissioned separately from sample history, HA 2026.9.0
+is connected under an explicit supported pin, and the graphical console reads
+real inventory. The Codex helper uses only an authenticated household-scoped
+Core endpoint/token, never HA/DB/OPA credentials. A real read request has reached
+Core completion and the live browser response. An initial event/request-ID
+polling defect and the commissioning trusted-context defect were reproduced and
+corrected. The active packet records all remaining deployment checks and limits.
+
+Both real SenseGuards are now assigned to their matching canonical rooms, but
+the upstream HA registry exposes zero sensor entities for them; current physical
+state is therefore unqualified. Room writes also exposed a missing Core-owned
+internal-tool mapping on the SENTRY route; the exact trusted source/ID correction
+preserves policy. The final UI partial-refresh correction prevents an unrelated
+slow section from discarding successful device updates. The installed workstation
+helper is scoped and its failures do not automatically replay requests.
+
+This is not resident SENTRY voice/persona completion, unrestricted HA admin, or
+automatic code-editing authority. Phases 0–14 stay accepted. Owner usability is
+only claimed for actually exercised deployed workflows; synthetic browser and
+isolated-Core tests retain their evidence level. No whole-goal acceptance is made.
+
 ## Latest Architect Gate — Phase 14 accepted - 2026-09-06
 
 - **Disposition:** `ACCEPTED — ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`.

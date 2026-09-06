@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
@@ -8,7 +9,13 @@ from uuid import UUID, uuid4
 import pytest
 
 from anima_ha.events import ObservationState
-from anima_ha.graph import CanonicalNode, NodeKind, ProviderReference, TargetKind
+from anima_ha.graph import (
+    CanonicalNode,
+    NodeKind,
+    ProviderReference,
+    TargetKind,
+    validate_commissioning,
+)
 from anima_ha.home_assistant import (
     HAActionOutcome,
     HAAdapterError,
@@ -24,13 +31,14 @@ from anima_ha.home_assistant import (
     inventory_handle,
 )
 from anima_ha.plugins import (
+    InvocationContext,
     InvocationOutcome,
     NativeRuntime,
     PluginManager,
     PluginValidationError,
     SecretBroker,
 )
-from anima_ha.policy import Assurance, IdentityContext, PolicyService
+from anima_ha.policy import Assurance, IdentityContext, PolicyService, RequestOrigin
 
 NOW = datetime(2026, 8, 29, 18, 0, tzinfo=UTC)
 
@@ -674,6 +682,90 @@ def test_discovered_device_commissions_from_registry_into_canonical_graph(
     assert result["power_capability_count"] == 1
     assert graph.commissioned is not None
     assert len(store.objects) == 3
+
+
+@pytest.mark.parametrize("sparse_current_registry", [False, True])
+@pytest.mark.parametrize("decision", ["ALLOW", "DENY"])
+def test_commission_device_through_trusted_ui_invocation_context(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+    sparse_current_registry: bool,
+    decision: str,
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    graph = CommissioningGraph(str(adapter.config.instance_id), uuid4(), uuid4())
+    adapter.graph = graph  # type: ignore[assignment]
+    discovery = snapshot()
+    if sparse_current_registry:
+        # Synthetic current registry shape: optional names, manufacturer,
+        # model, area, platform and legacy config_entries may all be absent.
+        adapter.config = replace(adapter.config, expected_version="2026.9.0")
+        discovery = replace(
+            discovery,
+            version="2026.9.0",
+            config={"version": "2026.9.0"},
+            devices=({"id": "ha-device", "config_entry_id": "zha-entry"},),
+            entities=({"entity_id": "binary_sensor.presence", "device_id": "ha-device"},),
+            states=(state("binary_sensor.presence", "off"),),
+        )
+    connection = FakeConnection(initial=discovery)
+    manager = PluginManager(secret_broker=SecretBroker({"ANIMA_HA_TOKEN": "fake-token"}))
+    manager.register(
+        home_assistant_manifest(adapter.config),
+        NativeRuntime(HomeAssistantPlugin(adapter, lambda token: connection)),
+        configuration={
+            "instance_id": str(adapter.config.instance_id),
+            "websocket_url": adapter.config.websocket_url,
+        },
+    )
+    manager.enable("anima.provider.home-assistant")
+    identity = authenticated_identity(graph.household_id)
+    handle = inventory_handle(adapter.config.instance_id, "device", "ha-device")
+    try:
+        result = manager.invoke(
+            "anima.provider.home-assistant.commission_device",
+            {
+                "device_handle": handle,
+                "name": "SenseGuard Basement",
+                "place_id": str(graph.place_id),
+            },
+            household_id=graph.household_id,
+            identity=identity,
+            origin=RequestOrigin.DIRECT_USER,
+            policy_service=PolicyService(DecisionEvaluator(decision)),
+            invocation_context=InvocationContext(
+                household_id=graph.household_id,
+                principal_id=identity.principal_id,
+                episode_id=None,
+                tool_request_id=uuid4(),
+                ordinal=1,
+                system_idempotency_key=f"ui:test-commission:{uuid4()}",
+                origin=RequestOrigin.DIRECT_USER,
+            ),
+        )
+        assert connection.calls == []
+        assert connection.data_calls == []
+        if decision == "DENY":
+            assert result.outcome == InvocationOutcome.POLICY_DENIED
+            assert graph.commissioned is None
+            return
+        assert result.outcome == InvocationOutcome.SUCCESS, result.error_class
+        assert result.policy_decision is not None
+        assert result.policy_decision.reason_code == "TEST_ALLOW"
+        assert result.result["device_handle"] == handle
+        assert result.result["entity_count"] == 1
+        assert result.result["power_capability_count"] == (0 if sparse_current_registry else 1)
+        assert graph.commissioned is not None
+        validate_commissioning(graph.commissioned)
+        assert len(graph.commissioned.provider_references) == 2
+        assert len(graph.commissioned.truth_bindings) == 1
+        device_node = next(
+            node for node in graph.commissioned.nodes if node.name == "SenseGuard Basement"
+        )
+        assert device_node.kind == (
+            NodeKind.SENSOR if sparse_current_registry else NodeKind.RESOURCE
+        )
+    finally:
+        manager.disable("anima.provider.home-assistant")
 
 
 def test_commissioned_device_lifecycle_stays_household_scoped(

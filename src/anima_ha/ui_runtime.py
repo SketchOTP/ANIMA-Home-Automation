@@ -998,6 +998,14 @@ class PostgresCommissionedIdentityResolver:
         return role.strip() if isinstance(role, str) and role.strip() else None
 
 
+def owner_ha_version() -> str:
+    """Explicit deployment pin; discovery still rejects any other version."""
+    version = os.environ.get("ANIMA_HA_EXPECTED_VERSION", "2026.8.2").strip()
+    if version not in {"2026.8.2", "2026.9.0"}:
+        raise ValueError("ANIMA_HA_EXPECTED_VERSION is not a qualified target")
+    return version
+
+
 def _environment_secrets() -> dict[str, str]:
     """Read declared secret references into the in-process broker only."""
     names = (
@@ -1010,7 +1018,19 @@ def _environment_secrets() -> dict[str, str]:
         "WALMART_PRIVATE_KEY_PATH",
         "BEST_BUY_API_KEY",
     )
-    return {name: os.environ[name] for name in names if os.environ.get(name)}
+    values = {name: os.environ[name] for name in names if os.environ.get(name)}
+    from anima_ha.ha_connection_setup import HASetupError, configured_connection
+
+    connection = configured_connection()
+    if connection is not None:
+        if connection["instance_id"] != os.environ.get("ANIMA_HA_INSTANCE_ID", "") or connection[
+            "base_url"
+        ] != os.environ.get("ANIMA_HA_BASE_URL", "").rstrip("/"):
+            raise HASetupError("HA_CONNECTION_CONFIGURATION_MISMATCH")
+        values[os.environ.get("ANIMA_HA_TOKEN_SECRET_NAME", "HA_ACCESS_TOKEN")] = connection[
+            "token"
+        ]
+    return values
 
 
 def build_postgres_core(
@@ -1197,6 +1217,7 @@ def build_postgres_core(
             instance_id,
             websocket_url,
             token_secret_name,
+            expected_version=owner_ha_version(),
             ssl=websocket_url.lower().startswith("wss://"),
         )
         ha_adapter = HomeAssistantAdapter(ha_config, truth, graph, PostgresHAStore(database_url))
@@ -1299,6 +1320,12 @@ def build_postgres_core(
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()
         or os.environ.get("ANIMA_SENTRY_HOUSEHOLD_ID", "").strip()
     )
+    if not household_value:
+        from anima_ha.ha_connection_setup import configured_connection
+
+        owner_connection = configured_connection()
+        if owner_connection is not None:
+            household_value = str(owner_connection["household_id"])
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
 

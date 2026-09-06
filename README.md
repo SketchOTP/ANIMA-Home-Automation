@@ -6,7 +6,7 @@ ANIMA HA is the local-first household control plane for a connected Home Assista
 
 ## Why ANIMA is different
 
-ANIMA treats cognition as a governed loop rather than a chat box. User and provider events enter an append-only journal, Attention decides whether reasoning is warranted, the Context Broker assembles a sparse provenance-rich packet, and Luna runs one bounded episode. Every mutation crosses the Tool Gateway and OPA policy boundary. Consequential household actions additionally use latest-state preconditions, PostgreSQL coordination, idempotency, and observed verification.
+ANIMA treats cognition as a governed loop rather than a chat box. User and provider events enter an append-only journal, Attention decides whether reasoning is warranted, and the Context Broker assembles a sparse provenance-rich packet for the selected SENTRY provider. Every mutation crosses the Tool Gateway and OPA policy boundary. Consequential household actions additionally use latest-state preconditions, PostgreSQL coordination, idempotency, and observed verification. Embedded AgentRuntime is a test/development provider, never an automatic production fallback.
 
 This separation makes the important claims inspectable: an LLM proposal is not authorization, an external result is not Truth, and a connector acknowledgement is not physical success.
 
@@ -19,14 +19,18 @@ flowchart TD
     J --> G[Household Graph]
     J --> A[Attention Layer]
     A --> C[Context Broker]
-    C --> L[Luna AgentRuntime]
-    L --> TG[Phase 5 Tool Gateway]
+    C --> IR[Durable intelligence request]
+    IR --> SB[Authenticated SENTRY client boundary]
+    SB --> L[SENTRY / bounded Codex household worker]
+    L -->|request-bound semantic operation| SB
+    SB --> TG[Phase 5 Tool Gateway]
     TG --> P[Phase 4 OPA policy]
     P --> X{Execution boundary}
     X -->|read or internal policy-gated| S[Tasks / Calendar / external reads]
     X -->|coordinated consequential| AC[Phase 9 Action Coordinator]
     AC --> HA[Home Assistant / verified providers]
     UI[Custom ANIMA UI] -->|conversation and semantic commands| J
+    UI -->|direct semantic command| TG
     UI -->|read models and invalidations| RM[ANIMA read models]
     J --> RM
 ```
@@ -51,6 +55,9 @@ These screenshots are captured from the tested local application with synthetic 
 
 ## What works today
 
+- A responsive graphical management console across all fifteen sections: live counters, state bars, icon navigation, device filters, switches, versioned forms, and explicit unavailable/unknown states. Charts use returned observations, not invented history.
+- Owner-authorized connection commissioning from the UI, with a private server-side HA credential volume, a distinct real household, persistent sessions, and no sample household promoted into owner authority. Multi-tab CSRF remains stable within one session.
+- Optional ANIMA-owned Unix service beside the UI shares the existing commissioned Core. The workstation Codex helper receives only its household-scoped client credential and endpoint; supported operations remain bounded by ANIMA's catalogue and policy. See [owner setup and current limits](docs/OWNER-VISUAL-CONSOLE-026A.md) and [worker runbook](docs/OWNER-SENTRY-RUNTIME.md).
 - FastAPI/Uvicorn local interface with React, TypeScript, and Vite.
 - Home Assistant OAuth boundary, exact principal mapping, hashed server sessions, CSRF/origin protection, and same-origin browser policy.
 - Configured conversation composition into Attention, Context Broker, and the selected intelligence provider; task and local-calendar mutations use the Phase 5/4 policy path.

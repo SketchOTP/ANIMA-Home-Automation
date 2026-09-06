@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import UTC, datetime, timedelta
+from typing import Any
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -28,6 +30,36 @@ def authenticated_client() -> tuple[TestClient, str, UIService]:
     assert callback.status_code == 307
     csrf = callback.headers["x-anima-csrf"]
     return client, csrf, service
+
+
+def test_queued_provider_request_id_is_not_overwritten_by_journal_event() -> None:
+    client, csrf, service = authenticated_client()
+    intelligence_id = str(uuid4())
+
+    class QueuedPipeline:
+        def run(self, identity: Any, event: Any) -> dict[str, Any]:
+            del identity
+            return {
+                "request_id": intelligence_id,
+                "response": "Queued for the provider",
+                "disposition": "QUEUED_FOR_SENTRY",
+                "trace": {"event_id": event.event_id, "correlation_id": event.correlation_id},
+            }
+
+    ingress = JournalConversationIngress(pipeline=QueuedPipeline(), fallback_enabled=False)
+    service.conversation = ingress
+    response = client.post(
+        "/api/v1/conversation",
+        json={"text": "Read the current household state"},
+        headers={"Origin": "http://testserver", "X-Anima-CSRF": csrf},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    event = ingress.events_seen[0]
+    assert body["request_id"] == intelligence_id
+    assert body["request_id"] != event.event_id
+    assert body["trace"]["event_id"] == event.event_id
+    assert body["trace"]["correlation_id"] == event.correlation_id
 
 
 class DeviceCommandStub:
@@ -216,7 +248,7 @@ def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:
     refreshed_csrf = bootstrap.json()["csrf_token"]
     record = next(iter(service.sessions.records.values()))  # type: ignore[attr-defined]
     assert record.secret_hash != client.cookies.get("anima_session").split(".", 1)[1]  # type: ignore[union-attr]
-    assert csrf != refreshed_csrf
+    assert csrf == refreshed_csrf  # Multiple tabs share one stable session-bound token.
     assert client.get("/auth/callback?code=anima-test-code&state=used").status_code == 400
 
 

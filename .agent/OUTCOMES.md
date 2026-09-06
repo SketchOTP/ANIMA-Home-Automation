@@ -1,5 +1,26 @@
 # Outcome Ledger
 
+## ANIMA-HA-OWNER-CONNECTION-VISUAL-CONSOLE-026A — owner runtime increment
+
+- Date: 2026-09-06
+- Status: `IMPLEMENTED AND DEPLOYED — BOUNDED OWNER EVIDENCE; FULL GOAL INCOMPLETE`
+- Actual HA owner connection, distinct household, eight discovered devices,
+  four UI-created rooms and two SenseGuard room assignments were observed.
+- Fifteen sections received graphical navigation, icons, status cards, filters,
+  compact forms, toggles and honest measured/unknown state. Synthetic portfolio
+  screenshots are separate from private owner runtime evidence.
+- One real UI → Codex → ANIMA read → browser response passed. Failed room
+  requests remained UNKNOWN_RESULT and were not replayed; their missing trusted
+  internal-tool mapping was reproduced and corrected with policy regression.
+- User services install the client-only helper and private SSH transports
+  outside protected SENTRY. No HA/DB/OPA or Codex login credential is transferred
+  into the helper. Resident SENTRY voice/persona is not claimed.
+- Current upstream ZHA registry absence prevents usable SenseGuard state despite
+  successful room commissioning. Agent support is narrower than UI management;
+  unsupported management execution profiles remain explicit limitations.
+- Exact hosted publication is reported in the active packet/Notion handoff.
+  Prior CI `34063086056` failed and remains historical negative evidence.
+
 ## ANIMA-HA-GOAL-DEVICE-OBSERVABILITY-023A — owner-facing device increment
 
 - Date: 2026-09-06

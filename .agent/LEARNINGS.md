@@ -2,6 +2,22 @@
 
 Temporary observations do not belong here. Add only findings likely to remain useful across future tasks.
 
+## Owner deployment and graphical console — 026A
+
+- A green fixture catalogue is not owner commissioning. Keep sample topology
+  separate, verify the real HA owner at the server, and test the browser against
+  the actual discovered inventory before claiming a connected household.
+- Preserve journal event IDs and queued intelligence request IDs separately.
+  Polling a journal ID as a provider request can hide a successfully completed
+  model turn behind an apparent provider outage.
+- Trusted native management tools need the same invocation-context routing from
+  UI and external intelligence. Device commissioning must not fall through to
+  the power-control argument handler.
+- A discovered or commissioned device is not evidence of functioning sensor
+  entities. Preserve unknown state when the upstream registry exposes none.
+- Preserve negative live results and inspect current state before a new attempt.
+  An ambiguous provider turn must not be automatically replayed as a retry.
+
 ---
 
 ## ANIMA-HA-P0-RUNTIME-BASELINE-002

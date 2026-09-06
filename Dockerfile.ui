@@ -17,7 +17,8 @@ RUN pip install --no-cache-dir .
 COPY policy/phase4 /usr/local/lib/python3.12/policy/phase4
 COPY --from=ui-build /build/ui/dist ./ui/dist
 RUN useradd --create-home --uid 10001 anima \
-    && mkdir -p /var/lib/anima/backups \
+    && mkdir -p /var/lib/anima/backups /var/lib/anima/connection /var/lib/anima/provider-boundary \
+    && chmod 700 /var/lib/anima/connection /var/lib/anima/provider-boundary \
     && chown -R anima:anima /app /var/lib/anima
 ENV ANIMA_BACKUP_DIR=/var/lib/anima/backups
 USER anima

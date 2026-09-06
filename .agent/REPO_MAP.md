@@ -1,6 +1,17 @@
 # Repository Map
 
-Last verified against: PHASE 12 CORE INTEGRATION / PORTFOLIO CLOSURE 2026-09-01
+Latest focused update: owner connection / visual console 026A, 2026-09-06.
+The remaining historical map below is not a full current-source audit.
+
+## Owner console additions
+
+- `src/anima_ha/ha_connection_setup.py` — verified owner commissioning and private HA connection persistence.
+- `src/anima_ha/owner_boundary.py` — optional authenticated Unix service sharing the UI Core.
+- `ui/src/visuals.tsx` and `ui/src/styles.css` — graphical navigation, truthful status graphics and responsive presentation.
+- `integrations/sentry/anima-household/codex_model.py`, `sentry_turn.py`, `household_worker.py` — client-only bounded iterative Codex helper.
+- `scripts/run_sentry_household_worker.py` — worker launcher without ANIMA Core imports.
+- `scripts/install_owner_worker_client.py` — operator-only private service-client provisioning, not HA credential transfer.
+- `docs/OWNER-VISUAL-CONSOLE-026A.md` and `docs/OWNER-SENTRY-RUNTIME.md` — workflows, deployment and explicit limits.
 
 ## Entry points
 

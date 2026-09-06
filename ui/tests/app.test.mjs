@@ -30,8 +30,10 @@ test("UI preserves Core semantic command and terminal-outcome contracts", async 
 
 test("unauthenticated UI offers the real Home Assistant sign-in route", async () => {
   const source = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
-  assert.match(source, /Sign in with Home Assistant/);
+  assert.match(source, /Continue with existing Home Assistant/);
   assert.match(source, /href="\/auth\/login"/);
+  assert.match(source, /href="\/auth\/login\?connect=1"/);
+  assert.match(source, /Credentials stay on the server/);
   assert.match(source, /AUTHENTICATION_REQUIRED/);
 });
 
