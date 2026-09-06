@@ -1152,3 +1152,21 @@ decision.
   increment remains implementation-verified and pending independent Architect
   acceptance. Phase 14 is accepted in the current repository state, and Phase
   15 remains unauthorized and unimplemented.
+
+## Opaque device-handle boundary - 2026-09-06
+
+- The owner-facing device discovery and commissioning contract now uses a
+  stable ANIMA-owned `device_handle`. Core resolves that handle inside the
+  Home Assistant adapter; browser/API payloads do not expose or submit raw
+  Home Assistant registry identifiers.
+- Safe device identity metadata (name, manufacturer, model, child status),
+  canonical ANIMA mapping, Truth state, and observation time remain available
+  to the owner. No provider credential, raw service call, or provider ID was
+  added to the browser contract.
+- Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070`; exact-head
+  hosted CI `34048949078` passed; artifact `9994126375` was published and its
+  endpoint exposed no digest. Local focused validation passed 42 backend
+  tests, Ruff, strict mypy, TypeScript, frontend tests, Vite build, and
+  `git diff --check`.
+- Status: implementation-verified, pending independent Architect acceptance.
+  Phase 15 remains unauthorized and unimplemented.

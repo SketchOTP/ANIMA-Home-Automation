@@ -256,3 +256,18 @@ mypy, TypeScript, the Vite production build, and `git diff --check`.
 This remains a bounded owner-facing projection, not a new alert store,
 provider, acknowledgement workflow, raw Home Assistant editor, or Phase 15
 feature. Independent Architect acceptance remains pending.
+
+## Opaque device-handle boundary — 2026-09-06
+
+The Devices view and commissioning flow now use stable opaque ANIMA device
+handles. Browser and UI API callers do not receive or submit raw Home Assistant
+registry identifiers; Core validates the handle and resolves the provider ID
+inside the Home Assistant adapter. The public projection retains only safe
+metadata and canonical ANIMA/Truth-backed state.
+
+Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070` passed exact-head
+hosted CI `34048949078`; artifact `9994126375` was published with no digest
+available from the artifact endpoint. Focused local validation passed 42
+backend tests, Ruff, strict mypy, TypeScript, frontend tests, Vite build, and
+`git diff --check`. This is implementation-verified and pending independent
+Architect acceptance; Phase 15 remains unauthorized and unimplemented.

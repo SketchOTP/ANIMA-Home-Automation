@@ -339,3 +339,21 @@ the Vite production build, and `git diff --check`.
 The bounded projection is now published, with the existing management-plane
 test matrix remaining green. Architect acceptance of this increment is still
 pending. Phase 15 remains unauthorized.
+
+## Opaque device-handle boundary — 2026-09-06
+
+The owner-facing device discovery and commissioning path now uses a stable
+ANIMA-owned `device_handle`. Core validates the handle and the Home Assistant
+adapter resolves the provider identifier internally. The browser/API contract
+therefore exposes no raw Home Assistant registry identifier while preserving
+bounded device metadata, canonical mapping, Truth state, and observation time.
+
+The plugin refresh projection and commission schema follow the same contract;
+the provider `device_id` is not accepted from the owner-facing path. Focused
+validation passed 42 backend tests, Ruff, strict mypy, TypeScript, frontend
+tests, Vite build, and `git diff --check`.
+
+Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070` passed exact-head
+hosted CI `34048949078` and published artifact `9994126375`; the artifact
+endpoint exposed no digest. This remains implementation evidence pending
+independent Architect acceptance. Phase 15 remains unauthorized.

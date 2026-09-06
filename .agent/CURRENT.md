@@ -46,6 +46,26 @@ browser access or Phase 15 behavior was added. See
 `docs/GOAL-DEVICE-OBSERVABILITY-023A.md`. Exact-head hosted validation passed
 in CI `34046105692`; independent Architect acceptance remains pending.
 
+## Latest device-boundary increment - 2026-09-06
+
+The Devices view and Home Assistant commissioning path now use stable
+ANIMA-owned opaque device handles. The browser and UI API no longer receive or
+submit Home Assistant registry identifiers; Core validates the handle and the
+Home Assistant adapter resolves the provider identifier internally. Safe
+manufacturer/model metadata and canonical ANIMA state remain available for
+owner comparison, while provider identifiers and credentials remain behind
+the integration boundary.
+
+Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070` is pushed with
+`main == origin/main` and a clean tree. Exact-head hosted CI `34048949078`
+passed and published artifact `9994126375`
+(`phase12-h5-evidence-4ba98cc14e07eb095616352ede4c46ff0753d070`); the
+artifact endpoint exposed no digest. Local focused validation passed 42
+backend tests, Ruff, strict mypy, TypeScript, frontend tests, Vite build, and
+`git diff --check`. This increment remains implementation-verified and
+pending independent Architect acceptance. Phase 15 remains unauthorized and
+unimplemented.
+
 ## Latest owner-facing publication - 2026-09-06
 
 The current owner-facing publication is the alert-inbox pagination increment:

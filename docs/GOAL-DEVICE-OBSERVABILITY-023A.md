@@ -42,3 +42,23 @@ records the terminal exact-head validation of this increment: hosted CI
 `34047315770` passed on that exact SHA and published artifact `9993666377`.
 The artifact endpoint exposed no digest. No runtime behavior changed and
 independent Architect acceptance remains pending.
+
+## Opaque provider-reference boundary — 2026-09-06
+
+The owner-facing discovery and commissioning flow now uses a stable opaque
+ANIMA `device_handle`. The browser selects that handle; Core validates it and
+the Home Assistant adapter resolves the provider identifier internally. The
+plugin-level refresh projection follows the same rule. The browser continues
+to receive only bounded manufacturer/model metadata, canonical ANIMA mapping,
+Truth state, and observation time.
+
+The commission schema now requires `device_handle` and no longer accepts a
+raw provider `device_id` from the owner-facing path. Focused tests cover
+plugin refresh projection, commissioning, UI API projection, and Core gateway
+handle validation. The implementation does not alter provider credentials,
+Home Assistant service access, or Phase 15 behavior.
+
+Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070` passed exact-head
+hosted CI `34048949078`; artifact `9994126375` was published and no artifact
+digest was exposed by the endpoint. The increment is implementation-verified
+and remains pending independent Architect acceptance.
