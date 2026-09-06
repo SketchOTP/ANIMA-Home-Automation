@@ -425,6 +425,20 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
         probe.activate()
         probe.stop()
         resource_id, capability_id, _, _, _ = commission_phase6_graph(graph, discovery, config.provider_scope)
+        initial_connection = HassClientConnection(
+            config,
+            token,
+            event_callback=lambda event: None,
+            disconnect_callback=lambda error: None,
+        )
+        try:
+            initial_connection.start()
+            initial_connection.activate()
+            initial_connection.call_service(
+                "input_boolean", "turn_off", {"entity_id": "input_boolean.anima_test_power"}
+            )
+        finally:
+            initial_connection.stop()
         adapter = HomeAssistantAdapter(config, reality, graph, store)
         connections: list[RestartAfterDispatchConnection] = []
 
@@ -474,7 +488,7 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
                 detail=f"expected={expected}; observed={observed}",
             )
 
-        assert adapter.set_power(resource_id, False, capability_id).observed_state == "off"
+        assert adapter.read_state(resource_id, capability_id)["state"] == "off"
         action = ActionRequest.create(
             action_id=uuid4(), action_intent_id=uuid4(), idempotency_key=f"phase14-ha-restart-{uuid4()}",
             household_id=household_id, tool=set_power,
