@@ -316,7 +316,7 @@ BACKUP_MANIFEST = PluginManifest(
             "semantic_action": "backup.create",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,
-            "idempotency": "NON_IDEMPOTENT",
+            "idempotency": "NONE",
             "external_content_trust": "LOCAL_TRUSTED",
         },
         {
