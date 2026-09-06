@@ -351,9 +351,15 @@ def opa_restart(results: list[dict[str, Any]]) -> None:
 
 
 class RestartAfterDispatchConnection:
-    def __init__(self, delegate: HassClientConnection, fixture: DockerHomeAssistant) -> None:
+    def __init__(
+        self,
+        delegate: HassClientConnection,
+        fixture: DockerHomeAssistant,
+        connection_factory: Any,
+    ) -> None:
         self.delegate = delegate
         self.fixture = fixture
+        self.connection_factory = connection_factory
         self.restart_metadata: tuple[dict[str, str], dict[str, str]] | None = None
         self.service_calls = 0
 
@@ -385,6 +391,10 @@ class RestartAfterDispatchConnection:
             self.fixture.stop()
             self.fixture.restart()
             self.restart_metadata = (before, fixture_metadata(self.fixture))
+            self.delegate.stop()
+            self.delegate = self.connection_factory()
+            self.delegate.start()
+            self.delegate.activate()
         return result
 
     def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> Any:
@@ -419,14 +429,18 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
         connections: list[RestartAfterDispatchConnection] = []
 
         def factory(current_token: str) -> RestartAfterDispatchConnection:
-            wrapped = RestartAfterDispatchConnection(
-                HassClientConnection(
+            def new_connection() -> HassClientConnection:
+                return HassClientConnection(
                     config,
                     current_token,
                     event_callback=adapter.receive_provider_event,
                     disconnect_callback=adapter.disconnected,
-                ),
+                )
+
+            wrapped = RestartAfterDispatchConnection(
+                new_connection(),
                 fixture,
+                new_connection,
             )
             connections.append(wrapped)
             return wrapped
