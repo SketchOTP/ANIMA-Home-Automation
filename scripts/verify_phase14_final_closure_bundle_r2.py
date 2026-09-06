@@ -292,7 +292,7 @@ def core_restart(results: list[dict[str, Any]]) -> None:
         f"result={resumed.record.result if resumed else None}"
     )
     assert gateway.calls == 1
-    assert before["container_id"] != after["container_id"]
+    assert before["started_at"] != after["started_at"] or before["pid"] != after["pid"]
     results.append(
         {
             "scenario_id": "CORE_RESTART_INFLIGHT",
@@ -302,6 +302,7 @@ def core_restart(results: list[dict[str, Any]]) -> None:
             "state_after_restart": recovered.status.value,
             "terminal_state": resumed.record.status.value,
             "provider_dispatches": gateway.calls,
+            "container_identity_preserved": before["container_id"] == after["container_id"],
             "before": before,
             "after": after,
             "approval_id": str(approval_id),
@@ -314,7 +315,7 @@ def opa_restart(results: list[dict[str, Any]]) -> None:
     compose("restart", "opa")
     wait_http(f"{OPA_URL}/health")
     after = metadata("opa")
-    assert before["container_id"] != after["container_id"]
+    assert before["started_at"] != after["started_at"] or before["pid"] != after["pid"]
     policy = PolicyService(OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL))
     gateway = CountingGateway()
     coordinator = ActionExecutionCoordinator(
@@ -331,6 +332,7 @@ def opa_restart(results: list[dict[str, Any]]) -> None:
             "evidence_level": "POSTGRES_OPA_CORE_PROCESS",
             "terminal_state": result.record.status.value,
             "provider_dispatches": gateway.calls,
+            "container_identity_preserved": before["container_id"] == after["container_id"],
             "before": before,
             "after": after,
             "policy_source": "running_unmodified_opa",
