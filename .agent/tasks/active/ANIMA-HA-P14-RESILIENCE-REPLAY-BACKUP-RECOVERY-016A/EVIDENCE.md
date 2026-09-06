@@ -646,3 +646,10 @@ unauthorized and unimplemented.
 - This is the latest exact-head evidence consolidation, not Phase 14
   acceptance. Deterministic-contract fixtures remain excluded from destructive
   proof; Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
+- The explicit R2 scenario mapping is published in
+  `docs/PHASE-14-R2-SCENARIO-COVERAGE.md`; it records 33 `VERIFIED` and 7
+  `UNKNOWN` scenarios at the latest evidence head. The residual cases are
+  rejection-vs-policy-denial, stronger-auth-vs-confirmation, manual change
+  before authorization, task due/cancel race, and distinct in-flight Core,
+  OPA, and HA restart coverage. This remains an honest `CONTINUE` audit, not
+  Phase 14 acceptance; Phase 15 remains unauthorized.

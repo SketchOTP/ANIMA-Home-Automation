@@ -50,6 +50,17 @@ not authorized.
 No item in this matrix authorizes a new provider, unrestricted HA administration,
 embedded intelligence fallback, or Phase 15 behavior.
 
+## Explicit R2 scenario audit
+
+The exact required-scenario mapping, including the seven still-unproven
+software-controllable cases, is maintained in
+[`docs/PHASE-14-R2-SCENARIO-COVERAGE.md`](PHASE-14-R2-SCENARIO-COVERAGE.md).
+The latest artifact is strong grouped real-store evidence, but the explicit
+R2 acceptance ledger remains `33 VERIFIED / 7 UNKNOWN`; this is intentionally
+not promoted to Phase 14 acceptance. The next work is one consolidated
+approval/action/process closure bundle for those seven IDs, followed by final
+external/replay reconciliation at one closing head.
+
 ## Consolidated ledger checkpoint
 
 The exact-head hosted run `34000279143` published

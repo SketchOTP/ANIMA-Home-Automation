@@ -372,3 +372,13 @@ including the 250-task/250-calendar traversal and replay fingerprints. This
 consolidation does not self-accept Phase 14; deterministic-contract fixtures
 remain excluded from destructive proof, Phase 14 remains `CONTINUE`, and Phase
 15 remains unauthorized.
+
+## Explicit R2 scenario audit
+
+The required-scenario mapping is published in
+`docs/PHASE-14-R2-SCENARIO-COVERAGE.md`. It records 33 `VERIFIED` and 7
+`UNKNOWN` scenarios at the latest evidence head. The residual cases are
+rejection-vs-policy-denial, stronger-auth-vs-confirmation, manual change
+before authorization, task due/cancel race, and distinct in-flight Core,
+OPA, and HA restart coverage. This remains an honest `CONTINUE` audit, not
+Phase 14 acceptance; Phase 15 remains unauthorized.
