@@ -28,6 +28,13 @@ test("UI preserves Core semantic command and terminal-outcome contracts", async 
   assert.match(source, /parent_id/);
 });
 
+test("unauthenticated UI offers the real Home Assistant sign-in route", async () => {
+  const source = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
+  assert.match(source, /Sign in with Home Assistant/);
+  assert.match(source, /href="\/auth\/login"/);
+  assert.match(source, /AUTHENTICATION_REQUIRED/);
+});
+
 test("alert inbox exposes the existing cursor contract to owners", async () => {
   const source = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
   assert.match(source, /\/api\/v1\/alerts\/events\?limit=50&cursor=/);
