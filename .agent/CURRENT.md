@@ -1100,3 +1100,6 @@ marker remains unclaimed.
   attempted shadow Codex runtime reached the actual provider boundary but was
   stopped by HTTP 401 authentication; no fallback or credential exposure was
   introduced.
+
+- Implementation head: `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef`; exact-head
+  hosted CI `34058199339` passed and published artifact `9996805982`.

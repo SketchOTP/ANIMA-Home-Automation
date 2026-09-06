@@ -1237,3 +1237,7 @@ decision.
 - This is a bounded owner-facing recovery increment. It does not reopen Phase
   14, add a service, expose credentials, claim live SENTRY-host operation, or
   begin Phase 15.
+
+- Exact implementation head `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef` passed
+  hosted CI `34058199339`; artifact `9996805982` was published. The public
+  artifact endpoint did not expose a digest without authenticated download.

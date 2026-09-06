@@ -24,23 +24,21 @@ the accepted Phase 0–14 evidence.
 
 ## Current product decision
 
-The bounded SENTRY text-delivery increment is complete pending Architect
-acceptance. It closes the UI-to-live-result handoff but does not claim that a
-real external SENTRY host has yet consumed the request. The largest remaining
-owner-facing gap is therefore the next coherent text operation:
+The bounded SENTRY text-delivery increment and the owner-facing backup-restore
+increment are implemented and hosted-qualified as separate goal slices. The
+next largest owner-facing capability remains the complete text operation:
 
 ```text
 owner → SENTRY text turn → anima-household MCP/Core → fresh Truth read or safe
 semantic action → ANIMA policy/verification → exact result → SENTRY response
 ```
 
-The next increment must use the accepted client-only MCP boundary and preserve
-ANIMA authority for Truth, policy, execution, and verification. If the protected
-SENTRY runtime cannot be exercised without source-tree changes or credential
-exposure, record that resource boundary explicitly and pivot to the next
-owner-usable ANIMA management workflow rather than adding another delivery seam.
-Voice, physical whole-home scenarios, and the complete A–O deck remain later
-work; this is not an automatic start of the historical Phase 15 roadmap.
+The actual shadow Codex attempt reached the real provider boundary but stopped
+at HTTP 401 authentication. That is an external operator resource gate, not a
+reason to add a second cognition seam or embedded fallback. Until it is
+available, the repository can continue bounded ANIMA management work; voice,
+physical whole-home scenarios, and the complete A–O deck remain later work.
+This is not an automatic start of the historical Phase 15 roadmap.
 
 ## Latest product increment — bounded backup restore
 

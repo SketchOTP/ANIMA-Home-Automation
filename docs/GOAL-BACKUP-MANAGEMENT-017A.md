@@ -25,3 +25,8 @@ bounded owner initiation and Core execution path.
 The archive manifest is server-only metadata. UI payloads contain only the
 backup reference, timestamp, size, schema version, digest, and integrity
 status. A backup is household-scoped and is not visible to another household.
+
+Implementation checkpoint: `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef`.
+Exact-head hosted CI: `34058199339` (PASS). Published artifact:
+`9996805982`; the public artifact endpoint did not expose a digest without
+authenticated download.
