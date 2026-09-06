@@ -24,6 +24,12 @@ Only bounded serial/radio fields are accepted, and unsupported steps fail
 explicitly. This setup flow is separate from the existing typed pairing and
 device-commissioning workflow.
 
+The onboarding implementation is published at
+`9a152d548549b13a69584cca34d186b49837ab70`. Exact-head hosted CI
+`34036396342` passed; artifact `9990480601` has digest
+`sha256:6f82097ddf081f3877827aac5382f63896b42ec9ee753cfc00a34323de1ab13b`.
+This remains pending independent Architect acceptance.
+
 Limitations and next candidates: this increment does not add notification
 destination management, plugin/integration administration, backup/restore UI,
 scenes/automation management, or Phase 15 behavior. The current packet remains

@@ -34,10 +34,14 @@ authorized by the goal-wide completion audit.
 - Unsafe serial paths, unsupported fields, arbitrary handlers, and unsupported
   flow steps fail closed. Successful setup reconciles the existing HA adapter;
   device pairing and commissioning remain typed workflows in Devices.
-- Local validation passed full pytest (235), Ruff, strict mypy, TypeScript,
+- Local validation passed full pytest (232), Ruff, strict mypy, TypeScript,
   frontend tests, Vite build, compile check, and `git diff --check`.
-- Implementation evidence is pending exact hosted qualification and Architect
-  acceptance. This is bounded ZHA onboarding, not general Home Assistant
+- Exact-head hosted CI `34036396342` passed on implementation head
+  `9a152d548549b13a69584cca34d186b49837ab70`. Reviewable artifact
+  `9990480601` has digest
+  `sha256:6f82097ddf081f3877827aac5382f63896b42ec9ee753cfc00a34323de1ab13b`.
+  This remains implementation evidence pending independent Architect
+  acceptance. It is bounded ZHA onboarding, not general Home Assistant
   administration. Phase 15 remains unauthorized.
 
 ## Latest owner-facing integration health and recovery increment - 2026-09-06

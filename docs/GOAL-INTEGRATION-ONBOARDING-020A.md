@@ -36,10 +36,14 @@ Assistant administrator UI.
 
 ## Validation status
 
-- Full Python pytest: 235 passed locally.
+- Full Python pytest: 232 passed locally.
 - Ruff check and format, strict mypy, TypeScript, frontend tests, Vite build,
   compile check, and `git diff --check` passed locally.
 - The focused provider test proves the HA flow reference remains private,
   unsafe serial paths are rejected, and a bounded completion is reconciled.
-- Exact hosted qualification is required before independent Architect
+- Exact hosted qualification completed on implementation head
+  `9a152d548549b13a69584cca34d186b49837ab70` with CI run `34036396342`.
+  Reviewable artifact `9990480601` has digest
+  `sha256:6f82097ddf081f3877827aac5382f63896b42ec9ee753cfc00a34323de1ab13b`.
+  This remains implementation evidence pending independent Architect
   acceptance. Phase 15 remains unauthorized.

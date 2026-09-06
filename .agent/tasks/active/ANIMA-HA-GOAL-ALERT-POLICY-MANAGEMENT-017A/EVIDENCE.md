@@ -13,7 +13,12 @@ provider boundary. Core retains the HA credential, endpoint, and provider flow
 reference; the browser receives an opaque setup handle and only bounded ZHA
 serial/radio inputs. Unsafe paths, arbitrary handlers, raw configuration, and
 unsupported flow steps fail closed. This is owner-facing ZHA onboarding, not a
-general Home Assistant administrator surface, and Phase 15 remains unauthorized.
+general Home Assistant administrator surface. Exact-head hosted CI
+`34036396342` passed on `9a152d548549b13a69584cca34d186b49837ab70`; artifact
+`9990480601` digest is
+`sha256:6f82097ddf081f3877827aac5382f63896b42ec9ee753cfc00a34323de1ab13b`.
+This remains pending independent Architect acceptance, and Phase 15 remains
+unauthorized.
 
 ## Result
 
