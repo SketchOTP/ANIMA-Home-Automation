@@ -64,6 +64,7 @@ from anima_ha.notification_routes import (
     NOTIFICATION_ROUTE_MANIFEST,
     NotificationRouteNativePlugin,
     PostgresNotificationRouteStore,
+    SenseGuardNotificationDispatcher,
 )
 from anima_ha.plugins import (
     InvocationContext,
@@ -1004,12 +1005,26 @@ def build_postgres_core(
                 profile=AttentionProfile("phase13.senseguard.v1", ()),
             ).run_once(household_id=household_id, tools=plugins.list_tools())
 
+        def resource_name(resource_id: UUID) -> str | None:
+            resource = graph.get_node(resource_id)
+            return resource.name if resource is not None else None
+
+        notification_dispatcher = SenseGuardNotificationDispatcher(
+            route_store=notification_route_store,
+            manager=plugins,
+            policy_service=policy_service,
+            action_executor=action_executor,
+            journal=journal,
+            resource_name=resource_name,
+        )
+
         router = SenseGuardEventRouter(
             household_id=household_id,
             policy_store=alert_policy_store,
             resource_resolver=resolve_resource,
             event_sink=journal,
             dispatch_attention=dispatch_attention,
+            dispatch_notification=notification_dispatcher.dispatch,
         )
         ha_adapter.set_normalized_event_callback(router.handle)
     return runtime

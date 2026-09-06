@@ -340,3 +340,17 @@ Notification-route presentation correction (2026-09-06):
 - Head `f808d9479735a957d47e36779ad04a5c3bc3d4b1` passed exact-head hosted CI
   `34020850164`; artifact `9985597571` was published. The active increment
   remains pending Architect acceptance.
+
+Automatic configured-alert delivery follow-on:
+
+- `src/anima_ha/notification_routes.py` — server-authored SenseGuard alert
+  dispatcher using the existing action/OPA/PluginManager/ntfy boundaries.
+- `src/anima_ha/senseguard_alerts.py` — exclusive notification-vs-SENTRY
+  delivery-mode routing with retry-safe notification callback semantics.
+- `src/anima_ha/plugins.py` and `policy/phase4/authorization.rego` — preserve
+  Core-owned policy metadata and authorize only configured system alerts.
+- `tests/test_notification_routes.py` and `tests/test_senseguard_alerts.py` —
+  route threshold/no-route, stable idempotency, actual ntfy plugin boundary,
+  and delivery-mode separation coverage.
+- Automatic delivery remains pending hosted exact-head validation and
+  Architect acceptance; no human receipt claim or Phase 15 behavior.

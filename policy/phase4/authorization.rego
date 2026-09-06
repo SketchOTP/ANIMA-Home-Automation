@@ -140,6 +140,20 @@ decision := result if {
     }
 } else := result if {
     input.action_intent.risk_class == "EXTERNAL_SIDE_EFFECT"
+    input.action_intent.semantic_action == "notifications.send"
+    input.origin == "DURABLE_SYSTEM_TASK"
+    input.graph.notification_alert_authorized == true
+    input.graph.notification_route_id != ""
+    input.graph.alert_policy_id != ""
+    result := {
+        "decision": "ALLOW",
+        "reason_code": "CONFIGURED_ALERT_NOTIFICATION",
+        "required_assurance": "ANONYMOUS",
+        "confirmation_required": false,
+        "policy_version": data.policy_version
+    }
+} else := result if {
+    input.action_intent.risk_class == "EXTERNAL_SIDE_EFFECT"
     confirmation_valid
     result := {
         "decision": "ALLOW",

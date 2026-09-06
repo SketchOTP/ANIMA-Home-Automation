@@ -46,3 +46,19 @@ This increment does not add a raw Home Assistant automation editor, arbitrary
 service calls, a new provider, or Phase 15 behavior. A successful ntfy provider
 acceptance is not a claim that a human received the message; notification
 delivery remains an external observation.
+
+## Configured alert delivery
+
+The `NOTIFICATION` delivery mode now dispatches a matched SenseGuard alert to
+an enabled, priority-compatible route through the existing ntfy provider,
+`ActionExecutionCoordinator`, `PluginManager`, and OPA boundary. The message
+is server-authored from the canonical resource and recorded event timestamp;
+the model and browser cannot supply a destination or arbitrary notification
+body. A stable alert/route idempotency key prevents a retry from redispatching
+a completed provider action. Missing routes or an unavailable ntfy provider
+are recorded as `NO_ROUTE` or `UNAVAILABLE` rather than reported as delivery.
+
+This is a narrow system-alert authorization for an owner-configured route.
+Ordinary model or user `notifications.send` operations remain external
+side effects requiring the existing confirmation path. Provider acceptance is
+still not evidence that a human received or read the notification.

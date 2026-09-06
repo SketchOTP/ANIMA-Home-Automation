@@ -29,6 +29,27 @@ test_external_side_effect_requires_confirmation if {
     result.decision == "REQUIRE_CONFIRMATION"
 }
 
+test_configured_alert_notification_is_explicitly_authorized if {
+    result := authorization.decision with input as base with input.origin as "DURABLE_SYSTEM_TASK" with input.graph as {
+        "notification_alert_authorized": true,
+        "notification_route_id": "route-1",
+        "alert_policy_id": "policy-1"
+    } with input.action_intent as {
+        "risk_class": "EXTERNAL_SIDE_EFFECT",
+        "semantic_action": "notifications.send"
+    }
+    result.decision == "ALLOW"
+    result.reason_code == "CONFIGURED_ALERT_NOTIFICATION"
+}
+
+test_unbound_system_notification_still_requires_confirmation if {
+    result := authorization.decision with input as base with input.origin as "DURABLE_SYSTEM_TASK" with input.action_intent as {
+        "risk_class": "EXTERNAL_SIDE_EFFECT",
+        "semantic_action": "notifications.send"
+    }
+    result.decision == "REQUIRE_CONFIRMATION"
+}
+
 test_admin_is_always_denied if {
     result := authorization.decision with input as base with input.action_intent as {"risk_class": "ADMIN_SYSTEM_PROHIBITED"}
     result.decision == "DENY"

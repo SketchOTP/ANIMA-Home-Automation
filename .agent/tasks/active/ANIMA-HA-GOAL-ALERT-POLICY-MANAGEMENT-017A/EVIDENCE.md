@@ -106,3 +106,21 @@ reference as “Server configured” without exposing a destination, topic, toke
 URL, or credential. This correction leaves the provider boundary unchanged.
 The route-management increment remains pending Architect acceptance; automatic
 delivery and human receipt are not claimed.
+
+## Automatic configured-alert delivery follow-on
+
+The `NOTIFICATION` SenseGuard delivery mode now uses the existing
+`ActionExecutionCoordinator` → `PolicyService`/OPA → `PluginManager` → ntfy
+path when a matched policy has an enabled priority-compatible route. The
+server constructs the bounded factual message from the canonical resource and
+event timestamp; the browser/model cannot provide a destination or arbitrary
+alert body. A stable event/route idempotency key prevents duplicate provider
+dispatch after retry, and `notification.delivery` records `SUCCEEDED`,
+`NO_ROUTE`, or `UNAVAILABLE` outcomes.
+
+The new narrow OPA rule authorizes only the server-generated configured-alert
+semantic path (`DURABLE_SYSTEM_TASK` plus Core-owned route/policy metadata).
+Ordinary user/model `notifications.send` remains confirmation-gated. Provider
+acceptance does not establish human receipt. Local deterministic coverage
+includes router-mode separation, no-route behavior, stable idempotency, and an
+actual ntfy-plugin/action-coordinator transport with a mock provider.

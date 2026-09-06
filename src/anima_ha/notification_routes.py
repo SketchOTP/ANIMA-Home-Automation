@@ -8,12 +8,15 @@ the household label, priority threshold, and enabled state.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
 import psycopg
 from psycopg.rows import dict_row
 
+from anima_ha.action import ActionRequest, resolve_action_safety_spec
+from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.plugins import (
     CORE_VERSION,
     MANIFEST_VERSION,
@@ -25,6 +28,7 @@ from anima_ha.plugins import (
     RuntimeKind,
     TrustClass,
 )
+from anima_ha.policy import Assurance, IdentityContext, PolicyContext, RequestOrigin
 
 
 class NotificationRouteError(ValueError):
@@ -156,6 +160,164 @@ class PostgresNotificationRouteStore:
                 raise NotificationRouteError("NOTIFICATION_ROUTE_VERSION_CONFLICT")
             connection.commit()
         return self._from_row(dict(row))
+
+
+class SenseGuardNotificationDispatcher:
+    """Deliver only server-authored matched alert facts to configured ntfy.
+
+    The route and alert policy are both pre-authorized household configuration.
+    The dispatcher never accepts a model-authored destination or message. The
+    actual provider call still passes through ActionExecutionCoordinator and
+    the normal OPA/PluginManager boundary.
+    """
+
+    def __init__(
+        self,
+        *,
+        route_store: Any,
+        manager: Any,
+        policy_service: Any,
+        action_executor: Any,
+        journal: Any,
+        resource_name: Any,
+    ) -> None:
+        self.route_store = route_store
+        self.manager = manager
+        self.policy_service = policy_service
+        self.action_executor = action_executor
+        self.journal = journal
+        self.resource_name = resource_name
+
+    @staticmethod
+    def _tool(manager: Any) -> Any | None:
+        return next(
+            (
+                item
+                for item in manager.list_tools()
+                if item.tool_id == "anima.external.notifications.send"
+            ),
+            None,
+        )
+
+    def _record(
+        self,
+        *,
+        alert: Any,
+        policy_id: UUID,
+        route_id: UUID | None,
+        status: str,
+        detail: str,
+        action_id: UUID | None = None,
+        provider_outcome: str | None = None,
+    ) -> None:
+        self.journal.append(
+            EventEnvelope.create(
+                event_id=str(uuid4()),
+                event_type="notification.delivery",
+                source="anima.notification-delivery",
+                subject_key=f"senseguard/{alert.payload.get('canonical_resource_id', 'unknown')}",
+                occurred_at=datetime.now(UTC),
+                correlation_id=alert.correlation_id,
+                causation_id=alert.event_id,
+                payload={
+                    "alert_event_id": alert.event_id,
+                    "alert_policy_id": str(policy_id),
+                    "route_id": str(route_id) if route_id else None,
+                    "status": status,
+                    "detail": detail[:240],
+                    "action_id": str(action_id) if action_id else None,
+                    "provider_outcome": provider_outcome,
+                },
+                importance=EventImportance.IMPORTANT,
+                delivery_class=DeliveryClass.GUARANTEED,
+                metadata={"household_id": str(alert.metadata.get("household_id", ""))},
+            )
+        )
+
+    def dispatch(self, alert: Any, policy: Any) -> list[dict[str, Any]]:
+        household_id = UUID(str(alert.metadata["household_id"]))
+        routes = [
+            route
+            for route in self.route_store.list_all(household_id)
+            if route.enabled and policy.priority >= route.minimum_priority
+        ]
+        if not routes:
+            self._record(
+                alert=alert,
+                policy_id=policy.policy_id,
+                route_id=None,
+                status="NO_ROUTE",
+                detail="no enabled configured route met the alert priority threshold",
+            )
+            return [{"status": "NO_ROUTE"}]
+        tool = self._tool(self.manager)
+        if tool is None or not tool.availability:
+            results = []
+            for route in routes:
+                self._record(
+                    alert=alert,
+                    policy_id=policy.policy_id,
+                    route_id=route.route_id,
+                    status="UNAVAILABLE",
+                    detail="configured ntfy provider is unavailable",
+                )
+                results.append({"status": "UNAVAILABLE", "route_id": str(route.route_id)})
+            return results
+
+        resource_id = str(alert.payload.get("canonical_resource_id", "unknown"))
+        name = str(self.resource_name(UUID(resource_id)) or f"SenseGuard {resource_id[:8]}")
+        occurred_at = str(alert.payload.get("occurred_at", alert.occurred_at.isoformat()))
+        message = (
+            f"{name} detected an event at {occurred_at}. "
+            "ANIMA recorded it; ask SENTRY for the current state."
+        )[:4000]
+        results = []
+        for route in routes:
+            action_idempotency = f"senseguard-notification:{alert.event_id}:{route.route_id}"
+            request = ActionRequest.create(
+                idempotency_key=action_idempotency,
+                household_id=household_id,
+                tool=tool,
+                arguments={"title": "ANIMA household alert", "message": message},
+                identity=IdentityContext(
+                    household_id,
+                    None,
+                    Assurance.ANONYMOUS,
+                    explanation="server-generated notification from matched owner policy",
+                ),
+                policy_service=self.policy_service,
+                policy_context=PolicyContext(
+                    graph_metadata={
+                        "notification_alert_authorized": True,
+                        "notification_route_id": str(route.route_id),
+                        "alert_policy_id": str(policy.policy_id),
+                    }
+                ),
+                origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+                safety_spec=resolve_action_safety_spec(tool),
+            )
+            execution = self.action_executor.execute(request)
+            status = execution.record.status.value
+            provider_outcome = (
+                execution.invocation.outcome.value if execution.invocation is not None else None
+            )
+            self._record(
+                alert=alert,
+                policy_id=policy.policy_id,
+                route_id=route.route_id,
+                status=status,
+                detail=execution.record.detail or "notification action completed",
+                action_id=execution.record.action_id,
+                provider_outcome=provider_outcome,
+            )
+            results.append(
+                {
+                    "status": status,
+                    "route_id": str(route.route_id),
+                    "action_id": str(execution.record.action_id),
+                }
+            )
+        return results
 
 
 def _schema(name: str) -> dict[str, Any]:

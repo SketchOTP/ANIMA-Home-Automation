@@ -1104,6 +1104,14 @@ class PluginManager:
                 },
             }
             if policy_context is not None:
+                # Policy context is Core-owned, trusted metadata. Preserve it
+                # for narrowly typed system paths (such as a configured alert
+                # notification) while keeping plugin identity/risk facts
+                # authoritative over any same-named keys.
+                intent_kwargs["graph_metadata"] = {
+                    **policy_context.graph_metadata,
+                    **intent_kwargs["graph_metadata"],
+                }
                 intent_kwargs["truth"] = policy_context.truth
             intent = ActionIntent.create(
                 action_intent_id=action_intent_id or uuid4(),

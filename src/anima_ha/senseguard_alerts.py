@@ -405,12 +405,14 @@ class SenseGuardEventRouter:
         resource_resolver: Any,
         event_sink: Any,
         dispatch_attention: Any | None = None,
+        dispatch_notification: Any | None = None,
     ) -> None:
         self.household_id = household_id
         self.policy_store = policy_store
         self.resource_resolver = resource_resolver
         self.event_sink = event_sink
         self.dispatch_attention = dispatch_attention
+        self.dispatch_notification = dispatch_notification
 
     def handle(self, event: EventEnvelope) -> list[EventEnvelope]:
         external_id = str(event.metadata.get("external_id", ""))
@@ -469,8 +471,18 @@ class SenseGuardEventRouter:
                 metadata={"household_id": str(self.household_id), **metadata},
             )
             appended = self.event_sink.append(alert)
-            if not appended.deduplicated and self.dispatch_attention is not None:
+            if (
+                policy.delivery_mode == "SENTRY_COGNITION"
+                and not appended.deduplicated
+                and self.dispatch_attention is not None
+            ):
                 self.dispatch_attention()
+            if policy.delivery_mode == "NOTIFICATION" and self.dispatch_notification is not None:
+                # Delivery is idempotent in the action store. Retrying the
+                # callback after an append/dispatch crash can therefore
+                # recover a missing notification without redispatching a
+                # completed provider action.
+                self.dispatch_notification(alert, policy)
             alerts.append(alert)
         return alerts
 

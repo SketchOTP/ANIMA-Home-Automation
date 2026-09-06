@@ -1,14 +1,17 @@
 from datetime import UTC, datetime, time
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
 
+from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.plugins import InvocationContext
 from anima_ha.policy import RequestOrigin
 from anima_ha.senseguard_alerts import (
     SENSEGUARD_ALERT_MANIFEST,
     SenseGuardAlertNativePlugin,
     SenseGuardAlertPolicy,
+    SenseGuardEventRouter,
     SenseGuardPolicyError,
     new_senseguard_policy,
 )
@@ -53,6 +56,64 @@ def test_senseguard_policy_rejects_unbounded_or_invalid_configuration() -> None:
         new_senseguard_policy(uuid4(), (), start_local=time(0), end_local=time(1))
     with pytest.raises(SenseGuardPolicyError):
         new_senseguard_policy(uuid4(), (uuid4(),), timezone="Not/AZone")
+
+
+def test_notification_policy_dispatches_notification_instead_of_sentry_attention() -> None:
+    household_id = uuid4()
+    resource_id = uuid4()
+    policy = SenseGuardAlertPolicy(
+        policy_id=uuid4(),
+        household_id=household_id,
+        resource_ids=(resource_id,),
+        event_type="senseguard.event",
+        timezone="America/New_York",
+        start_local=time(0),
+        end_local=time(5),
+        delivery_mode="NOTIFICATION",
+    )
+    event = EventEnvelope.create(
+        event_id="ha-senseguard-1",
+        event_type="truth.observation",
+        source="home-assistant",
+        subject_key="binary_sensor.basement_guard",
+        occurred_at=datetime(2026, 9, 6, 5, 3, tzinfo=UTC),
+        payload={"state": "on"},
+        importance=EventImportance.IMPORTANT,
+        delivery_class=DeliveryClass.BEST_EFFORT,
+        metadata={
+            "external_id": "binary_sensor.basement_guard",
+            "senseguard_event_type": "senseguard.event",
+            "household_id": str(household_id),
+        },
+    )
+    attention_calls: list[None] = []
+    notification_calls: list[tuple[object, object]] = []
+
+    class Store:
+        def list_enabled(self, household: UUID) -> list[SenseGuardAlertPolicy]:
+            return [policy] if household == household_id else []
+
+    class Sink:
+        def append(self, alert: object) -> object:
+            del alert
+            return SimpleNamespace(deduplicated=False)
+
+    router = SenseGuardEventRouter(
+        household_id=household_id,
+        policy_store=Store(),  # type: ignore[arg-type]
+        resource_resolver=lambda value: (
+            resource_id if value == event.metadata["external_id"] else None
+        ),
+        event_sink=Sink(),
+        dispatch_attention=lambda: attention_calls.append(None),
+        dispatch_notification=lambda alert, matched: notification_calls.append((alert, matched)),
+    )
+
+    alerts = router.handle(event)
+
+    assert len(alerts) == 1
+    assert attention_calls == []
+    assert notification_calls == [(alerts[0], policy)]
 
 
 def test_typed_alert_plugin_owns_household_and_creator_provenance() -> None:

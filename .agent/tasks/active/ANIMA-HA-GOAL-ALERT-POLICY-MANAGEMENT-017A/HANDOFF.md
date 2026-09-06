@@ -56,3 +56,15 @@ Exact-head hosted CI: `34020850164` — PASS. Artifact: `9985597571`.
 The presentation correction maps `server_configured` to “Server configured”
 in the Notifications view. Route management remains pending Architect
 acceptance; automatic delivery, human receipt, and Phase 15 are not claimed.
+
+## Automatic configured-alert delivery follow-on
+
+Implementation adds the bounded server-side delivery path for matched
+SenseGuard policies whose delivery mode is `NOTIFICATION`. Enabled routes are
+selected by household and minimum priority, then the factual alert is sent
+through the existing action coordinator, OPA, PluginManager, and configured
+ntfy provider. Route/event idempotency prevents duplicate dispatch on retry;
+missing route and provider-unavailable states are recorded explicitly.
+
+This does not claim human receipt. Ordinary model/user notification sends
+remain confirmation-gated, and no Phase 15 behavior is implemented.

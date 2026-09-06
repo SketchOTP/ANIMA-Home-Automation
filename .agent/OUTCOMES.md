@@ -1083,3 +1083,17 @@ decision.
 - Route management remains `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; automatic
   alert delivery and human receipt are not claimed. Phase 15 remains
   unauthorized.
+
+## Automatic configured-alert delivery - owner-facing follow-on
+
+- The typed SenseGuard `NOTIFICATION` mode now dispatches matched alerts to
+  the enabled server-configured ntfy route through the existing action,
+  PluginManager, and OPA boundaries.
+- Messages are server-authored factual observations; destinations and
+  credentials remain Core-owned. Event/route idempotency prevents a completed
+  notification from being redispatched during a retry.
+- `notification.delivery` records explicit `SUCCEEDED`, `NO_ROUTE`, or
+  `UNAVAILABLE` outcomes. Ordinary user/model sends remain confirmation-gated;
+  provider acceptance is not human receipt.
+- Focused tests, full pytest, Ruff, strict mypy, and OPA validation pass
+  locally. Hosted exact-head qualification is pending.

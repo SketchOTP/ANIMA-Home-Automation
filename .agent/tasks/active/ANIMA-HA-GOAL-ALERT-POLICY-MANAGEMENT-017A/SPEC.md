@@ -40,3 +40,11 @@ and toggles enabled state through a versioned save. HTTP transport success does
 not imply semantic success; the existing `MutationOutcome` notice is shown.
 The Notifications view provides the corresponding versioned route metadata
 form and renders only `ntfy` / `server_configured` provenance.
+
+When a matching policy uses `NOTIFICATION`, ANIMA evaluates the configured
+route and priority threshold, then sends only a server-authored factual alert
+through the existing coordinated ntfy provider path. The alert action has a
+stable event/route idempotency key and is recorded as `notification.delivery`.
+No-route and provider-unavailable outcomes are explicit. This narrow
+owner-configured system-alert path is distinct from ordinary model/user
+notification sends, which retain external-side-effect confirmation.

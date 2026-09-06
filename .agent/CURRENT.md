@@ -71,11 +71,26 @@ authorized by the goal-wide completion audit.
   pending Architect acceptance, automatic alert delivery is not claimed, and
   Phase 15 remains unauthorized.
 
+## Latest owner-facing notification delivery increment - 2026-09-06
+
+- The `NOTIFICATION` SenseGuard policy mode now dispatches matched alerts to
+  enabled, priority-compatible server-configured ntfy routes through the
+  existing ActionExecutionCoordinator, OPA, and PluginManager boundaries.
+- Messages are server-authored from canonical resource identity and event
+  timestamp. Stable alert/route idempotency prevents duplicate completed
+  provider dispatch; `NO_ROUTE` and `UNAVAILABLE` are explicit journaled
+  outcomes.
+- Ordinary user/model `notifications.send` remains confirmation-gated. Human
+  receipt is not claimed, and Phase 15 remains unauthorized.
+- Local full validation and OPA tests pass; hosted exact-head qualification
+  is required before Architect review.
+
 ## Active directive
 
 ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed
 SenseGuard alert-policy capability through the ANIMA Core/API/UI management
-plane, together with the bounded commissioned-device lifecycle follow-on.
+plane, bounded commissioned-device lifecycle, and configured-alert delivery
+follow-on.
 Preserve the accepted authority, privacy, policy, verification, SENTRY, and
 Home Assistant abstraction boundaries. Phase 15 household demonstration is not
 authorized.
@@ -558,6 +573,19 @@ and the due/cancel race. Durable rejection is recorded separately but remains
 provisional because the action projection is still `POLICY_DENIED`; distinct
 in-flight Core, OPA, and HA restart boundaries remain open. Phase 14 remains
 `CONTINUE`; Phase 15 remains unauthorized.
+
+## Automatic configured-alert delivery increment - 2026-09-06
+
+- Added a bounded server-authored SenseGuard `NOTIFICATION` delivery path.
+- Matched alerts select only enabled household routes meeting the policy
+  priority threshold and dispatch through the existing ActionExecutionCoordinator,
+  OPA, PluginManager, and configured ntfy provider.
+- Stable alert/route idempotency keys prevent duplicate completed dispatches;
+  `NO_ROUTE` and `UNAVAILABLE` are recorded explicitly.
+- Ordinary user/model `notifications.send` remains confirmation-gated. No
+  human receipt claim, new provider, credential exposure, or Phase 15 behavior.
+- Local focused/full validation and OPA tests pass; hosted exact-head
+  qualification remains required before Architect review.
 
 The current uncommitted increment adds the actual Compose process restart target
 for PostgreSQL, OPA, SearXNG, and ANIMA UI, with service health and Journal
