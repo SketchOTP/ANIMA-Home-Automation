@@ -226,3 +226,33 @@ Local Ruff, formatting, strict mypy, the full Python suite, TypeScript,
 frontend tests, Vite build, and `git diff --check` passed. Hosted exact-head
 qualification and independent Architect acceptance remain pending. Phase 15
 remains unauthorized.
+
+## Owner-facing alert inbox follow-on — 2026-09-06
+
+The Alerts view now includes a bounded Alert inbox backed by the existing
+PostgreSQL Event Journal. It presents matched SenseGuard events with their
+canonical resource name, source-observation timestamp, priority, configured
+delivery mode, and latest notification disposition when available.
+
+The authenticated `/api/v1/alerts/events` route is household-scoped and uses
+stable cursor pagination. The browser receives a sanitized read projection;
+raw journal rows, credentials, Home Assistant internals, and policy authority
+remain in Core. This is not an acknowledgement workflow or a human-receipt
+claim. No new store/provider, raw HA editor, or Phase 15 behavior was added.
+
+At draft time the implementation was pending exact-head hosted qualification;
+that qualification is recorded below. Independent Architect acceptance remains
+pending. Phase 15 remains unauthorized.
+
+## Owner-facing alert inbox qualification
+
+The alert inbox implementation passed exact-head hosted qualification on
+`87a990f5452f85ab748a1f7ea4a88d84a03d86f4` with CI `34041527112` — PASS.
+The reviewable artifact is `9992007435`, digest
+`sha256:917058baa013dc3a08e7756b083c0c19b48e04c1d22e23d886c3bfe943776686`.
+Local focused validation passed the alert/preferences tests, Ruff, strict
+mypy, TypeScript, the Vite production build, and `git diff --check`.
+
+This remains a bounded owner-facing projection, not a new alert store,
+provider, acknowledgement workflow, raw Home Assistant editor, or Phase 15
+feature. Independent Architect acceptance remains pending.

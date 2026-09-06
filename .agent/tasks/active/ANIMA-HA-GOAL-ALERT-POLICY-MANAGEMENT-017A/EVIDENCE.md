@@ -308,3 +308,34 @@ PluginManager → policy → Home Assistant adapter boundary. It does not expose
 raw Home Assistant services, configuration, credentials, or arbitrary hosts.
 The increment is implementation evidence pending independent Architect
 acceptance; Phase 15 remains unauthorized.
+
+## Owner-facing alert inbox follow-on — 2026-09-06
+
+The Alerts view now includes a bounded read projection of matched SenseGuard
+events from the authoritative PostgreSQL Event Journal. It shows the
+canonical resource name, source-observation time, event type, priority,
+configured delivery mode, and latest notification disposition when available.
+
+`GET /api/v1/alerts/events` is authenticated, household-scoped, sanitized,
+and cursor-paginated by `(occurred_at, alert_id)`. It does not create a second
+alert store, expose raw journal/provider data, or claim human receipt. The
+empty-state/API contract is covered by `tests/test_ui_api.py`; the existing
+SSE invalidation path refreshes the projection after alert activity.
+
+This is a bounded owner-facing read surface, not an acknowledgement workflow,
+raw Home Assistant editor, new provider, or Phase 15 behavior. At draft time
+the increment was pending exact-head hosted qualification; that qualification
+is recorded below.
+
+## Owner-facing alert inbox qualification
+
+The alert inbox implementation passed exact-head hosted qualification on
+`87a990f5452f85ab748a1f7ea4a88d84a03d86f4` with CI `34041527112` — PASS.
+The reviewable artifact is `9992007435`, digest
+`sha256:917058baa013dc3a08e7756b083c0c19b48e04c1d22e23d886c3bfe943776686`.
+Local focused validation also passed 19 tests, Ruff, strict mypy, TypeScript,
+the Vite production build, and `git diff --check`.
+
+The bounded projection is now published, with the existing management-plane
+test matrix remaining green. Architect acceptance of this increment is still
+pending. Phase 15 remains unauthorized.

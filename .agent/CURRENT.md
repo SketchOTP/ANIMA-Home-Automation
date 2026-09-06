@@ -25,6 +25,25 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing alert inbox increment - 2026-09-06
+
+- The Alerts view now includes a bounded Alert inbox backed by the existing
+  PostgreSQL Event Journal. Owners can see matched SenseGuard events, canonical
+  resource names, source-observation timestamps, priority, configured delivery
+  mode, and the latest notification disposition when available.
+- The API is authenticated and household-scoped and uses stable cursor
+  pagination. It returns a sanitized read projection only; raw journal rows,
+  credentials, Home Assistant internals, and policy authority are not exposed.
+- This is an owner-facing read projection, not a new alert store or an
+  acknowledgement workflow. It does not add a provider, raw HA automation
+  editor, Phase 15 behavior, or a human-receipt claim.
+- Implementation head: `87a990f5452f85ab748a1f7ea4a88d84a03d86f4`.
+- Exact-head hosted CI: `34041527112` — PASS.
+- Reviewable artifact: `9992007435`, digest
+  `sha256:917058baa013dc3a08e7756b083c0c19b48e04c1d22e23d886c3bfe943776686`.
+- This increment is complete pending independent Architect acceptance;
+  Phase 15 remains unauthorized.
+
 ## Latest owner-facing preferences increment - 2026-09-06
 
 - ANIMA now provides a bounded owner-facing Preferences view backed by the
