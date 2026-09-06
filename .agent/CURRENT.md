@@ -25,6 +25,33 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing automation-management increment - 2026-09-06
+
+- The Automations view and `/api/v1/automations` now provide a bounded,
+  household-scoped, versioned event-to-power workflow. An owner selects an
+  observed commissioned resource state (`on`/`off`) and one commissioned
+  power resource plus its `desired_on` action; enabled state and optimistic
+  edits are preserved in PostgreSQL.
+- Normalized HA observations route through `AutomationEventRouter`, journal a
+  bounded `automation.fired` event, and create a stable event-derived
+  autonomous action request. Execution remains PluginManager → OPA → existing
+  action locking/freshness/idempotency → Home Assistant → Phase 9 observation
+  and verification. No raw HA entity/service, credential, arbitrary payload,
+  second scheduler, or policy bypass was added.
+- Focused and full local validation passed: 230 Python tests, Ruff check and
+  format, strict mypy, TypeScript, frontend tests, Vite build, and
+  `git diff --check`. The known-good external Python environment was used
+  because this SFTP checkout's local `.venv` interpreter is unavailable.
+- Implementation/final candidate: `bdb3c2430f596cf2f9ea9ee97a6656c98d06ef75`;
+  `main == origin/main`; clean tree at publication.
+- Exact-head hosted CI: `34032615735` — PASS. Reviewable artifact:
+  `9989311210`; digest
+  `sha256:a576e085c3bdeb37a65b6efb857a9b980709fb8fb81586366d05f75d8df8a985`.
+- This is implementation evidence pending independent Architect acceptance.
+  The supported form is intentionally narrower than a raw Home Assistant
+  automation editor; rich conditions and advanced multi-step automations
+  remain future bounded work. Phase 15 remains unauthorized.
+
 ## Latest owner-facing scene-management increment - 2026-09-06
 
 - The bounded Scenes view now lets the owner create and edit household-scoped,

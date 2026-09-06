@@ -163,3 +163,15 @@ version conflicts, provenance, timestamps, and deterministic event identity.
 This is implementation evidence pending exact-head hosted qualification and
 independent Architect acceptance. It is not a raw HA automation editor or
 Phase 15 behavior.
+
+Exact-head hosted qualification is now complete:
+
+- Implementation/final candidate: `bdb3c2430f596cf2f9ea9ee97a6656c98d06ef75`.
+- Exact-head CI: `34032615735` — PASS.
+- Reviewable artifact: `9989311210`.
+- Artifact digest: `sha256:a576e085c3bdeb37a65b6efb857a9b980709fb8fb81586366d05f75d8df8a985`.
+
+The hosted workflow passed the complete existing validation, including the
+Phase 0–14/SENTRY suites, ARM64/container checks, H5 targets, and public-safety
+scan. The automation increment is ready for independent Architect review;
+Phase 15 remains unauthorized.

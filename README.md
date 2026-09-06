@@ -79,7 +79,8 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 
 Phases 0–14 are Architect accepted. Current work is goal-wide owner-facing
 management-plane convergence, currently covering typed SenseGuard alert-policy,
-commissioned-device lifecycle, backup, notification-route, and scene management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
+commissioned-device lifecycle, backup, notification-route, scene, and bounded
+automation management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
 guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish
 accepted platform contracts from the current bounded product increment. Phase 15
 remains unauthorized.

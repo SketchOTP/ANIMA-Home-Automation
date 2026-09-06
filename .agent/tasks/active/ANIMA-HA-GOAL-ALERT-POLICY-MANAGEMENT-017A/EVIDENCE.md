@@ -236,3 +236,15 @@ commissioned-resource enforcement, UTC timestamps, autonomous provenance, and
 stable event-to-action identity. The UI exposes only the bounded trigger,
 action, enabled state, and versioned edit controls. Full hosted qualification
 is required before this follow-on can be independently accepted.
+
+Hosted qualification completed on the exact implementation head:
+
+- Implementation/final candidate: `bdb3c2430f596cf2f9ea9ee97a6656c98d06ef75`.
+- Exact-head CI: `34032615735` — PASS.
+- Reviewable artifact: `9989311210`.
+- Artifact digest: `sha256:a576e085c3bdeb37a65b6efb857a9b980709fb8fb81586366d05f75d8df8a985`.
+
+The hosted workflow passed the full existing Phase 0–14/SENTRY validation,
+PostgreSQL/OPA/isolated-HA checks, ARM64/container checks, H5 targets, and
+public-safety scan. This remains implementation evidence pending independent
+Architect acceptance; Phase 15 remains unauthorized.
