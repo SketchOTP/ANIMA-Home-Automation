@@ -80,6 +80,7 @@ def test_risk_classifier_is_semantic_and_unknown_fails_closed() -> None:
         classifier.classify("lock", {"security_sensitive": True})
         == RiskClass.SECURITY_SECURE_ACTION
     )
+    assert classifier.classify("backup.restore") == RiskClass.SECURITY_SECURE_ACTION
     assert (
         classifier.classify("unlock", {"security_sensitive": True})
         == RiskClass.SECURITY_ACCESS_ACTION
