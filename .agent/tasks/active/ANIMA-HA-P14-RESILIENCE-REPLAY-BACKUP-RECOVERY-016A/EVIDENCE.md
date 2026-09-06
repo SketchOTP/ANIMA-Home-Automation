@@ -606,3 +606,17 @@ unauthorized and unimplemented.
   Phase 14 disposition remains `CONTINUE`; deterministic-contract fixtures
   remain excluded from destructive proof, and broader clustered process-state
   and final-replay closure remains open. Phase 15 remains unauthorized.
+
+## Current exact-head governance reconciliation - 2026-09-05
+
+- The current governed head is `2f1c45231355578f33fe737708a4c94f63596887`,
+  matching `origin/main`.
+- Exact-head hosted CI `34004155779` passed and published artifact `9980525065`;
+  artifact metadata confirms the exact tested SHA.
+- This governance-only checkpoint reconciles the packet with the current
+  public status and qualification matrix. It does not change runtime behavior
+  or self-accept Phase 14.
+- The exact-head ledger reports all 22 required evidence files, no missing or
+  non-passing mapped scenarios, and all ten mapped families `VERIFIED` for
+  their named exercised scenarios. Deterministic-contract fixtures remain
+  excluded from destructive proof. Phase 15 remains unauthorized.

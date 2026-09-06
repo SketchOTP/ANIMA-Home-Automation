@@ -19,6 +19,7 @@ not authorized.
 | Explicit-status ledger correction | `527810827728fc8242fbc4069b9eecb5c8060f6a` | `34001997325` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
 | Current exact-head mapped-family ledger | `4006bcde922eb3c86c827db5700ece2ce46e98a9` | `34002634015` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
 | Current exact-head destructive ledger | `a84d318e491e78ce5d7e7d0cdd59d2fbf74a2048` | `34003443720` PASS | `9980299813` |
+| Current exact-head governance reconciliation | `2f1c45231355578f33fe737708a4c94f63596887` | `34004155779` PASS | `9980525065` |
 
 ## Clustered status
 
@@ -95,6 +96,15 @@ present in the exact-head bundle. The overall Phase 14 disposition remains
 self-acceptance, and deterministic-contract fixtures remain excluded from
 destructive proof. The broader final acceptance boundary remains tracked
 below. Phase 15 remains unauthorized.
+
+## Current exact-head governance reconciliation
+
+The governance-only reconciliation head `2f1c45231355578f33fe737708a4c94f63596887`
+passed exact-head hosted CI `34004155779` and published artifact `9980525065`.
+It updates the public README, `.agent/CURRENT.md`, and this matrix to the
+current Phase 14 evidence checkpoint. No runtime behavior changed. The Phase
+14 evidence ledger remains `CONTINUE`, not self-acceptance; Phase 15 remains
+unauthorized.
 
 ## Next consolidated closure bundle
 
