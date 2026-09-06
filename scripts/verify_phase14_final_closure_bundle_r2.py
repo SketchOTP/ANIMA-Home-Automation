@@ -322,8 +322,18 @@ def opa_restart(results: list[dict[str, Any]]) -> None:
         gateway, PostgresActionStore(DATABASE_URL), PostgresResourceLocker(DATABASE_URL)
     )
     request = action_request(policy, uuid4(), "opa-restart")
+    refresh_states = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "2"}}),
+        ]
+    )
+    request = replace(request, refresher=lambda resources: next(refresh_states))
     result = coordinator.execute(request)
-    assert result.record.status == ActionStatus.SUCCEEDED
+    assert result.record.status == ActionStatus.SUCCEEDED, (
+        f"OPA restart terminal status={result.record.status.value} "
+        f"detail={result.record.detail} result={result.record.result}"
+    )
     assert gateway.calls == 1
     results.append(
         {
