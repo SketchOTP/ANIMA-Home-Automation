@@ -40,3 +40,21 @@ build/runtime smoke, Docker UI validation, public-safety scan, and local UI
 validation.
 
 This is a completed implementation handoff, not Architect self-acceptance.
+
+## Follow-on management-plane increment
+
+The same active packet also contains the bounded commissioned-device lifecycle
+slice documented in `docs/GOAL-DEVICE-LIFECYCLE-017A.md`:
+
+- `rename_device` preserves the prior canonical name as an alias.
+- `reassign_device` changes only ANIMA's active `INSTALLED_IN` topology edge,
+  after server-side household and destination validation.
+- `retire_device` retires the canonical resource, capabilities, provider
+  references, Truth bindings, aliases, and active relationships while leaving
+  the Home Assistant registry unchanged.
+- The Devices view now exposes these operations for mapped devices and renders
+  canonical ANIMA names rather than stale provider labels.
+
+The focused lifecycle test, full Python pytest, Ruff, TypeScript check, and
+Vite production build pass locally. This follow-on remains part of the pending
+Architect review; no goal-wide or Phase 15 acceptance is claimed.

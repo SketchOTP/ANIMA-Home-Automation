@@ -901,6 +901,123 @@ class PostgresHouseholdGraph:
                 connection.rollback()
                 raise
 
+    def move_resource(self, resource_id: UUID, place_id: UUID) -> None:
+        """Move one commissioned resource to another canonical place.
+
+        This is an ANIMA topology mutation.  It never changes the provider
+        mapping or asks the provider to move a physical device; those remain
+        owned by the Home Assistant integration.
+        """
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT kind FROM anima_graph_nodes WHERE canonical_id = %s AND retired_at IS NULL",
+                        (resource_id,),
+                    )
+                    resource = cursor.fetchone()
+                    if resource is None or str(resource["kind"]) not in {"RESOURCE", "SENSOR"}:
+                        raise GraphValidationError("resource is unknown or retired")
+                    cursor.execute(
+                        "SELECT kind FROM anima_graph_nodes WHERE canonical_id = %s AND retired_at IS NULL",
+                        (place_id,),
+                    )
+                    place = cursor.fetchone()
+                    if place is None or str(place["kind"]) not in {"ROOM", "ZONE"}:
+                        raise GraphValidationError("destination must be an active room or zone")
+                    cursor.execute(
+                        """SELECT relationship_id, target_id FROM anima_graph_relationships
+                           WHERE relationship_type = 'INSTALLED_IN' AND source_id = %s
+                             AND retired_at IS NULL ORDER BY relationship_id""",
+                        (resource_id,),
+                    )
+                    current = cursor.fetchall()
+                    if len(current) != 1:
+                        raise GraphValidationError(
+                            "resource must have exactly one active installed-in relationship"
+                        )
+                    current_place = UUID(str(current[0]["target_id"]))
+                    if current_place == place_id:
+                        return
+                    cursor.execute(
+                        "UPDATE anima_graph_relationships SET retired_at = now() WHERE relationship_id = %s",
+                        (current[0]["relationship_id"],),
+                    )
+                    relationship_id = uuid4()
+                    cursor.execute(
+                        """INSERT INTO anima_graph_relationships
+                           (relationship_id, relationship_type, source_id, target_id, metadata)
+                           VALUES (%s, 'INSTALLED_IN', %s, %s, '{}'::jsonb)""",
+                        (relationship_id, resource_id, place_id),
+                    )
+                    self._audit(
+                        connection,
+                        "resource.moved",
+                        resource_id,
+                        {
+                            "from_place_id": str(current_place),
+                            "to_place_id": str(place_id),
+                            "relationship_id": str(relationship_id),
+                        },
+                    )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+
+    def retire_resource(self, resource_id: UUID) -> None:
+        """Retire a commissioned resource and its owned semantic edges."""
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT kind FROM anima_graph_nodes WHERE canonical_id = %s AND retired_at IS NULL",
+                        (resource_id,),
+                    )
+                    resource = cursor.fetchone()
+                    if resource is None or str(resource["kind"]) not in {"RESOURCE", "SENSOR"}:
+                        raise GraphValidationError("resource is unknown or already retired")
+                    cursor.execute(
+                        """SELECT target_id FROM anima_graph_relationships
+                           WHERE relationship_type = 'EXPOSES' AND source_id = %s
+                             AND retired_at IS NULL""",
+                        (resource_id,),
+                    )
+                    target_ids = [resource_id] + [
+                        UUID(str(row["target_id"])) for row in cursor.fetchall()
+                    ]
+                    cursor.execute(
+                        "UPDATE anima_graph_nodes SET retired_at = now(), updated_at = now() WHERE canonical_id = ANY(%s)",
+                        (target_ids,),
+                    )
+                    cursor.execute(
+                        """UPDATE anima_graph_relationships SET retired_at = now()
+                           WHERE retired_at IS NULL AND (source_id = ANY(%s) OR target_id = ANY(%s))""",
+                        (target_ids, target_ids),
+                    )
+                    cursor.execute(
+                        "UPDATE anima_graph_aliases SET retired_at = now() WHERE retired_at IS NULL AND canonical_id = ANY(%s)",
+                        (target_ids,),
+                    )
+                    cursor.execute(
+                        "UPDATE anima_graph_provider_refs SET retired_at = now() WHERE retired_at IS NULL AND target_id = ANY(%s)",
+                        (target_ids,),
+                    )
+                    cursor.execute(
+                        "UPDATE anima_graph_truth_bindings SET retired_at = now() WHERE retired_at IS NULL AND target_id = ANY(%s)",
+                        (target_ids,),
+                    )
+                    self._audit(
+                        connection,
+                        "resource.retired",
+                        resource_id,
+                        {"retired_target_count": len(target_ids)},
+                    )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+
     def map_provider_reference(
         self, reference: ProviderReference, *, allow_remap: bool = False
     ) -> None:

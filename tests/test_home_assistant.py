@@ -26,6 +26,7 @@ from anima_ha.plugins import (
     InvocationOutcome,
     NativeRuntime,
     PluginManager,
+    PluginValidationError,
     SecretBroker,
 )
 from anima_ha.policy import Assurance, IdentityContext, PolicyService
@@ -113,11 +114,53 @@ class CommissioningGraph(FakeGraph):
 
     def commission(self, document: Any) -> Any:
         self.commissioned = document
+        for node in document.nodes:
+            if node.kind in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+                self.resource_id = node.canonical_id
         return SimpleNamespace(
             created_nodes=len(document.nodes),
             created_relationships=len(document.relationships),
             created_provider_references=len(document.provider_references),
         )
+
+
+class LifecycleGraph(CommissioningGraph):
+    def __init__(self, scope: str, resource_id: UUID, capability_id: UUID) -> None:
+        super().__init__(scope, resource_id, capability_id)
+        self.current_place = self.place_id
+        self.renamed: list[tuple[UUID, str]] = []
+        self.moved: list[tuple[UUID, UUID]] = []
+        self.retired: list[UUID] = []
+        self.other_place = uuid4()
+        self.other_place_node = CanonicalNode(self.other_place, NodeKind.ROOM, "Office")
+
+    def get_node(self, canonical_id: UUID) -> CanonicalNode | None:
+        if canonical_id == self.other_place:
+            return self.other_place_node
+        if canonical_id == self.resource_id and self.commissioned is not None:
+            return CanonicalNode(self.resource_id, NodeKind.RESOURCE, "SenseGuard Basement")
+        return super().get_node(canonical_id)
+
+    def places_in_household(self, household_id: UUID) -> list[CanonicalNode]:
+        if household_id != self.household_id:
+            return []
+        return [self.place, self.other_place_node]
+
+    def resources_in_place(self, place_id: UUID, recursive: bool = True) -> list[CanonicalNode]:
+        del recursive
+        if place_id == self.current_place and self.commissioned is not None:
+            return [CanonicalNode(self.resource_id, NodeKind.RESOURCE, "SenseGuard Basement")]
+        return []
+
+    def rename_node(self, canonical_id: UUID, new_name: str) -> None:
+        self.renamed.append((canonical_id, new_name))
+
+    def move_resource(self, resource_id: UUID, place_id: UUID) -> None:
+        self.current_place = place_id
+        self.moved.append((resource_id, place_id))
+
+    def retire_resource(self, resource_id: UUID) -> None:
+        self.retired.append(resource_id)
 
 
 def state(entity_id: str, value: str, stamp: str = "2026-08-29T18:00:00+00:00") -> dict[str, Any]:
@@ -461,6 +504,9 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
         "refresh_inventory",
         "permit_zigbee_join",
         "commission_device",
+        "rename_device",
+        "reassign_device",
+        "retire_device",
         "read_state",
         "set_power",
     }
@@ -522,6 +568,57 @@ def test_discovered_device_commissions_from_registry_into_canonical_graph(
     assert result["power_capability_count"] == 1
     assert graph.commissioned is not None
     assert len(store.objects) == 3
+
+
+def test_commissioned_device_lifecycle_stays_household_scoped(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    graph = LifecycleGraph(str(adapter.config.instance_id), uuid4(), uuid4())
+    adapter.graph = graph  # type: ignore[assignment]
+    adapter.start(FakeConnection())
+    plugin = HomeAssistantPlugin(adapter, lambda token: FakeConnection())
+    plugin.invoke_for_household(
+        "commission_device",
+        {
+            "device_id": "ha-device",
+            "name": "SenseGuard Basement",
+            "place_id": str(graph.place_id),
+        },
+        5.0,
+        graph.household_id,
+    )
+
+    renamed = plugin.invoke_for_household(
+        "rename_device",
+        {"resource_id": str(graph.resource_id), "name": "SenseGuard Lower Level"},
+        5.0,
+        graph.household_id,
+    )
+    moved = plugin.invoke_for_household(
+        "reassign_device",
+        {"resource_id": str(graph.resource_id), "place_id": str(graph.other_place)},
+        5.0,
+        graph.household_id,
+    )
+    retired = plugin.invoke_for_household(
+        "retire_device", {"resource_id": str(graph.resource_id)}, 5.0, graph.household_id
+    )
+
+    assert renamed["name"] == "SenseGuard Lower Level"
+    assert moved["place_id"] == str(graph.other_place)
+    assert retired["operation"] == "retire_device"
+    assert graph.renamed == [(graph.resource_id, "SenseGuard Lower Level")]
+    assert graph.moved == [(graph.resource_id, graph.other_place)]
+    assert graph.retired == [graph.resource_id]
+
+    with pytest.raises(PluginValidationError, match="not in the commissioned household"):
+        plugin.invoke_for_household(
+            "rename_device",
+            {"resource_id": str(graph.resource_id), "name": "Nope"},
+            5.0,
+            uuid4(),
+        )
 
 
 def test_current_home_assistant_device_registry_fields_are_preserved(

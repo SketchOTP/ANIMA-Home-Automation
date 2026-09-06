@@ -287,6 +287,14 @@ class CoreUICommandGateway:
         items = []
         for item in self.home_assistant_adapter.provider_inventory():
             metadata = dict(item.get("metadata") or {})
+            canonical_target = None
+            canonical_value = metadata.get("canonical_target_id")
+            if canonical_value and self.graph is not None:
+                try:
+                    canonical_target = self.graph.get_node(UUID(str(canonical_value)))
+                except (TypeError, ValueError):
+                    canonical_target = None
+            mapped = canonical_target is not None and item.get("present") is True
             items.append(
                 {
                     "external_object_kind": str(item.get("external_object_kind", "")),
@@ -295,17 +303,23 @@ class CoreUICommandGateway:
                     "metadata": {
                         key: metadata[key]
                         for key in (
-                            "name",
                             "name_by_user",
+                            "name",
                             "area_id",
                             "device_id",
                             "platform",
                             "disabled_by",
-                            "mapping_status",
-                            "canonical_target_id",
                         )
                         if key in metadata
-                    },
+                    }
+                    | ({
+                        "name": canonical_target.name,
+                        "mapping_status": "MAPPED",
+                        "canonical_target_id": str(canonical_target.canonical_id),
+                    } if mapped else {
+                        "mapping_status": "UNMAPPED",
+                        "canonical_target_id": None,
+                    }),
                 }
             )
         return {"status": "AVAILABLE", "items": items}
@@ -317,6 +331,9 @@ class CoreUICommandGateway:
             "refresh": "refresh_inventory",
             "permit-pairing": "permit_zigbee_join",
             "commission": "commission_device",
+            "rename": "rename_device",
+            "reassign": "reassign_device",
+            "retire": "retire_device",
         }
         name = operation_map.get(operation)
         if name is None:

@@ -2048,7 +2048,7 @@ def create_app(
         body: MutationRequest,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
-        if operation not in {"refresh", "permit-pairing", "commission"}:
+        if operation not in {"refresh", "permit-pairing", "commission", "rename", "reassign", "retire"}:
             raise HTTPException(status_code=404, detail="UNKNOWN_DEVICE_OPERATION")
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)

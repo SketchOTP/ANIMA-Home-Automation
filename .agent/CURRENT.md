@@ -27,13 +27,18 @@ authorized by the goal-wide completion audit.
 
 ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed
 SenseGuard alert-policy capability through the ANIMA Core/API/UI management
-plane. Preserve the accepted authority, privacy, policy, verification, SENTRY,
-and Home Assistant abstraction boundaries. Phase 15 household demonstration is
-not authorized.
+plane, together with the bounded commissioned-device lifecycle follow-on.
+Preserve the accepted authority, privacy, policy, verification, SENTRY, and
+Home Assistant abstraction boundaries. Phase 15 household demonstration is not
+authorized.
 
 ## Active task packet
 
 `.agent/tasks/active/ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A/`
+
+The packet remains `COMPLETE — PENDING ARCHITECT ACCEPTANCE` and now includes
+the device lifecycle follow-on: rename, reassignment to an existing room/zone,
+and ANIMA retirement without mutating Home Assistant’s provider registry.
 
 ## Latest Phase 14 evidence ledger checkpoint
 

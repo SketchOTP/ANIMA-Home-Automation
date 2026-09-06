@@ -56,6 +56,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Configured conversation composition into Attention, Context Broker, and the selected intelligence provider; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
 - ANIMA-owned device onboarding from the local Devices view: open a bounded ZHA pairing window, refresh the commissioned HA registry, place a discovered device in an existing room, and expose only its normalized semantic capabilities. Power controls continue through the Phase 5/4/9 path.
+- ANIMA-owned commissioned-device lifecycle from the same Devices view: rename a device, move it between existing rooms/zones, or retire it from ANIMA’s canonical model. These mutations preserve the Home Assistant registry and remain household-scoped, policy-gated Graph operations.
 - ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
@@ -68,8 +69,8 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 ## Evidence
 
 Phases 0–14 are Architect accepted. Current work is goal-wide owner-facing
-management-plane convergence, beginning with typed SenseGuard alert-policy
-management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
+management-plane convergence, currently covering typed SenseGuard alert-policy
+and commissioned-device lifecycle management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
 guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish
 accepted platform contracts from the current bounded product increment. Phase 15
 remains unauthorized.

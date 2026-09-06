@@ -20,3 +20,10 @@ Limitations and next candidates: this increment does not add notification
 destination management, plugin/integration administration, backup/restore UI,
 scenes/automation management, or Phase 15 behavior. The current packet remains
 pending independent Architect review; Phase 15 is unauthorized.
+
+The Devices view also now provides the bounded commissioned-device lifecycle
+operations described in `docs/GOAL-DEVICE-LIFECYCLE-017A.md`: rename, move to a
+validated household room/zone, and retire from ANIMA while preserving the
+underlying Home Assistant registry. The lifecycle follow-on is included in
+this active packet so governance retains one active goal increment until the
+Architect reviews the combined publication.

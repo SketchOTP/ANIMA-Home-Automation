@@ -1107,37 +1107,28 @@ class HomeAssistantPlugin:
 
     def list_tools(self) -> list[dict[str, Any]]:
         return [
-            {
-                "name": "refresh_inventory",
-                "input_schema": home_assistant_manifest(self.adapter.config).tools[0][
-                    "input_schema"
-                ],
-            },
-            {
-                "name": "permit_zigbee_join",
-                "input_schema": home_assistant_manifest(self.adapter.config).tools[1][
-                    "input_schema"
-                ],
-            },
-            {
-                "name": "commission_device",
-                "input_schema": home_assistant_manifest(self.adapter.config).tools[2][
-                    "input_schema"
-                ],
-            },
-            {
-                "name": "read_state",
-                "input_schema": home_assistant_manifest(self.adapter.config).tools[3][
-                    "input_schema"
-                ],
-            },
-            {
-                "name": "set_power",
-                "input_schema": home_assistant_manifest(self.adapter.config).tools[4][
-                    "input_schema"
-                ],
-            },
+            {"name": str(tool["name"]), "input_schema": dict(tool["input_schema"])}
+            for tool in home_assistant_manifest(self.adapter.config).tools
         ]
+
+    def _resource_in_household(self, household_id: UUID, resource_id: UUID) -> CanonicalNode:
+        resource = self.adapter.graph.get_node(resource_id)
+        if resource is None or resource.kind not in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+            raise PluginValidationError("commissioned device resource is unavailable")
+        if not any(
+            item.canonical_id == resource_id
+            for place in self.adapter.graph.places_in_household(household_id)
+            for item in self.adapter.graph.resources_in_place(place.canonical_id)
+        ):
+            raise PluginValidationError("device is not in the commissioned household")
+        return resource
+
+    def _place_in_household(self, household_id: UUID, place_id: UUID) -> None:
+        if not any(
+            item.canonical_id == place_id
+            for item in self.adapter.graph.places_in_household(household_id)
+        ):
+            raise PluginValidationError("destination is not in the commissioned household")
 
     def invoke_for_household(
         self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID
@@ -1158,6 +1149,40 @@ class HomeAssistantPlugin:
                 str(arguments["name"]),
                 UUID(str(arguments["place_id"])),
             )
+        if name == "rename_device":
+            resource_id = UUID(str(arguments["resource_id"]))
+            resource = self._resource_in_household(household_id, resource_id)
+            new_name = str(arguments["name"]).strip()
+            if not new_name or len(new_name) > 120:
+                raise PluginValidationError("device name must be 1-120 characters")
+            self.adapter.graph.rename_node(resource.canonical_id, new_name)
+            return {
+                "resource_id": str(resource.canonical_id),
+                "name": new_name,
+                "operation": "rename_device",
+            }
+        if name == "reassign_device":
+            resource_id = UUID(str(arguments["resource_id"]))
+            resource = self._resource_in_household(household_id, resource_id)
+            place_id = UUID(str(arguments["place_id"]))
+            self._place_in_household(household_id, place_id)
+            self.adapter.graph.move_resource(resource.canonical_id, place_id)
+            return {
+                "resource_id": str(resource.canonical_id),
+                "place_id": str(place_id),
+                "operation": "reassign_device",
+            }
+        if name == "retire_device":
+            resource_id = UUID(str(arguments["resource_id"]))
+            resource = self._resource_in_household(household_id, resource_id)
+            self.adapter.graph.retire_resource(resource.canonical_id)
+            return {
+                "resource_id": str(resource.canonical_id),
+                "operation": "retire_device",
+                "detail": (
+                    "Device removed from ANIMA commissioning; Home Assistant registry unchanged"
+                ),
+            }
         return self.invoke(name, arguments, timeout)
 
     def _commission_device(
@@ -1375,6 +1400,27 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
         },
         "additionalProperties": False,
     }
+    rename_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["resource_id", "name"],
+        "properties": {
+            "resource_id": id_schema,
+            "name": {"type": "string", "minLength": 1, "maxLength": 120},
+        },
+        "additionalProperties": False,
+    }
+    reassign_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["resource_id", "place_id"],
+        "properties": {"resource_id": id_schema, "place_id": id_schema},
+        "additionalProperties": False,
+    }
+    retire_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["resource_id"],
+        "properties": {"resource_id": id_schema},
+        "additionalProperties": False,
+    }
     common: dict[str, Any] = {
         "type": "object",
         "required": ["resource_id"],
@@ -1427,6 +1473,41 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                 "input_schema": commission_schema,
                 "output_schema": {"type": "object"},
                 "semantic_action": "commission_home_device",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "rename_device",
+                "description": "Rename a commissioned ANIMA device while preserving its old alias",
+                "input_schema": rename_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "rename_home_device",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "reassign_device",
+                "description": "Move a commissioned ANIMA device to another household room or zone",
+                "input_schema": reassign_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "reassign_home_device",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "retire_device",
+                "description": (
+                    "Remove a device from ANIMA commissioning without changing Home Assistant"
+                ),
+                "input_schema": retire_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "retire_home_device",
                 "risk_class": "LOW_RISK_HOME_CONTROL",
                 "read_only": False,
                 "idempotency": "IDEMPOTENT",
