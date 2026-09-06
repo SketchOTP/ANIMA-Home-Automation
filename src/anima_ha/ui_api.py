@@ -82,6 +82,7 @@ class UIConfig:
     bind_port: int = 8090
     static_dir: Path = Path("ui/dist")
     ha_base_url: str | None = None
+    ha_browser_url: str | None = None
     ha_client_id: str | None = None
     ha_redirect_uri: str | None = None
     opa_url: str = "http://127.0.0.1:8181"
@@ -104,6 +105,7 @@ class UIConfig:
             bind_port=port,
             static_dir=Path(source.get("ANIMA_UI_STATIC_DIR", "ui/dist")),
             ha_base_url=source.get("ANIMA_HA_BASE_URL") or None,
+            ha_browser_url=source.get("ANIMA_HA_BROWSER_URL") or None,
             ha_client_id=source.get("ANIMA_HA_OAUTH_CLIENT_ID") or None,
             ha_redirect_uri=source.get("ANIMA_HA_OAUTH_REDIRECT_URI") or None,
             opa_url=source.get("ANIMA_OPA_URL", "http://127.0.0.1:8181").rstrip("/"),
@@ -1884,8 +1886,9 @@ class HomeAssistantOAuth:
         self.config = config
 
     def authorization_url(self, state: str) -> str:
+        browser_base_url = self.config.ha_browser_url or self.config.ha_base_url
         if (
-            not self.config.ha_base_url
+            not browser_base_url
             or not self.config.ha_client_id
             or not self.config.ha_redirect_uri
         ):
@@ -1898,7 +1901,7 @@ class HomeAssistantOAuth:
             "state": state,
             "response_type": "code",
         }
-        return f"{self.config.ha_base_url.rstrip('/')}/auth/authorize?{urlencode(params)}"
+        return f"{browser_base_url.rstrip('/')}/auth/authorize?{urlencode(params)}"
 
     async def resolve_user_id(self, code: str) -> str:
         """Exchange one authorization code and query HA's authenticated user.

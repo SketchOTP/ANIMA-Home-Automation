@@ -12,6 +12,7 @@ from anima_ha.ui_api import (
     JournalConversationIngress,
     UIConfig,
     UIEventBroadcaster,
+    HomeAssistantOAuth,
     UIService,
     create_app,
     validate_ui_preferences,
@@ -80,6 +81,20 @@ def test_health_is_public_but_household_data_requires_session() -> None:
     client = TestClient(app)
     assert client.get("/healthz").json()["status"] == "ok"
     assert client.get("/api/v1/home").status_code == 401
+
+
+def test_oauth_uses_browser_url_while_token_exchange_keeps_internal_url() -> None:
+    config = UIConfig(
+        ha_base_url="http://ha-internal:8123",
+        ha_browser_url="http://localhost:8123",
+        ha_client_id="http://localhost:18090",
+        ha_redirect_uri="http://localhost:18090/auth/callback",
+    )
+
+    authorization_url = HomeAssistantOAuth(config).authorization_url("state")
+
+    assert authorization_url.startswith("http://localhost:8123/auth/authorize?")
+    assert "redirect_uri=http%3A%2F%2Flocalhost%3A18090%2Fauth%2Fcallback" in authorization_url
 
 
 def test_device_routes_return_registry_and_route_bounded_mutations() -> None:
