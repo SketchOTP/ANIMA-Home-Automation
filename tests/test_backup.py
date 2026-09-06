@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from uuid import UUID
 
 from anima_ha.backup import BackupCoordinator
-
 
 HOUSEHOLD_A = UUID("00000000-0000-0000-0000-000000000001")
 HOUSEHOLD_B = UUID("00000000-0000-0000-0000-000000000002")
