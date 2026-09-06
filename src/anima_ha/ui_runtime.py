@@ -943,6 +943,7 @@ def build_postgres_core(
     )
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
+
         def resolve_resource(external_id: str) -> UUID | None:
             node = graph.resolve_provider_reference(
                 "home_assistant", provider_scope, "entity", external_id

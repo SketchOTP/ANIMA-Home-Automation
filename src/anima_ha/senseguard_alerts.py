@@ -225,9 +225,7 @@ class PostgresSenseGuardAlertPolicyStore:
             delivery_mode=str(row["delivery_mode"]),
             enabled=bool(row["enabled"]),
             creator_principal_id=(
-                UUID(str(row["creator_principal_id"]))
-                if row.get("creator_principal_id")
-                else None
+                UUID(str(row["creator_principal_id"])) if row.get("creator_principal_id") else None
             ),
             version=int(row["version"]),
         )
