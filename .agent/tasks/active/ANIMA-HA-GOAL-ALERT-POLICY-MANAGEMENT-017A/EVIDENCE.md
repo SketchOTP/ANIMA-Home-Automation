@@ -202,5 +202,14 @@ outside this slice. Phase 15 remains unauthorized.
 
 The hosted run passed deterministic validation, the existing Phase 0-14 and
 SENTRY checks, ARM64/container validation, H5 targets, and the public-safety
-scan. This remains implementation evidence pending independent Architect
-acceptance; Phase 15 remains unauthorized.
+scan. Exact-head evidence is:
+
+- implementation/final candidate: `c59504dcb9d85daecb16972fd1dfe925431821b7`;
+- hosted CI: `34030239375` — PASS;
+- reviewable artifact: `9988522653`;
+- artifact digest: `sha256:3c452d235a538c633840a6973f7111eae1d649df4e0abf6889f3199dd37f454d`.
+
+The local SFTP checkout lacks a usable Python pytest interpreter, so the
+hosted run is the authoritative full-regression result. This remains
+implementation evidence pending independent Architect acceptance; Phase 15
+remains unauthorized.

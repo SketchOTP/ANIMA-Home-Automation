@@ -35,6 +35,17 @@ authorized by the goal-wide completion audit.
 - PostgreSQL migration `0024_scenes.sql` and `anima.scenes` keep definitions
   declarative. No raw Home Assistant entity, service, credential, arbitrary
   automation payload, or second execution path was added.
+- Implementation/final candidate: `c59504dcb9d85daecb16972fd1dfe925431821b7`;
+  `main == origin/main`; clean tree after publication.
+- Exact-head hosted CI: `34030239375` — PASS. Reviewable artifact:
+  `9988522653`
+  (`phase12-h5-evidence-c59504dcb9d85daecb16972fd1dfe925431821b7`), digest
+  `sha256:3c452d235a538c633840a6973f7111eae1d649df4e0abf6889f3199dd37f454d`.
+- Hosted validation passed deterministic scene checks, the existing Phase 0–14
+  and SENTRY suites, ARM64/container validation, H5 targets, and the
+  public-safety scan. Scene apply remains a bounded sequential operation:
+  each control is independently governed and verified; a later failure is
+  reported as `PARTIAL`, not atomic success.
 - Focused compileall, Ruff, TypeScript, Vite build, and diff checks pass. The
   local Python pytest interpreter is unavailable in this SFTP checkout; full
   regression and container qualification remain hosted-CI evidence.

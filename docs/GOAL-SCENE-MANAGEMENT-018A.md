@@ -32,5 +32,13 @@ this increment and require their own typed capabilities.
 
 The implementation is covered by deterministic validation for household
 scope, commissioned-resource validation, duplicate-resource rejection, and
-stale-version handling. Full PostgreSQL, OPA, Home Assistant, frontend, and
-hosted CI qualification remains the authoritative next validation step.
+stale-version handling. Exact-head hosted qualification passed on
+`c59504dcb9d85daecb16972fd1dfe925431821b7` in CI `34030239375`. The reviewable
+artifact is `9988522653`, digest
+`sha256:3c452d235a538c633840a6973f7111eae1d649df4e0abf6889f3199dd37f454d`.
+The hosted workflow also passed the existing Phase 0–14/SENTRY validation,
+ARM64/container checks, H5 targets, and public-safety scan. Local Python pytest
+was unavailable in the SFTP checkout, so local execution is not claimed.
+
+This increment remains pending independent Architect acceptance. Phase 15 is
+not implemented or authorized.
