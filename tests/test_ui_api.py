@@ -115,6 +115,17 @@ def test_alert_policy_route_is_bounded_and_household_scoped() -> None:
     assert response.json()["status"] == "SUCCEEDED"
 
 
+def test_alert_event_inbox_is_authenticated_and_cursor_shaped() -> None:
+    client, _csrf, _service = authenticated_client()
+
+    response = client.get("/api/v1/alerts/events?limit=10")
+
+    assert response.status_code == 200
+    assert response.json() == {"items": [], "next_cursor": None}
+    unauthenticated = TestClient(create_app(UIService(config=UIConfig(test_auth_enabled=True))))
+    assert unauthenticated.get("/api/v1/alerts/events").status_code == 401
+
+
 def test_notification_route_is_bounded_and_keeps_destination_server_owned() -> None:
     service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
     client = TestClient(create_app(service), follow_redirects=False)

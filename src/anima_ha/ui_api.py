@@ -418,6 +418,10 @@ class HouseholdReadModel(Protocol):
 
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def alert_events(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]: ...
+
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
     def backups(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
@@ -803,6 +807,13 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def alert_events(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity, cursor
+        _page_limit(limit)
+        return {"items": [], "next_cursor": None}
+
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
@@ -925,6 +936,13 @@ class UnavailableHouseholdReadModel:
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
+
+    def alert_events(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        del identity, cursor
+        _page_limit(limit)
+        return {"items": [], "next_cursor": None}
 
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
@@ -1442,6 +1460,89 @@ class PostgresHouseholdReadModel:
             policy.to_payload()
             for policy in self.alert_policy_store.list_all(identity.household_id)
         ]
+
+    def alert_events(
+        self, identity: UIIdentity, *, cursor: str | None = None, limit: int = UI_PAGE_SIZE
+    ) -> dict[str, Any]:
+        """Project matched SenseGuard events from the authoritative journal."""
+
+        bounded = _page_limit(limit)
+        decoded = _decode_page_cursor(cursor)
+        clauses = [
+            "metadata->>'household_id'=%s",
+            "source='anima:senseguard-policy'",
+        ]
+        params: list[Any] = [str(identity.household_id)]
+        if decoded is not None:
+            occurred_at, event_id = decoded
+            clauses.append("(occurred_at, event_id) < (%s, %s)")
+            params.extend([occurred_at, event_id])
+        with self._connect() as connection, connection.cursor() as cursor_db:
+            cursor_db.execute(
+                f"""
+                SELECT event_id, occurred_at, payload, metadata
+                FROM anima_event_journal
+                WHERE {' AND '.join(clauses)}
+                ORDER BY occurred_at DESC, event_id DESC
+                LIMIT %s
+                """,
+                (*params, bounded + 1),
+            )
+            rows = list(cursor_db.fetchall())
+            event_ids = [str(row["event_id"]) for row in rows]
+            delivery_by_alert: dict[str, str] = {}
+            if event_ids:
+                cursor_db.execute(
+                    """
+                    SELECT payload->>'alert_event_id' AS alert_event_id,
+                           payload->>'status' AS status
+                    FROM anima_event_journal
+                    WHERE event_type='notification.delivery'
+                      AND metadata->>'household_id'=%s
+                      AND payload->>'alert_event_id' = ANY(%s)
+                    ORDER BY journal_position DESC
+                    """,
+                    (str(identity.household_id), event_ids),
+                )
+                for delivery in cursor_db.fetchall():
+                    alert_id = str(delivery["alert_event_id"])
+                    if alert_id not in delivery_by_alert:
+                        delivery_by_alert[alert_id] = str(delivery["status"])
+        selected = rows[:bounded]
+        items: list[dict[str, Any]] = []
+        for row in selected:
+            payload = dict(row["payload"] or {})
+            metadata = dict(row["metadata"] or {})
+            resource_id = str(payload.get("canonical_resource_id", ""))
+            resource_name = None
+            if self.graph is not None and resource_id:
+                try:
+                    resource = self.graph.get_node(UUID(resource_id))
+                except (ValueError, TypeError):
+                    resource = None
+                resource_name = resource.name if resource is not None else None
+            items.append(
+                {
+                    "alert_id": str(row["event_id"]),
+                    "source_event_id": payload.get("source_event_id"),
+                    "resource_id": resource_id,
+                    "resource_name": resource_name or "SenseGuard resource",
+                    "event_type": str(payload.get("event_type", "senseguard.event")),
+                    "occurred_at": row["occurred_at"].isoformat(),
+                    "priority": int(metadata.get("priority", 0)),
+                    "delivery_mode": str(metadata.get("delivery_mode", "SENTRY_COGNITION")),
+                    "delivery_status": delivery_by_alert.get(str(row["event_id"]), "RECORDED"),
+                }
+            )
+        has_more = len(rows) > bounded
+        next_cursor = (
+            _encode_page_cursor(
+                selected[-1]["occurred_at"].isoformat(), str(selected[-1]["event_id"])
+            )
+            if has_more and selected
+            else None
+        )
+        return {"items": items, "next_cursor": next_cursor}
 
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
         if self.notification_route_store is None:
@@ -2435,6 +2536,17 @@ def create_app(
     @app.get("/api/v1/alerts/policies")
     async def alert_policies(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.alert_policies(current_identity(request))}
+
+    @app.get("/api/v1/alerts/events")
+    async def alert_events(request: Request) -> dict[str, Any]:
+        try:
+            limit = int(request.query_params.get("limit", str(UI_PAGE_SIZE)))
+            cursor = request.query_params.get("cursor")
+            return svc.read_model.alert_events(
+                current_identity(request), cursor=cursor, limit=limit
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_ALERT_PAGE") from exc
 
     @app.post("/api/v1/alerts/policies")
     async def save_alert_policy(
