@@ -358,3 +358,17 @@ in the packet/status records; it does not change runtime behavior or
 self-accept Phase 14. The evidence ledger remains a named-slice coverage
 record with deterministic-contract fixtures excluded from destructive proof.
 Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
+
+## Latest exact-head evidence ledger - 2026-09-06
+
+The latest exact-head evidence run passed on
+`469cffe41204ccdd9d05b3417a4409bc52f7d9ef` with hosted CI `34005359983` and
+artifact `9980877995`, digest
+`sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`.
+The artifact tested that exact SHA, found all 22 required evidence inputs, and
+reported all ten mapped families `VERIFIED` for their named scenarios with no
+missing or non-passing entries. Its real-store bundle contains 13 scenarios,
+including the 250-task/250-calendar traversal and replay fingerprints. This
+consolidation does not self-accept Phase 14; deterministic-contract fixtures
+remain excluded from destructive proof, Phase 14 remains `CONTINUE`, and Phase
+15 remains unauthorized.

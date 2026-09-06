@@ -24,9 +24,11 @@ workflow engine, provider, or household feature is authorized.
 
 ## Latest Phase 14 evidence ledger checkpoint
 
-The current governed code/evidence head is `9c26fdc3f371cd867a925e4b1a081835fc1d1913`,
-matching `origin/main`. Exact-head hosted CI `34004675040` passed and published
-artifact `9980681769`; its evidence metadata confirms the tested SHA exactly.
+The current governed code/evidence head is `469cffe41204ccdd9d05b3417a4409bc52f7d9ef`,
+matching `origin/main`. Exact-head hosted CI `34005359983` passed and published
+artifact `9980877995` with digest
+`sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`;
+its evidence metadata confirms the tested SHA exactly.
 The consolidated `PHASE14_EVIDENCE_LEDGER` step completed successfully and
 confirmed that all 22 required real-store evidence files are present, with
 explicit PASS/PASSED scenario statuses, source digests, and family mappings.

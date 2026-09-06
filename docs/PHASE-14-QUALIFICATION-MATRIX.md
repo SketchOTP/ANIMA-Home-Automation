@@ -21,6 +21,7 @@ not authorized.
 | Current exact-head destructive ledger | `a84d318e491e78ce5d7e7d0cdd59d2fbf74a2048` | `34003443720` PASS | `9980299813` |
 | Current exact-head governance reconciliation | `2f1c45231355578f33fe737708a4c94f63596887` | `34004155779` PASS | `9980525065` |
 | Latest exact-head packet reconciliation | `9c26fdc3f371cd867a925e4b1a081835fc1d1913` | `34004675040` PASS | `9980681769` |
+| Latest exact-head evidence ledger | `469cffe41204ccdd9d05b3417a4409bc52f7d9ef` | `34005359983` PASS | `9980877995` (`sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`) |
 
 ## Clustered status
 
@@ -115,6 +116,18 @@ The latest governance-only packet reconciliation head
 packet/status references to the actual current repository head. No runtime
 behavior changed, the Phase 14 disposition remains `CONTINUE`, and Phase 15
 remains unauthorized.
+
+## Latest exact-head evidence ledger
+
+The exact-head hosted run `34005359983` passed on
+`469cffe41204ccdd9d05b3417a4409bc52f7d9ef` and published artifact `9980877995`
+with digest `sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`.
+The ledger tested that exact SHA, found all 22 required evidence inputs, and
+reported all ten mapped families `VERIFIED` for their named scenarios with no
+missing or non-passing entries. The real-store bundle contains 13 scenarios,
+including 250-task/250-calendar traversal and replay fingerprints. The only
+remaining external-resource gate recorded here is native Pi 5; this evidence
+does not self-accept Phase 14, whose disposition remains `CONTINUE`.
 
 ## Next consolidated closure bundle
 

@@ -632,3 +632,17 @@ unauthorized and unimplemented.
 - The exact-head ledger remains evidence-integrity coverage for named exercised
   scenarios; deterministic-contract fixtures remain excluded from destructive
   proof. Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
+
+## Latest exact-head evidence ledger - 2026-09-06
+
+- PASS / exact governed head: `469cffe41204ccdd9d05b3417a4409bc52f7d9ef`;
+  hosted CI `34005359983` passed.
+- Reviewable artifact `9980877995` has digest
+  `sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`.
+- Artifact metadata confirms the exact tested SHA, all 22 required evidence
+  inputs, and all ten mapped families `VERIFIED` for their named scenarios
+  with no missing or non-passing entries. The real-store bundle contains 13
+  scenarios and the only recorded external gate is native Pi 5.
+- This is the latest exact-head evidence consolidation, not Phase 14
+  acceptance. Deterministic-contract fixtures remain excluded from destructive
+  proof; Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
