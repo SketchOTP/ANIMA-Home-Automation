@@ -155,3 +155,18 @@ Hosted qualification update:
 - Reviewable artifact: `9986165454`.
 - The active packet remains complete pending Architect acceptance. No human
   receipt, automatic voice response, or Phase 15 behavior is claimed.
+
+## Server-owned backup snapshot follow-on
+
+The current bounded recovery increment adds an authenticated Backups view and
+`/api/v1/backups` read/create/inspect routes. Requests cross the normal Core
+gateway, PluginManager, and policy boundary. The backup plugin receives
+household scope from ANIMA's trusted invocation context rather than from
+browser/model arguments. PostgreSQL credentials and archive paths remain
+server-owned; manifests are household-scoped and UI payloads are sanitized.
+
+The surface creates and validates snapshots only. It does not expose restore,
+database administration, archive downloads, or physical-state claims after a
+restore. Restore remains a separately controlled maintenance workflow with
+fresh HA reconciliation. This increment is implementation evidence pending
+hosted qualification and Architect acceptance; Phase 15 remains unauthorized.

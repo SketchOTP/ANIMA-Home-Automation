@@ -34,6 +34,7 @@ from anima_ha.attention import (
     PostgresAttentionService,
     default_attention_profile,
 )
+from anima_ha.backup import BACKUP_MANIFEST, BackupCoordinator, BackupNativePlugin
 from anima_ha.calendar import (
     CALENDAR_MANIFEST,
     CalendarNativePlugin,
@@ -310,6 +311,17 @@ class CoreUICommandGateway:
         if name is None:
             raise UICommandError("UNKNOWN_SPACE_OPERATION")
         return self._invoke(identity, HOUSEHOLD_SPACES_MANIFEST.plugin_id, name, payload)
+
+    def backup_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {"create": "create_backup", "inspect": "inspect_backup"}
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_BACKUP_OPERATION")
+        # Household scope is carried in the trusted InvocationContext.  The
+        # browser may identify a backup to inspect, but never its household.
+        return self._invoke(identity, BACKUP_MANIFEST.plugin_id, name, payload)
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -694,6 +706,7 @@ class CoreRuntime:
     home_assistant_adapter: HomeAssistantAdapter | None = None
     alert_policy_store: PostgresSenseGuardAlertPolicyStore | None = None
     notification_route_store: PostgresNotificationRouteStore | None = None
+    backup_coordinator: BackupCoordinator | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -862,6 +875,10 @@ def build_postgres_core(
 
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
     notification_route_store = PostgresNotificationRouteStore(database_url)
+    backup_coordinator = BackupCoordinator(
+        database_url,
+        os.environ.get("ANIMA_BACKUP_DIR", "/var/lib/anima/backups"),
+    )
 
     def alert_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
         node = graph.get_node(resource_id)
@@ -901,6 +918,11 @@ def build_postgres_core(
     register_and_enable(
         HOUSEHOLD_SPACES_MANIFEST,
         NativeRuntime(HouseholdSpacesNativePlugin(graph)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        BACKUP_MANIFEST,
+        NativeRuntime(BackupNativePlugin(backup_coordinator)),
         persist_choice=False,
     )
 
@@ -1039,6 +1061,7 @@ def build_postgres_core(
         ha_adapter,
         alert_policy_store,
         notification_route_store,
+        backup_coordinator,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()

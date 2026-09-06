@@ -25,6 +25,16 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing recovery increment - 2026-09-06
+
+- The next bounded management-plane slice adds Core-owned PostgreSQL backup
+  snapshot creation and SHA-256 validation through the authenticated Backups
+  view. Household scope is enforced by trusted InvocationContext and is not a
+  browser/model field; database credentials and archive paths stay in Core.
+- This is not yet a publication or acceptance claim: hosted validation is
+  required. Restore remains maintenance-only and must re-observe Home
+  Assistant after database restoration. Phase 15 remains unauthorized.
+
 - Current published head: `4960a99d56ee49059e6e73e2b4c71e616cac8496`;
   `main == origin/main`; clean tree at the latest publication.
 - Exact-head hosted CI: `34025860330` - PASS. Reviewable artifact:

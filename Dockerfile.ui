@@ -8,12 +8,18 @@ RUN npm run build
 FROM docker.io/library/python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 COPY policy/phase4 /usr/local/lib/python3.12/policy/phase4
 COPY --from=ui-build /build/ui/dist ./ui/dist
-RUN useradd --create-home --uid 10001 anima && chown -R anima:anima /app
+RUN useradd --create-home --uid 10001 anima \
+    && mkdir -p /var/lib/anima/backups \
+    && chown -R anima:anima /app /var/lib/anima
+ENV ANIMA_BACKUP_DIR=/var/lib/anima/backups
 USER anima
 EXPOSE 8090
 ENTRYPOINT ["anima-ui"]

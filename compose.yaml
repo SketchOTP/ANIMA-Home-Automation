@@ -68,6 +68,7 @@ services:
       ANIMA_UI_BIND: 0.0.0.0
       ANIMA_UI_PORT: 8090
       ANIMA_UI_STATIC_DIR: /app/ui/dist
+      ANIMA_BACKUP_DIR: ${ANIMA_BACKUP_DIR:-/var/lib/anima/backups}
       ANIMA_OPA_URL: http://opa:8181
       ANIMA_INTELLIGENCE_PROVIDER: ${ANIMA_INTELLIGENCE_PROVIDER:-embedded_reference}
       ANIMA_SEARXNG_URL: http://searxng:8080
@@ -83,6 +84,8 @@ services:
       HA_ACCESS_TOKEN: ${HA_ACCESS_TOKEN:-}
     ports:
       - "127.0.0.1:${ANIMA_UI_PORT:-18090}:8090"
+    volumes:
+      - anima_ha_backup_data:/var/lib/anima/backups
     depends_on:
       db:
         condition: service_healthy
@@ -97,3 +100,4 @@ services:
 
 volumes:
   anima_ha_postgres_data:
+  anima_ha_backup_data:

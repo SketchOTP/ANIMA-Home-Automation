@@ -419,6 +419,8 @@ class HouseholdReadModel(Protocol):
 
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def backups(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
@@ -487,6 +489,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def backup_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -544,6 +550,11 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"space.{operation}")
+
+    def backup_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"backup.{operation}")
 
 
 class ConversationIngress(Protocol):
@@ -756,6 +767,10 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def backups(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return dict(self._settings)
@@ -863,6 +878,10 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def backups(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return validate_ui_preferences({})
@@ -885,6 +904,7 @@ class PostgresHouseholdReadModel:
         plugins: Any | None = None,
         alert_policy_store: Any | None = None,
         notification_route_store: Any | None = None,
+        backup_coordinator: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -893,6 +913,7 @@ class PostgresHouseholdReadModel:
         self.plugins = plugins
         self.alert_policy_store = alert_policy_store
         self.notification_route_store = notification_route_store
+        self.backup_coordinator = backup_coordinator
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1360,6 +1381,14 @@ class PostgresHouseholdReadModel:
             for route in self.notification_route_store.list_all(identity.household_id)
         ]
 
+    def backups(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.backup_coordinator is None:
+            return []
+        return [
+            record.to_payload()
+            for record in self.backup_coordinator.list_for_household(identity.household_id)
+        ]
+
     def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
         if not providers:
             return None
@@ -1509,6 +1538,13 @@ class DemoCommandGateway:
         del identity, payload
         self.events.publish("home.invalidated")
         return {"status": "UNAVAILABLE", "operation": f"space.{operation}"}
+
+    def backup_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity, payload
+        self.events.publish("capabilities.changed")
+        return {"status": "UNAVAILABLE", "operation": f"backup.{operation}"}
 
 
 class JournalConversationIngress:
@@ -1857,6 +1893,7 @@ def create_app(
                 plugins=core_runtime.plugins,
                 alert_policy_store=core_runtime.alert_policy_store,
                 notification_route_store=core_runtime.notification_route_store,
+                backup_coordinator=core_runtime.backup_coordinator,
             )
         svc = UIService(
             config=config,
@@ -2137,6 +2174,28 @@ def create_app(
     @app.get("/api/v1/integrations")
     async def integrations(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.integrations(current_identity(request))}
+
+    @app.get("/api/v1/backups")
+    async def backups(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.backups(current_identity(request))}
+
+    @app.post("/api/v1/backups/{operation}")
+    async def mutate_backups(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"create", "inspect"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_BACKUP_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.backup_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/api/v1/places")
     async def places(request: Request) -> dict[str, Any]:
