@@ -1221,3 +1221,19 @@ decision.
   operation through `anima-household` MCP/Core, preserving ANIMA authority for
   Truth, policy, execution, and verification. This is not Phase 15 and does
   not reopen Phase 14.
+
+## Permanent Goal — bounded backup restore - 2026-09-06
+
+- Implemented a Core-owned `restore_backup` operation behind the existing
+  authenticated UI and PluginManager boundary. It requires explicit owner
+  confirmation, revalidates the household-scoped archive digest, uses
+  PostgreSQL cleanup/single-transaction restore flags, reapplies migrations,
+  and marks restored physical Truth `STALE` until fresh Home Assistant
+  observation.
+- Added focused confirmation, command-safety, migration, and Truth-invalidation
+  contract tests. UI TypeScript checks, frontend tests, Vite production build,
+  Python syntax, and `git diff --check` passed locally. Full Python validation
+  remains governed by hosted CI.
+- This is a bounded owner-facing recovery increment. It does not reopen Phase
+  14, add a service, expose credentials, claim live SENTRY-host operation, or
+  begin Phase 15.

@@ -10,12 +10,17 @@ permissions, and household filtering. Browser payloads contain no database
 URL, credential, archive path, or household authority; the authenticated
 InvocationContext supplies household scope.
 
-The current surface intentionally does not restore an active database. Restore
-requires a controlled maintenance workflow that can stop/reconstruct the
-application, migrate the restored database, and re-observe Home Assistant
-before treating physical state as current. The existing Phase 14 `pg_dump` /
-`pg_restore` evidence remains the qualification record for that operator
-workflow; this increment adds no new restore claim.
+The owner-facing surface now also supports an explicitly confirmed Core-owned
+restore of a validated archive into the configured ANIMA database. The restore
+uses PostgreSQL cleanup and single-transaction safeguards, applies current
+migrations, and marks restored physical Truth `UNKNOWN_UNTIL_REOBSERVED` until
+Home Assistant performs a fresh reconciliation. The browser never receives a
+database URL, credential, archive path, or raw administration command.
+
+This is a controlled recovery operation, not a claim that restored physical
+state is current. The existing Phase 14 `pg_dump` / `pg_restore` evidence
+remains the clean-environment qualification record; this increment adds the
+bounded owner initiation and Core execution path.
 
 The archive manifest is server-only metadata. UI payloads contain only the
 backup reference, timestamp, size, schema version, digest, and integrity

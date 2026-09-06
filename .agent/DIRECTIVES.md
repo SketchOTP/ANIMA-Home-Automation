@@ -666,3 +666,15 @@ Append new directives at the bottom; never rewrite an accepted historical direct
   turn remains unclaimed and is not being silently replaced by ANIMA cognition.
 - Phase 15 remains unauthorized; the permanent completion marker remains
   unclaimed.
+
+## Permanent Goal product convergence — bounded backup restore - 2026-09-06
+
+- Phase 14 is accepted and remains closed. The next goal-wide owner-facing
+  increment was selected after the live SENTRY shadow attempt reached an
+  external Codex HTTP 401 authentication gate.
+- Scope: expose a Core-owned, explicitly confirmed restore of a validated
+  server-side PostgreSQL snapshot; apply migrations; invalidate restored
+  physical Truth until HA reobservation; keep credentials and database paths
+  server-only.
+- No new resilience family, provider, broker, database, SENTRY source change,
+  or Phase 15 behavior is authorized by this increment.

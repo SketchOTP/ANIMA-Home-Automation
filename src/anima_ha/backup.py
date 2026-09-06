@@ -21,7 +21,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from psycopg.conninfo import conninfo_to_dict
-
+from anima_ha.db.migrate import migrate
 from anima_ha.plugins import (
     CORE_VERSION,
     MANIFEST_VERSION,
@@ -65,7 +65,7 @@ Runner = Callable[..., subprocess.CompletedProcess[bytes]]
 
 
 class BackupCoordinator:
-    """Create and inspect backups without exposing database administration."""
+    """Create, inspect, and restore backups without exposing database administration."""
 
     def __init__(
         self,
@@ -73,6 +73,9 @@ class BackupCoordinator:
         backup_dir: str | Path,
         *,
         runner: Runner = subprocess.run,
+        migrator: Callable[[str, int], list[str]] = migrate,
+        truth_invalidator: Callable[[], None] | None = None,
+        connect_timeout: int = 5,
     ) -> None:
         if not database_url.strip():
             raise BackupError("database URL is required")
@@ -82,6 +85,9 @@ class BackupCoordinator:
         self.database_url = database_url
         self.backup_dir = path
         self.runner = runner
+        self.migrator = migrator
+        self.truth_invalidator = truth_invalidator
+        self.connect_timeout = connect_timeout
 
     def _prepare_dir(self) -> None:
         self.backup_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -217,6 +223,86 @@ class BackupCoordinator:
             restorable=digest == record.sha256,
         )
 
+    def _pg_restore_command(self) -> tuple[list[str], dict[str, str]]:
+        try:
+            values = conninfo_to_dict(self.database_url)
+        except Exception as exc:  # pragma: no cover - psycopg owns parsing
+            raise BackupError("database URL cannot be parsed") from exc
+        password = values.pop("password", None)
+        command = [
+            "pg_restore",
+            "--clean",
+            "--if-exists",
+            "--exit-on-error",
+            "--single-transaction",
+            "--no-owner",
+            "--no-privileges",
+        ]
+        supported = {
+            "host": "--host",
+            "port": "--port",
+            "user": "--username",
+            "dbname": "--dbname",
+        }
+        for key, option in supported.items():
+            value = values.get(key)
+            if value not in (None, ""):
+                command.extend([option, str(value)])
+        if not any(item in command for item in ("--dbname", "--host")):
+            raise BackupError("database URL has no usable connection target")
+        environment = dict(os.environ)
+        if password is not None:
+            environment["PGPASSWORD"] = str(password)
+        return command, environment
+
+    def _mark_truth_stale(self) -> None:
+        if self.truth_invalidator is not None:
+            self.truth_invalidator()
+            return
+        # Restored observations describe the database at backup time. They
+        # must not be presented as current physical reality until HA performs
+        # a fresh reconciliation.
+        import psycopg
+
+        with psycopg.connect(self.database_url, connect_timeout=self.connect_timeout) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE anima_truth_state SET status='STALE', updated_at=now()"
+                )
+            connection.commit()
+
+    def restore(self, household_id: UUID, backup_id: str, *, confirm: bool = False) -> BackupRecord:
+        """Restore one validated archive into the configured ANIMA database.
+
+        This is an explicitly confirmed, Core-only maintenance mutation. The
+        archive is restored with PostgreSQL's cleanup and single-transaction
+        safeguards, current migrations are applied, and all restored Truth is
+        invalidated until a provider performs fresh observation.
+        """
+        if not confirm:
+            raise BackupError("explicit restore confirmation is required")
+        record = self.inspect(household_id, backup_id)
+        if not record.restorable:
+            raise BackupError("backup integrity validation failed")
+        archive = self.backup_dir / f"{record.backup_id}.dump"
+        command, environment = self._pg_restore_command()
+        completed = self.runner(
+            [*command, str(archive)],
+            check=False,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if completed.returncode != 0:
+            detail = completed.stderr.decode("utf-8", "replace")[:240]
+            raise BackupError(f"pg_restore failed: {detail or 'unknown error'}")
+        try:
+            self.migrator(self.database_url, self.connect_timeout)
+            self._mark_truth_stale()
+        except Exception as exc:
+            raise BackupError("restore completed but recovery reconciliation failed") from exc
+        return record
+
 
 class BackupNativePlugin:
     """Typed Core operations for owner-visible backup snapshots."""
@@ -252,6 +338,18 @@ class BackupNativePlugin:
                 "backup": self.coordinator.inspect(
                     household_id, str(arguments["backup_id"])
                 ).to_payload(),
+            }
+        if name == "restore_backup":
+            return {
+                "status": "SUCCEEDED",
+                "operation": "backup.restore",
+                "backup": self.coordinator.restore(
+                    household_id,
+                    str(arguments["backup_id"]),
+                    confirm=bool(arguments["confirm"]),
+                ).to_payload(),
+                "physical_truth": "UNKNOWN_UNTIL_REOBSERVED",
+                "reobserve_required": True,
             }
         raise BackupError("unknown backup operation")
 
@@ -296,6 +394,38 @@ BACKUP_MANIFEST = PluginManifest(
             "risk_class": "READ_ONLY",
             "read_only": True,
             "idempotency": "IDEMPOTENT",
+            "external_content_trust": "LOCAL_TRUSTED",
+        },
+        {
+            "name": "restore_backup",
+            "description": (
+                "Restore a validated server-owned snapshot after explicit owner confirmation"
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "backup_id": {"type": "string", "maxLength": 64},
+                    "confirm": {"type": "boolean", "const": True},
+                },
+                "required": ["backup_id", "confirm"],
+                "additionalProperties": False,
+            },
+            "output_schema": {
+                "type": "object",
+                "required": ["status", "operation", "backup", "physical_truth"],
+                "properties": {
+                    "status": {"const": "SUCCEEDED"},
+                    "operation": {"const": "backup.restore"},
+                    "backup": {"type": "object"},
+                    "physical_truth": {"const": "UNKNOWN_UNTIL_REOBSERVED"},
+                    "reobserve_required": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "semantic_action": "backup.restore",
+            "risk_class": "SECURITY_SECURE_ACTION",
+            "read_only": False,
+            "idempotency": "NONE",
             "external_content_trust": "LOCAL_TRUSTED",
         },
         {

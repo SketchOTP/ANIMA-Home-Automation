@@ -7,9 +7,9 @@ the accepted Phase 0–14 evidence.
 | Objective | Current disposition | Evidence boundary / remaining gap |
 | --- | --- | --- |
 | MO-01 resilience and recovery | ACCEPTED | Phase 14 is accepted; native Pi 5 remains an external hardware gate. |
-| MO-02 management plane | PARTIAL | Bounded device, integration, alert, notification, scene, automation, task, calendar, preference, backup, and room workflows exist. Active restore and unsupported advanced HA administration remain outside the prototype surface. |
+| MO-02 management plane | PARTIAL — RECOVERY WORKFLOW IMPLEMENTED | Bounded device, integration, alert, notification, scene, automation, task, calendar, preference, backup/restore, and room workflows exist. Unsupported advanced HA administration remains outside the prototype surface. |
 | MO-03 versioned API | PARTIAL | Current UI workflows have authenticated API routes; a formal 100% support-matrix audit remains open. |
-| MO-04 local UI | PARTIAL | Current bounded lifecycle is owner-usable; restore remains maintenance-only and final integrated SENTRY operation is not yet the owner-facing completion marker. |
+| MO-04 local UI | PARTIAL — RECOVERY CONTROL ADDED | Current bounded lifecycle is owner-usable, including explicit backup restore with a physical-state reobservation warning; final integrated SENTRY operation is not yet the owner-facing completion marker. |
 | MO-05 SENTRY MCP | ACCEPTED | Phase 13 runtime-compatible household boundary is accepted; no raw authority bypass exists. |
 | MO-06 SENTRY integration | PARTIAL — OWNER TEXT DELIVERY IMPLEMENTED | The ANIMA UI can queue a bounded SENTRY request and receive/display a live result through the credential-isolated delivery channel. An actual external SENTRY host turn is not claimed by this increment; voice remains later work. |
 | MO-07 onboarding without HA frontend | IMPLEMENTED (BOUNDED) | ZHA onboarding, device discovery, commissioning, lifecycle, and recovery are available through ANIMA; unsupported integration classes fail explicitly. |
@@ -41,3 +41,13 @@ exposure, record that resource boundary explicitly and pivot to the next
 owner-usable ANIMA management workflow rather than adding another delivery seam.
 Voice, physical whole-home scenarios, and the complete A–O deck remain later
 work; this is not an automatic start of the historical Phase 15 roadmap.
+
+## Latest product increment — bounded backup restore
+
+ANIMA now lets an authenticated owner restore a validated server-owned
+PostgreSQL snapshot through Core after explicit browser confirmation. Core
+keeps the archive path and database credentials private, applies current
+migrations, and invalidates restored physical Truth until Home Assistant is
+reobserved. This closes the owner initiation gap without adding a new service
+or exposing raw database administration. Phase 14 remains accepted; Phase 15
+remains unauthorized.

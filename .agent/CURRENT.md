@@ -1083,3 +1083,20 @@ accepted client-only `anima-household` MCP/Core boundary:
 The external SENTRY host turn remains unclaimed; embedded ANIMA cognition is
 not an implicit fallback. Phase 15 remains unauthorized and the completion
 marker remains unclaimed.
+
+## Permanent Goal product increment — bounded backup restore - 2026-09-06
+
+- Status: `IMPLEMENTED — PENDING ARCHITECT ACCEPTANCE`.
+- The authenticated Backups view now offers explicit owner-confirmed restore
+  through the existing Core backup plugin. Core validates the household-scoped
+  archive digest, runs bounded PostgreSQL restore, reapplies current
+  migrations, and invalidates restored physical Truth until Home Assistant
+  performs fresh observation.
+- No database URL, credentials, archive path, raw SQL, or restore command is
+  exposed to the browser or model. This is a management-plane increment, not
+  a new resilience phase; Phase 14 remains accepted and Phase 15 remains
+  unauthorized.
+- The next global product gap remains a real external SENTRY host turn. The
+  attempted shadow Codex runtime reached the actual provider boundary but was
+  stopped by HTTP 401 authentication; no fallback or credential exposure was
+  introduced.

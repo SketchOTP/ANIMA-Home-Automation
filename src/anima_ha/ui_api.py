@@ -2588,7 +2588,7 @@ def create_app(
         body: MutationRequest,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
-        if operation not in {"create", "inspect"}:
+        if operation not in {"create", "inspect", "restore"}:
             raise HTTPException(status_code=404, detail="UNKNOWN_BACKUP_OPERATION")
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)

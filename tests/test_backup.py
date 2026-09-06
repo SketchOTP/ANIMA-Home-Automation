@@ -5,7 +5,9 @@ import subprocess
 from pathlib import Path
 from uuid import UUID
 
-from anima_ha.backup import BackupCoordinator
+import pytest
+
+from anima_ha.backup import BackupCoordinator, BackupError
 
 HOUSEHOLD_A = UUID("00000000-0000-0000-0000-000000000001")
 HOUSEHOLD_B = UUID("00000000-0000-0000-0000-000000000002")
@@ -71,3 +73,65 @@ def test_backup_dump_never_receives_password_as_argument(tmp_path: Path) -> None
     args, environment = calls[0]
     assert "secret" not in " ".join(args)
     assert environment["PGPASSWORD"] == "secret"
+
+
+def test_backup_restore_requires_explicit_confirmation(tmp_path: Path) -> None:
+    coordinator = BackupCoordinator(
+        "postgresql://anima:secret@example.test/anima",
+        tmp_path,
+        runner=_runner,
+    )
+    record = coordinator.create(HOUSEHOLD_A)
+    calls: list[list[str]] = []
+
+    def restore_runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        del kwargs
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, b"", b"")
+
+    restore = BackupCoordinator(
+        "postgresql://anima:secret@example.test/anima",
+        tmp_path,
+        runner=restore_runner,
+        migrator=lambda _url, _timeout: [],
+        truth_invalidator=lambda: None,
+    )
+
+    with pytest.raises(BackupError, match="explicit restore confirmation"):
+        restore.restore(HOUSEHOLD_A, record.backup_id)
+    assert calls == []
+
+
+def test_backup_restore_is_validated_migrated_and_marks_truth_stale(tmp_path: Path) -> None:
+    source = BackupCoordinator(
+        "postgresql://anima:secret@example.test/anima",
+        tmp_path,
+        runner=_runner,
+    )
+    record = source.create(HOUSEHOLD_A)
+    calls: list[list[str]] = []
+    migrations: list[tuple[str, int]] = []
+    invalidations: list[bool] = []
+
+    def restore_runner(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[bytes]:
+        del kwargs
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, b"", b"")
+
+    restore = BackupCoordinator(
+        "postgresql://anima:secret@example.test/anima",
+        tmp_path,
+        runner=restore_runner,
+        migrator=lambda url, timeout: migrations.append((url, timeout)) or ["0010"],
+        truth_invalidator=lambda: invalidations.append(True),
+    )
+
+    restored = restore.restore(HOUSEHOLD_A, record.backup_id, confirm=True)
+
+    assert restored.backup_id == record.backup_id
+    assert len(calls) == 1
+    assert "--clean" in calls[0]
+    assert "--single-transaction" in calls[0]
+    assert "secret" not in " ".join(calls[0])
+    assert migrations == [("postgresql://anima:secret@example.test/anima", 5)]
+    assert invalidations == [True]

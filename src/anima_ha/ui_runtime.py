@@ -344,7 +344,11 @@ class CoreUICommandGateway:
     def backup_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        operation_map = {"create": "create_backup", "inspect": "inspect_backup"}
+        operation_map = {
+            "create": "create_backup",
+            "inspect": "inspect_backup",
+            "restore": "restore_backup",
+        }
         name = operation_map.get(operation)
         if name is None:
             raise UICommandError("UNKNOWN_BACKUP_OPERATION")
