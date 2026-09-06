@@ -88,9 +88,7 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
     resource_id = uuid4()
     capability_id = uuid4()
     observed_at = datetime.now(UTC)
-    resource = SimpleNamespace(
-        canonical_id=resource_id, name="Hall light", kind=NodeKind.RESOURCE
-    )
+    resource = SimpleNamespace(canonical_id=resource_id, name="Hall light", kind=NodeKind.RESOURCE)
     capability = SimpleNamespace(
         canonical_id=capability_id,
         name="Hall light power capability",

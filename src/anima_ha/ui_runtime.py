@@ -445,7 +445,9 @@ class CoreUICommandGateway:
                         if value is True or str(value).casefold() == "on"
                         else "OFF"
                         if value is False or str(value).casefold() == "off"
-                        else str(value)[:80] if value is not None else "UNKNOWN"
+                        else str(value)[:80]
+                        if value is not None
+                        else "UNKNOWN"
                     )
                 else:
                     state = status.split("/", 1)[0]

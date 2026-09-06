@@ -1182,6 +1182,7 @@ class PostgresHouseholdReadModel:
         capabilities = self.capabilities(identity)
         rooms: list[dict[str, Any]] = []
         if self.graph is not None and callable(getattr(self.graph, "places_in_household", None)):
+
             def device_state(resource: Any) -> str:
                 if self.truth is None or self.graph is None:
                     return "UNKNOWN"
@@ -1205,7 +1206,9 @@ class PostgresHouseholdReadModel:
                         if value is True or str(value).casefold() == "on"
                         else "OFF"
                         if value is False or str(value).casefold() == "off"
-                        else str(value)[:80] if value is not None else "UNKNOWN"
+                        else str(value)[:80]
+                        if value is not None
+                        else "UNKNOWN"
                     )
                 return "UNKNOWN"
 
