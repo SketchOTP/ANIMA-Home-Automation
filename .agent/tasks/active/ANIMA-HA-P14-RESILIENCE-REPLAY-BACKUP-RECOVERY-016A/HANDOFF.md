@@ -290,3 +290,13 @@ proved safe reclaim only before provider work began, `UNKNOWN_RESULT` after
 provider start, and no new claim after a durable result. No model or embedded
 AgentRuntime ran. This remains a partial Phase 14 checkpoint; the active
 packet stays active and Phase 15 remains unauthorized.
+
+## Consolidated evidence ledger checkpoint
+
+The current exact governed head is `d68f8205787d67b2f21ea9a7bba690b3e37f145c`,
+with exact-head CI `34000279143` passing. Artifact `9979391397` has digest
+`sha256:1a45b144e9cf001aad7beeef459d5517636769f7b619a68b309cce9880f5073e`.
+The `PHASE14_EVIDENCE_LEDGER` found all 22 required real-store output files,
+validated their machine-readable evidence, and recorded family-level coverage.
+The ledger remains `CONTINUE`; it does not self-accept Phase 14 or upgrade the
+remaining broader lifecycle gaps. Phase 15 remains unauthorized.

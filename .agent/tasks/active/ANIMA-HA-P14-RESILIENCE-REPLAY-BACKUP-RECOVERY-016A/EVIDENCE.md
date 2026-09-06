@@ -554,3 +554,17 @@ Approval/continuation, HA action reality, outage/process, external-content,
 and deeper ARM64 families remain partial or open. The matrix is a planning and
 evidence reconciliation record, not Phase 14 acceptance. Phase 15 remains
 unauthorized and unimplemented.
+
+## Consolidated evidence ledger checkpoint - 2026-09-05
+
+- PASS / exact governed head: `d68f8205787d67b2f21ea9a7bba690b3e37f145c`;
+  hosted CI `34000279143` passed. Artifact `9979391397`, digest
+  `sha256:1a45b144e9cf001aad7beeef459d5517636769f7b619a68b309cce9880f5073e`.
+- PASS / `PHASE14_EVIDENCE_LEDGER`: all 22 required real-store evidence files
+  were present, valid JSON evidence was consolidated, and the mapped provider,
+  approval, action, event/Truth/Attention, plugin, external-content,
+  backup/replay, process, SENTRY, OPA, and history slices were observed.
+- The ledger deliberately records `ledger_disposition=CONTINUE`. It is an
+  integrity and coverage consolidation, not Phase 14 acceptance. The five
+  `DETERMINISTIC_CONTRACT` scenarios are explicitly excluded from destructive
+  evidence. Native Pi 5 remains an external gate; Phase 15 remains unauthorized.

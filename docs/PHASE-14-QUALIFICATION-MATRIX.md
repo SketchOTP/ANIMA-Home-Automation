@@ -14,6 +14,7 @@ not authorized.
 | HA ambiguity/manual reality | `10830755f2f449b5c2a64b1f095f52a1fafb04d4` | `33996868220` PASS | `9978452041` |
 | Policy reauthorization | `cc8b0107ca9615750a580a41fc95dcbdc3722f74` | `33998136623` PASS | `9978800620` |
 | SENTRY process lifecycle | `62533e8673a25ece7079595bd73bb3a650cb1d8c` | `33998969482` PASS | `9979026256` |
+| Consolidated evidence ledger | `d68f8205787d67b2f21ea9a7bba690b3e37f145c` | `34000279143` PASS | `9979391397` (`sha256:1a45b144e9cf001aad7beeef459d5517636769f7b619a68b309cce9880f5073e`) |
 
 ## Clustered status
 
@@ -41,3 +42,15 @@ not authorized.
 
 No item in this matrix authorizes a new provider, unrestricted HA administration,
 embedded intelligence fallback, or Phase 15 behavior.
+
+## Consolidated ledger checkpoint
+
+The exact-head hosted run `34000279143` published
+`PHASE14_EVIDENCE_LEDGER` for `d68f8205787d67b2f21ea9a7bba690b3e37f145c`.
+All 22 required real-store evidence files were present and every mapped
+destructive slice was observed. The ledger status is `PASS` for evidence
+integrity, while its disposition remains `CONTINUE`; it does not convert the
+broader partial families in this matrix into Phase 14 acceptance. The five
+deterministic-contract scenarios are explicitly listed as excluded from
+destructive evidence. Native Pi 5 remains an external gate and Phase 15 is
+unauthorized.
