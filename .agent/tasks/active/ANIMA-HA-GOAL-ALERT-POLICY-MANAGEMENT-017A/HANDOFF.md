@@ -2,6 +2,31 @@
 
 Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
 
+## Current owner-facing publication — explicit household preferences
+
+Implementation/final candidate:
+`e2edc65b7fc0be5b5a429e15db75f7ace5112b46`.
+
+Exact hosted CI: `34038924040` — PASS.
+
+Reviewable artifact: `9991255680`.
+
+Artifact digest:
+`sha256:c15af9045e32d3c9bae1d9a79552253e7cc8e9d7329e297b4506fde3bc9130bd`.
+
+ANIMA now gives the owner a bounded Preferences view for explicit household
+context. The path is authenticated UI → API → Core UI gateway →
+PluginManager → OPA → canonical `MemoryService`, with list/create/correct/
+retract lifecycle. Household, principal, and explicit-input provenance remain
+server-owned; preference content cannot authorize actions or replace Truth.
+
+The typed `anima.household-preferences` capability is included in the
+request-bound SENTRY catalogue. It exposes bounded projections only and does
+not expose raw memory, SQL, HA, filesystem, or policy controls. Local and
+hosted validation passed as recorded in the evidence packet. This increment is
+complete pending independent Architect acceptance; Phase 15 remains
+unauthorized.
+
 Implementation/final candidate: `95268160021f9f9b6ca97b113ffb42bb8dca1405`.
 
 Exact hosted CI: `34015458746` — PASS.

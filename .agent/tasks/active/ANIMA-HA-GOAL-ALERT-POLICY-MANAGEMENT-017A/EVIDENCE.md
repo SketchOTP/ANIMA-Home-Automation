@@ -5,6 +5,38 @@ Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
 This packet records only the bounded owner-facing alert-policy increment. It
 does not accept Phase 15 or alter the accepted Phase 0–14 status.
 
+## Owner-managed household preferences — 2026-09-06
+
+The current goal-directed publication adds a bounded owner-facing explicit
+preference workflow. `src/anima_ha/preferences.py` defines the typed
+`anima.household-preferences` capability over the existing canonical
+`MemoryService`; the authenticated API and React Preferences view support
+list, create, correction, and retraction. Categories and content length are
+bounded, and active preferences retain explicit-input provenance.
+
+All writes use the existing Core UI gateway → PluginManager → policy path.
+Household, principal, and provenance are server-owned. Preferences are
+context only and cannot create household Truth, permissions, assurance,
+policy, or device state. The request-bound SENTRY catalogue exposes the same
+typed capability without exposing raw memory, SQL, HA, filesystem, or policy
+controls.
+
+Focused tests prove trusted manifest boundaries, household isolation,
+explicit provenance, correction/retraction lifecycle, and authenticated API
+behavior. Local validation also passed the full Python suite, Ruff check and
+format, strict mypy, TypeScript, frontend tests, Vite build, compile check,
+and `git diff --check`.
+
+Exact-head hosted qualification:
+
+- implementation/final candidate: `e2edc65b7fc0be5b5a429e15db75f7ace5112b46`;
+- hosted CI: `34038924040` — PASS;
+- reviewable artifact: `9991255680`;
+- artifact digest: `sha256:c15af9045e32d3c9bae1d9a79552253e7cc8e9d7329e297b4506fde3bc9130bd`.
+
+This is a bounded owner-facing product increment, not a goal-wide or Phase 15
+acceptance. The active packet remains pending independent Architect review.
+
 ## Bounded integration-setup follow-on
 
 The current goal-wide packet also records `docs/GOAL-INTEGRATION-ONBOARDING-020A.md`.

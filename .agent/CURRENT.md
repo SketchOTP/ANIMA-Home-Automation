@@ -25,6 +25,26 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing preferences increment - 2026-09-06
+
+- ANIMA now provides a bounded owner-facing Preferences view backed by the
+  canonical `MemoryService` and typed `anima.household-preferences` capability.
+  Owners can create, correct, and retract explicit preferences for alerts,
+  comfort, meals, shopping, privacy, and other household context.
+- The authenticated API, Core gateway, PluginManager, and OPA path keep
+  household/principal/provenance server-owned. Preferences are context only;
+  they do not create Truth, permissions, assurance, policy, or device state.
+- The same typed capability is available through request-bound SENTRY
+  catalogues. No generic memory editor, raw SQL, HA administration, new
+  provider, or Phase 15 behavior was added.
+- Implementation head: `e2edc65b7fc0be5b5a429e15db75f7ace5112b46`.
+- Exact-head hosted CI: `34038924040` — PASS.
+- Reviewable artifact: `9991255680`, digest
+  `sha256:c15af9045e32d3c9bae1d9a79552253e7cc8e9d7329e297b4506fde3bc9130bd`.
+- Local focused/full Python, Ruff, strict mypy, TypeScript, frontend tests,
+  Vite build, compile, and diff checks passed. This increment is complete
+  pending independent Architect acceptance; Phase 15 remains unauthorized.
+
 ## Latest owner-facing bounded integration-setup increment - 2026-09-06
 
 - The Integrations view now starts and continues only Home Assistant's fixed
