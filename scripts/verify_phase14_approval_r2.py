@@ -94,6 +94,7 @@ def main() -> int:
             {
                 "scenario_id": "APPROVAL_CONCURRENT_ONE_WINNER",
                 "evidence_level": "POSTGRES_OPA_CORE",
+                "status": "PASS",
                 "approval_id": str(approval_id),
                 "winner_count": len(winners),
                 "winner_decision": winners[0].decision,

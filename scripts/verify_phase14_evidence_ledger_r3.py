@@ -41,6 +41,7 @@ REQUIRED_FILES = (
     "phase14-inflight-restart-r2.json",
 )
 CONTRACT_ONLY_FILES = ("phase14-resilience.json",)
+PASS_STATUSES = frozenset(("PASS", "PASSED"))
 
 REQUIRED_COVERAGE: dict[str, tuple[str, ...]] = {
     "provider_lifecycle": (
@@ -182,11 +183,15 @@ def main() -> int:
     coverage: dict[str, dict[str, Any]] = {}
     for family, scenario_ids in REQUIRED_COVERAGE.items():
         found = [by_id[item] for item in scenario_ids if item in by_id]
+        non_passing = [item["scenario_id"] for item in found if item["status"] not in PASS_STATUSES]
         coverage[family] = {
-            "status": "VERIFIED" if len(found) == len(scenario_ids) else "PARTIAL",
+            "status": (
+                "VERIFIED" if len(found) == len(scenario_ids) and not non_passing else "PARTIAL"
+            ),
             "required": list(scenario_ids),
             "observed": found,
             "missing": [item for item in scenario_ids if item not in by_id],
+            "non_passing": non_passing,
         }
 
     deterministic_only = sorted(
