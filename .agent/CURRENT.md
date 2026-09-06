@@ -73,6 +73,9 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing notification delivery increment - 2026-09-06
 
+- Implementation head: `1f29ad9ab20055cc2a5f15aee1c7bea440f78807`.
+- Exact-head hosted CI: `34022620543` — PASS. Reviewable artifact:
+  `9986165454` (`phase12-h5-evidence-1f29ad9ab20055cc2a5f15aee1c7bea440f78807`).
 - The `NOTIFICATION` SenseGuard policy mode now dispatches matched alerts to
   enabled, priority-compatible server-configured ntfy routes through the
   existing ActionExecutionCoordinator, OPA, and PluginManager boundaries.
@@ -82,8 +85,9 @@ authorized by the goal-wide completion audit.
   outcomes.
 - Ordinary user/model `notifications.send` remains confirmation-gated. Human
   receipt is not claimed, and Phase 15 remains unauthorized.
-- Local full validation and OPA tests pass; hosted exact-head qualification
-  is required before Architect review.
+- Local full validation and OPA tests pass, and the exact implementation head
+  passed hosted qualification. This remains `COMPLETE - PENDING ARCHITECT
+  ACCEPTANCE`; no human receipt claim or Phase 15 behavior is made.
 
 ## Active directive
 

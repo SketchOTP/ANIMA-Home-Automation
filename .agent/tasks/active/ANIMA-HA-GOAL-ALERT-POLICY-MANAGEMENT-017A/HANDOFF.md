@@ -68,3 +68,11 @@ missing route and provider-unavailable states are recorded explicitly.
 
 This does not claim human receipt. Ordinary model/user notification sends
 remain confirmation-gated, and no Phase 15 behavior is implemented.
+
+Hosted qualification update:
+
+- Implementation head: `1f29ad9ab20055cc2a5f15aee1c7bea440f78807`.
+- Exact-head hosted CI: `34022620543` — PASS.
+- Reviewable artifact: `9986165454`.
+- This follow-on is complete pending Architect acceptance; Phase 15 remains
+  unauthorized.

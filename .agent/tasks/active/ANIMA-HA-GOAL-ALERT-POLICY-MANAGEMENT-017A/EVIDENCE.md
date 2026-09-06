@@ -124,3 +124,11 @@ Ordinary user/model `notifications.send` remains confirmation-gated. Provider
 acceptance does not establish human receipt. Local deterministic coverage
 includes router-mode separation, no-route behavior, stable idempotency, and an
 actual ntfy-plugin/action-coordinator transport with a mock provider.
+
+Hosted qualification update:
+
+- Implementation head: `1f29ad9ab20055cc2a5f15aee1c7bea440f78807`.
+- Exact-head hosted CI: `34022620543` — PASS.
+- Reviewable artifact: `9986165454`.
+- The active packet remains complete pending Architect acceptance. No human
+  receipt, automatic voice response, or Phase 15 behavior is claimed.

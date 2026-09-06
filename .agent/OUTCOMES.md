@@ -1086,6 +1086,8 @@ decision.
 
 ## Automatic configured-alert delivery - owner-facing follow-on
 
+- Implementation head: `1f29ad9ab20055cc2a5f15aee1c7bea440f78807`.
+- Exact-head hosted CI: `34022620543` — PASS. Artifact: `9986165454`.
 - The typed SenseGuard `NOTIFICATION` mode now dispatches matched alerts to
   the enabled server-configured ntfy route through the existing action,
   PluginManager, and OPA boundaries.
@@ -1096,4 +1098,5 @@ decision.
   `UNAVAILABLE` outcomes. Ordinary user/model sends remain confirmation-gated;
   provider acceptance is not human receipt.
 - Focused tests, full pytest, Ruff, strict mypy, and OPA validation pass
-  locally. Hosted exact-head qualification is pending.
+  locally; hosted exact-head qualification passed. This remains complete
+  pending Architect acceptance. Phase 15 remains unauthorized.
