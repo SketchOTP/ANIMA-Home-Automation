@@ -1100,3 +1100,18 @@ decision.
 - Focused tests, full pytest, Ruff, strict mypy, and OPA validation pass
   locally; hosted exact-head qualification passed. This remains complete
   pending Architect acceptance. Phase 15 remains unauthorized.
+
+## Goal-wide owner-facing alert inbox - 2026-09-06
+
+- Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`.
+- Implementation head: `87a990f5452f85ab748a1f7ea4a88d84a03d86f4`; exact-head
+  hosted CI `34041527112` passed. Final governance head:
+  `6dbb8ab66f1021a7e93336a093ae167142bf993f`; exact-head hosted CI
+  `34042285900` passed. Artifact `9992225909`, digest
+  `sha256:20c9c070dfc8abe47971d8746c96b0201f7847e576eed87888b1e86c94bc78ad`.
+- ANIMA now exposes a household-scoped, sanitized, cursor-paginated alert
+  inbox backed by the existing Event Journal and canonical Graph resource
+  names. It preserves observed timestamps and notification dispositions without
+  claiming human receipt or creating a second alert store.
+- Focused API tests, Ruff, strict mypy, TypeScript, Vite, and the existing
+  hosted validation suite passed. Phase 15 remains unauthorized.
