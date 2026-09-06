@@ -118,11 +118,15 @@ def test_backup_restore_is_validated_migrated_and_marks_truth_stale(tmp_path: Pa
         calls.append(args)
         return subprocess.CompletedProcess(args, 0, b"", b"")
 
+    def record_migration(url: str, timeout: int) -> list[str]:
+        migrations.append((url, timeout))
+        return ["0010"]
+
     restore = BackupCoordinator(
         "postgresql://anima:secret@example.test/anima",
         tmp_path,
         runner=restore_runner,
-        migrator=lambda url, timeout: migrations.append((url, timeout)) or ["0010"],
+        migrator=record_migration,
         truth_invalidator=lambda: invalidations.append(True),
     )
 
