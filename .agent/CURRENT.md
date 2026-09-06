@@ -25,10 +25,15 @@ authorized by the goal-wide completion audit.
 
 ## Active directive
 
-GOAL-WIDE MANAGEMENT-PLANE CONVERGENCE — select the next bounded owner-facing
-increment from the current usability/support-matrix audit. Preserve the
-accepted authority, privacy, policy, verification, SENTRY, and Home Assistant
-abstraction boundaries. Phase 15 household demonstration is not authorized.
+ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed
+SenseGuard alert-policy capability through the ANIMA Core/API/UI management
+plane. Preserve the accepted authority, privacy, policy, verification, SENTRY,
+and Home Assistant abstraction boundaries. Phase 15 household demonstration is
+not authorized.
+
+## Active task packet
+
+`.agent/tasks/active/ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A/`
 
 ## Latest Phase 14 evidence ledger checkpoint
 

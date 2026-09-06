@@ -50,6 +50,12 @@ class DeviceCommandStub:
         del identity
         return {"status": "SUCCEEDED", "operation": operation, "result": payload}
 
+    def alert_policy_mutation(
+        self, identity: object, operation: str, payload: dict[str, object]
+    ) -> dict[str, object]:
+        del identity
+        return {"status": "SUCCEEDED", "operation": operation, "result": {"policy": payload}}
+
 
 def test_health_is_public_but_household_data_requires_session() -> None:
     app = create_app(UIService(config=UIConfig(test_auth_enabled=True)))
@@ -73,6 +79,22 @@ def test_device_routes_return_registry_and_route_bounded_mutations() -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "SUCCEEDED"
     assert response.json()["operation"] == "permit-pairing"
+
+
+def test_alert_policy_route_is_bounded_and_household_scoped() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
+    client = TestClient(create_app(service), follow_redirects=False)
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+    csrf = callback.headers["x-anima-csrf"]
+    assert client.get("/api/v1/alerts/policies").json()["items"] == []
+    response = client.post(
+        "/api/v1/alerts/policies",
+        json={"payload": {"event_type": "senseguard.event", "resource_ids": ["resource"]}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "SUCCEEDED"
 
 
 def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:

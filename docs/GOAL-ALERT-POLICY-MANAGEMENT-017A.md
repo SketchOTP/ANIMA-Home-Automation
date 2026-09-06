@@ -1,0 +1,39 @@
+# Goal increment — typed SenseGuard alert-policy management
+
+ANIMA now exposes the existing typed SenseGuard policy model through its
+owner-facing management plane. This closes the gap between having a safe event
+router and giving the owner a way to configure it without opening the Home
+Assistant frontend.
+
+## Supported contract
+
+The Alerts view and /api/v1/alerts/policies API support:
+
+- canonical commissioned resource references;
+- normalized event type;
+- IANA household timezone;
+- local time window, including overnight windows;
+- priority and guaranteed-attention semantics;
+- SENTRY cognition or notification delivery mode;
+- enabled/disabled state;
+- optimistic versioned edits and durable creator provenance.
+
+The browser cannot choose a household, principal, role, Home Assistant entity,
+service, or raw automation payload. Mutations pass through the Core plugin
+catalogue, policy service, and existing PostgreSQL SenseGuard store. Disabled
+policies remain durable; event matching continues to read enabled policies only.
+
+## Boundary
+
+A matching event still follows the existing path:
+
+Home Assistant event → ANIMA normalization → canonical resource → typed policy
+→ Journal/Attention
+
+The policy decides whether an event deserves attention. It does not decide what
+SENTRY says or what household action SENTRY may take. Current event timestamps,
+household timezone conversion, provenance, and duplicate alert identity remain
+owned by the existing SenseGuard router.
+
+This increment does not add a raw Home Assistant automation editor, arbitrary
+service calls, a new provider, or Phase 15 behavior.

@@ -9,6 +9,7 @@ action SENTRY may take.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, time
 from typing import Any
@@ -19,6 +20,17 @@ import psycopg
 from psycopg.rows import dict_row
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
+from anima_ha.plugins import (
+    CORE_VERSION,
+    MANIFEST_VERSION,
+    ExternalContentTrust,
+    Idempotency,
+    InvocationContext,
+    PluginManifest,
+    PluginValidationError,
+    RuntimeKind,
+    TrustClass,
+)
 
 
 class SenseGuardPolicyError(ValueError):
@@ -189,40 +201,199 @@ class PostgresSenseGuardAlertPolicyStore:
 
     def list_enabled(self, household_id: UUID) -> list[SenseGuardAlertPolicy]:
         """Read the active typed policies for one household."""
+        return self._list(household_id, enabled_only=True)
+
+    def list_all(self, household_id: UUID) -> list[SenseGuardAlertPolicy]:
+        """Read all policies for one household, including disabled history."""
+        return self._list(household_id, enabled_only=False)
+
+    @staticmethod
+    def _from_row(row: dict[str, Any]) -> SenseGuardAlertPolicy:
+        resource_ids = row["resource_ids"]
+        if isinstance(resource_ids, str):
+            resource_ids = json.loads(resource_ids)
+        return SenseGuardAlertPolicy(
+            policy_id=UUID(str(row["policy_id"])),
+            household_id=UUID(str(row["household_id"])),
+            resource_ids=tuple(UUID(str(item)) for item in resource_ids),
+            event_type=str(row["event_type"]),
+            timezone=str(row["timezone"]),
+            start_local=row["start_local"],
+            end_local=row["end_local"],
+            priority=int(row["priority"]),
+            guaranteed_attention=bool(row["guaranteed_attention"]),
+            delivery_mode=str(row["delivery_mode"]),
+            enabled=bool(row["enabled"]),
+            creator_principal_id=(
+                UUID(str(row["creator_principal_id"]))
+                if row.get("creator_principal_id")
+                else None
+            ),
+            version=int(row["version"]),
+        )
+
+    def _list(self, household_id: UUID, *, enabled_only: bool) -> list[SenseGuardAlertPolicy]:
+        predicate = " AND enabled" if enabled_only else ""
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
-                """SELECT * FROM anima_senseguard_alert_policies
-                   WHERE household_id=%s AND enabled ORDER BY policy_id""",
+                f"""SELECT * FROM anima_senseguard_alert_policies
+                   WHERE household_id=%s{predicate} ORDER BY policy_id""",
                 (household_id,),
             )
             rows = cursor.fetchall()
-        policies: list[SenseGuardAlertPolicy] = []
-        for row in rows:
-            resource_ids = row["resource_ids"]
-            if isinstance(resource_ids, str):
-                resource_ids = json.loads(resource_ids)
-            policies.append(
-                SenseGuardAlertPolicy(
-                    policy_id=UUID(str(row["policy_id"])),
-                    household_id=UUID(str(row["household_id"])),
-                    resource_ids=tuple(UUID(str(item)) for item in resource_ids),
-                    event_type=str(row["event_type"]),
-                    timezone=str(row["timezone"]),
-                    start_local=row["start_local"],
-                    end_local=row["end_local"],
-                    priority=int(row["priority"]),
-                    guaranteed_attention=bool(row["guaranteed_attention"]),
-                    delivery_mode=str(row["delivery_mode"]),
-                    enabled=bool(row["enabled"]),
-                    creator_principal_id=(
-                        UUID(str(row["creator_principal_id"]))
-                        if row.get("creator_principal_id")
-                        else None
-                    ),
-                    version=int(row["version"]),
-                )
+        return [self._from_row(dict(row)) for row in rows]
+
+    def get(self, household_id: UUID, policy_id: UUID) -> SenseGuardAlertPolicy | None:
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM anima_senseguard_alert_policies "
+                "WHERE household_id=%s AND policy_id=%s",
+                (household_id, policy_id),
             )
-        return policies
+            row = cursor.fetchone()
+        return self._from_row(dict(row)) if row is not None else None
+
+
+def _policy_input_schema(name: str) -> dict[str, Any]:
+    if name == "list_policies":
+        return {"type": "object", "additionalProperties": False}
+    if name == "save_policy":
+        return {
+            "type": "object",
+            "properties": {
+                "policy_id": {"type": "string", "format": "uuid"},
+                "expected_version": {"type": "integer", "minimum": 1},
+                "resource_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 32,
+                    "items": {"type": "string", "format": "uuid"},
+                },
+                "event_type": {"type": "string", "minLength": 1, "maxLength": 120},
+                "timezone": {"type": "string", "minLength": 1, "maxLength": 64},
+                "start_local": {"type": "string", "maxLength": 16},
+                "end_local": {"type": "string", "maxLength": 16},
+                "priority": {"type": "integer", "minimum": 0, "maximum": 100},
+                "guaranteed_attention": {"type": "boolean"},
+                "delivery_mode": {"enum": ["SENTRY_COGNITION", "NOTIFICATION"]},
+                "enabled": {"type": "boolean"},
+            },
+            "required": [
+                "resource_ids",
+                "event_type",
+                "timezone",
+                "start_local",
+                "end_local",
+            ],
+            "additionalProperties": False,
+        }
+    raise PluginValidationError("unknown SenseGuard policy tool")
+
+
+SENSEGUARD_ALERT_MANIFEST = PluginManifest(
+    plugin_id="anima.senseguard-alerts",
+    plugin_version="0.1.0",
+    manifest_version=MANIFEST_VERSION,
+    requires_core=CORE_VERSION,
+    name="ANIMA SenseGuard alert policies",
+    description="Typed household alert policies for commissioned SenseGuard resources",
+    runtime_kind=RuntimeKind.TRUSTED_NATIVE,
+    trust_class=TrustClass.TRUSTED_NATIVE,
+    capabilities=("senseguard_alert_policies",),
+    tools=(
+        {
+            "name": "list_policies",
+            "description": "List typed alert policies for the current household",
+            "input_schema": _policy_input_schema("list_policies"),
+            "output_schema": {"type": "object"},
+            "semantic_action": "read_alert_policies",
+            "risk_class": "READ_ONLY",
+            "read_only": True,
+            "idempotency": Idempotency.IDEMPOTENT.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+        {
+            "name": "save_policy",
+            "description": "Create or update a typed household alert policy",
+            "input_schema": _policy_input_schema("save_policy"),
+            "output_schema": {"type": "object"},
+            "semantic_action": "configure_alerts",
+            "risk_class": "LOW_RISK_HOME_CONTROL",
+            "read_only": False,
+            "idempotency": Idempotency.KEYED.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+    ),
+    source="builtin:anima_ha.senseguard_alerts",
+)
+
+
+class SenseGuardAlertNativePlugin:
+    """Core-owned typed policy facade; no raw HA automation surface."""
+
+    def __init__(
+        self,
+        store: PostgresSenseGuardAlertPolicyStore,
+        resource_validator: Callable[[UUID, UUID], bool] | None = None,
+    ) -> None:
+        self.store = store
+        self.resource_validator = resource_validator
+
+    def start(self, secret_env: dict[str, str]) -> None:
+        if secret_env:
+            raise PluginValidationError("SenseGuard policy store accepts no secrets")
+
+    def stop(self) -> None:
+        return None
+
+    def list_tools(self) -> list[dict[str, Any]]:
+        return [dict(item) for item in SENSEGUARD_ALERT_MANIFEST.tools]
+
+    def invoke(self, name: str, arguments: dict[str, Any], timeout: float) -> Any:
+        raise PluginValidationError("SenseGuard policies require trusted invocation context")
+
+    def invoke_with_invocation_context(
+        self, name: str, arguments: dict[str, Any], timeout: float, context: InvocationContext
+    ) -> Any:
+        del timeout
+        if name == "list_policies":
+            return {
+                "policies": [
+                    item.to_payload() for item in self.store.list_all(context.household_id)
+                ]
+            }
+        if name != "save_policy":
+            raise PluginValidationError("unknown SenseGuard policy operation")
+        policy_id = UUID(str(arguments["policy_id"])) if arguments.get("policy_id") else uuid4()
+        current = self.store.get(context.household_id, policy_id)
+        if current is not None and arguments.get("expected_version") is None:
+            raise SenseGuardPolicyError("SENSEGUARD_POLICY_VERSION_REQUIRED")
+        resource_ids = tuple(UUID(str(item)) for item in arguments["resource_ids"])
+        if self.resource_validator is not None and any(
+            not self.resource_validator(context.household_id, resource_id)
+            for resource_id in resource_ids
+        ):
+            raise SenseGuardPolicyError("SENSEGUARD_RESOURCE_NOT_COMMISSIONED")
+        version = current.version + 1 if current is not None else 1
+        policy = SenseGuardAlertPolicy(
+            policy_id=policy_id,
+            household_id=context.household_id,
+            resource_ids=resource_ids,
+            event_type=str(arguments["event_type"]),
+            timezone=str(arguments["timezone"]),
+            start_local=_clock(arguments["start_local"]),
+            end_local=_clock(arguments["end_local"]),
+            priority=int(arguments.get("priority", 90)),
+            guaranteed_attention=bool(arguments.get("guaranteed_attention", True)),
+            delivery_mode=str(arguments.get("delivery_mode", "SENTRY_COGNITION")),
+            enabled=bool(arguments.get("enabled", True)),
+            creator_principal_id=(
+                current.creator_principal_id if current is not None else context.principal_id
+            ),
+            version=version,
+        )
+        saved = self.store.save(policy, expected_version=arguments.get("expected_version"))
+        return {"policy": saved.to_payload()}
 
 
 class SenseGuardEventRouter:

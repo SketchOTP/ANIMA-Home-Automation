@@ -78,7 +78,9 @@ from anima_ha.policy import (
     RequestOrigin,
 )
 from anima_ha.senseguard_alerts import (
+    SENSEGUARD_ALERT_MANIFEST,
     PostgresSenseGuardAlertPolicyStore,
+    SenseGuardAlertNativePlugin,
     SenseGuardEventRouter,
 )
 from anima_ha.sentry_boundary import CoreSentryBoundary
@@ -231,6 +233,7 @@ class CoreUICommandGateway:
             event_name = {
                 "anima.durable-tasks": "tasks.changed",
                 "anima.calendar": "calendar.changed",
+                "anima.senseguard-alerts": "alerts.changed",
                 "anima.provider.home-assistant": "home.invalidated",
             }.get(plugin_prefix, "capabilities.changed")
             self.events.publish(event_name)
@@ -265,6 +268,11 @@ class CoreUICommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._invoke(identity, "anima.calendar", operation, payload)
+
+    def alert_policy_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._invoke(identity, "anima.senseguard-alerts", operation, payload)
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -624,6 +632,7 @@ class CoreRuntime:
     intelligence_store: PostgresIntelligenceStore | None = None
     intelligence_provider: IntelligenceProviderMode = IntelligenceProviderMode.EMBEDDED_REFERENCE
     home_assistant_adapter: HomeAssistantAdapter | None = None
+    alert_policy_store: PostgresSenseGuardAlertPolicyStore | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -768,6 +777,28 @@ def build_postgres_core(
     truth = PostgresRealityStore(database_url)
     secrets = _environment_secrets()
     plugins = PluginManager(journal=journal, secret_broker=SecretBroker(secrets))
+    alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
+
+    def alert_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
+        node = graph.get_node(resource_id)
+        if node is None or node.kind not in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+            return False
+        return any(
+            resource_id == resource.canonical_id
+            for place in graph.places_in_household(household_id)
+            for resource in graph.resources_in_place(place.canonical_id)
+        )
+
+    plugins.register(
+        SENSEGUARD_ALERT_MANIFEST,
+        NativeRuntime(
+            SenseGuardAlertNativePlugin(
+                alert_policy_store,
+                resource_validator=alert_resource_is_commissioned,
+            )
+        ),
+    )
+    plugins.enable(SENSEGUARD_ALERT_MANIFEST.plugin_id)
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
     plugins.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
@@ -904,6 +935,7 @@ def build_postgres_core(
         intelligence_store,
         intelligence_provider,
         ha_adapter,
+        alert_policy_store,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()
@@ -911,8 +943,6 @@ def build_postgres_core(
     )
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
-        policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
-
         def resolve_resource(external_id: str) -> UUID | None:
             node = graph.resolve_provider_reference(
                 "home_assistant", provider_scope, "entity", external_id
@@ -934,7 +964,7 @@ def build_postgres_core(
 
         router = SenseGuardEventRouter(
             household_id=household_id,
-            policy_store=policy_store,
+            policy_store=alert_policy_store,
             resource_resolver=resolve_resource,
             event_sink=journal,
             dispatch_attention=dispatch_attention,

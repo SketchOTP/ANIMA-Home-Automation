@@ -411,6 +411,8 @@ class HouseholdReadModel(Protocol):
 
     def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
@@ -463,6 +465,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, approval_id: str, decision: str
     ) -> dict[str, Any]: ...
 
+    def alert_policy_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -501,6 +507,11 @@ class UnavailableCommandGateway:
     def confirmation(self, identity: UIIdentity, approval_id: str, decision: str) -> dict[str, Any]:
         return self._unavailable(f"confirmation.{approval_id}")
 
+    def alert_policy_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"alert_policy.{operation}")
+
 
 class ConversationIngress(Protocol):
     def submit(self, identity: UIIdentity, text: str) -> dict[str, Any]: ...
@@ -521,6 +532,7 @@ class UIEventBroadcaster:
             "home.invalidated",
             "tasks.changed",
             "calendar.changed",
+            "alerts.changed",
             "activity.changed",
             "conversation.completed",
             "capabilities.changed",
@@ -692,6 +704,10 @@ class DemoHouseholdReadModel:
             },
         ]
 
+    def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return dict(self._settings)
@@ -783,6 +799,10 @@ class UnavailableHouseholdReadModel:
             },
         ]
 
+    def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return validate_ui_preferences({})
@@ -803,12 +823,14 @@ class PostgresHouseholdReadModel:
         graph: Any | None = None,
         truth: Any | None = None,
         plugins: Any | None = None,
+        alert_policy_store: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
         self.graph = graph
         self.truth = truth
         self.plugins = plugins
+        self.alert_policy_store = alert_policy_store
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1240,6 +1262,14 @@ class PostgresHouseholdReadModel:
         )
         return result
 
+    def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.alert_policy_store is None:
+            return []
+        return [
+            policy.to_payload()
+            for policy in self.alert_policy_store.list_all(identity.household_id)
+        ]
+
     def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
         if not providers:
             return None
@@ -1352,6 +1382,17 @@ class DemoCommandGateway:
             "control_id": control_id,
             "outcome": "UNKNOWN_RESULT",
             "detail": "Verification is pending",
+        }
+
+    def alert_policy_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        self.events.publish("alerts.changed")
+        return {
+            "status": "SUCCEEDED",
+            "operation": f"alert_policy.{operation}",
+            "result": {"policy": payload},
         }
 
 
@@ -1699,6 +1740,7 @@ def create_app(
                 graph=core_runtime.graph,
                 truth=core_runtime.truth.projection,
                 plugins=core_runtime.plugins,
+                alert_policy_store=core_runtime.alert_policy_store,
             )
         svc = UIService(
             config=config,
@@ -1979,6 +2021,25 @@ def create_app(
     @app.get("/api/v1/devices")
     async def devices(request: Request) -> dict[str, Any]:
         return svc.commands.device_inventory(current_identity(request))
+
+    @app.get("/api/v1/alerts/policies")
+    async def alert_policies(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.alert_policies(current_identity(request))}
+
+    @app.post("/api/v1/alerts/policies")
+    async def save_alert_policy(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.alert_policy_mutation(
+                svc.identity_from_session(session), "save_policy", body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.post("/api/v1/devices/{operation}")
     async def mutate_devices(

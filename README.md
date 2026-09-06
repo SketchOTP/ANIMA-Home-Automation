@@ -56,6 +56,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Configured conversation composition into Attention, Context Broker, and the selected intelligence provider; task and local-calendar mutations use the Phase 5/4 policy path.
 - Phase 9-coordinated semantic home controls when a commissioned Home Assistant provider is available.
 - ANIMA-owned device onboarding from the local Devices view: open a bounded ZHA pairing window, refresh the commissioned HA registry, place a discovered device in an existing room, and expose only its normalized semantic capabilities. Power controls continue through the Phase 5/4/9 path.
+- ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
@@ -66,7 +67,12 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 
 ## Evidence
 
-Phases 0–13 are Architect accepted. The active work is Phase 14 resilience, replay, backup, and recovery qualification. The [Authority state](.agent/CURRENT.md), [SENTRY integration guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish accepted platform contracts from remaining destructive qualification evidence.
+Phases 0–14 are Architect accepted. Current work is goal-wide owner-facing
+management-plane convergence, beginning with typed SenseGuard alert-policy
+management. The [Authority state](.agent/CURRENT.md), [SENTRY integration
+guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish
+accepted platform contracts from the current bounded product increment. Phase 15
+remains unauthorized.
 
 ## Implemented Phase 0 through Phase 11 baseline
 
@@ -136,5 +142,7 @@ For the Phase 11 external-by-intent adapters, fixed-host egress, trust/audit bou
 For the Phase 12 custom local interface, OAuth/session boundary, semantic API, SSE invalidation, UI privacy posture, and validation limits, see [`docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md`](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md).
 
 ## Authority
+
+The current owner-facing increment is documented in [GOAL-ALERT-POLICY-MANAGEMENT-017A.md](docs/GOAL-ALERT-POLICY-MANAGEMENT-017A.md).
 
 The adopted goal and operating workflow live in [`PROJECT_GOAL.md`](.agent/PROJECT_GOAL.md), [`AGENTS.md`](AGENTS.md), and `.agents/`. Product implementation remains bounded by the Authority records in `.agent/`.
