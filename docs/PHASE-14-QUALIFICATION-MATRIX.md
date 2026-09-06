@@ -17,6 +17,7 @@ not authorized.
 | Consolidated evidence ledger | `d68f8205787d67b2f21ea9a7bba690b3e37f145c` | `34000279143` PASS | `9979391397` (`sha256:1a45b144e9cf001aad7beeef459d5517636769f7b619a68b309cce9880f5073e`) |
 | Consolidated ledger governance publication | `76453a3f38e2abfbd52dcad78f6128f97bf4af8c` | `34000794948` PASS | `9979518862` (`sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`) |
 | Explicit-status ledger correction | `527810827728fc8242fbc4069b9eecb5c8060f6a` | `34001997325` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
+| Current exact-head mapped-family ledger | `4006bcde922eb3c86c827db5700ece2ce46e98a9` | `34002634015` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
 
 ## Clustered status
 
@@ -78,6 +79,20 @@ that status; the ledger therefore reports all ten named evidence families as
 `VERIFIED` at this head. This closes an evidence-integrity defect only. It does
 not promote deterministic-contract fixtures or erase the broader lifecycle,
 process-state, and final-replay breadth still tracked as `PARTIAL` above.
+
+## Current exact-head mapped-family ledger
+
+The current exact-head hosted run `34002634015` passed on
+`4006bcde922eb3c86c827db5700ece2ce46e98a9` and published artifact
+`9979858475` with digest
+`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
+The evidence auditor found all 22 required real-store files, no missing files,
+and no non-passing mapped scenarios; all ten mapped evidence families are
+therefore `VERIFIED` for their named exercised scenarios at this exact head.
+The overall Phase 14 disposition remains `CONTINUE`: this is evidence
+integrity/coverage, not self-acceptance, and deterministic-contract fixtures
+remain excluded from destructive proof. The broader clustered closure and
+final replay requirements remain tracked below. Phase 15 remains unauthorized.
 
 ## Next consolidated closure bundle
 

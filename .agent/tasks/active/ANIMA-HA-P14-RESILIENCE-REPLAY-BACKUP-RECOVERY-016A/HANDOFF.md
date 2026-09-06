@@ -321,3 +321,17 @@ auditor requires explicit pass status for every mapped scenario. All ten named
 families are verified for evidence integrity at this checkpoint. The overall
 Phase 14 disposition remains `CONTINUE`; this does not promote contract-only
 fixtures or close broader process-state and final-replay requirements.
+
+## Current exact-head mapped-family ledger - 2026-09-06
+
+- PASS / exact governed code/evidence head:
+  `4006bcde922eb3c86c827db5700ece2ce46e98a9`; hosted CI `34002634015` passed.
+- Reviewable artifact `9979858475` has digest
+  `sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
+- The evidence auditor found all 22 required real-store files, no missing
+  files, and no non-passing mapped scenarios. All ten mapped families are
+  `VERIFIED` for their named exercised scenarios at this exact head.
+- This is an evidence-integrity and coverage reconciliation only. The overall
+  Phase 14 disposition remains `CONTINUE`; deterministic-contract fixtures
+  remain excluded from destructive proof, and broader clustered process-state
+  and final-replay closure remains open. Phase 15 remains unauthorized.
