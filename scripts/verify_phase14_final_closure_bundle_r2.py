@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 from datetime import UTC, datetime
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -255,11 +256,19 @@ def core_restart(results: list[dict[str, Any]]) -> None:
         pending_approvals=pending,
     )
     principal = uuid4()
+    refresh_states = iter(
+        [
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "1"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "off", "version": "2"}}),
+            TruthSnapshot({"power": {"state": "KNOWN", "value": "on", "version": "3"}}),
+        ]
+    )
     request = action_request(
         PolicyService(ConfirmationOnly(), audit_store=PostgresPolicyStore(DATABASE_URL)),
         principal,
         "core-restart",
     )
+    request = replace(request, refresher=lambda resources: next(refresh_states))
     waiting = coordinator.execute(request)
     assert waiting.record.status == ActionStatus.REQUIRE_CONFIRMATION
     approval_id = UUID(str(waiting.record.result["approval_id"]))  # type: ignore[index]
