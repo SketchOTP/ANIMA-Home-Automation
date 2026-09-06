@@ -25,13 +25,29 @@ authorized by the goal-wide completion audit.
 
 ## Latest repository publication - 2026-09-06
 
-The current repository head is the documentation-only reconciliation commit
-`688356a876e230360a4925d844cd37c6752f8041`, with `main == origin/main` and a
-clean tree. Exact-head hosted CI `34047315770` passed on that SHA and
-published artifact `9993666377`. The artifact endpoint exposed no digest.
-This publication changes no runtime behavior; it records terminal validation
-of the existing device-observability increment. Independent Architect
-acceptance remains pending. Phase 15 remains unauthorized and unimplemented.
+The current repository head is the room/zone lifecycle increment
+`60ac3e7958f39932f37f519789b6e66d4f2b8b48`, with `main == origin/main` and a
+clean tree. Hosted CI `34051465103` is the exact-head validation run and is
+currently in progress. This increment gives the owner bounded create, rename,
+move, and empty-place removal controls through ANIMA's existing Core path;
+independent Architect acceptance remains pending. Phase 15 remains
+unauthorized and unimplemented.
+
+## Latest owner-facing room/zone lifecycle increment - 2026-09-06
+
+- ANIMA now exposes canonical room/zone parent context and a bounded lifecycle
+  of create, rename, move, and remove through the authenticated UI → Core UI
+  gateway → PluginManager → PolicyService → PostgreSQL graph path.
+- Move rejects cross-household targets, cycles, invalid containers, and sibling
+  name conflicts. Remove preserves graph history and rejects places with child
+  places, commissioned resources, or other active relationships.
+- The UI uses separate rename and move actions, filters invalid descendants,
+  and requires confirmation before removal. Home Assistant registry and
+  provider configuration remain untouched.
+- Focused validation passed 27 backend tests, Ruff, strict mypy, TypeScript,
+  frontend tests, Vite build, package build, and `git diff --check`. Exact-head
+  hosted CI `34051465103` is the current publication gate. See
+  `docs/GOAL-SPACE-LIFECYCLE-024A.md`.
 
 ## Latest owner-facing device increment - 2026-09-06
 

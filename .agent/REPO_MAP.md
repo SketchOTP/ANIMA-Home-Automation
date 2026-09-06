@@ -362,3 +362,21 @@ Automatic configured-alert delivery follow-on:
   and delivery-mode separation coverage.
 - Automatic delivery remains pending Architect acceptance; no human receipt
   claim or Phase 15 behavior.
+
+Owner-facing room and zone lifecycle increment (2026-09-06):
+
+- `src/anima_ha/graph.py` — household-scoped parent lookup, cycle-safe place
+  movement, sibling-name conflict detection, and history-preserving empty
+  place retirement.
+- `src/anima_ha/household_spaces.py`, `src/anima_ha/ui_runtime.py`, and
+  `src/anima_ha/ui_api.py` — typed move/remove operations through the existing
+  Core management boundary, with parent-aware place projections.
+- `ui/src/main.tsx` — explicit owner rename, move, and confirmed remove
+  controls; invalid self/descendant destinations are hidden in the editor.
+- `docs/GOAL-SPACE-LIFECYCLE-024A.md` and
+  `.agent/tasks/completed/ANIMA-HA-GOAL-SPACE-LIFECYCLE-024A/` — scope,
+  safety boundary, and validation handoff.
+- Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48`; hosted exact-
+  head CI `34051465103` is the current publication gate. Phase 14 remains
+  accepted, Phase 15 remains unauthorized, and Architect acceptance remains
+  pending.
