@@ -16,7 +16,7 @@ Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
 
 ## Validation
 
-Focused backend tests: PASS (27 tests).
+Focused backend tests: PASS (27 tests). Full Python suite: PASS (240 tests).
 
 Ruff format/check: PASS.
 
@@ -26,12 +26,16 @@ TypeScript check: PASS.
 
 Frontend tests: PASS (4 tests).
 
-Vite production build: PASS.
+Vite production build: PASS. Python package build: PASS.
 
 `git diff --check`: PASS.
 
-Full-suite, hosted exact-head, and independent Architect acceptance remain
-publication gates and must not be inferred from this focused evidence.
+Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48` passed exact-head
+hosted CI `34051465103`. Governance head `7cdedb29f877087dbbec884f4e71a002cc53aa4e`
+passed exact-head hosted CI `34051680528` and published artifact `9994893147`.
+The downloaded artifact archive hash is
+`sha256:b10b3529fd86a86c64319d0c6a247ddbb110d0e7f26d782d01d17cf81b2d5b79`.
+Independent Architect acceptance remains pending.
 
 ## Boundary
 

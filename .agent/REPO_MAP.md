@@ -376,7 +376,8 @@ Owner-facing room and zone lifecycle increment (2026-09-06):
 - `docs/GOAL-SPACE-LIFECYCLE-024A.md` and
   `.agent/tasks/completed/ANIMA-HA-GOAL-SPACE-LIFECYCLE-024A/` — scope,
   safety boundary, and validation handoff.
-- Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48`; hosted exact-
-  head CI `34051465103` is the current publication gate. Phase 14 remains
-  accepted, Phase 15 remains unauthorized, and Architect acceptance remains
-  pending.
+- Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48` passed
+  exact-head CI `34051465103`; governance head
+  `7cdedb29f877087dbbec884f4e71a002cc53aa4e` passed exact-head CI
+  `34051680528` with artifact `9994893147`. Phase 14 remains accepted, Phase
+  15 remains unauthorized, and Architect acceptance remains pending.

@@ -1156,7 +1156,7 @@ decision.
 ## Room and zone lifecycle management - 2026-09-06
 
 - Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`.
-- Head `60ac3e7958f39932f37f519789b6e66d4f2b8b48` contains the bounded
+- Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48` contains the bounded
   owner-facing room/zone lifecycle increment. The authenticated Spaces view
   can create, rename, move, and confirm removal of empty canonical places.
 - Core remains authoritative for household scope, valid container kinds,
@@ -1164,9 +1164,10 @@ decision.
   history-preserving retirement. No Home Assistant registry/configuration
   mutation or Phase 15 behavior was added.
 - Focused and full local validation passed as recorded in
-  `docs/GOAL-SPACE-LIFECYCLE-024A.md`. Hosted exact-head CI `34051465103` is
-  the current publication gate. Phase 14 remains accepted and Phase 15
-  remains unauthorized.
+  `docs/GOAL-SPACE-LIFECYCLE-024A.md`. Governance head
+  `7cdedb29f877087dbbec884f4e71a002cc53aa4e` passed exact-head hosted CI
+  `34051680528`; artifact `9994893147` was published. Phase 14 remains
+  accepted and Phase 15 remains unauthorized.
 
 ## Opaque device-handle boundary - 2026-09-06
 
