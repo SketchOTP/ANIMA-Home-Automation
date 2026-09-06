@@ -267,9 +267,7 @@ class BackupCoordinator:
 
         with psycopg.connect(self.database_url, connect_timeout=self.connect_timeout) as connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE anima_truth_state SET status='STALE', updated_at=now()"
-                )
+                cursor.execute("UPDATE anima_truth_state SET status='STALE', updated_at=now()")
             connection.commit()
 
     def restore(self, household_id: UUID, backup_id: str, *, confirm: bool = False) -> BackupRecord:
