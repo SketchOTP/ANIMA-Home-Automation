@@ -255,7 +255,11 @@ def core_restart(results: list[dict[str, Any]]) -> None:
         pending_approvals=pending,
     )
     principal = uuid4()
-    request = action_request(PolicyService(ConfirmationOnly()), principal, "core-restart")
+    request = action_request(
+        PolicyService(ConfirmationOnly(), audit_store=PostgresPolicyStore(DATABASE_URL)),
+        principal,
+        "core-restart",
+    )
     waiting = coordinator.execute(request)
     assert waiting.record.status == ActionStatus.REQUIRE_CONFIRMATION
     approval_id = UUID(str(waiting.record.result["approval_id"]))  # type: ignore[index]
