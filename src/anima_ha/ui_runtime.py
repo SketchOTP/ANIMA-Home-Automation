@@ -832,9 +832,17 @@ def build_postgres_core(
     )
 
     def register_and_enable(
-        manifest: Any, runtime: Any, *, configuration: dict[str, Any] | None = None
+        manifest: Any,
+        runtime: Any,
+        *,
+        configuration: dict[str, Any] | None = None,
+        persist_choice: bool = True,
     ) -> None:
-        persisted = plugin_store.enabled(manifest.plugin_id)
+        # Persisted enablement is an operator preference for optional
+        # integrations.  Required Core capabilities and commissioned HA must
+        # be reconstructed from the current composition, not disabled by a
+        # stale row left by a previous test or runtime.
+        persisted = plugin_store.enabled(manifest.plugin_id) if persist_choice else None
         plugins.register(manifest, runtime, configuration=configuration)
         if persisted is not False:
             plugins.enable(manifest.plugin_id)
@@ -860,15 +868,23 @@ def build_postgres_core(
                 resource_validator=alert_resource_is_commissioned,
             )
         ),
+        persist_choice=False,
     )
     register_and_enable(
         NOTIFICATION_ROUTE_MANIFEST,
         NativeRuntime(NotificationRouteNativePlugin(notification_route_store)),
+        persist_choice=False,
     )
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
-    register_and_enable(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
-    register_and_enable(CALENDAR_MANIFEST, NativeRuntime(CalendarNativePlugin(calendar_service)))
+    register_and_enable(
+        TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)), persist_choice=False
+    )
+    register_and_enable(
+        CALENDAR_MANIFEST,
+        NativeRuntime(CalendarNativePlugin(calendar_service)),
+        persist_choice=False,
+    )
 
     # These are the qualified Phase 11 portfolio providers. Provider identity
     # is composition-owned; no model argument can select a host or credential.
@@ -929,11 +945,13 @@ def build_postgres_core(
             manifest,
             NativeRuntime(ha_runtime),
             configuration={"instance_id": str(instance_id), "websocket_url": websocket_url},
+            persist_choice=False,
         )
 
     register_and_enable(
         CAPABILITY_MANAGEMENT_MANIFEST,
         NativeRuntime(CapabilityManagementNativePlugin(plugins)),
+        persist_choice=False,
     )
 
     policy_service = PolicyService(
