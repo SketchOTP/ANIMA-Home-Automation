@@ -1067,3 +1067,6 @@ decision.
   arbitrary destination is exposed.
 - This slice manages route metadata only. Automatic SenseGuard-to-ntfy
   delivery and human receipt remain unclaimed. Phase 15 remains unauthorized.
+- Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`;
+  exact-head hosted CI `34019836787` — PASS. Governance-only follow-up; no
+  runtime behavior changed.

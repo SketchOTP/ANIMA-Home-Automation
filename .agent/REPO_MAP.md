@@ -329,3 +329,5 @@ Owner-facing notification-route management follow-on (2026-09-06):
   `34019264187`; artifact `9985073980` was published. Automatic alert delivery
   and human receipt are not claimed; the active goal packet remains pending
   Architect acceptance.
+- Governance reconciliation head `549630a412cd8fc4fc69a608d67aeb31596c8fdf`
+  passed exact-head hosted CI `34019836787`; no runtime behavior changed.

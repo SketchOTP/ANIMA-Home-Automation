@@ -90,3 +90,7 @@ This is route management, not automatic SenseGuard-to-ntfy delivery; delivery
 remains a separate existing typed capability and is not claimed here. The
 increment remains pending independent Architect acceptance. Phase 15 remains
 unauthorized.
+
+Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`.
+Exact-head hosted CI: `34019836787` — PASS. This forward-only governance
+follow-up changed records only.

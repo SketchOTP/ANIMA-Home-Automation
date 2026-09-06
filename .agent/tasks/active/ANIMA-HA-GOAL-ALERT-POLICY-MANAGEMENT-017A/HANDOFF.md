@@ -45,3 +45,8 @@ Artifact: `9985073980`.
 The implementation is complete and pending Architect acceptance. This slice
 does not claim automatic alert delivery or human receipt; it manages the
 notification route metadata only. Phase 15 remains unauthorized.
+
+Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`.
+Exact-head hosted CI: `34019836787` — PASS. The follow-up was governance-only;
+runtime behavior remains at implementation head
+`09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`.

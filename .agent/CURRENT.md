@@ -54,6 +54,9 @@ authorized by the goal-wide completion audit.
 - Route management is implemented and validated; automatic SenseGuard-to-ntfy
   delivery and human receipt are not claimed. The active packet remains
   `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; Phase 15 remains unauthorized.
+- Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`;
+  `main == origin/main`; exact-head hosted CI `34019836787` - PASS. This
+  forward-only governance commit changed records only.
 
 ## Active directive
 
