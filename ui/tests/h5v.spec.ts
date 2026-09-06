@@ -29,7 +29,7 @@ test("browser approval resumes the same governed episode", async ({ page }) => {
 test("browser rejection resumes without provider dispatch", async ({ page }) => {
   await requestNotification(page);
   await page.getByRole("button", { name: "Reject" }).first().click();
-  await expect(page.getByRole("status").filter({ hasText: "POLICY DENIED" })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "REJECTED" })).toBeVisible();
   await expect(page.getByText("The notification was rejected and was not dispatched.")).toBeVisible();
   await expect(page.getByText("Pending confirmation")).toHaveCount(0);
 });
