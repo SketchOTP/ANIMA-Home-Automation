@@ -102,5 +102,18 @@ server-owned; manifests are household-scoped and UI payloads are sanitized.
 The surface creates and validates snapshots only. It does not expose restore,
 database administration, archive downloads, or physical-state claims after a
 restore. Restore remains a separately controlled maintenance workflow with
-fresh HA reconciliation. This increment is implementation evidence pending
-hosted qualification and Architect acceptance; Phase 15 remains unauthorized.
+fresh HA reconciliation. This increment remains implementation evidence
+pending independent Architect acceptance; Phase 15 remains unauthorized.
+
+Hosted qualification is complete on the exact candidate head:
+
+- Implementation/final candidate: `240f29563e9a6326eb004bef367f3bd715624464`.
+- Exact-head CI: `34028034777` - PASS.
+- Reviewable artifact: `9987831976`
+  (`phase12-h5-evidence-240f29563e9a6326eb004bef367f3bd715624464`).
+- Artifact digest: `sha256:4c30e740e4f4995f4959adbb7e1ebddc4269c7b2b7632edc461d9a41034d8a34`.
+
+The hosted workflow passed the existing Phase 0-14/SENTRY suites, backup
+management validation, ARM64 image/runtime checks, Docker UI validation, H5
+evidence targets, and public-safety scan. The implementation does not claim
+restore through the browser or current physical state after restore.

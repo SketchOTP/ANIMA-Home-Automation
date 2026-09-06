@@ -27,13 +27,25 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing recovery increment - 2026-09-06
 
-- The next bounded management-plane slice adds Core-owned PostgreSQL backup
+- The bounded management-plane slice adds Core-owned PostgreSQL backup
   snapshot creation and SHA-256 validation through the authenticated Backups
   view. Household scope is enforced by trusted InvocationContext and is not a
   browser/model field; database credentials and archive paths stay in Core.
-- This is not yet a publication or acceptance claim: hosted validation is
-  required. Restore remains maintenance-only and must re-observe Home
-  Assistant after database restoration. Phase 15 remains unauthorized.
+- Hosted qualification passed on the exact implementation head below. This is
+  implementation evidence pending independent Architect acceptance. Restore
+  remains maintenance-only and must re-observe Home Assistant after database
+  restoration. Phase 15 remains unauthorized.
+
+- Implementation/final candidate: `240f29563e9a6326eb004bef367f3bd715624464`;
+  `main == origin/main`; clean tree.
+- Exact-head hosted CI: `34028034777` - PASS. Reviewable artifact:
+  `9987831976`
+  (`phase12-h5-evidence-240f29563e9a6326eb004bef367f3bd715624464`), digest
+  `sha256:4c30e740e4f4995f4959adbb7e1ebddc4269c7b2b7632edc461d9a41034d8a34`.
+- Hosted validation passed the existing Phase 0-14/SENTRY suites, the
+  server-owned backup path, ARM64 image/runtime checks, Docker UI validation,
+  H5 evidence targets, and public-safety scan. No restore, archive download,
+  database administration, or physical-state claim was added.
 
 - Current published head: `4960a99d56ee49059e6e73e2b4c71e616cac8496`;
   `main == origin/main`; clean tree at the latest publication.
