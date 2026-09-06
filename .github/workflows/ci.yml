@@ -337,6 +337,15 @@ jobs:
           set -euo pipefail
           uv run --locked python scripts/verify_phase14_inflight_restart_r2.py \
             | tee /tmp/anima-p14-evidence/phase14-inflight-restart-r2.json
+      - name: Consolidate Phase 14 evidence ledger
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          uv run --locked python scripts/verify_phase14_evidence_ledger_r3.py \
+            --evidence-dir /tmp/anima-p14-evidence \
+            --output /tmp/anima-p14-evidence/phase14-evidence-ledger-r3.json \
+            | tee /tmp/anima-p14-evidence/phase14-evidence-ledger-r3.stdout.json
       - name: Stop UI after process restart matrix
         if: always()
         env:
