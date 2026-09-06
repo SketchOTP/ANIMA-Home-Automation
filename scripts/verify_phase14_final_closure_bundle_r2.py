@@ -288,7 +288,11 @@ def core_restart(results: list[dict[str, Any]]) -> None:
             {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
         ),
     )
-    assert resumed is not None and resumed.record.status == ActionStatus.SUCCEEDED
+    assert resumed is not None and resumed.record.status == ActionStatus.SUCCEEDED, (
+        f"restart approval terminal status={resumed.record.status.value if resumed else None} "
+        f"detail={resumed.record.detail if resumed else None} "
+        f"result={resumed.record.result if resumed else None}"
+    )
     assert gateway.calls == 1
     assert before["container_id"] != after["container_id"]
     results.append(
