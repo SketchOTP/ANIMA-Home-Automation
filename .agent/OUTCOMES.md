@@ -1052,3 +1052,18 @@ decision.
   destructive families. Native Pi 5 remains an external hardware gate.
 - Disposition: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`. Phase 15 remains
   unauthorized and unimplemented; no new resilience scope was added.
+
+## ANIMA-HA-GOAL-NOTIFICATION-ROUTE-MANAGEMENT — owner-facing follow-on
+
+- Date: 2026-09-06
+- Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`
+- Implementation head: `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`
+- Exact-head hosted CI: `34019264187` — PASS
+- Reviewable artifact: `9985073980`
+- Adds household-scoped, optimistic-versioned notification-route management
+  through the existing Core/PluginManager/PolicyService path and a bounded
+  Notifications UI. The browser/model see fixed `ntfy` and
+  `server_configured` references only; no topic, token, URL, credential, or
+  arbitrary destination is exposed.
+- This slice manages route metadata only. Automatic SenseGuard-to-ntfy
+  delivery and human receipt remain unclaimed. Phase 15 remains unauthorized.

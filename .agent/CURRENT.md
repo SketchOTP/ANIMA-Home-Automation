@@ -40,6 +40,21 @@ authorized by the goal-wide completion audit.
 - The active packet remains `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; no
   second active packet was created. Phase 15 remains unauthorized.
 
+## Latest owner-facing notification-route publication - 2026-09-06
+
+- Current implementation head: `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`;
+  `main == origin/main`; clean tree at implementation publication.
+- Exact-head hosted CI: `34019264187` - PASS. Reviewable artifact:
+  `9985073980` (`phase12-h5-evidence-09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`).
+- The increment adds a bounded PostgreSQL-backed notification-route record and
+  authenticated Notifications view through Core/PluginManager/PolicyService.
+  Provider and destination remain server-owned (`ntfy` / configured); no
+  topic, token, URL, credential, or arbitrary destination reaches browser or
+  model context.
+- Route management is implemented and validated; automatic SenseGuard-to-ntfy
+  delivery and human receipt are not claimed. The active packet remains
+  `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; Phase 15 remains unauthorized.
+
 ## Active directive
 
 ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed

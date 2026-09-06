@@ -315,3 +315,17 @@ Owner-facing management increment (2026-09-06):
 - Published head `b3057add1b912d15b82b4ccc5b836041e3b11c89` passed exact-head
   hosted CI `34017171506`; artifact `9984398595` was published without a
   public digest. The increment remains pending Architect acceptance.
+
+Owner-facing notification-route management follow-on (2026-09-06):
+
+- `src/anima_ha/notification_routes.py` and migration
+  `src/anima_ha/db/migrations/0023_notification_routes.sql` — typed,
+  household-scoped, optimistic-versioned route metadata with fixed
+  server-owned `ntfy` provider/configured-destination references.
+- `src/anima_ha/ui_runtime.py`, `src/anima_ha/ui_api.py`, and
+  `ui/src/main.tsx` — Core/PluginManager/PolicyService routing and authenticated
+  Notifications view for label, priority threshold, and enabled state.
+- Head `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36` passed exact-head hosted CI
+  `34019264187`; artifact `9985073980` was published. Automatic alert delivery
+  and human receipt are not claimed; the active goal packet remains pending
+  Architect acceptance.

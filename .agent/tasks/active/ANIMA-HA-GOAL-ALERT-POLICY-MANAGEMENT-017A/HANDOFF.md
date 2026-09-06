@@ -27,3 +27,21 @@ validated household room/zone, and retire from ANIMA while preserving the
 underlying Home Assistant registry. The lifecycle follow-on is included in
 this active packet so governance retains one active goal increment until the
 Architect reviews the combined publication.
+
+## Notification-route management follow-on
+
+The owner-facing Notifications view now manages one typed, household-scoped
+route through the normal authenticated API → Core UI gateway → PluginManager →
+PolicyService → PostgreSQL path. The route exposes only the fixed `ntfy`
+provider and a server-configured destination reference; topic, token, URL, and
+other credentials never enter the browser or model context. Label, minimum
+priority, enabled state, creator provenance, and optimistic version are
+bounded and server-validated.
+
+Implementation head: `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`.
+Exact hosted CI: `34019264187` — PASS.
+Artifact: `9985073980`.
+
+The implementation is complete and pending Architect acceptance. This slice
+does not claim automatic alert delivery or human receipt; it manages the
+notification route metadata only. Phase 15 remains unauthorized.

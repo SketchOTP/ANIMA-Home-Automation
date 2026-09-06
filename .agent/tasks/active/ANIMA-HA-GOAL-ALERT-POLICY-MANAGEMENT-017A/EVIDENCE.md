@@ -58,3 +58,35 @@ slice documented in `docs/GOAL-DEVICE-LIFECYCLE-017A.md`:
 The focused lifecycle test, full Python pytest, Ruff, TypeScript check, and
 Vite production build pass locally. This follow-on remains part of the pending
 Architect review; no goal-wide or Phase 15 acceptance is claimed.
+
+## Notification-route management follow-on
+
+The same active packet now includes the bounded owner-facing notification-route
+slice. Implementation head: `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`.
+
+Exact-head hosted CI: `34019264187` — PASS.
+
+Reviewable artifact: `9985073980`
+(`phase12-h5-evidence-09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`).
+
+The slice provides:
+
+- a PostgreSQL-backed, household-scoped route record with optimistic versioning;
+- typed `list_routes` and `save_route` operations through PluginManager and
+  the existing policy boundary;
+- an authenticated Notifications view for label, minimum priority, and
+  enabled-state management;
+- server-owned `ntfy` provider and configured destination references;
+- no topic, token, URL, credential, or arbitrary destination exposed to the
+  browser or model;
+- explicit provider attribution and no claim that a notification was received.
+
+Local validation passed full pytest, Ruff check/format, strict mypy, compileall,
+TypeScript, frontend tests, Vite production build, and `git diff --check`.
+Hosted validation also passed the existing Phase 0–14, SENTRY, PostgreSQL/OPA,
+isolated-HA, ARM64, Docker, safety, and UI validation workflow.
+
+This is route management, not automatic SenseGuard-to-ntfy delivery; delivery
+remains a separate existing typed capability and is not claimed here. The
+increment remains pending independent Architect acceptance. Phase 15 remains
+unauthorized.
