@@ -264,7 +264,7 @@ class ActionRiskClassifier:
     _financial = {"purchase", "complete_purchase", "pay", "checkout"}
     _external = {"send_message", "send_email", "create_external_record", "change_calendar"}
     _access = {"unlock", "open", "disarm", "grant_access"}
-    _secure = {"lock", "close", "arm", "secure"}
+    _secure = {"lock", "close", "arm", "secure", "capabilities.configure"}
     _read_prefixes = ("get_", "read_", "query_", "list_", "inspect_", "status_")
 
     def classify(
