@@ -654,3 +654,15 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. A live external SENTRY
   host is not claimed by this increment and remains a later runtime/resource
   qualification. Phase 14 remains accepted; Phase 15 remains unauthorized.
+
+## Permanent Goal product-convergence reconciliation — 2026-09-06
+
+- Phase 14 is Architect accepted; no further resilience qualification is
+  authorized unless product work exposes a concrete regression.
+- The goal-wide scorecard was reconciled after the bounded SENTRY text result
+  delivery increment. Governance head: `55698df43aec6bfb93033b9d05c48c7c0c269f3d`.
+- The next product gap is the owner-usable text operation through the accepted
+  client-only `anima-household` MCP/Core boundary. A live external SENTRY host
+  turn remains unclaimed and is not being silently replaced by ANIMA cognition.
+- Phase 15 remains unauthorized; the permanent completion marker remains
+  unclaimed.

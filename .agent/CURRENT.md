@@ -822,6 +822,22 @@ provisional because the action projection is still `POLICY_DENIED`; distinct
 in-flight Core, OPA, and HA restart boundaries remain open. Phase 14 remains
 `CONTINUE`; Phase 15 remains unauthorized.
 
+## Permanent Goal product convergence — 2026-09-06
+
+Phase 14 is Architect accepted as
+`ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`; it is not an active work area. The
+current product increment is bounded SENTRY text result delivery. Its
+implementation is published at `97be56fac54a848982d5767fe792ea66083412e9`
+with exact-head hosted CI `34055080097` passing and reviewable artifact
+`9995888935` (`sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`).
+
+The follow-up governance publication is `55698df43aec6bfb93033b9d05c48c7c0c269f3d`.
+It reconciles the goal-wide scorecard: bounded text delivery is now
+implemented, while a live external SENTRY host turn remains unclaimed. The
+next largest owner-facing gap is the complete text operation
+`owner → SENTRY → anima-household MCP/Core → Truth or governed action → exact
+result → SENTRY response`. No Phase 14 reopening or Phase 15 work is authorized.
+
 ## Automatic configured-alert delivery increment - 2026-09-06
 
 - Added a bounded server-authored SenseGuard `NOTIFICATION` delivery path.
@@ -1050,3 +1066,20 @@ It verified `MANUAL_CHANGE_BEFORE_AUTHORIZATION`,
 audit is 36 `VERIFIED` and 4 `UNKNOWN`; rejection projection plus distinct
 in-flight Core, OPA, and HA restart boundaries remain open. Phase 14 remains
 `CONTINUE`; Phase 15 remains unauthorized.
+
+## Current permanent Goal state — 2026-09-06
+
+Phase 14 is Architect accepted as
+`ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`; no new resilience qualification is
+active. The bounded SENTRY text result-delivery increment is published and
+hosted-qualified at implementation head
+`97be56fac54a848982d5767fe792ea66083412e9` with CI `34055080097` and artifact
+`9995888935`. Governance scorecard reconciliation is published at
+`55698df43aec6bfb93033b9d05c48c7c0c269f3d`.
+
+The owner-facing product gap is now the complete text operation through the
+accepted client-only `anima-household` MCP/Core boundary:
+`owner → SENTRY → ANIMA Truth or governed action → exact result → SENTRY`.
+The external SENTRY host turn remains unclaimed; embedded ANIMA cognition is
+not an implicit fallback. Phase 15 remains unauthorized and the completion
+marker remains unclaimed.

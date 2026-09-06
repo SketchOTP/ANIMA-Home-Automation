@@ -1210,3 +1210,14 @@ decision.
 - This is a meaningful owner-facing increment, not a claim of a live external
   SENTRY host turn. Phase 14 remains accepted and Phase 15 remains
   unauthorized.
+
+## Permanent Goal scorecard reconciliation - 2026-09-06
+
+- Governance head: `55698df43aec6bfb93033b9d05c48c7c0c269f3d`.
+- The scorecard now records bounded SENTRY text result delivery as implemented
+  but partial at the whole-product level: the ANIMA UI can receive a bounded
+  live response, while an actual external SENTRY host turn is not claimed.
+- The next selected product increment is the complete owner-usable text
+  operation through `anima-household` MCP/Core, preserving ANIMA authority for
+  Truth, policy, execution, and verification. This is not Phase 15 and does
+  not reopen Phase 14.
