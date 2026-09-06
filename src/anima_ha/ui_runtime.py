@@ -289,12 +289,25 @@ class CoreUICommandGateway:
             metadata = dict(item.get("metadata") or {})
             canonical_target = None
             canonical_value = metadata.get("canonical_target_id")
-            if canonical_value and self.graph is not None:
+            graph = self.home_assistant_adapter.graph
+            if canonical_value:
                 try:
-                    canonical_target = self.graph.get_node(UUID(str(canonical_value)))
+                    canonical_target = graph.get_node(UUID(str(canonical_value)))
                 except (TypeError, ValueError):
                     canonical_target = None
             mapped = canonical_target is not None and item.get("present") is True
+            mapped_metadata: dict[str, Any]
+            if mapped and canonical_target is not None:
+                mapped_metadata = {
+                    "name": canonical_target.name,
+                    "mapping_status": "MAPPED",
+                    "canonical_target_id": str(canonical_target.canonical_id),
+                }
+            else:
+                mapped_metadata = {
+                    "mapping_status": "UNMAPPED",
+                    "canonical_target_id": None,
+                }
             items.append(
                 {
                     "external_object_kind": str(item.get("external_object_kind", "")),
@@ -312,18 +325,7 @@ class CoreUICommandGateway:
                         )
                         if key in metadata
                     }
-                    | (
-                        {
-                            "name": canonical_target.name,
-                            "mapping_status": "MAPPED",
-                            "canonical_target_id": str(canonical_target.canonical_id),
-                        }
-                        if mapped
-                        else {
-                            "mapping_status": "UNMAPPED",
-                            "canonical_target_id": None,
-                        }
-                    ),
+                    | mapped_metadata,
                 }
             )
         return {"status": "AVAILABLE", "items": items}
