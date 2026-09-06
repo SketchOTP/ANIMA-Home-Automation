@@ -21,6 +21,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from psycopg.conninfo import conninfo_to_dict
+
 from anima_ha.db.migrate import migrate
 from anima_ha.plugins import (
     CORE_VERSION,
