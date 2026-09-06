@@ -969,7 +969,11 @@ class PostgresHouseholdGraph:
                         connection,
                         "node.created",
                         place_id,
-                        {"kind": kind.value, "name": display_name, "household_id": str(household_id)},
+                        {
+                            "kind": kind.value,
+                            "name": display_name,
+                            "household_id": str(household_id),
+                        },
                     )
                     relationship_id = uuid4()
                     cursor.execute(
