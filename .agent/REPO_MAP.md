@@ -260,9 +260,9 @@ GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is 
 
 ### Phase 14 resilience/replay/restore
 
-- `src/anima_ha/backup.py` - Core-owned PostgreSQL snapshot creation and
-  digest validation with server-side household manifests; restore remains a
-  maintenance-only operation.
+- `src/anima_ha/backup.py` - Core-owned PostgreSQL snapshot creation,
+  household-scoped digest validation, and explicitly confirmed restore with
+  migration/reobservation safeguards.
 - `docs/GOAL-BACKUP-MANAGEMENT-017A.md` - bounded owner-facing backup surface,
   credential/path boundary, and restore limitation.
 
