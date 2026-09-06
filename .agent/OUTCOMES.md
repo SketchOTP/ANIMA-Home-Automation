@@ -1241,3 +1241,7 @@ decision.
 - Exact implementation head `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef` passed
   hosted CI `34058199339`; artifact `9996805982` was published. The public
   artifact endpoint did not expose a digest without authenticated download.
+- Final governance head `7d57f32dda04295a0c4830849416e753490791a1` passed
+  exact-head hosted CI `34059183314`; artifact `9997092423` was published.
+  The public artifact endpoint did not expose a digest without authenticated
+  download.

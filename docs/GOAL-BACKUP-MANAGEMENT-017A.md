@@ -30,3 +30,8 @@ Implementation checkpoint: `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef`.
 Exact-head hosted CI: `34058199339` (PASS). Published artifact:
 `9996805982`; the public artifact endpoint did not expose a digest without
 authenticated download.
+
+Final governance checkpoint: `7d57f32dda04295a0c4830849416e753490791a1`.
+Exact-head hosted CI: `34059183314` (PASS). Published artifact:
+`9997092423`; the public artifact endpoint did not expose a digest without
+authenticated download.

@@ -1103,3 +1103,5 @@ marker remains unclaimed.
 
 - Implementation head: `da7392bf57b2ecf615bbfcace5700e9fb0e6fcef`; exact-head
   hosted CI `34058199339` passed and published artifact `9996805982`.
+- Final governance head: `7d57f32dda04295a0c4830849416e753490791a1`; exact-head
+  hosted CI `34059183314` passed and published artifact `9997092423`.
