@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,6 +20,9 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import psycopg
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from scripts.verify_phase6_home_assistant import (
     INSTANCE_ID,
@@ -72,7 +76,6 @@ from anima_ha.policy import (
 DATABASE_URL = os.environ.get("ANIMA_DATABASE_URL", "")
 OPA_URL = os.environ.get("ANIMA_OPA_URL", "http://127.0.0.1:18181")
 UI_PORT = os.environ.get("ANIMA_UI_PORT", "18090")
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def compose(*args: str) -> str:
