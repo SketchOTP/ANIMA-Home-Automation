@@ -413,6 +413,8 @@ class HouseholdReadModel(Protocol):
 
     def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def places(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
@@ -481,6 +483,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def space_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -533,6 +539,11 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"integration.{operation}")
+
+    def space_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"space.{operation}")
 
 
 class ConversationIngress(Protocol):
@@ -730,6 +741,13 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def places(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return [
+            {"place_id": "household-demo", "name": "Anima Home", "kind": "HOUSEHOLD"},
+            {"place_id": "room-demo", "name": "Living room", "kind": "ROOM"},
+        ]
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
@@ -830,6 +848,10 @@ class UnavailableHouseholdReadModel:
         ]
 
     def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def places(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
 
@@ -1310,6 +1332,18 @@ class PostgresHouseholdReadModel:
 
         return integration_items(self.plugins)
 
+    def places(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.graph is None:
+            return []
+        root = self.graph.get_node(identity.household_id)
+        if root is None:
+            return []
+        places = [root, *self.graph.places_in_household(identity.household_id)]
+        return [
+            {"place_id": str(place.canonical_id), "name": place.name, "kind": place.kind.value}
+            for place in places
+        ]
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         if self.alert_policy_store is None:
             return []
@@ -1468,6 +1502,13 @@ class DemoCommandGateway:
         del identity, payload
         self.events.publish("capabilities.changed")
         return {"status": "UNAVAILABLE", "operation": f"integration.{operation}"}
+
+    def space_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity, payload
+        self.events.publish("home.invalidated")
+        return {"status": "UNAVAILABLE", "operation": f"space.{operation}"}
 
 
 class JournalConversationIngress:
@@ -2096,6 +2137,28 @@ def create_app(
     @app.get("/api/v1/integrations")
     async def integrations(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.integrations(current_identity(request))}
+
+    @app.get("/api/v1/places")
+    async def places(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.places(current_identity(request))}
+
+    @app.post("/api/v1/places/{operation}")
+    async def mutate_places(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"create", "rename"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_SPACE_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.space_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.post("/api/v1/integrations/{operation}")
     async def mutate_integrations(

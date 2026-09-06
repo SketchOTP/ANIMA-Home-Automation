@@ -62,6 +62,12 @@ class DeviceCommandStub:
         del identity
         return {"status": "SUCCEEDED", "operation": operation, "result": {"route": payload}}
 
+    def space_mutation(
+        self, identity: object, operation: str, payload: dict[str, object]
+    ) -> dict[str, object]:
+        del identity
+        return {"status": "SUCCEEDED", "operation": operation, "result": {"space": payload}}
+
 
 def test_health_is_public_but_household_data_requires_session() -> None:
     app = create_app(UIService(config=UIConfig(test_auth_enabled=True)))
@@ -118,6 +124,24 @@ def test_notification_route_is_bounded_and_keeps_destination_server_owned() -> N
     assert response.status_code == 200
     assert response.json()["status"] == "SUCCEEDED"
     assert "destination" not in response.json()["result"]["route"]
+
+
+def test_space_routes_use_session_identity_and_bounded_payload() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
+    client = TestClient(create_app(service), follow_redirects=False)
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+    csrf = callback.headers["x-anima-csrf"]
+    places = client.get("/api/v1/places")
+    assert places.status_code == 200
+    assert places.json()["items"][0]["kind"] == "HOUSEHOLD"
+    response = client.post(
+        "/api/v1/places/create",
+        json={"payload": {"name": "Basement", "kind": "ROOM", "parent_id": "household-demo"}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["result"]["space"]["kind"] == "ROOM"
 
 
 def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:

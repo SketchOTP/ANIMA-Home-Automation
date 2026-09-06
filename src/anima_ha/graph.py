@@ -901,6 +901,198 @@ class PostgresHouseholdGraph:
                 connection.rollback()
                 raise
 
+    def create_place(
+        self, household_id: UUID, parent_id: UUID, name: str, kind: NodeKind
+    ) -> CanonicalNode:
+        """Create one bounded room/zone inside a commissioned household.
+
+        Topology is an ANIMA-owned graph concern.  The household and parent
+        are checked inside the same transaction as the insert so a browser or
+        model cannot create a place in another household or attach it to an
+        unrelated graph branch.
+        """
+        if kind not in {NodeKind.ROOM, NodeKind.ZONE}:
+            raise GraphValidationError("only ROOM and ZONE places may be created here")
+        display_name = name.strip()
+        if not display_name or len(display_name) > 120:
+            raise GraphValidationError("place name must contain 1 to 120 characters")
+        normalized = normalize_alias(display_name)
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT n.kind
+                        FROM anima_graph_nodes n
+                        JOIN descendants d ON d.canonical_id = n.canonical_id
+                        WHERE n.canonical_id = %s AND n.retired_at IS NULL
+                        """,
+                        (household_id, parent_id),
+                    )
+                    parent = cursor.fetchone()
+                    if parent is None or str(parent["kind"]) not in {
+                        item.value for item in CONTAINER_KINDS
+                    }:
+                        raise GraphValidationError("parent is not in this household")
+
+                    cursor.execute(
+                        """
+                        SELECT n.name
+                        FROM anima_graph_nodes n
+                        JOIN anima_graph_relationships r ON r.target_id = n.canonical_id
+                        WHERE r.source_id = %s AND r.relationship_type = 'CONTAINS'
+                          AND r.retired_at IS NULL AND n.retired_at IS NULL
+                        """,
+                        (parent_id,),
+                    )
+                    if any(normalize_alias(str(row["name"])) == normalized for row in cursor):
+                        raise GraphConflict("a place with this name already exists under parent")
+
+                    place_id = uuid4()
+                    cursor.execute(
+                        """
+                        INSERT INTO anima_graph_nodes
+                            (canonical_id, kind, name, security_sensitive, metadata)
+                        VALUES (%s, %s, %s, false, '{}'::jsonb)
+                        """,
+                        (place_id, kind.value, display_name),
+                    )
+                    self._audit(
+                        connection,
+                        "node.created",
+                        place_id,
+                        {"kind": kind.value, "name": display_name, "household_id": str(household_id)},
+                    )
+                    relationship_id = uuid4()
+                    cursor.execute(
+                        """
+                        INSERT INTO anima_graph_relationships
+                            (relationship_id, relationship_type, source_id, target_id, metadata)
+                        VALUES (%s, 'CONTAINS', %s, %s, '{}'::jsonb)
+                        """,
+                        (relationship_id, parent_id, place_id),
+                    )
+                    self._audit(
+                        connection,
+                        "relationship.added",
+                        relationship_id,
+                        {
+                            "relationship_type": RelationshipType.CONTAINS.value,
+                            "source_id": str(parent_id),
+                            "target_id": str(place_id),
+                        },
+                    )
+                    cursor.execute(
+                        """
+                        INSERT INTO anima_graph_aliases
+                            (alias_id, normalized_alias, display_alias, canonical_id, node_kind, scope_id)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        """,
+                        (uuid4(), normalized, display_name, place_id, kind.value, parent_id),
+                    )
+                    self._audit(
+                        connection,
+                        "alias.added",
+                        place_id,
+                        {"canonical_id": str(place_id), "alias": display_name},
+                    )
+                    connection.commit()
+                return CanonicalNode(place_id, kind, display_name)
+            except Exception:
+                connection.rollback()
+                raise
+
+    def rename_place(self, household_id: UUID, place_id: UUID, name: str) -> CanonicalNode:
+        """Rename a room/zone only when it belongs to the supplied household."""
+        display_name = name.strip()
+        if not display_name or len(display_name) > 120:
+            raise GraphValidationError("place name must contain 1 to 120 characters")
+        normalized = normalize_alias(display_name)
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT n.name, n.kind, r.source_id AS parent_id
+                        FROM anima_graph_nodes n
+                        JOIN descendants d ON d.canonical_id = n.canonical_id
+                        JOIN anima_graph_relationships r
+                          ON r.target_id = n.canonical_id
+                         AND r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        WHERE n.canonical_id = %s AND n.retired_at IS NULL
+                        ORDER BY r.created_at
+                        LIMIT 1
+                        """,
+                        (household_id, place_id),
+                    )
+                    row = cursor.fetchone()
+                    if row is None or str(row["kind"]) not in {
+                        NodeKind.ROOM.value,
+                        NodeKind.ZONE.value,
+                    }:
+                        raise GraphValidationError("place is unknown or outside this household")
+                    cursor.execute(
+                        """
+                        SELECT n.name
+                        FROM anima_graph_nodes n
+                        JOIN anima_graph_relationships r ON r.target_id = n.canonical_id
+                        WHERE r.source_id = %s AND r.relationship_type = 'CONTAINS'
+                          AND r.retired_at IS NULL AND n.retired_at IS NULL
+                          AND n.canonical_id <> %s
+                        """,
+                        (row["parent_id"], place_id),
+                    )
+                    if any(normalize_alias(str(item["name"])) == normalized for item in cursor):
+                        raise GraphConflict("a place with this name already exists under parent")
+                    old_name = str(row["name"])
+                    if old_name != display_name:
+                        cursor.execute(
+                            "UPDATE anima_graph_nodes SET name=%s, updated_at=now() WHERE canonical_id=%s",
+                            (display_name, place_id),
+                        )
+                        cursor.execute(
+                            """
+                            INSERT INTO anima_graph_aliases
+                                (alias_id, normalized_alias, display_alias, canonical_id, node_kind, scope_id)
+                            VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+                            """,
+                            (
+                                uuid4(),
+                                normalize_alias(old_name),
+                                old_name,
+                                place_id,
+                                str(row["kind"]),
+                                row["parent_id"],
+                            ),
+                        )
+                        self._audit(
+                            connection,
+                            "node.renamed",
+                            place_id,
+                            {"old_name": old_name, "new_name": display_name},
+                        )
+                    connection.commit()
+                return CanonicalNode(UUID(str(place_id)), NodeKind(str(row["kind"])), display_name)
+            except Exception:
+                connection.rollback()
+                raise
+
     def move_resource(self, resource_id: UUID, place_id: UUID) -> None:
         """Move one commissioned resource to another canonical place.
 

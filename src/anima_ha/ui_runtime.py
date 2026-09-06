@@ -56,6 +56,10 @@ from anima_ha.home_assistant import (
     PostgresHAStore,
     home_assistant_manifest,
 )
+from anima_ha.household_spaces import (
+    HOUSEHOLD_SPACES_MANIFEST,
+    HouseholdSpacesNativePlugin,
+)
 from anima_ha.intelligence import (
     IntelligenceOrigin,
     IntelligenceProviderMode,
@@ -297,6 +301,15 @@ class CoreUICommandGateway:
         if name is None:
             raise UICommandError("UNKNOWN_INTEGRATION_OPERATION")
         return self._invoke(identity, CAPABILITY_MANAGEMENT_MANIFEST.plugin_id, name, payload)
+
+    def space_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {"create": "create_space", "rename": "rename_space"}
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_SPACE_OPERATION")
+        return self._invoke(identity, HOUSEHOLD_SPACES_MANIFEST.plugin_id, name, payload)
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -883,6 +896,11 @@ def build_postgres_core(
     register_and_enable(
         CALENDAR_MANIFEST,
         NativeRuntime(CalendarNativePlugin(calendar_service)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        HOUSEHOLD_SPACES_MANIFEST,
+        NativeRuntime(HouseholdSpacesNativePlugin(graph)),
         persist_choice=False,
     )
 
