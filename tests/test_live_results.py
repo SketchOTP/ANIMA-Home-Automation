@@ -77,6 +77,7 @@ def test_ui_reads_only_live_result_for_the_request_household() -> None:
 
     service = UIService(
         core_runtime=SimpleNamespace(intelligence_store=Store()),
+        commands=SimpleNamespace(),  # type: ignore[arg-type]
         sentry_results=Bus(),  # type: ignore[arg-type]
     )
 
