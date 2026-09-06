@@ -17,6 +17,7 @@ from anima_ha.agent import (
 from anima_ha.attention import AttentionProfile, ReasoningTrigger, TriggerStatus
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.graph import NodeKind
+from anima_ha.home_assistant import inventory_handle
 from anima_ha.plugins import (
     DispatchState,
     ExternalContentTrust,
@@ -119,6 +120,7 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
             ]
 
     adapter = SimpleNamespace(
+        config=SimpleNamespace(instance_id=UUID("00000000-0000-0000-0000-000000000099")),
         graph=Graph(),
         reality=SimpleNamespace(projection=SimpleNamespace(get=lambda *_args, **_kwargs: None)),
         provider_inventory=lambda: [
@@ -148,6 +150,10 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
     result = gateway.device_inventory(cast(Any, object()))
 
     item = result["items"][0]
+    assert item["device_handle"] == inventory_handle(
+        adapter.config.instance_id, "device", "ha-device"
+    )
+    assert "external_id" not in item
     assert item["state"] == "ON"
     assert item["truth_status"] == "CURRENT/KNOWN"
     assert item["capabilities"] == [

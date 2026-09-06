@@ -37,7 +37,7 @@ class DeviceCommandStub:
             "items": [
                 {
                     "external_object_kind": "device",
-                    "external_id": "ha-device",
+                    "device_handle": "opaque-device-handle",
                     "present": True,
                     "metadata": {"name": "SenseGuard Basement"},
                 }
@@ -88,7 +88,9 @@ def test_device_routes_return_registry_and_route_bounded_mutations() -> None:
     login = client.get("/auth/login")
     callback = client.get(login.headers["location"])
     csrf = callback.headers["x-anima-csrf"]
-    assert client.get("/api/v1/devices").json()["items"][0]["external_id"] == "ha-device"
+    item = client.get("/api/v1/devices").json()["items"][0]
+    assert item["device_handle"] == "opaque-device-handle"
+    assert "external_id" not in item
     response = client.post(
         "/api/v1/devices/permit-pairing",
         json={"payload": {"duration_seconds": 60}},

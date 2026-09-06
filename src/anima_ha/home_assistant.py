@@ -172,6 +172,22 @@ class HAProviderObject:
     canonical_target_id: UUID | None = None
 
 
+def inventory_handle(instance_id: UUID, object_kind: str, external_id: str) -> str:
+    """Return a stable opaque reference for an ANIMA discovery item.
+
+    The handle is only a lookup key.  Core resolves it back to the provider
+    identifier inside the Home Assistant adapter; callers never need to see
+    or choose the provider identifier itself.
+    """
+
+    return str(
+        uuid5(
+            NAMESPACE_URL,
+            f"anima://home-assistant/{instance_id}/inventory/{object_kind}/{external_id}",
+        )
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class HADiscoverySnapshot:
     version: str
@@ -585,7 +601,14 @@ class PostgresHAStore:
                    ORDER BY external_object_kind, external_id""",
                 (instance_id,),
             )
-            return [dict(row) for row in cursor.fetchall()]
+            rows = [dict(row) for row in cursor.fetchall()]
+        for row in rows:
+            row["inventory_handle"] = inventory_handle(
+                instance_id,
+                str(row["external_object_kind"]),
+                str(row["external_id"]),
+            )
+        return rows
 
 
 class HomeAssistantAdapter:
@@ -682,6 +705,8 @@ class HomeAssistantAdapter:
                 "config_entry_id",
                 "config_subentry_id",
                 "config_entries",
+                "manufacturer",
+                "model",
             },
             "entity": {"name", "original_name", "device_id", "area_id", "platform", "disabled_by"},
         }[kind]
@@ -1016,6 +1041,50 @@ class HomeAssistantAdapter:
 
     def provider_inventory(self) -> list[dict[str, Any]]:
         return self.store.inventory(self.config.instance_id)
+
+    def resolve_device_handle(self, handle: str) -> str | None:
+        """Resolve an ANIMA-owned discovery handle inside the provider boundary."""
+
+        for item in self.provider_inventory():
+            if item.get("external_object_kind") != "device":
+                continue
+            external_id = str(item.get("external_id", ""))
+            if external_id and inventory_handle(
+                self.config.instance_id, "device", external_id
+            ) == handle:
+                return external_id
+        return None
+
+    def public_device_inventory(self) -> list[dict[str, Any]]:
+        """Project discovery metadata without provider identifiers."""
+
+        safe_keys = {
+            "name",
+            "name_by_user",
+            "manufacturer",
+            "model",
+            "is_child_device",
+            "mapping_status",
+        }
+        result: list[dict[str, Any]] = []
+        for item in self.provider_inventory():
+            if item.get("external_object_kind") != "device":
+                continue
+            external_id = str(item.get("external_id", ""))
+            metadata = dict(item.get("metadata") or {})
+            result.append(
+                {
+                    "external_object_kind": "device",
+                    "device_handle": inventory_handle(
+                        self.config.instance_id, "device", external_id
+                    ),
+                    "present": bool(item.get("present")),
+                    "metadata": {
+                        key: metadata[key] for key in sorted(safe_keys) if key in metadata
+                    },
+                }
+            )
+        return result
 
     def permit_zigbee_join(self, duration_seconds: int) -> dict[str, Any]:
         """Open a bounded ZHA pairing window through the configured HA instance."""
@@ -1423,16 +1492,23 @@ class HomeAssistantPlugin:
             return {
                 "provider": PROVIDER,
                 "household_id": str(household_id),
-                "items": self.adapter.provider_inventory(),
+                "items": self.adapter.public_device_inventory(),
             }
         if name == "permit_zigbee_join":
             return self.adapter.permit_zigbee_join(int(arguments["duration_seconds"]))
         if name == "commission_device":
+            device_handle = str(arguments["device_handle"])
+            device_id = self.adapter.resolve_device_handle(device_handle)
+            if device_id is None:
+                raise PluginValidationError(
+                    "discovered Home Assistant device handle is unavailable"
+                )
             return self._commission_device(
                 household_id,
-                str(arguments["device_id"]),
+                device_id,
                 str(arguments["name"]),
                 UUID(str(arguments["place_id"])),
+                device_handle,
             )
         if name == "rename_device":
             resource_id = UUID(str(arguments["resource_id"]))
@@ -1471,7 +1547,12 @@ class HomeAssistantPlugin:
         return self.invoke(name, arguments, timeout)
 
     def _commission_device(
-        self, household_id: UUID, device_id: str, name: str, place_id: UUID
+        self,
+        household_id: UUID,
+        device_id: str,
+        name: str,
+        place_id: UUID,
+        device_handle: str,
     ) -> dict[str, Any]:
         """Map one discovered HA device into ANIMA's canonical graph.
 
@@ -1626,7 +1707,7 @@ class HomeAssistantPlugin:
         self.adapter.reconcile()
         return {
             "resource_id": str(resource_id),
-            "device_id": device_id,
+            "device_handle": device_handle,
             "place_id": str(place_id),
             "entity_count": len(entities),
             "power_capability_count": capabilities,
@@ -1708,9 +1789,9 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
     }
     commission_schema: dict[str, Any] = {
         "type": "object",
-        "required": ["device_id", "name", "place_id"],
+        "required": ["device_handle", "name", "place_id"],
         "properties": {
-            "device_id": {"type": "string", "minLength": 1, "maxLength": 256},
+            "device_handle": id_schema,
             "name": {"type": "string", "minLength": 1, "maxLength": 120},
             "place_id": id_schema,
         },

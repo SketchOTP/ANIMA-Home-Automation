@@ -21,6 +21,7 @@ from anima_ha.home_assistant import (
     HomeAssistantPlugin,
     MappingStatus,
     home_assistant_manifest,
+    inventory_handle,
 )
 from anima_ha.plugins import (
     InvocationOutcome,
@@ -316,6 +317,25 @@ def json_text(value: Any) -> str:
     import json
 
     return json.dumps(value, sort_keys=True, default=str)
+
+
+def test_refresh_inventory_projects_opaque_device_handles(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    adapter.start(FakeConnection())
+    plugin = HomeAssistantPlugin(adapter, lambda token: FakeConnection())
+
+    result = plugin.invoke_for_household("refresh_inventory", {}, 5.0, uuid4())
+
+    assert result["provider"] == "home_assistant"
+    assert len(result["items"]) == 1
+    item = result["items"][0]
+    assert item["device_handle"] == inventory_handle(
+        adapter.config.instance_id, "device", "ha-device"
+    )
+    assert "external_id" not in item
+    assert "device_id" not in item
 
 
 def test_snapshot_idempotency_and_buffered_newer_event(
@@ -640,14 +660,17 @@ def test_discovered_device_commissions_from_registry_into_canonical_graph(
     result = plugin.invoke_for_household(
         "commission_device",
         {
-            "device_id": "ha-device",
+            "device_handle": inventory_handle(adapter.config.instance_id, "device", "ha-device"),
             "name": "SenseGuard Basement",
             "place_id": str(graph.place_id),
         },
         5.0,
         graph.household_id,
     )
-    assert result["device_id"] == "ha-device"
+    assert result["device_handle"] == inventory_handle(
+        adapter.config.instance_id, "device", "ha-device"
+    )
+    assert "device_id" not in result
     assert result["power_capability_count"] == 1
     assert graph.commissioned is not None
     assert len(store.objects) == 3
@@ -664,7 +687,7 @@ def test_commissioned_device_lifecycle_stays_household_scoped(
     plugin.invoke_for_household(
         "commission_device",
         {
-            "device_id": "ha-device",
+            "device_handle": inventory_handle(adapter.config.instance_id, "device", "ha-device"),
             "name": "SenseGuard Basement",
             "place_id": str(graph.place_id),
         },

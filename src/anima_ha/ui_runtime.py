@@ -62,6 +62,7 @@ from anima_ha.home_assistant import (
     HomeAssistantPlugin,
     PostgresHAStore,
     home_assistant_manifest,
+    inventory_handle,
 )
 from anima_ha.household_spaces import (
     HOUSEHOLD_SPACES_MANIFEST,
@@ -463,6 +464,8 @@ class CoreUICommandGateway:
             return {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
 
         for item in self.home_assistant_adapter.provider_inventory():
+            if item.get("external_object_kind") != "device":
+                continue
             metadata = dict(item.get("metadata") or {})
             canonical_target = None
             canonical_value = metadata.get("canonical_target_id")
@@ -505,17 +508,20 @@ class CoreUICommandGateway:
             items.append(
                 {
                     "external_object_kind": str(item.get("external_object_kind", "")),
-                    "external_id": str(item.get("external_id", "")),
+                    "device_handle": inventory_handle(
+                        self.home_assistant_adapter.config.instance_id,
+                        str(item.get("external_object_kind", "")),
+                        str(item.get("external_id", "")),
+                    ),
                     "present": bool(item.get("present")),
                     "metadata": {
                         key: metadata[key]
                         for key in (
                             "name_by_user",
                             "name",
-                            "area_id",
-                            "device_id",
-                            "platform",
-                            "disabled_by",
+                            "manufacturer",
+                            "model",
+                            "is_child_device",
                         )
                         if key in metadata
                     }
@@ -542,6 +548,12 @@ class CoreUICommandGateway:
         name = operation_map.get(operation)
         if name is None:
             raise UICommandError("UNKNOWN_DEVICE_OPERATION")
+        if operation == "commission":
+            handle = str(payload.get("device_handle", ""))
+            if not handle or self.home_assistant_adapter is None:
+                raise UICommandError("DEVICE_HANDLE_REQUIRED")
+            if self.home_assistant_adapter.resolve_device_handle(handle) is None:
+                raise UICommandError("UNKNOWN_DEVICE_HANDLE")
         return self._invoke(identity, "anima.provider.home-assistant", name, payload)
 
     def control(
