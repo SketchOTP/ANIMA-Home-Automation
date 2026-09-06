@@ -33,8 +33,8 @@ route. The Home room/device projection uses the same Truth resolution instead
 of presenting every device as `UNKNOWN`. Provider entity references and
 credentials remain outside the browser contract; no direct Home Assistant
 browser access or Phase 15 behavior was added. See
-`docs/GOAL-DEVICE-OBSERVABILITY-023A.md`. The implementation is pending
-exact-head hosted validation and independent Architect acceptance.
+`docs/GOAL-DEVICE-OBSERVABILITY-023A.md`. Exact-head hosted validation passed
+in CI `34046105692`; independent Architect acceptance remains pending.
 
 ## Latest owner-facing publication - 2026-09-06
 

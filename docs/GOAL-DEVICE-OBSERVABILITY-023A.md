@@ -31,5 +31,6 @@ behavior was added.
 
 The focused backend tests, full Python test suite, Ruff, strict mypy,
 TypeScript check, frontend unit tests, and production Vite build pass in the
-pinned project toolchains. This increment remains implementation evidence
-pending exact-head hosted validation and independent Architect acceptance.
+pinned project toolchains. Exact-head hosted CI `34046105692` passed on the
+published descendant `86f0cea4a5ef65b06ec5b8071789b960183b2730`; independent
+Architect acceptance remains pending.

@@ -3,7 +3,7 @@
 ## ANIMA-HA-GOAL-DEVICE-OBSERVABILITY-023A — owner-facing device increment
 
 - Date: 2026-09-06
-- Status: `IMPLEMENTATION COMPLETE - PENDING EXACT-HEAD HOSTED VALIDATION AND ARCHITECT ACCEPTANCE`
+- Status: `IMPLEMENTATION COMPLETE - EXACT-HEAD HOSTED VALIDATION PASSED; ARCHITECT ACCEPTANCE PENDING`
 - Scope: canonical capability/state projection for commissioned devices in the
   Devices and Home views, plus bounded On/Off controls routed through the
   existing ANIMA Core control path.
@@ -11,8 +11,8 @@
   explicit; no raw Home Assistant calls, credentials, new provider, new store,
   or Phase 15 behavior was added.
 - Validation: focused and full Python tests, Ruff, strict mypy, TypeScript,
-  frontend tests, and Vite build pass in pinned toolchains. Exact hosted CI
-  and independent Architect acceptance remain pending.
+  frontend tests, and Vite build pass in pinned toolchains. Exact-head hosted
+  CI `34046105692` passed; independent Architect acceptance remains pending.
 
 ## ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — owner-facing management increment
 
