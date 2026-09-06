@@ -394,3 +394,36 @@ rejection result is intentionally provisional because the durable approval is
 `REJECTED` while the current action projection is `POLICY_DENIED`. The audit
 is now 36 `VERIFIED` and 4 `UNKNOWN`; distinct in-flight Core, OPA, and HA
 restart coverage remains open. This does not self-accept Phase 14.
+
+## Final bounded closure handoff - 2026-09-06
+
+### CODEX RESULT — ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2
+
+Verdict: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`.
+
+- Starting consolidation baseline: `2f1c45231355578f33fe737708a4c94f63596887`.
+- Final implementation/evidence head:
+  `6a61e38276a086535fa933b38d5b69cabdb0a167`.
+- Exact hosted CI: `34012962667` — PASS on that exact SHA.
+- Artifact: `9983142603`; digest
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+
+The final closure bundle passed the four residual software boundaries:
+`REJECTION_NOT_POLICY_DENIAL`, `CORE_RESTART_INFLIGHT`,
+`OPA_RESTART_INFLIGHT`, and `HA_RESTART_INFLIGHT`. The explicit R2 audit is
+`40 VERIFIED / 0 UNKNOWN` for mapped scenarios. Real-store clean replay ran
+twice with matching behavior and durable-record fingerprints and detected the
+intentional divergence. The hosted run also passed the complete configured
+Phase 14 suite, ARM64 build/runtime smoke, package/container/browser/safety
+validation, and artifact publication.
+
+All ten historical carry-forward families are dispositioned as verified for
+their required exercised slices: provider lifecycle/fencing; approval and
+continuation; HA action reality; Journal/Truth/Attention/SenseGuard; plugin
+isolation; external content; HA/OPA/SENTRY outage behavior; backup/restore and
+history; process restart; and ARM64 portability. Deterministic contract
+fixtures remain separately labeled and are not promoted into destructive proof.
+Native Pi 5 remains `EXTERNAL_RESOURCE_GATE_NATIVE_PI5`.
+
+The active task remains under `.agent/tasks/active/` pending Architect
+acceptance. Phase 15 was not implemented and remains unauthorized.

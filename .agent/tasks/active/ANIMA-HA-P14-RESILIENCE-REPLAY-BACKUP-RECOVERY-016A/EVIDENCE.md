@@ -1,6 +1,6 @@
 # Evidence - Phase 14
 
-Status: IN PROGRESS
+Status: COMPLETE - PENDING ARCHITECT ACCEPTANCE
 
 Starting ANIMA SHA:
 f0456d24fa09ed6873e882c89a9dce759f73a619
@@ -665,3 +665,27 @@ unauthorized and unimplemented.
 - The explicit audit is now 36 `VERIFIED` and 4 `UNKNOWN`; remaining unknowns
   are the rejection projection and distinct in-flight Core, OPA, and HA restart
   boundaries. Phase 14 remains `CONTINUE`; Phase 15 remains unauthorized.
+
+## Final bounded closure bundle - 2026-09-06
+
+- PASS / exact implementation head:
+  `6a61e38276a086535fa933b38d5b69cabdb0a167`; hosted CI `34012962667`
+  passed. Reviewable artifact `9983142603` has digest
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+- PASS / `PHASE14_FINAL_CLOSURE_BUNDLE`: real PostgreSQL rejection projection,
+  in-flight Core restart, in-flight OPA restart, and in-flight isolated-HA
+  restart all passed. Rejection exposed the bounded semantic result
+  `REJECTED`, retained action status `POLICY_DENIED`, and dispatched zero
+  providers. Core and OPA restart actions each dispatched once and reached
+  `SUCCEEDED`; HA restart dispatched once, returned authoritative
+  `VERIFICATION_FAILED`, reconnected `ONLINE`, and replay dispatched zero.
+- PASS / `REAL_STORE_CLEAN_REPLAY`: two fresh PostgreSQL runs matched behavior
+  and durable fingerprints; the intentional divergence was detected as a
+  machine-readable difference. The final run also passed all configured
+  Phase 14 targets, ARM64 build/runtime smoke, package/container/browser/
+  safety validation, and artifact publication.
+- Final explicit R2 audit: `40 VERIFIED / 0 UNKNOWN` mapped scenarios. The
+  earlier 36/4 and provisional records remain historical and are not erased.
+- Native Pi 5 remains `EXTERNAL_RESOURCE_GATE_NATIVE_PI5`; Phase 15 remains
+  unauthorized and unimplemented. Disposition: `COMPLETE - PENDING ARCHITECT
+  ACCEPTANCE`.

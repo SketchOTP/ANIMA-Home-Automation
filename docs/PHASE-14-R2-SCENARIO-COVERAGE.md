@@ -1,9 +1,9 @@
 # Phase 14 R2 scenario coverage audit
 
-This audit maps the explicit R2 acceptance scenarios to the latest published
-real-store evidence at `d8a87f6cc9ef9640e91c5578b68cf9afee03315e`, hosted CI
-`34007776365`, artifact `9981611090`, digest
-`sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
+This audit maps the explicit R2 acceptance scenarios to the final bounded
+closure evidence at `6a61e38276a086535fa933b38d5b69cabdb0a167`, hosted CI
+`34012962667`, artifact `9983142603`, digest
+`sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
 It is an evidence reconciliation record, not a Phase 14 acceptance claim.
 `VERIFIED` includes a grouped evidence mapping only when the cited output
 contains the required observable invariant. `UNKNOWN` means the current
@@ -18,7 +18,7 @@ unauthorized.
 | `APPROVAL_CONCURRENT_ONE_WINNER` | `VERIFIED` | `phase14-approval-race.json`; real PostgreSQL race, one winner and durable approval. |
 | `CONTINUATION_POST_ACTION_RESTART_NO_DUPLICATE_RESULT` | `VERIFIED` | `phase14-approval-durable-r3.json`; equivalent published scenario `CONTINUATION_POST_ACTION_DURABLE_NO_DUPLICATE_RESULT`, action result durable before process loss, one dispatch, zero recovery redispatches. |
 | `CONTINUATION_PRINCIPAL_REVALIDATION` | `VERIFIED` | Same durable continuation evidence records `wrong_principal_rejected=true`; continuation authority is rechecked before reuse. |
-| `REJECTION_NOT_POLICY_DENIAL` | `UNKNOWN` | The durable approval row is `REJECTED`, but the action projection is `POLICY_DENIED`; a distinct end-to-end user-facing rejection result is not separately proven. |
+| `REJECTION_NOT_POLICY_DENIAL` | `VERIFIED` | `phase14-final-closure-bundle-r2.json`; real PostgreSQL approval rejection projects the bounded user result `REJECTED`, preserves `POLICY_DENIED` as the action status, and records zero provider dispatch. |
 | `STRONG_AUTH_NOT_CONFIRMATION` | `VERIFIED` | `phase14-closure-bundle-r2.json`; real OPA returns `REQUIRE_STRONGER_AUTH` for a security-access intent and creates no ordinary confirmation row or dispatch. |
 | `STALE_FENCE_CONTINUATION_REJECTED` | `VERIFIED` | `phase14-continuation-r2.json`; stale result/transition rejected and continuation enters recovery-required without dispatch. |
 | `RESOURCE_OPPOSING_ACTIONS` | `VERIFIED` | Exact Phase 9 isolated-HA output records opposing requests, PostgreSQL resource locking and conflict resolution before connector dispatch. |
@@ -49,23 +49,29 @@ unauthorized.
 | `CALENDAR_CONCURRENT_VERSION_WINNER` | `VERIFIED` | `phase14-r2-real-store.json`; one optimistic-version winner and stale writer rejection. |
 | `REAL_STORE_REPLAY_MATCH` | `VERIFIED` | `phase14-clean-replay-r2.json`; two fresh PostgreSQL runs match behavior and durable fingerprints. |
 | `REAL_STORE_REPLAY_DIFF_DETECTED` | `VERIFIED` | Same output; intentional expected divergence produces a machine-readable difference. |
-| `CORE_RESTART_INFLIGHT` | `UNKNOWN` | Current process matrix proves service continuity, but not an in-flight Core/UI restart at each required lifecycle boundary. |
-| `OPA_RESTART_INFLIGHT` | `UNKNOWN` | OPA continuity and fail-closed outage are proven, but an in-flight OPA restart scenario is not separately identified. |
-| `HA_RESTART_INFLIGHT` | `UNKNOWN` | HA outage/reconnect and isolated action evidence exist, but an in-flight HA process restart is not separately identified. |
+| `CORE_RESTART_INFLIGHT` | `VERIFIED` | `phase14-final-closure-bundle-r2.json`; the real UI/Core process restarted during a pending approval, the original approval remained durable, and the resumed action dispatched once and reached `SUCCEEDED`. |
+| `OPA_RESTART_INFLIGHT` | `VERIFIED` | `phase14-final-closure-bundle-r2.json`; the real OPA process restarted during governed action execution, recovered, and the action reached `SUCCEEDED` through the current policy path with one dispatch. |
+| `HA_RESTART_INFLIGHT` | `VERIFIED` | `phase14-final-closure-bundle-r2.json`; isolated Home Assistant restarted after dispatch and before verification, the adapter reconnected, terminal verification remained authoritative, and replay dispatched zero additional times. |
 | `POSTGRES_RESTART_INFLIGHT` | `VERIFIED` | `phase14-inflight-restart-r2.json`; real container restart spans pending, claimed, provider-running, result-received and due-task states. |
 | `PLUGIN_RESTART_INFLIGHT` | `VERIFIED` | `phase14-plugin-process-r2.json`; real child-process replacement and failure isolation are observed. |
 | `ARM64_BUILD_RUNTIME` | `VERIFIED` | Exact CI runs the pinned `linux/arm64` image build, import smoke and deterministic replay contract; native Pi 5 remains external. |
 
-## Residual closure bundle
+## Final bounded closure bundle
 
-The consolidated closure bundle at `d8a87f6...` adds three exact verified
-scenarios and one explicitly provisional projection record. The audit therefore
-has 36 `VERIFIED` scenarios and 4 `UNKNOWN` scenarios. The remaining unknowns
-are the rejection projection and distinct in-flight Core, OPA, and HA restart
-boundaries. The provisional rejection record proves the durable approval row is
-`REJECTED` and no dispatch occurred, but intentionally does not promote the
-current action projection of `POLICY_DENIED` into exact semantic closure.
+The final bounded closure bundle at `6a61e382...` adds four real-store/process
+scenarios: rejection-vs-policy-denial projection, in-flight Core restart,
+in-flight OPA restart, and in-flight isolated-HA restart. All four passed in
+hosted CI `34012962667`; the bundle tested the exact implementation SHA and
+reported `provider_dispatches=0` for rejection and one dispatch for each
+governed restart action. The HA restart terminal state was
+`VERIFICATION_FAILED`, and replay returned the same durable result without a
+second dispatch.
 
-Until that bundle passes at the final governed head, Phase 14 remains
-`CONTINUE`; the deterministic contract fixtures remain excluded from this
-audit, and Phase 15 remains unauthorized.
+The explicit audit is now 40 `VERIFIED` and 0 `UNKNOWN` for the mapped R2
+scenarios. The prior provisional/negative records remain historical evidence;
+they are not deleted or rewritten.
+
+The implementation head is ready for the Architect Gate, but this record does
+not self-accept Phase 14. Deterministic contract fixtures remain excluded from
+destructive proof, native Pi 5 remains an external hardware gate, and Phase 15
+remains unauthorized.

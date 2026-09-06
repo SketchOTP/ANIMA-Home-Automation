@@ -299,3 +299,17 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - After workflow-only validation changes, the exact pushed head and exact-head
   CI must be recorded together; earlier green checkpoints remain historical
   evidence and must not be presented as the final governed run.
+
+### Phase 14 final bounded closure
+
+- A restart-after-dispatch harness must reconnect the same provider adapter
+  before post-action verification; otherwise a real HA restart is mistaken for
+  a production verification defect. Setup mutations must be performed through
+  an uninstrumented connection so dispatch counters measure only the governed
+  action under test.
+- User rejection is a semantic `REJECTED` result distinct from the durable
+  action projection `POLICY_DENIED`; browser tests must assert the user-facing
+  contract without erasing the authoritative action/policy audit state.
+- The final bounded closure head `6a61e382...` passed exact hosted CI
+  `34012962667`; the mapped R2 audit is `40 VERIFIED / 0 UNKNOWN` and the
+  only remaining external gate is native Pi 5 hardware.

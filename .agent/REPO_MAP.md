@@ -276,3 +276,17 @@ GitHub baseline parent: `088b267467fff93bfd225b9a94a6f4999759fb9f`. This map is 
 - scripts/verify_phase14_resilience.py - deterministic Phase 14 contract target;
   it reports the scenarios it actually executes and names unrun infrastructure
   rather than promoting it to success.
+
+Final bounded closure evidence (2026-09-06):
+
+- `scripts/verify_phase14_final_closure_bundle_r2.py` - real PostgreSQL,
+  Core/OPA process, and isolated-HA residual closure bundle. Its HA harness
+  reconnects the same adapter after the real container restart before allowing
+  Phase 9 verification; initial state preparation uses a separate uninstrumented
+  connection so dispatch counts measure only the governed action.
+- Exact implementation/evidence head `6a61e38276a086535fa933b38d5b69cabdb0a167`
+  passed hosted CI `34012962667`; artifact `9983142603` digest is
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+- Final mapped R2 audit is `40 VERIFIED / 0 UNKNOWN`; native Pi 5 remains an
+  external hardware gate. Phase 14 is pending Architect acceptance and Phase
+  15 remains unauthorized.

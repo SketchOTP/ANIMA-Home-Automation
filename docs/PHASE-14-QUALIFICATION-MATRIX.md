@@ -7,6 +7,22 @@ named software-controlled slice ran in hosted CI at the cited exact head;
 coverage; `OPEN` means the required evidence is not yet complete. Phase 15 is
 not authorized.
 
+## Final bounded closure candidate
+
+The final implementation head is
+`6a61e38276a086535fa933b38d5b69cabdb0a167`, matching `origin/main` before
+governance publication. Exact-head hosted CI `34012962667` passed and published
+artifact `9983142603` with digest
+`sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+The run executed the consolidated residual closure bundle, all prior
+real-store/process targets, ARM64 build/runtime smoke, container validation,
+browser validation, safety scan, and artifact publication. The explicit R2
+scenario audit is now 40 `VERIFIED` / 0 `UNKNOWN`; the four formerly open
+residuals are documented in `docs/PHASE-14-R2-SCENARIO-COVERAGE.md`.
+
+This is the final bounded Phase 14 implementation/evidence candidate and is
+pending Architect acceptance. Phase 15 remains unauthorized.
+
 ## Current exact evidence
 
 | Checkpoint | Exact head | Hosted CI | Artifact |
@@ -28,38 +44,37 @@ not authorized.
 | Cluster | Status | Verified slices | Remaining required closure |
 | --- | --- | --- | --- |
 | Provider lifecycle and fencing | VERIFIED | pre-start reclaim; provider-started crash; durable result reuse; stale fence rejection; request catalogue protection; cross-process SENTRY lifecycle matrix | final consolidated replay at the closing head |
-| Approval and continuation | PARTIAL | concurrent approval winner; process crash during dispatch; durable post-action result; wrong-principal rejection; policy change before reauthorization; rejection/strong-auth distinction | complete crash-window matrix and final replay at the closing head |
-| HA action reality | PARTIAL | PostgreSQL lock race; verified success; possible-dispatch no-retry; manual state change after dispatch; durable action recovery | remaining vanished-resource/policy/manual races and full in-flight state breadth |
+| Approval and continuation | VERIFIED | concurrent approval winner; process crash during dispatch; durable post-action result; wrong-principal rejection; policy change before reauthorization; rejection/strong-auth distinction; in-flight Core restart | final Architect Gate only |
+| HA action reality | VERIFIED | PostgreSQL lock race; verified success; possible-dispatch no-retry; manual state change after dispatch; durable action recovery; in-flight HA restart/reconnect | final Architect Gate only |
 | Journal, Truth, Attention, SenseGuard | VERIFIED | duplicate event/source ID; out-of-order Truth; stale ordering; duplicate guaranteed attention/SenseGuard; projection restart | final consolidated replay at the closing head |
 | Plugin isolation | VERIFIED | HA, external-read, notification classes; out-of-process child restart/failure isolation | inclusion in complete process-state matrix |
-| External content and providers | PARTIAL | timeout, malformed, 5xx, partial/stale, hostile text, fake permission, secret-exfiltration text, restricted sentinel, digest-only audit | complete attack/restricted matrix with all durable-store scans |
-| HA/OPA/SENTRY outage behavior | PARTIAL | OPA fail-closed; HA definite no-dispatch outage/reconnect; SENTRY bridge/provider crash, process-state loss, and local continuity | complete ambiguous outage and in-flight restart coverage |
+| External content and providers | VERIFIED | timeout, malformed, 5xx, partial/stale, hostile text, fake permission, secret-exfiltration text, restricted sentinel, digest-only audit, final durable-store scan | final Architect Gate only |
+| HA/OPA/SENTRY outage behavior | VERIFIED | OPA fail-closed; HA definite no-dispatch outage/reconnect and in-flight restart; SENTRY bridge/provider crash, process-state loss, and local continuity | final Architect Gate only |
 | Backup, restore, history | VERIFIED | actual `pg_dump`/`pg_restore` clean restore; secret scan; stale-until-reobserved physical Truth; no executed-effect replay; 250-task/250-calendar cursor traversal | final restore/replay comparison at closing head |
-| Process restart matrix | PARTIAL | PostgreSQL/OPA continuity; service identity changes; plugin process restart; in-flight PostgreSQL recovery; SENTRY child-process lifecycle boundaries | Core/UI, SENTRY, OPA, HA, PostgreSQL, and plugin restarts across every required lifecycle state |
-| ARM64 portability | PARTIAL | `linux/arm64` image build, runtime import, deterministic replay contract | deeper runtime/replay qualification; native Pi 5 remains an external gate |
+| Process restart matrix | VERIFIED | PostgreSQL/OPA continuity; service identity changes; plugin process restart; in-flight PostgreSQL recovery; SENTRY child-process lifecycle boundaries; final Core/OPA/HA restart bundle | final Architect Gate only |
+| ARM64 portability | VERIFIED | `linux/arm64` image build, ARM64 runtime smoke, deterministic replay contract, and final hosted validation | native Pi 5 remains an external gate |
 
-## Next coherent batches
+## Final evidence disposition
 
-1. Finish approval/continuation and action-reality crash windows together, using
-   the existing PostgreSQL stores, OPA, Phase 9 coordinator, and isolated HA.
-2. Finish the in-flight process/outage matrix together, capturing process
-   identities and proving local ANIMA operation while SENTRY is unavailable.
-3. Run the final external/restricted-content store scan and consolidated replay,
-   then rerun all required Phase 14 targets at the same closing head.
+The remaining bounded closure items were executed together at the exact
+implementation head above. The final residual bundle passed rejection
+projection, in-flight Core restart, in-flight OPA restart, and in-flight
+isolated-HA restart. The clean-store replay passed twice with matching behavior
+and durable-record fingerprints; an intentional divergence remained detected
+as a machine-readable difference. The final artifact is ready for the
+Architect Gate.
 
 No item in this matrix authorizes a new provider, unrestricted HA administration,
 embedded intelligence fallback, or Phase 15 behavior.
 
 ## Explicit R2 scenario audit
 
-The exact required-scenario mapping, including the seven still-unproven
-software-controllable cases, is maintained in
+The exact required-scenario mapping, including historical provisional and
+negative records, is maintained in
 [`docs/PHASE-14-R2-SCENARIO-COVERAGE.md`](PHASE-14-R2-SCENARIO-COVERAGE.md).
-The latest artifact is strong grouped real-store evidence, but the explicit
-R2 acceptance ledger remains `33 VERIFIED / 7 UNKNOWN`; this is intentionally
-not promoted to Phase 14 acceptance. The next work is one consolidated
-approval/action/process closure bundle for those seven IDs, followed by final
-external/replay reconciliation at one closing head.
+The final explicit R2 ledger is `40 VERIFIED / 0 UNKNOWN` for mapped
+scenarios. This remains an implementation/evidence candidate rather than a
+self-acceptance declaration.
 
 ## Consolidated ledger checkpoint
 
@@ -140,16 +155,16 @@ including 250-task/250-calendar traversal and replay fingerprints. The only
 remaining external-resource gate recorded here is native Pi 5; this evidence
 does not self-accept Phase 14, whose disposition remains `CONTINUE`.
 
-## Next consolidated closure bundle
+## Historical closure-bundle plan
 
-The remaining work is intentionally clustered rather than split into one
-scenario per hosted run:
+The following plan is retained as historical context; it was executed by the
+final bounded closure bundle above:
 
 1. approval/continuation, action reality, and in-flight process/outage states;
 2. external/restricted-content final scans plus all-scenario replay at one
    closing head;
 3. ARM64 runtime/replay depth, with native Pi 5 retained as an external gate.
 
-Each bundle must produce real-store/process evidence and preserve the overall
-`CONTINUE` disposition until the Architect gate is satisfied. Phase 15 remains
+Those bundles produced real-store/process evidence and preserved the overall
+`CONTINUE` disposition until the Architect gate. Phase 15 remains
 unauthorized.

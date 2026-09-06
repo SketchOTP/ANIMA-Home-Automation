@@ -24,20 +24,19 @@ workflow engine, provider, or household feature is authorized.
 
 ## Latest Phase 14 evidence ledger checkpoint
 
-The current governed code/evidence head is `469cffe41204ccdd9d05b3417a4409bc52f7d9ef`,
-matching `origin/main`. Exact-head hosted CI `34005359983` passed and published
-artifact `9980877995` with digest
-`sha256:7aa61997f3e60504ce714623263913c228dd45c577f1444f31fec85a4182702a`;
+The latest implementation/evidence head is `6a61e38276a086535fa933b38d5b69cabdb0a167`,
+matching `origin/main` before the final governance publication. Exact-head
+hosted CI `34012962667` passed and published artifact `9983142603` with digest
+`sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`;
 its evidence metadata confirms the tested SHA exactly.
 The consolidated `PHASE14_EVIDENCE_LEDGER` step completed successfully and
 confirmed that all 22 required real-store evidence files are present, with
 explicit PASS/PASSED scenario statuses, source digests, and family mappings.
-The ledger's disposition remains `CONTINUE`; deterministic-contract fixtures
-remain explicitly excluded from destructive proof. All ten mapped destructive
-families are verified for their named exercised scenarios at this exact head;
-the broader final acceptance boundary remains open and is not self-accepted.
-Phase 15 remains
-unauthorized.
+The final bounded closure bundle and the consolidated ledger report all ten
+mapped destructive families verified, including `40 VERIFIED / 0 UNKNOWN`
+explicit R2 scenarios. Deterministic-contract fixtures remain explicitly
+excluded from destructive proof. Phase 14 is ready for the Architect Gate but
+is not self-accepted; Phase 15 remains unauthorized.
 
 ## Current authority result
 
@@ -93,6 +92,23 @@ Only executed scenarios may be marked PASSED. Missing PostgreSQL, HA, SENTRY,
 or ARM64 infrastructure remains NOT RUN, NOT APPLICABLE, BLOCKED, or an
 explicit external gate. No secrets, restricted provider content, or household
 private data may enter committed evidence. Phase 15 behavior is absent.
+
+## Final bounded closure candidate - 2026-09-06
+
+- Implementation/evidence head: `6a61e38276a086535fa933b38d5b69cabdb0a167`.
+- Exact-head hosted CI: `34012962667` passed.
+- Reviewable artifact: `9983142603`, digest
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+- The run passed the four residual closure scenarios: rejection projection
+  distinct from policy denial; in-flight Core restart; in-flight OPA restart;
+  and in-flight isolated-HA restart. It also passed the complete configured
+  Phase 14 target set, clean-store replay, ARM64 build/runtime smoke, package,
+  container, browser, and safety gates.
+- The final residual bundle is `PASS`; the clean-store replay matched behavior
+  and durable fingerprints across two fresh runs and detected an intentional
+  divergence. Native Pi 5 remains the only external hardware gate.
+- Disposition: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`. Phase 15 remains
+  unauthorized and unimplemented.
 
 ## Preserved historical state
 

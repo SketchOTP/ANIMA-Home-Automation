@@ -19,8 +19,9 @@
   CI 33939908542
 - Last completed outcome: Phase 13 SENTRY-ready platform; Phase 14 is the only
   active ANIMA scope and Phase 15 remains unauthorized.
-- Last state sync: 2026-09-05; Phases 0-13 are Architect accepted. Phase 14
-  is active; Phase 15 remains unauthorized.
+- Last state sync: 2026-09-06; Phases 0-13 are Architect accepted. Phase 14
+  has a complete bounded implementation/evidence candidate pending Architect
+  acceptance; Phase 15 remains unauthorized.
 
 ## Phase 14 initial state
 
@@ -30,7 +31,8 @@
   negative/resource-gate evidence.
 - The Phase 14 packet is the only current implementation pointer. The
   canonical scenario model and deterministic replay/restore safety metadata
-  are in progress; final Phase 14 acceptance is not claimed.
+  are complete for the bounded closure contract; final Phase 14 acceptance is
+  not claimed.
 
 ## Mandatory kernel
 

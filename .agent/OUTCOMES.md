@@ -1011,3 +1011,17 @@ decision.
   real for the named targets but does not close the full approval/continuation,
   SENTRY-outage, in-flight restart, broader attack/restricted-content, or
   ARM64 replay-runtime matrix. Phase 15 was not implemented.
+
+## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 - final bounded candidate
+
+- Final implementation/evidence head: `6a61e38276a086535fa933b38d5b69cabdb0a167`.
+- Exact-head hosted CI `34012962667` passed; artifact `9983142603` has digest
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+- The residual closure bundle passed rejection-vs-policy-denial projection,
+  in-flight Core restart, in-flight OPA restart, and in-flight isolated-HA
+  restart. The final real-store replay matched behavior and durable-record
+  fingerprints across two fresh runs and detected an intentional divergence.
+- The final audit is `40 VERIFIED / 0 UNKNOWN` mapped scenarios across all ten
+  destructive families. Native Pi 5 remains an external hardware gate.
+- Disposition: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`. Phase 15 remains
+  unauthorized and unimplemented; no new resilience scope was added.

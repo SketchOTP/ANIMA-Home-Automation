@@ -377,3 +377,17 @@ UI, and voice remain out of scope.
   00aa9ac3a35b7b012581160b961e01a9480bbbdf with CI 33939908542.
 - No Phase 15 behavior, ANIMA voice, new provider, broker, database, or
   workflow engine is authorized.
+
+## Phase 14 final bounded closure candidate - 2026-09-06
+
+- The final residual implementation/evidence head is
+  `6a61e38276a086535fa933b38d5b69cabdb0a167`; exact-head hosted CI
+  `34012962667` passed and published artifact `9983142603` with digest
+  `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
+- The four remaining mapped residuals passed: distinct rejection projection,
+  in-flight Core restart, in-flight OPA restart, and in-flight isolated-HA
+  restart. The explicit R2 ledger is `40 VERIFIED / 0 UNKNOWN`; clean-store
+  replay matched durable fingerprints and detected intentional divergence.
+- This is `COMPLETE - PENDING ARCHITECT ACCEPTANCE`, not self-acceptance.
+  Native Pi 5 remains an external hardware gate. Phase 15 remains unauthorized
+  and unimplemented.
