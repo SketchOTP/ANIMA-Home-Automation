@@ -299,3 +299,19 @@ Phase 14 acceptance and current product direction (2026-09-06):
   goal-wide owner-facing management-plane increment, beginning with typed
   SenseGuard alert-policy management through ANIMA rather than the Home
   Assistant frontend.
+
+Owner-facing management increment (2026-09-06):
+
+- `src/anima_ha/senseguard_alerts.py`, `src/anima_ha/ui_api.py`, and
+  `ui/src/main.tsx` — typed SenseGuard alert-policy storage, policy-gated UI
+  management, and server-owned household/principal/version handling.
+- `src/anima_ha/graph.py`, `src/anima_ha/home_assistant.py`, and
+  `src/anima_ha/ui_runtime.py` — canonical device alias rename, active-room
+  reassignment, retirement of ANIMA mappings, and bounded Core command
+  routing without Home Assistant registry mutation.
+- `docs/GOAL-ALERT-POLICY-MANAGEMENT-017A.md` and
+  `docs/GOAL-DEVICE-LIFECYCLE-017A.md` — scope, evidence, and explicit
+  lifecycle limits for the combined increment.
+- Published head `b3057add1b912d15b82b4ccc5b836041e3b11c89` passed exact-head
+  hosted CI `34017171506`; artifact `9984398595` was published without a
+  public digest. The increment remains pending Architect acceptance.

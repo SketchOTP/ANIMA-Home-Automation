@@ -1,5 +1,20 @@
 # Outcome Ledger
 
+## ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — owner-facing management increment
+
+- Date: 2026-09-06
+- Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`
+- Published head: `b3057add1b912d15b82b4ccc5b836041e3b11c89`
+- Exact-head hosted CI: `34017171506` — PASS
+- Artifact: `9984398595`; the public run metadata did not expose a digest.
+- Scope: typed SenseGuard alert-policy management plus commissioned-device
+  lifecycle management through ANIMA. Device lifecycle supports canonical
+  rename, reassignment to an existing room/zone, and retirement of the ANIMA
+  mapping without mutating Home Assistant's provider registry.
+- Evidence limit: local and hosted validation is green, but a dedicated
+  real-PostgreSQL/Playwright device-lifecycle journey remains for independent
+  acceptance. Phase 15 was not implemented.
+
 ## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 — Phase 14 accepted
 
 - Date: 2026-09-06

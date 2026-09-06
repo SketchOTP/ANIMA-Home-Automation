@@ -23,6 +23,23 @@ plane usable through ANIMA without the Home Assistant frontend. Phases 0-14
 are Architect accepted; Phase 15 remains unauthorized until separately
 authorized by the goal-wide completion audit.
 
+## Latest owner-facing publication - 2026-09-06
+
+- Current published head: `b3057add1b912d15b82b4ccc5b836041e3b11c89`;
+  `main == origin/main`; clean tree at the latest publication.
+- Exact-head hosted CI: `34017171506` - PASS. Reviewable artifact:
+  `9984398595`; the public run metadata did not expose an artifact digest.
+- The combined goal increment now includes typed SenseGuard alert-policy
+  management plus commissioned-device lifecycle management. The latter adds
+  Core-governed rename, reassignment to an existing room/zone, and retirement
+  of an ANIMA mapping without mutating Home Assistant's provider registry.
+- Local and hosted validation passed for the published code. Device lifecycle
+  evidence is focused plugin/Graph coverage and exact-head workflow evidence;
+  a dedicated real-PostgreSQL/Playwright lifecycle journey remains a stated
+  evidence limit pending independent review.
+- The active packet remains `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; no
+  second active packet was created. Phase 15 remains unauthorized.
+
 ## Active directive
 
 ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed
@@ -42,19 +59,21 @@ and ANIMA retirement without mutating Home Assistant’s provider registry.
 
 ## Latest Phase 14 evidence ledger checkpoint
 
-The latest implementation/evidence head is `6a61e38276a086535fa933b38d5b69cabdb0a167`,
-matching `origin/main` before the final governance publication. Exact-head
-hosted CI `34012962667` passed and published artifact `9983142603` with digest
-`sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`;
-its evidence metadata confirms the tested SHA exactly.
+The accepted Phase 14 closure evidence was produced at implementation/evidence
+head `6a61e38276a086535fa933b38d5b69cabdb0a167`, followed by accepted
+governance head `1f13b4421cff819d13163eb8580d16191fd1c40a`.
+Exact-head hosted CI `34012962667` passed on the implementation head and
+`34013571702` passed on the final governed head; artifacts `9983142603` and
+`9983326562` were published with their recorded digests in the historical
+Phase 14 packet.
 The consolidated `PHASE14_EVIDENCE_LEDGER` step completed successfully and
 confirmed that all 22 required real-store evidence files are present, with
 explicit PASS/PASSED scenario statuses, source digests, and family mappings.
 The final bounded closure bundle and the consolidated ledger report all ten
 mapped destructive families verified, including `40 VERIFIED / 0 UNKNOWN`
 explicit R2 scenarios. Deterministic-contract fixtures remain explicitly
-excluded from destructive proof. Phase 14 is ready for the Architect Gate but
-is not self-accepted; Phase 15 remains unauthorized.
+excluded from destructive proof. Phase 14 is accepted; Phase 15 remains
+unauthorized.
 
 ## Current authority result
 
