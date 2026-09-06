@@ -76,3 +76,16 @@ Hosted qualification update:
 - Reviewable artifact: `9986165454`.
 - This follow-on is complete pending Architect acceptance; Phase 15 remains
   unauthorized.
+
+## Household room/zone management follow-on
+
+Implementation/final candidate: `4960a99d56ee49059e6e73e2b4c71e616cac8496`.
+Exact-head hosted CI: `34025860330` — PASS. Artifact: `9987176873`.
+
+The Spaces view and typed `household.topology` Core capability let the owner
+create and rename bounded ROOM/ZONE resources, then select those resources
+when commissioning a discovered device. The path is authenticated UI → API →
+Core UI gateway → PluginManager → trusted Graph mutation; household identity
+and authority remain server-owned. No Home Assistant frontend, raw HA
+configuration, or new authority store is introduced. This follow-on remains
+pending Architect acceptance.

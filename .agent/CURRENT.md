@@ -25,18 +25,18 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
-- Current published head: `b3057add1b912d15b82b4ccc5b836041e3b11c89`;
+- Current published head: `4960a99d56ee49059e6e73e2b4c71e616cac8496`;
   `main == origin/main`; clean tree at the latest publication.
-- Exact-head hosted CI: `34017171506` - PASS. Reviewable artifact:
-  `9984398595`; the public run metadata did not expose an artifact digest.
+- Exact-head hosted CI: `34025860330` - PASS. Reviewable artifact:
+  `9987176873` (`phase12-h5-evidence-4960a99d56ee49059e6e73e2b4c71e616cac8496`).
 - The combined goal increment now includes typed SenseGuard alert-policy
-  management plus commissioned-device lifecycle management. The latter adds
-  Core-governed rename, reassignment to an existing room/zone, and retirement
-  of an ANIMA mapping without mutating Home Assistant's provider registry.
-- Local and hosted validation passed for the published code. Device lifecycle
-  evidence is focused plugin/Graph coverage and exact-head workflow evidence;
-  a dedicated real-PostgreSQL/Playwright lifecycle journey remains a stated
-  evidence limit pending independent review.
+  management plus commissioned-device lifecycle and household room/zone
+  management. The latter adds Core-governed creation and renaming of bounded
+  ROOM/ZONE resources, so a new device can be placed in a newly created ANIMA
+  room without opening Home Assistant.
+- Local focused validation and hosted validation passed for the published
+  code. The hosted workflow also passed the existing Phase 14 qualification,
+  ARM64/container checks, H5 evidence targets, and public-safety scan.
 - The active packet remains `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; no
   second active packet was created. Phase 15 remains unauthorized.
 

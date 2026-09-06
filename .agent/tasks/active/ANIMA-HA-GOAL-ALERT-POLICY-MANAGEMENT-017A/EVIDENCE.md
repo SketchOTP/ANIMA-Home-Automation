@@ -41,6 +41,29 @@ validation.
 
 This is a completed implementation handoff, not Architect self-acceptance.
 
+## Household room/zone management follow-on
+
+Implementation head: `4960a99d56ee49059e6e73e2b4c71e616cac8496`.
+
+Exact-head hosted CI: `34025860330` — PASS.
+
+Reviewable artifact: `9987176873`
+(`phase12-h5-evidence-4960a99d56ee49059e6e73e2b4c71e616cac8496`).
+
+The ANIMA-owned `household.topology` capability now provides typed
+`list_spaces`, `create_space`, and `rename_space` operations through trusted
+`InvocationContext`, the existing Graph/PluginManager/OPA/API boundaries, and
+the authenticated Spaces UI. Graph mutations enforce household containment,
+ROOM/ZONE kinds, bounded names, and sibling uniqueness; browser/model input
+cannot provide household authority. The owner can create a room or zone before
+commissioning a newly discovered device, so this closes the prior dependency
+on an already-existing room without exposing Home Assistant administration.
+
+Focused compile/Ruff, TypeScript, frontend tests, Vite build, and diff checks
+passed. The full hosted workflow also passed the existing Phase 0–14 and
+SENTRY validation, ARM64/container checks, H5 targets, and public-safety scan.
+This remains implementation evidence pending independent Architect review.
+
 ## Follow-on management-plane increment
 
 The same active packet also contains the bounded commissioned-device lifecycle
