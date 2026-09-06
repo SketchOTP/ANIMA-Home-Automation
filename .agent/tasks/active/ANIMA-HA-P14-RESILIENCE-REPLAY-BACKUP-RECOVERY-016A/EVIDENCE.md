@@ -647,9 +647,21 @@ unauthorized and unimplemented.
   acceptance. Deterministic-contract fixtures remain excluded from destructive
   proof; Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
 - The explicit R2 scenario mapping is published in
-  `docs/PHASE-14-R2-SCENARIO-COVERAGE.md`; it records 33 `VERIFIED` and 7
-  `UNKNOWN` scenarios at the latest evidence head. The residual cases are
-  rejection-vs-policy-denial, stronger-auth-vs-confirmation, manual change
-  before authorization, task due/cancel race, and distinct in-flight Core,
-  OPA, and HA restart coverage. This remains an honest `CONTINUE` audit, not
-  Phase 14 acceptance; Phase 15 remains unauthorized.
+  `docs/PHASE-14-R2-SCENARIO-COVERAGE.md`; the latest bundle records 36
+  `VERIFIED` and 4 `UNKNOWN` scenarios. The residual cases are
+  rejection-vs-policy-denial and distinct in-flight Core, OPA, and HA restart
+  coverage. This remains an honest `CONTINUE` audit, not Phase 14 acceptance;
+  Phase 15 remains unauthorized.
+
+## Consolidated residual closure bundle - 2026-09-06
+
+- Exact head `d8a87f6cc9ef9640e91c5578b68cf9afee03315e` passed hosted CI
+  `34007776365`; artifact `9981611090` has digest
+  `sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
+- Real PostgreSQL/OPA evidence passed for `MANUAL_CHANGE_BEFORE_AUTHORIZATION`,
+  `STRONG_AUTH_NOT_CONFIRMATION`, and `TASK_DUE_CANCEL_RACE`, all with zero
+  dispatches. Rejection remains provisional: the durable approval is
+  `REJECTED` but the action projection remains `POLICY_DENIED`.
+- The explicit audit is now 36 `VERIFIED` and 4 `UNKNOWN`; remaining unknowns
+  are the rejection projection and distinct in-flight Core, OPA, and HA restart
+  boundaries. Phase 14 remains `CONTINUE`; Phase 15 remains unauthorized.

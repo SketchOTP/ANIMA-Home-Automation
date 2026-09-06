@@ -462,6 +462,18 @@ exact-head hosted run. Phase 14 remains `CONTINUE`; full process/restart,
 approval-continuation, and ARM64 runtime matrices remain open. Phase 15 remains
 unauthorized and unimplemented.
 
+## Latest consolidated residual bundle - 2026-09-06
+
+The exact implementation/evidence head `d8a87f6cc9ef9640e91c5578b68cf9afee03315e`
+passed hosted CI `34007776365` and published artifact `9981611090` with digest
+`sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
+The explicit audit is now 36 `VERIFIED` and 4 `UNKNOWN`. The new real-store
+bundle verified manual change before authorization, stronger-auth separation,
+and the due/cancel race. Durable rejection is recorded separately but remains
+provisional because the action projection is still `POLICY_DENIED`; distinct
+in-flight Core, OPA, and HA restart boundaries remain open. Phase 14 remains
+`CONTINUE`; Phase 15 remains unauthorized.
+
 The current uncommitted increment adds the actual Compose process restart target
 for PostgreSQL, OPA, SearXNG, and ANIMA UI, with service health and Journal
 continuity checks. It remains explicitly a service-continuity slice and does
@@ -665,3 +677,15 @@ This closes the exercised SENTRY lifecycle slice only. Phase 14 remains
 the full outage/restart matrix, external-content closure, final real-store
 replay, and deeper ARM64 runtime evidence remain open. Phase 15 remains
 unauthorized and unimplemented.
+
+## Current residual closure status - 2026-09-06
+
+The consolidated real-store bundle was tested at
+`d8a87f6cc9ef9640e91c5578b68cf9afee03315e` by hosted CI `34007776365` and
+published as artifact `9981611090` with digest
+`sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
+It verified `MANUAL_CHANGE_BEFORE_AUTHORIZATION`,
+`STRONG_AUTH_NOT_CONFIRMATION`, and `TASK_DUE_CANCEL_RACE`. The explicit R2
+audit is 36 `VERIFIED` and 4 `UNKNOWN`; rejection projection plus distinct
+in-flight Core, OPA, and HA restart boundaries remain open. Phase 14 remains
+`CONTINUE`; Phase 15 remains unauthorized.

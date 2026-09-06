@@ -376,9 +376,21 @@ remain excluded from destructive proof, Phase 14 remains `CONTINUE`, and Phase
 ## Explicit R2 scenario audit
 
 The required-scenario mapping is published in
-`docs/PHASE-14-R2-SCENARIO-COVERAGE.md`. It records 33 `VERIFIED` and 7
-`UNKNOWN` scenarios at the latest evidence head. The residual cases are
-rejection-vs-policy-denial, stronger-auth-vs-confirmation, manual change
-before authorization, task due/cancel race, and distinct in-flight Core,
-OPA, and HA restart coverage. This remains an honest `CONTINUE` audit, not
-Phase 14 acceptance; Phase 15 remains unauthorized.
+`docs/PHASE-14-R2-SCENARIO-COVERAGE.md`. The latest bundle records 36
+`VERIFIED` and 4 `UNKNOWN` scenarios. The residual cases are
+rejection-vs-policy-denial and distinct in-flight Core, OPA, and HA restart
+coverage. This remains an honest `CONTINUE` audit, not Phase 14 acceptance;
+Phase 15 remains unauthorized.
+
+## Consolidated residual closure bundle - 2026-09-06
+
+The exact-head hosted run `34007776365` passed on
+`d8a87f6cc9ef9640e91c5578b68cf9afee03315e` and published artifact `9981611090`
+with digest
+`sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
+The bundle passes real PostgreSQL/OPA evidence for manual change before
+authorization, stronger-auth separation, and the due/cancel race. The
+rejection result is intentionally provisional because the durable approval is
+`REJECTED` while the current action projection is `POLICY_DENIED`. The audit
+is now 36 `VERIFIED` and 4 `UNKNOWN`; distinct in-flight Core, OPA, and HA
+restart coverage remains open. This does not self-accept Phase 14.

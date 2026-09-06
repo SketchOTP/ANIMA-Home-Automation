@@ -1,9 +1,9 @@
 # Phase 14 R2 scenario coverage audit
 
 This audit maps the explicit R2 acceptance scenarios to the latest published
-real-store evidence at `c7cd9b0ee7f7b62e0aed427f89697b0337eecd8f`, hosted CI
-`34006015292`, artifact `9981079823`, digest
-`sha256:f015301d6a796594ec777602170b8f6a554150c76ff826ef29e9f14f06aaaf5d`.
+real-store evidence at `d8a87f6cc9ef9640e91c5578b68cf9afee03315e`, hosted CI
+`34007776365`, artifact `9981611090`, digest
+`sha256:5039a23a45f7fa0fd5c41d84221a111ba06e77c25b4d0dfbd9141eaeaf7957ac`.
 It is an evidence reconciliation record, not a Phase 14 acceptance claim.
 `VERIFIED` includes a grouped evidence mapping only when the cited output
 contains the required observable invariant. `UNKNOWN` means the current
@@ -19,11 +19,11 @@ unauthorized.
 | `CONTINUATION_POST_ACTION_RESTART_NO_DUPLICATE_RESULT` | `VERIFIED` | `phase14-approval-durable-r3.json`; equivalent published scenario `CONTINUATION_POST_ACTION_DURABLE_NO_DUPLICATE_RESULT`, action result durable before process loss, one dispatch, zero recovery redispatches. |
 | `CONTINUATION_PRINCIPAL_REVALIDATION` | `VERIFIED` | Same durable continuation evidence records `wrong_principal_rejected=true`; continuation authority is rechecked before reuse. |
 | `REJECTION_NOT_POLICY_DENIAL` | `UNKNOWN` | The durable approval row is `REJECTED`, but the action projection is `POLICY_DENIED`; a distinct end-to-end user-facing rejection result is not separately proven. |
-| `STRONG_AUTH_NOT_CONFIRMATION` | `UNKNOWN` | Strong-auth behavior exists in retained Phase 6/12 evidence, but this R2 real-store artifact has no explicit destructive scenario proving it cannot be downgraded to ordinary confirmation. |
+| `STRONG_AUTH_NOT_CONFIRMATION` | `VERIFIED` | `phase14-closure-bundle-r2.json`; real OPA returns `REQUIRE_STRONGER_AUTH` for a security-access intent and creates no ordinary confirmation row or dispatch. |
 | `STALE_FENCE_CONTINUATION_REJECTED` | `VERIFIED` | `phase14-continuation-r2.json`; stale result/transition rejected and continuation enters recovery-required without dispatch. |
 | `RESOURCE_OPPOSING_ACTIONS` | `VERIFIED` | Exact Phase 9 isolated-HA output records opposing requests, PostgreSQL resource locking and conflict resolution before connector dispatch. |
 | `USER_VS_AUTONOMOUS_RACE` | `VERIFIED` | Same Phase 9 output records distinct principals issuing opposite requests and deterministic lock/conflict handling. |
-| `MANUAL_CHANGE_BEFORE_AUTHORIZATION` | `UNKNOWN` | Policy change before approval is proven, but a separate manual physical-state change before authorization is not identified in the artifact. |
+| `MANUAL_CHANGE_BEFORE_AUTHORIZATION` | `VERIFIED` | `phase14-closure-bundle-r2.json`; fresh required off/version 1 changes to on/version 2 before continuation and the real action store returns `PRECONDITION_FAILED` with zero dispatches. |
 | `MANUAL_CHANGE_BEFORE_VERIFICATION` | `VERIFIED` | `phase14-ha-ambiguous-r3.json`; one isolated-HA dispatch followed by observable external change yields `VERIFICATION_FAILED` with no replay dispatch. |
 | `POSSIBLE_DISPATCH_NO_RETRY` | `VERIFIED` | `phase14-action-recovery-r2.json` and `phase14-ha-ambiguous-r3.json`; possible dispatch remains unknown/failed and replay does not redispatch. |
 | `HA_DUPLICATE_EVENT_DEDUP` | `VERIFIED` | `phase14-events-plugins-r2.json`; duplicate HA event has one effective journal row. |
@@ -45,7 +45,7 @@ unauthorized.
 | `FAKE_PERMISSION_NO_AUTHORITY` | `VERIFIED` | `phase14-external-attack-r2.json`; fake permission text does not alter policy or authority. |
 | `RESTRICTED_CONTENT_ZERO_DURABLE` | `VERIFIED` | External attack and Phase 11 restricted-content evidence show zero prohibited durable sentinel content. |
 | `TASK_CALENDAR_250_RECORD_PAGINATION` | `VERIFIED` | `phase14-r2-real-store.json`; 250 tasks and 250 calendar records traverse stable cursors with unique IDs. |
-| `TASK_DUE_CANCEL_RACE` | `UNKNOWN` | Due-task restart evidence exists, but a real concurrent cancel-versus-due-claim race is not separately identified. |
+| `TASK_DUE_CANCEL_RACE` | `VERIFIED` | `phase14-closure-bundle-r2.json`; real PostgreSQL concurrent due-claim/cancel produces at most one run and zero dispatches. |
 | `CALENDAR_CONCURRENT_VERSION_WINNER` | `VERIFIED` | `phase14-r2-real-store.json`; one optimistic-version winner and stale writer rejection. |
 | `REAL_STORE_REPLAY_MATCH` | `VERIFIED` | `phase14-clean-replay-r2.json`; two fresh PostgreSQL runs match behavior and durable fingerprints. |
 | `REAL_STORE_REPLAY_DIFF_DETECTED` | `VERIFIED` | Same output; intentional expected divergence produces a machine-readable difference. |
@@ -58,13 +58,13 @@ unauthorized.
 
 ## Residual closure bundle
 
-The current explicit audit therefore has 33 `VERIFIED` scenarios and 7
-`UNKNOWN` scenarios. The next implementation batch should be one real-store
-closure bundle for those seven items, reusing the existing PostgreSQL, OPA,
-isolated-HA, task, approval, and process seams. It must emit these exact
-scenario IDs, tested SHA, evidence level, durable identifiers/digests, process
-identity where applicable, dispatch count, and terminal status. No grouped
-scenario may be relabeled as an exact scenario without those fields.
+The consolidated closure bundle at `d8a87f6...` adds three exact verified
+scenarios and one explicitly provisional projection record. The audit therefore
+has 36 `VERIFIED` scenarios and 4 `UNKNOWN` scenarios. The remaining unknowns
+are the rejection projection and distinct in-flight Core, OPA, and HA restart
+boundaries. The provisional rejection record proves the durable approval row is
+`REJECTED` and no dispatch occurred, but intentionally does not promote the
+current action projection of `POLICY_DENIED` into exact semantic closure.
 
 Until that bundle passes at the final governed head, Phase 14 remains
 `CONTINUE`; the deterministic contract fixtures remain excluded from this
