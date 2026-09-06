@@ -18,7 +18,8 @@ status is not a claim that a person heard or read a notification.
 
 The API uses stable cursor pagination over `(occurred_at, alert_id)` so older
 alerts remain discoverable without a fixed-window omission. The UI refreshes
-the projection through the existing SSE invalidation path. No alert
+the newest page through the existing SSE invalidation path and lets the owner
+load subsequent pages through the same cursor contract. No alert
 acknowledgement, arbitrary Home Assistant automation editor, new provider,
 new persistence system, or Phase 15 behavior was added.
 
@@ -27,5 +28,6 @@ new persistence system, or Phase 15 behavior was added.
 The authenticated API route and empty-state contract are covered by the UI API
 tests. PostgreSQL projection behavior remains bounded to the existing journal
 and graph read models and is qualified with the repository's normal static,
-frontend, and hosted validation gates. This increment is implementation
+frontend, and hosted validation gates. The browser's older-page control is
+covered by a focused UI source contract test. This increment is implementation
 evidence pending independent Architect acceptance.

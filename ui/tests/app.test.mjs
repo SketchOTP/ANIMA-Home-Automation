@@ -22,3 +22,10 @@ test("UI preserves Core semantic command and terminal-outcome contracts", async 
   assert.match(source, /display_mode/);
   assert.match(source, /appearance/);
 });
+
+test("alert inbox exposes the existing cursor contract to owners", async () => {
+  const source = await readFile(new URL("../src/main.tsx", import.meta.url), "utf8");
+  assert.match(source, /\/api\/v1\/alerts\/events\?limit=50&cursor=/);
+  assert.match(source, /Load older alerts/);
+  assert.match(source, /setAlertEvents\(\(current\) => \[\.\.\.current, \.\.\.page\.items\]\)/);
+});
