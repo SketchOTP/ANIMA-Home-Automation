@@ -1169,6 +1169,16 @@ decision.
   `34051680528`; artifact `9994893147` was published. Phase 14 remains
   accepted and Phase 15 remains unauthorized.
 
+## Goal-wide usability scorecard - 2026-09-06
+
+- The permanent Goal was rechecked after Phase 14 acceptance and the room/zone
+  lifecycle publication. The scorecard is recorded in
+  `docs/GOAL-WIDE-SCORECARD-2026-09-06.md`.
+- The next selected product increment is bounded SENTRY text household
+  operation through ANIMA's existing client-only MCP/Core authority boundary.
+  It is not the historical Phase 15 A–O deck, and it will not add ANIMA voice,
+  raw HA administration, or a second intelligence.
+
 ## Opaque device-handle boundary - 2026-09-06
 
 - The owner-facing device discovery and commissioning contract now uses a

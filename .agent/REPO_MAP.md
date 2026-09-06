@@ -381,3 +381,11 @@ Owner-facing room and zone lifecycle increment (2026-09-06):
   `7cdedb29f877087dbbec884f4e71a002cc53aa4e` passed exact-head CI
   `34051680528` with artifact `9994893147`. Phase 14 remains accepted, Phase
   15 remains unauthorized, and Architect acceptance remains pending.
+
+Goal-wide usability scorecard (2026-09-06):
+
+- `docs/GOAL-WIDE-SCORECARD-2026-09-06.md` records the MO-02 through MO-15
+  recheck after Phase 14 acceptance and the room/zone lifecycle increment.
+- The next product candidate is bounded SENTRY text household operation via
+  the accepted ANIMA MCP/Core boundary. Historical Phase 15, ANIMA voice, and
+  the full A–O demonstration remain unstarted and unauthorized.

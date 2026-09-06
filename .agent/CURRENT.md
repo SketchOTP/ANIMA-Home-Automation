@@ -48,8 +48,21 @@ acceptance remains pending. Phase 15 remains unauthorized and unimplemented.
   provider configuration remain untouched.
 - Focused validation passed 27 backend tests, Ruff, strict mypy, TypeScript,
   frontend tests, Vite build, package build, and `git diff --check`. Exact-head
-  hosted CI `34051465103` is the current publication gate. See
+  hosted CI `34051465103` is the room-lifecycle implementation validation run;
+  the evidence-bound governance head is validated by the current exact-head CI.
+  See
   `docs/GOAL-SPACE-LIFECYCLE-024A.md`.
+
+## Goal-wide usability scorecard and next candidate - 2026-09-06
+
+The scorecard in `docs/GOAL-WIDE-SCORECARD-2026-09-06.md` rechecks MO-02
+through MO-15 against the current repository and accepted evidence. MO-01 and
+MO-05/MO-10 are accepted; bounded onboarding, settings, external capabilities,
+and deployment are implemented. MO-02/MO-03/MO-04/MO-14 remain partial because
+the support matrix is bounded and restore/final integrated operation still need
+completion. MO-12/MO-13 are later product work; the historical Phase 15 deck
+has not started. The next selected owner-facing slice is bounded SENTRY text
+household operation through the accepted ANIMA authority boundary.
 
 ## Latest owner-facing device increment - 2026-09-06
 
