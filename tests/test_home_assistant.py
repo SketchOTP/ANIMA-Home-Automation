@@ -502,6 +502,7 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
     tools = {tool.name: tool for tool in manager.list_tools()}
     assert set(tools) == {
         "refresh_inventory",
+        "reconnect",
         "permit_zigbee_join",
         "commission_device",
         "rename_device",
@@ -534,6 +535,25 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
     manager.disable("anima.provider.home-assistant")
     assert manager.list_tools() == []
     assert connection.stopped is True
+
+
+def test_reconnect_is_core_owned_and_status_projection_is_secret_free(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, graph, _, _ = adapter_parts
+    connections = [FakeConnection(), FakeConnection()]
+    plugin = HomeAssistantPlugin(adapter, lambda token: connections.pop(0))
+    plugin.start({"ANIMA_HA_TOKEN": "must-not-escape"})
+    status = plugin.safe_status()
+    assert status["health"] == "ONLINE"
+    assert status["connected_version"] == "2026.8.2"
+    assert "websocket_url" not in status
+    assert "token" not in status
+
+    result = plugin.invoke_for_household("reconnect", {}, 5.0, uuid4())
+    assert result["status"] == "SUCCEEDED"
+    assert result["health"]["health"] == "ONLINE"
+    plugin.stop()
 
 
 def test_pairing_window_uses_bounded_internal_zha_service(

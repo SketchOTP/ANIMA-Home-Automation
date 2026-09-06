@@ -25,6 +25,20 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing integration health and recovery increment - 2026-09-06
+
+- The Integrations view now projects bounded Home Assistant operational health
+  without exposing its endpoint, token, or configuration. Owners can see the
+  connection state, version, sync/event timestamps, subscription status, and
+  mapped/unmapped inventory counts.
+- A typed `Reconnect` action runs through the existing authenticated UI → Core
+  PluginManager → policy → Home Assistant adapter boundary. Core retains the
+  connection token and endpoint; the browser supplies only the fixed provider
+  reference. Reconnect reconciles the current registry and returns bounded
+  health, with no raw HA service/configuration path.
+- This increment is implementation evidence pending independent Architect
+  acceptance. Phase 15 remains unauthorized.
+
 ## Latest owner-facing automation-management increment - 2026-09-06
 
 - The Automations view and `/api/v1/automations` now provide a bounded,

@@ -1092,6 +1092,7 @@ class HomeAssistantPlugin:
     ) -> None:
         self.adapter = adapter
         self.connection_factory = connection_factory
+        self._token: str | None = None
         self.started = False
 
     def start(self, secret_env: dict[str, str]) -> None:
@@ -1099,10 +1100,12 @@ class HomeAssistantPlugin:
         if not token:
             raise PluginValidationError("declared Home Assistant token is unavailable")
         self.adapter.start(self.connection_factory(token))
+        self._token = token
         self.started = True
 
     def stop(self) -> None:
         self.adapter.stop()
+        self._token = None
         self.started = False
 
     def list_tools(self) -> list[dict[str, Any]]:
@@ -1110,6 +1113,10 @@ class HomeAssistantPlugin:
             {"name": str(tool["name"]), "input_schema": dict(tool["input_schema"])}
             for tool in home_assistant_manifest(self.adapter.config).tools
         ]
+
+    def safe_status(self) -> dict[str, Any]:
+        """Return connection health without exposing endpoint or credentials."""
+        return self.adapter.status.to_payload()
 
     def _resource_in_household(self, household_id: UUID, resource_id: UUID) -> CanonicalNode:
         resource = self.adapter.graph.get_node(resource_id)
@@ -1133,6 +1140,18 @@ class HomeAssistantPlugin:
     def invoke_for_household(
         self, name: str, arguments: dict[str, Any], timeout: float, household_id: UUID
     ) -> Any:
+        if name == "reconnect":
+            del arguments, timeout, household_id
+            token = self._token
+            if not token:
+                raise PluginValidationError("Home Assistant provider is not started")
+            recovered = self.adapter.reconnect(lambda: self.connection_factory(token))
+            self.started = recovered
+            return {
+                "status": "SUCCEEDED" if recovered else "FAILED",
+                "health": self.safe_status(),
+                "operation": "reconnect_home_assistant",
+            }
         if name == "refresh_inventory":
             self.adapter.reconcile()
             return {
@@ -1384,6 +1403,11 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
         "properties": {},
         "additionalProperties": False,
     }
+    reconnect_schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    }
     permit_schema: dict[str, Any] = {
         "type": "object",
         "required": ["duration_seconds"],
@@ -1451,6 +1475,17 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                 "semantic_action": "refresh_home_assistant",
                 "risk_class": "READ_ONLY",
                 "read_only": True,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "reconnect",
+                "description": "Reconnect the configured Home Assistant instance and reconcile it",
+                "input_schema": reconnect_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "recover_home_assistant",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
                 "idempotency": "IDEMPOTENT",
                 "external_content_trust": "PLUGIN_TRUSTED",
             },

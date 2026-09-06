@@ -248,3 +248,16 @@ The hosted workflow passed the full existing Phase 0–14/SENTRY validation,
 PostgreSQL/OPA/isolated-HA checks, ARM64/container checks, H5 targets, and
 public-safety scan. This remains implementation evidence pending independent
 Architect acceptance; Phase 15 remains unauthorized.
+## Goal-wide integration health and recovery follow-on — 2026-09-06
+
+The owner-facing Integrations view now exposes bounded Home Assistant health
+and a Core-owned reconnect/reconcile operation. The provider retains its
+server-side endpoint and token; the browser supplies only the fixed provider
+reference. Safe health fields include connection state, version, sync/event
+timestamps, subscription state, inventory counts, and error category.
+
+The typed `reconnect` tool runs through the existing authenticated UI/API →
+PluginManager → policy → Home Assistant adapter boundary. It does not expose
+raw Home Assistant services, configuration, credentials, or arbitrary hosts.
+The increment is implementation evidence pending independent Architect
+acceptance; Phase 15 remains unauthorized.

@@ -307,6 +307,8 @@ class CoreUICommandGateway:
     def integration_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
+        if operation == "reconnect" and payload.get("plugin_id") == "anima.provider.home-assistant":
+            return self._invoke(identity, "anima.provider.home-assistant", "reconnect", {})
         operation_map = {"set-enabled": "set_integration_enabled"}
         name = operation_map.get(operation)
         if name is None:

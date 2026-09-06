@@ -35,7 +35,7 @@ MANAGEABLE_INTEGRATIONS = frozenset(
 def _public_plugin(plugin: Any) -> dict[str, Any]:
     """Return health and identity only; never expose configuration or errors."""
     state = plugin.state.value if isinstance(plugin.state, PluginState) else str(plugin.state)
-    return {
+    result: dict[str, Any] = {
         "plugin_id": plugin.manifest.plugin_id,
         "name": plugin.manifest.name,
         "description": plugin.manifest.description,
@@ -45,10 +45,34 @@ def _public_plugin(plugin: Any) -> dict[str, Any]:
         "manageable": plugin.manifest.plugin_id in MANAGEABLE_INTEGRATIONS,
         "error": "integration_failed" if state in {"FAILED", "INCOMPATIBLE"} else None,
     }
+    # The HA adapter owns its endpoint and credentials.  Only its bounded
+    # operational status is projected to the owner-facing management plane.
+    runtime = getattr(plugin, "runtime", None)
+    native = getattr(runtime, "plugin", None)
+    safe_status = getattr(native, "safe_status", None)
+    if callable(safe_status) and plugin.manifest.plugin_id == "anima.provider.home-assistant":
+        status = dict(safe_status())
+        result["health"] = {
+            key: status[key]
+            for key in (
+                "health",
+                "connected_version",
+                "last_successful_state_sync",
+                "last_received_event",
+                "subscriptions_active",
+                "discovered_counts",
+                "mapped_count",
+                "unmapped_count",
+                "reconnect_attempt",
+                "last_error_category",
+            )
+            if key in status
+        }
+    return result
 
 
 class CapabilityManagementNativePlugin:
-    """Implement the two typed integration-management operations."""
+    """Implement typed integration-management and recovery operations."""
 
     def __init__(self, manager: PluginManager) -> None:
         self.manager = manager

@@ -175,3 +175,15 @@ The hosted workflow passed the complete existing validation, including the
 Phase 0–14/SENTRY suites, ARM64/container checks, H5 targets, and public-safety
 scan. The automation increment is ready for independent Architect review;
 Phase 15 remains unauthorized.
+## Goal-wide integration health and recovery follow-on — 2026-09-06
+
+ANIMA's Integrations view now renders server-safe Home Assistant connection
+health and offers a typed Reconnect action. Core keeps the HA token and
+endpoint, calls the existing adapter's supervised reconnect/reconciliation,
+and returns bounded health. The browser and SENTRY cannot provide a host,
+token, entity, service, or raw configuration payload.
+
+Local Ruff, formatting, strict mypy, the full Python suite, TypeScript,
+frontend tests, Vite build, and `git diff --check` passed. Hosted exact-head
+qualification and independent Architect acceptance remain pending. Phase 15
+remains unauthorized.
