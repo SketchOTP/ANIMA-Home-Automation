@@ -300,3 +300,12 @@ The `PHASE14_EVIDENCE_LEDGER` found all 22 required real-store output files,
 validated their machine-readable evidence, and recorded family-level coverage.
 The ledger remains `CONTINUE`; it does not self-accept Phase 14 or upgrade the
 remaining broader lifecycle gaps. Phase 15 remains unauthorized.
+
+## Consolidated ledger governance publication - 2026-09-06
+
+The current documentation/governance head is
+`76453a3f38e2abfbd52dcad78f6128f97bf4af8c`, matching `origin/main`. Exact-head
+hosted CI `34000794948` passed and published artifact `9979518862` with digest
+`sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`.
+This is a reconciled integrity/coverage checkpoint, not Phase 14 acceptance;
+the active packet remains `CONTINUE` and Phase 15 remains unauthorized.

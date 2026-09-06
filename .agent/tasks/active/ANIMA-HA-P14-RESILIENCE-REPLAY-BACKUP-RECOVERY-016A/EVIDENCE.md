@@ -568,3 +568,14 @@ unauthorized and unimplemented.
   integrity and coverage consolidation, not Phase 14 acceptance. The five
   `DETERMINISTIC_CONTRACT` scenarios are explicitly excluded from destructive
   evidence. Native Pi 5 remains an external gate; Phase 15 remains unauthorized.
+
+## Consolidated ledger governance publication - 2026-09-06
+
+- The documentation/governance head `76453a3f38e2abfbd52dcad78f6128f97bf4af8c`
+  matches `origin/main` and passed exact-head hosted CI `34000794948`.
+- Reviewable artifact `9979518862` has digest
+  `sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`.
+- This publication reconciles the current packet with the passing consolidated
+  ledger checkpoint. It remains `CONTINUE`, does not self-accept Phase 14, and
+  preserves the explicit exclusion of deterministic-contract fixtures from
+  destructive evidence. Phase 15 remains unauthorized.

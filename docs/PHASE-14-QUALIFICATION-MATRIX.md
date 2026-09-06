@@ -15,6 +15,7 @@ not authorized.
 | Policy reauthorization | `cc8b0107ca9615750a580a41fc95dcbdc3722f74` | `33998136623` PASS | `9978800620` |
 | SENTRY process lifecycle | `62533e8673a25ece7079595bd73bb3a650cb1d8c` | `33998969482` PASS | `9979026256` |
 | Consolidated evidence ledger | `d68f8205787d67b2f21ea9a7bba690b3e37f145c` | `34000279143` PASS | `9979391397` (`sha256:1a45b144e9cf001aad7beeef459d5517636769f7b619a68b309cce9880f5073e`) |
+| Consolidated ledger governance publication | `76453a3f38e2abfbd52dcad78f6128f97bf4af8c` | `34000794948` PASS | `9979518862` (`sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`) |
 
 ## Clustered status
 
@@ -54,3 +55,12 @@ broader partial families in this matrix into Phase 14 acceptance. The five
 deterministic-contract scenarios are explicitly listed as excluded from
 destructive evidence. Native Pi 5 remains an external gate and Phase 15 is
 unauthorized.
+
+## Consolidated ledger governance publication
+
+The documentation/governance publication at `76453a3f38e2abfbd52dcad78f6128f97bf4af8c`
+passed exact-head hosted CI `34000794948` and published artifact `9979518862`
+with digest `sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`.
+This publication reconciles the current repository state with the consolidated
+ledger checkpoint. It remains an integrity and coverage record with overall
+disposition `CONTINUE`, not Phase 14 acceptance; Phase 15 remains unauthorized.
