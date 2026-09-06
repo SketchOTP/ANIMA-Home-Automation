@@ -21,6 +21,8 @@ test("UI preserves Core semantic command and terminal-outcome contracts", async 
   assert.match(source, /widget_order/);
   assert.match(source, /display_mode/);
   assert.match(source, /appearance/);
+  assert.match(source, /capabilities/);
+  assert.match(source, /\/api\/v1\/controls\//);
 });
 
 test("alert inbox exposes the existing cursor contract to owners", async () => {

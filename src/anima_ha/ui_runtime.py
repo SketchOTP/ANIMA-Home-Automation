@@ -426,11 +426,44 @@ class CoreUICommandGateway:
                 "reason": "HOME_ASSISTANT_NOT_COMMISSIONED",
             }
         items = []
+        graph = self.home_assistant_adapter.graph
+        truth = getattr(self.home_assistant_adapter.reality, "projection", None)
+        if not callable(getattr(truth, "get", None)):
+            truth = None
+
+        def truth_state(capability_id: UUID) -> dict[str, Any]:
+            if truth is None:
+                return {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
+            for binding, resolution in graph.truth_for_node(capability_id, truth):
+                if binding.semantic_attribute not in {"power.state", "state"}:
+                    continue
+                status = getattr(resolution.status, "value", str(resolution.status))
+                value = resolution.value
+                if status == "CURRENT/KNOWN":
+                    state = (
+                        "ON"
+                        if value is True or str(value).casefold() == "on"
+                        else "OFF"
+                        if value is False or str(value).casefold() == "off"
+                        else str(value)[:80] if value is not None else "UNKNOWN"
+                    )
+                else:
+                    state = status.split("/", 1)[0]
+                return {
+                    "truth_status": status,
+                    "state": state,
+                    "observed_at": (
+                        resolution.last_observed_at.isoformat()
+                        if resolution.last_observed_at is not None
+                        else None
+                    ),
+                }
+            return {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
+
         for item in self.home_assistant_adapter.provider_inventory():
             metadata = dict(item.get("metadata") or {})
             canonical_target = None
             canonical_value = metadata.get("canonical_target_id")
-            graph = self.home_assistant_adapter.graph
             if canonical_value:
                 try:
                     canonical_target = graph.get_node(UUID(str(canonical_value)))
@@ -449,6 +482,24 @@ class CoreUICommandGateway:
                     "mapping_status": "UNMAPPED",
                     "canonical_target_id": None,
                 }
+            capabilities: list[dict[str, Any]] = []
+            device_state = {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
+            if mapped and canonical_target is not None:
+                for capability in graph.resource_capabilities(canonical_target.canonical_id):
+                    capability_type = str(capability.metadata.get("capability_type", ""))
+                    if not capability_type:
+                        continue
+                    snapshot = truth_state(capability.canonical_id)
+                    descriptor = {
+                        "type": capability_type,
+                        "label": capability.name,
+                        "readable": bool(capability.metadata.get("readable", True)),
+                        "writable": bool(capability.metadata.get("writable", False)),
+                        **snapshot,
+                    }
+                    capabilities.append(descriptor)
+                    if capability_type == "power.set":
+                        device_state = snapshot
             items.append(
                 {
                     "external_object_kind": str(item.get("external_object_kind", "")),
@@ -467,6 +518,10 @@ class CoreUICommandGateway:
                         if key in metadata
                     }
                     | mapped_metadata,
+                    "state": device_state["state"],
+                    "truth_status": device_state["truth_status"],
+                    "observed_at": device_state["observed_at"],
+                    "capabilities": capabilities,
                 }
             )
         return {"status": "AVAILABLE", "items": items}

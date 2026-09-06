@@ -1182,6 +1182,33 @@ class PostgresHouseholdReadModel:
         capabilities = self.capabilities(identity)
         rooms: list[dict[str, Any]] = []
         if self.graph is not None and callable(getattr(self.graph, "places_in_household", None)):
+            def device_state(resource: Any) -> str:
+                if self.truth is None or self.graph is None:
+                    return "UNKNOWN"
+                bindings_to_check: list[Any] = []
+                for capability in self.graph.resource_capabilities(resource.canonical_id):
+                    bindings_to_check.extend(
+                        self.graph.truth_for_node(capability.canonical_id, self.truth)
+                    )
+                bindings_to_check.sort(
+                    key=lambda item: 0 if item[0].semantic_attribute == "power.state" else 1
+                )
+                for binding, resolution in bindings_to_check:
+                    if binding.semantic_attribute not in {"power.state", "state"}:
+                        continue
+                    status = getattr(resolution.status, "value", str(resolution.status))
+                    if status != TruthStatus.CURRENT_KNOWN.value:
+                        return status.split("/", 1)[0]
+                    value = resolution.value
+                    return (
+                        "ON"
+                        if value is True or str(value).casefold() == "on"
+                        else "OFF"
+                        if value is False or str(value).casefold() == "off"
+                        else str(value)[:80] if value is not None else "UNKNOWN"
+                    )
+                return "UNKNOWN"
+
             places = self.graph.places_in_household(identity.household_id)
             for place in places:
                 if place.kind not in {NodeKind.ROOM, NodeKind.ZONE}:
@@ -1197,7 +1224,7 @@ class PostgresHouseholdReadModel:
                             "device_id": str(resource.canonical_id),
                             "name": resource.name,
                             "kind": resource.kind.value,
-                            "state": "UNKNOWN",
+                            "state": device_state(resource),
                         }
                     )
                 rooms.append(

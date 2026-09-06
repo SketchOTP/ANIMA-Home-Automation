@@ -16,6 +16,7 @@ from anima_ha.agent import (
 )
 from anima_ha.attention import AttentionProfile, ReasoningTrigger, TriggerStatus
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
+from anima_ha.graph import NodeKind
 from anima_ha.plugins import (
     DispatchState,
     ExternalContentTrust,
@@ -81,6 +82,87 @@ class StubContext:
             context_packet_id=UUID(str(self.packet["context_packet_id"])),
             to_payload=lambda: self.packet,
         )
+
+
+def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
+    resource_id = uuid4()
+    capability_id = uuid4()
+    observed_at = datetime.now(UTC)
+    resource = SimpleNamespace(
+        canonical_id=resource_id, name="Hall light", kind=NodeKind.RESOURCE
+    )
+    capability = SimpleNamespace(
+        canonical_id=capability_id,
+        name="Hall light power capability",
+        kind=NodeKind.CAPABILITY,
+        metadata={"capability_type": "power.set", "readable": True, "writable": True},
+    )
+
+    class Graph:
+        def get_node(self, value: UUID) -> object | None:
+            return resource if value == resource_id else None
+
+        def resource_capabilities(self, value: UUID) -> list[object]:
+            assert value == resource_id
+            return [capability]
+
+        def truth_for_node(self, value: UUID, truth: object) -> list[tuple[object, object]]:
+            assert value == capability_id
+            assert truth is not None
+            return [
+                (
+                    SimpleNamespace(semantic_attribute="power.state"),
+                    SimpleNamespace(
+                        status=SimpleNamespace(value="CURRENT/KNOWN"),
+                        value=True,
+                        last_observed_at=observed_at,
+                    ),
+                )
+            ]
+
+    adapter = SimpleNamespace(
+        graph=Graph(),
+        reality=SimpleNamespace(projection=SimpleNamespace(get=lambda *_args, **_kwargs: None)),
+        provider_inventory=lambda: [
+            {
+                "external_object_kind": "device",
+                "external_id": "ha-device",
+                "present": True,
+                "metadata": {"canonical_target_id": str(resource_id), "name": "Hall light"},
+            }
+        ],
+    )
+    manager = SimpleNamespace(
+        list_tools=lambda: [
+            SimpleNamespace(
+                plugin_id="anima.provider.home-assistant",
+                name="refresh_inventory",
+                availability=True,
+            )
+        ]
+    )
+    gateway = CoreUICommandGateway(
+        cast(Any, manager),
+        PolicyService(AllowEvaluator()),
+        home_assistant_adapter=adapter,  # type: ignore[arg-type]
+    )
+
+    result = gateway.device_inventory(cast(Any, object()))
+
+    item = result["items"][0]
+    assert item["state"] == "ON"
+    assert item["truth_status"] == "CURRENT/KNOWN"
+    assert item["capabilities"] == [
+        {
+            "type": "power.set",
+            "label": "Hall light power capability",
+            "readable": True,
+            "writable": True,
+            "truth_status": "CURRENT/KNOWN",
+            "state": "ON",
+            "observed_at": observed_at.isoformat(),
+        }
+    ]
 
 
 def test_core_pipeline_runs_real_agent_from_journal_trigger() -> None:

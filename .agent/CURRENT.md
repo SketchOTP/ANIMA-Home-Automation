@@ -23,6 +23,19 @@ plane usable through ANIMA without the Home Assistant frontend. Phases 0-14
 are Architect accepted; Phase 15 remains unauthorized until separately
 authorized by the goal-wide completion audit.
 
+## Latest owner-facing device increment - 2026-09-06
+
+The current product increment is device observability and governed control.
+The Devices view now shows canonical semantic capabilities and the latest
+ANIMA Truth-backed state for commissioned devices, and exposes bounded On/Off
+controls for writable power capabilities through the existing Core control
+route. The Home room/device projection uses the same Truth resolution instead
+of presenting every device as `UNKNOWN`. Provider entity references and
+credentials remain outside the browser contract; no direct Home Assistant
+browser access or Phase 15 behavior was added. See
+`docs/GOAL-DEVICE-OBSERVABILITY-023A.md`. The implementation is pending
+exact-head hosted validation and independent Architect acceptance.
+
 ## Latest owner-facing publication - 2026-09-06
 
 The current owner-facing publication is the alert-inbox pagination increment:
