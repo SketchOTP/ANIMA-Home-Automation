@@ -27,9 +27,16 @@ audit/history. The event router continues to read enabled policies only.
 Product content is ordinary ANIMA configuration, not restricted external
 content. Existing Event Journal/Attention provenance remains authoritative.
 
+Notification route metadata is a separate bounded owner setting. It selects
+the existing server-configured ntfy provider without exposing its destination
+or credentials to the browser or model. Route identity, household, creator,
+and version are server-owned; label, minimum priority, and enabled state are
+the only mutable fields.
+
 ## UI behavior
 
 The Alerts view lists current household policies, supports bounded create/edit,
 and toggles enabled state through a versioned save. HTTP transport success does
 not imply semantic success; the existing `MutationOutcome` notice is shown.
-
+The Notifications view provides the corresponding versioned route metadata
+form and renders only `ntfy` / `server_configured` provenance.

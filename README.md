@@ -59,7 +59,7 @@ These screenshots are captured from the tested local application with synthetic 
 - ANIMA-owned commissioned-device lifecycle from the same Devices view: rename a device, move it between existing rooms/zones, or retire it from ANIMA’s canonical model. These mutations preserve the Home Assistant registry and remain household-scoped, policy-gated Graph operations.
 - ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
-- Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly.
+- Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly. Owners can configure typed SenseGuard alert policies and the server-owned notification route from ANIMA.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
 
 ## Safety and trust model

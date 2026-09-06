@@ -413,6 +413,8 @@ class HouseholdReadModel(Protocol):
 
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
@@ -469,6 +471,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def notification_route_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -511,6 +517,11 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"alert_policy.{operation}")
+
+    def notification_route_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"notification_route.{operation}")
 
 
 class ConversationIngress(Protocol):
@@ -708,6 +719,10 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return dict(self._settings)
@@ -803,6 +818,10 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return validate_ui_preferences({})
@@ -824,6 +843,7 @@ class PostgresHouseholdReadModel:
         truth: Any | None = None,
         plugins: Any | None = None,
         alert_policy_store: Any | None = None,
+        notification_route_store: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -831,6 +851,7 @@ class PostgresHouseholdReadModel:
         self.truth = truth
         self.plugins = plugins
         self.alert_policy_store = alert_policy_store
+        self.notification_route_store = notification_route_store
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1270,6 +1291,14 @@ class PostgresHouseholdReadModel:
             for policy in self.alert_policy_store.list_all(identity.household_id)
         ]
 
+    def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.notification_route_store is None:
+            return []
+        return [
+            route.to_payload()
+            for route in self.notification_route_store.list_all(identity.household_id)
+        ]
+
     def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
         if not providers:
             return None
@@ -1393,6 +1422,17 @@ class DemoCommandGateway:
             "status": "SUCCEEDED",
             "operation": f"alert_policy.{operation}",
             "result": {"policy": payload},
+        }
+
+    def notification_route_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        self.events.publish("capabilities.changed")
+        return {
+            "status": "SUCCEEDED",
+            "operation": f"notification_route.{operation}",
+            "result": {"route": payload},
         }
 
 
@@ -1741,6 +1781,7 @@ def create_app(
                 truth=core_runtime.truth.projection,
                 plugins=core_runtime.plugins,
                 alert_policy_store=core_runtime.alert_policy_store,
+                notification_route_store=core_runtime.notification_route_store,
             )
         svc = UIService(
             config=config,
@@ -2037,6 +2078,25 @@ def create_app(
         try:
             return svc.commands.alert_policy_mutation(
                 svc.identity_from_session(session), "save_policy", body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/api/v1/notifications/routes")
+    async def notification_routes(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.notification_routes(current_identity(request))}
+
+    @app.post("/api/v1/notifications/routes")
+    async def save_notification_route(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.notification_route_mutation(
+                svc.identity_from_session(session), "save_route", body.payload
             )
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc

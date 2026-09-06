@@ -56,6 +56,12 @@ class DeviceCommandStub:
         del identity
         return {"status": "SUCCEEDED", "operation": operation, "result": {"policy": payload}}
 
+    def notification_route_mutation(
+        self, identity: object, operation: str, payload: dict[str, object]
+    ) -> dict[str, object]:
+        del identity
+        return {"status": "SUCCEEDED", "operation": operation, "result": {"route": payload}}
+
 
 def test_health_is_public_but_household_data_requires_session() -> None:
     app = create_app(UIService(config=UIConfig(test_auth_enabled=True)))
@@ -95,6 +101,23 @@ def test_alert_policy_route_is_bounded_and_household_scoped() -> None:
     )
     assert response.status_code == 200
     assert response.json()["status"] == "SUCCEEDED"
+
+
+def test_notification_route_is_bounded_and_keeps_destination_server_owned() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
+    client = TestClient(create_app(service), follow_redirects=False)
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+    csrf = callback.headers["x-anima-csrf"]
+    assert client.get("/api/v1/notifications/routes").json()["items"] == []
+    response = client.post(
+        "/api/v1/notifications/routes",
+        json={"payload": {"label": "Overnight alerts", "minimum_priority": 80}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "SUCCEEDED"
+    assert "destination" not in response.json()["result"]["route"]
 
 
 def test_oauth_state_is_single_use_and_session_stores_only_hashes() -> None:

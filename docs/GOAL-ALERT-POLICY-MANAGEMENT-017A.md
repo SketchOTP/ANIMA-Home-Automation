@@ -18,6 +18,13 @@ The Alerts view and /api/v1/alerts/policies API support:
 - enabled/disabled state;
 - optimistic versioned edits and durable creator provenance.
 
+The Notifications view and `/api/v1/notifications/routes` API also expose one
+bounded household route for those policies. The owner may set its label,
+minimum priority, and enabled state. The provider remains the existing
+server-configured ntfy boundary; the browser cannot provide a topic, token,
+URL, or other destination. Route updates use the same Core PluginManager,
+OPA, CSRF, household scope, and optimistic versioning boundary.
+
 The browser cannot choose a household, principal, role, Home Assistant entity,
 service, or raw automation payload. Mutations pass through the Core plugin
 catalogue, policy service, and existing PostgreSQL SenseGuard store. Disabled
@@ -36,4 +43,6 @@ household timezone conversion, provenance, and duplicate alert identity remain
 owned by the existing SenseGuard router.
 
 This increment does not add a raw Home Assistant automation editor, arbitrary
-service calls, a new provider, or Phase 15 behavior.
+service calls, a new provider, or Phase 15 behavior. A successful ntfy provider
+acceptance is not a claim that a human received the message; notification
+delivery remains an external observation.

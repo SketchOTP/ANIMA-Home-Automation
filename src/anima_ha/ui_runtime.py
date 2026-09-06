@@ -60,6 +60,11 @@ from anima_ha.intelligence import (
     SentryAttentionBridge,
 )
 from anima_ha.journal import PostgresEventJournal, PostgresRealityStore
+from anima_ha.notification_routes import (
+    NOTIFICATION_ROUTE_MANIFEST,
+    NotificationRouteNativePlugin,
+    PostgresNotificationRouteStore,
+)
 from anima_ha.plugins import (
     InvocationContext,
     InvocationOutcome,
@@ -273,6 +278,11 @@ class CoreUICommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._invoke(identity, "anima.senseguard-alerts", operation, payload)
+
+    def notification_route_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._invoke(identity, "anima.notification-routes", operation, payload)
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -656,6 +666,7 @@ class CoreRuntime:
     intelligence_provider: IntelligenceProviderMode = IntelligenceProviderMode.EMBEDDED_REFERENCE
     home_assistant_adapter: HomeAssistantAdapter | None = None
     alert_policy_store: PostgresSenseGuardAlertPolicyStore | None = None
+    notification_route_store: PostgresNotificationRouteStore | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -801,6 +812,7 @@ def build_postgres_core(
     secrets = _environment_secrets()
     plugins = PluginManager(journal=journal, secret_broker=SecretBroker(secrets))
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
+    notification_route_store = PostgresNotificationRouteStore(database_url)
 
     def alert_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
         node = graph.get_node(resource_id)
@@ -822,6 +834,11 @@ def build_postgres_core(
         ),
     )
     plugins.enable(SENSEGUARD_ALERT_MANIFEST.plugin_id)
+    plugins.register(
+        NOTIFICATION_ROUTE_MANIFEST,
+        NativeRuntime(NotificationRouteNativePlugin(notification_route_store)),
+    )
+    plugins.enable(NOTIFICATION_ROUTE_MANIFEST.plugin_id)
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
     plugins.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
@@ -959,6 +976,7 @@ def build_postgres_core(
         intelligence_provider,
         ha_adapter,
         alert_policy_store,
+        notification_route_store,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()

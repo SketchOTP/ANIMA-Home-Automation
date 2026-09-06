@@ -124,6 +124,19 @@ test("desktop home exposes governed household surfaces and truthful health", asy
   await expect(page.getByRole("checkbox", { name: "health" })).toBeVisible();
 });
 
+test("desktop notification route keeps delivery destination server-owned", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
+  await page.getByRole("button", { name: "Notifications" }).click();
+  await expect(page.getByRole("heading", { name: "Notification route" })).toBeVisible();
+  await page.getByLabel("Route label").fill("Overnight SenseGuard alerts");
+  await page.getByLabel("Minimum alert priority").fill("80");
+  await page.getByRole("button", { name: "Create route" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "SUCCEEDED" })).toBeVisible();
+  await expect(page.getByText(/server configured/i)).toBeVisible();
+  await expect(page.getByText("ntfy", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Route label")).toHaveValue("Overnight SenseGuard alerts");
+});
+
 test("responsive navigation and privacy boundary hold at each viewport", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Home" })).toBeVisible();
   await page.getByRole("button", { name: "Capabilities" }).click();
