@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
+import subprocess
 from uuid import UUID
 
 from anima_ha.backup import BackupCoordinator
