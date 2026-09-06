@@ -190,6 +190,19 @@ The external target is now included in hosted CI. HA adapter outage,
 notification-side-effect outage, full plugin lifecycle isolation, SENTRY
 bridge/provider restart, and process-level recovery remain open.
 
+## Explicit-status ledger correction - 2026-09-06
+
+- PASSED / exact governed head: `527810827728fc8242fbc4069b9eecb5c8060f6a`;
+  hosted CI `34001997325` passed and published artifact `9979858475` with
+  digest `sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
+- The approval ownership race now emits an explicit `status=PASS`, and the
+  ledger auditor rejects mapped scenarios whose status is absent or non-pass.
+  All ten named ledger families are therefore `VERIFIED` for evidence
+  integrity at this head. This does not self-accept Phase 14: the broader
+  process-state breadth and final consolidated replay remain tracked as
+  closure work, and the five deterministic-contract scenarios remain excluded
+  from destructive proof.
+
 ## R2 service-restart qualification - 2026-09-05
 
 - PASSED / POSTGRES_OPA_CORE: `scripts/verify_phase14_service_restart_r2.py`

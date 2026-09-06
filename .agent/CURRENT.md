@@ -24,15 +24,17 @@ workflow engine, provider, or household feature is authorized.
 
 ## Latest Phase 14 evidence ledger checkpoint
 
-The current governed documentation head is `76453a3f38e2abfbd52dcad78f6128f97bf4af8c`,
-matching `origin/main`. Exact-head hosted CI `34000794948` passed and published
-artifact `9979518862` with digest
-`sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`.
+The current governed code/evidence head is `527810827728fc8242fbc4069b9eecb5c8060f6a`,
+matching `origin/main`. Exact-head hosted CI `34001997325` passed and published
+artifact `9979858475` with digest
+`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
 The consolidated `PHASE14_EVIDENCE_LEDGER` step completed successfully and
 confirmed that all 22 required real-store evidence files are present, with
-source digests and family mappings. Its disposition remains `CONTINUE`;
-deterministic-contract fixtures remain explicitly excluded from destructive
-proof. Phase 15 remains unauthorized.
+explicit PASS/PASSED scenario statuses, source digests, and family mappings.
+The ledger's disposition remains `CONTINUE`; deterministic-contract fixtures
+remain explicitly excluded from destructive proof, and the broader matrix
+still requires final clustered closure/replay evidence. Phase 15 remains
+unauthorized.
 
 ## Current authority result
 

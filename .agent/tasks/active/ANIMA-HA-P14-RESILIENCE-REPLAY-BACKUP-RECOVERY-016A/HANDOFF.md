@@ -309,3 +309,15 @@ hosted CI `34000794948` passed and published artifact `9979518862` with digest
 `sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`.
 This is a reconciled integrity/coverage checkpoint, not Phase 14 acceptance;
 the active packet remains `CONTINUE` and Phase 15 remains unauthorized.
+
+## Explicit-status ledger correction
+
+The current code/evidence head is `527810827728fc8242fbc4069b9eecb5c8060f6a`,
+matching `origin/main`, with exact-head hosted CI `34001997325` passing.
+Artifact `9979858475` has digest
+`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
+The approval-race evidence now emits an explicit pass status, and the ledger
+auditor requires explicit pass status for every mapped scenario. All ten named
+families are verified for evidence integrity at this checkpoint. The overall
+Phase 14 disposition remains `CONTINUE`; this does not promote contract-only
+fixtures or close broader process-state and final-replay requirements.
