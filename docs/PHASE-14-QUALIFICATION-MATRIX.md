@@ -20,6 +20,7 @@ not authorized.
 | Current exact-head mapped-family ledger | `4006bcde922eb3c86c827db5700ece2ce46e98a9` | `34002634015` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
 | Current exact-head destructive ledger | `a84d318e491e78ce5d7e7d0cdd59d2fbf74a2048` | `34003443720` PASS | `9980299813` |
 | Current exact-head governance reconciliation | `2f1c45231355578f33fe737708a4c94f63596887` | `34004155779` PASS | `9980525065` |
+| Latest exact-head packet reconciliation | `9c26fdc3f371cd867a925e4b1a081835fc1d1913` | `34004675040` PASS | `9980681769` |
 
 ## Clustered status
 
@@ -105,6 +106,15 @@ It updates the public README, `.agent/CURRENT.md`, and this matrix to the
 current Phase 14 evidence checkpoint. No runtime behavior changed. The Phase
 14 evidence ledger remains `CONTINUE`, not self-acceptance; Phase 15 remains
 unauthorized.
+
+## Latest exact-head packet reconciliation
+
+The latest governance-only packet reconciliation head
+`9c26fdc3f371cd867a925e4b1a081835fc1d1913` passed exact-head hosted CI
+`34004675040` and published artifact `9980681769`. It updates the active
+packet/status references to the actual current repository head. No runtime
+behavior changed, the Phase 14 disposition remains `CONTINUE`, and Phase 15
+remains unauthorized.
 
 ## Next consolidated closure bundle
 

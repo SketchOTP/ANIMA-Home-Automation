@@ -620,3 +620,15 @@ unauthorized and unimplemented.
   non-passing mapped scenarios, and all ten mapped families `VERIFIED` for
   their named exercised scenarios. Deterministic-contract fixtures remain
   excluded from destructive proof. Phase 15 remains unauthorized.
+
+## Latest exact-head packet reconciliation - 2026-09-05
+
+- The current governed head is `9c26fdc3f371cd867a925e4b1a081835fc1d1913`,
+  matching `origin/main`.
+- Exact-head hosted CI `34004675040` passed and published artifact `9980681769`;
+  artifact metadata confirms the exact tested SHA.
+- This governance-only checkpoint corrects stale packet/status references. It
+  does not change runtime behavior or self-accept Phase 14.
+- The exact-head ledger remains evidence-integrity coverage for named exercised
+  scenarios; deterministic-contract fixtures remain excluded from destructive
+  proof. Phase 14 remains `CONTINUE` and Phase 15 remains unauthorized.
