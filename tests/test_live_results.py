@@ -9,7 +9,6 @@ from anima_ha.live_results import _bounded_payload
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence
 from anima_ha.ui_api import UIIdentity, UIService
 
-
 HOUSEHOLD = UUID("00000000-0000-0000-0000-000000000012")
 PRINCIPAL = UUID("00000000-0000-0000-0000-000000000013")
 
