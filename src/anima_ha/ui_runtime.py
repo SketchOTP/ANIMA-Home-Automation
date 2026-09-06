@@ -312,14 +312,18 @@ class CoreUICommandGateway:
                         )
                         if key in metadata
                     }
-                    | ({
-                        "name": canonical_target.name,
-                        "mapping_status": "MAPPED",
-                        "canonical_target_id": str(canonical_target.canonical_id),
-                    } if mapped else {
-                        "mapping_status": "UNMAPPED",
-                        "canonical_target_id": None,
-                    }),
+                    | (
+                        {
+                            "name": canonical_target.name,
+                            "mapping_status": "MAPPED",
+                            "canonical_target_id": str(canonical_target.canonical_id),
+                        }
+                        if mapped
+                        else {
+                            "mapping_status": "UNMAPPED",
+                            "canonical_target_id": None,
+                        }
+                    ),
                 }
             )
         return {"status": "AVAILABLE", "items": items}
