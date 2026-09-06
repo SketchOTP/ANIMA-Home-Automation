@@ -40,6 +40,10 @@ from anima_ha.calendar import (
     CalendarService,
     PostgresCalendarStore,
 )
+from anima_ha.capability_management import (
+    CAPABILITY_MANAGEMENT_MANIFEST,
+    CapabilityManagementNativePlugin,
+)
 from anima_ha.context import ContextBroker
 from anima_ha.events import EventEnvelope
 from anima_ha.external import ExternalAuditJournalSink, external_plugin
@@ -284,6 +288,15 @@ class CoreUICommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._invoke(identity, "anima.notification-routes", operation, payload)
+
+    def integration_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {"set-enabled": "set_integration_enabled"}
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_INTEGRATION_OPERATION")
+        return self._invoke(identity, CAPABILITY_MANAGEMENT_MANIFEST.plugin_id, name, payload)
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -811,7 +824,20 @@ def build_postgres_core(
     graph = PostgresHouseholdGraph(database_url)
     truth = PostgresRealityStore(database_url)
     secrets = _environment_secrets()
-    plugins = PluginManager(journal=journal, secret_broker=SecretBroker(secrets))
+    from anima_ha.plugins import PostgresPluginStore
+
+    plugin_store = PostgresPluginStore(database_url)
+    plugins = PluginManager(
+        journal=journal, store=plugin_store, secret_broker=SecretBroker(secrets)
+    )
+
+    def register_and_enable(
+        manifest: Any, runtime: Any, *, configuration: dict[str, Any] | None = None
+    ) -> None:
+        persisted = plugin_store.enabled(manifest.plugin_id)
+        plugins.register(manifest, runtime, configuration=configuration)
+        if persisted is not False:
+            plugins.enable(manifest.plugin_id)
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
     notification_route_store = PostgresNotificationRouteStore(database_url)
 
@@ -825,7 +851,7 @@ def build_postgres_core(
             for resource in graph.resources_in_place(place.canonical_id)
         )
 
-    plugins.register(
+    register_and_enable(
         SENSEGUARD_ALERT_MANIFEST,
         NativeRuntime(
             SenseGuardAlertNativePlugin(
@@ -834,18 +860,14 @@ def build_postgres_core(
             )
         ),
     )
-    plugins.enable(SENSEGUARD_ALERT_MANIFEST.plugin_id)
-    plugins.register(
+    register_and_enable(
         NOTIFICATION_ROUTE_MANIFEST,
         NativeRuntime(NotificationRouteNativePlugin(notification_route_store)),
     )
-    plugins.enable(NOTIFICATION_ROUTE_MANIFEST.plugin_id)
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
-    plugins.register(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
-    plugins.register(CALENDAR_MANIFEST, NativeRuntime(CalendarNativePlugin(calendar_service)))
-    plugins.enable(TASK_MANIFEST.plugin_id)
-    plugins.enable(CALENDAR_MANIFEST.plugin_id)
+    register_and_enable(TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)))
+    register_and_enable(CALENDAR_MANIFEST, NativeRuntime(CalendarNativePlugin(calendar_service)))
 
     # These are the qualified Phase 11 portfolio providers. Provider identity
     # is composition-owned; no model argument can select a host or credential.
@@ -863,16 +885,14 @@ def build_postgres_core(
             searxng_host=os.environ.get("ANIMA_SEARXNG_HOST", "searxng"),
             overpass_url=os.environ.get("ANIMA_OVERPASS_URL", "https://overpass-api.de"),
         )
-        plugins.register(manifest, NativeRuntime(plugin_runtime))
-        plugins.enable(plugin_id)
+        register_and_enable(manifest, NativeRuntime(plugin_runtime))
     if secrets.get("NTFY_TOPIC"):
         manifest, plugin_runtime = external_plugin(
             "anima.external.notifications",
             audit_sink=ExternalAuditJournalSink(journal),
             transport=external_transport,
         )
-        plugins.register(manifest, NativeRuntime(plugin_runtime))
-        plugins.enable(manifest.plugin_id)
+        register_and_enable(manifest, NativeRuntime(plugin_runtime))
 
     # HA is commissioned only when the operator has supplied the instance
     # identity, websocket endpoint, and the already-established secret ref.
@@ -904,12 +924,16 @@ def build_postgres_core(
                 disconnect_callback=ha_adapter.disconnected,
             ),
         )
-        plugins.register(
+        register_and_enable(
             manifest,
             NativeRuntime(ha_runtime),
             configuration={"instance_id": str(instance_id), "websocket_url": websocket_url},
         )
-        plugins.enable(manifest.plugin_id)
+
+    register_and_enable(
+        CAPABILITY_MANAGEMENT_MANIFEST,
+        NativeRuntime(CapabilityManagementNativePlugin(plugins)),
+    )
 
     policy_service = PolicyService(
         OpaPolicyClient(opa_url), audit_store=PostgresPolicyStore(database_url)

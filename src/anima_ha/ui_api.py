@@ -411,6 +411,8 @@ class HouseholdReadModel(Protocol):
 
     def capabilities(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
     def notification_routes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
@@ -475,6 +477,10 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def integration_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -522,6 +528,11 @@ class UnavailableCommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         return self._unavailable(f"notification_route.{operation}")
+
+    def integration_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"integration.{operation}")
 
 
 class ConversationIngress(Protocol):
@@ -715,6 +726,10 @@ class DemoHouseholdReadModel:
             },
         ]
 
+    def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return []
@@ -813,6 +828,10 @@ class UnavailableHouseholdReadModel:
                 "detail": "Phase 13",
             },
         ]
+
+    def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
 
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
@@ -1283,6 +1302,14 @@ class PostgresHouseholdReadModel:
         )
         return result
 
+    def integrations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        if self.plugins is None:
+            return []
+        from anima_ha.capability_management import integration_items
+
+        return integration_items(self.plugins)
+
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
         if self.alert_policy_store is None:
             return []
@@ -1434,6 +1461,13 @@ class DemoCommandGateway:
             "operation": f"notification_route.{operation}",
             "result": {"route": payload},
         }
+
+    def integration_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity, payload
+        self.events.publish("capabilities.changed")
+        return {"status": "UNAVAILABLE", "operation": f"integration.{operation}"}
 
 
 class JournalConversationIngress:
@@ -2058,6 +2092,28 @@ def create_app(
     @app.get("/api/v1/capabilities")
     async def capabilities(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.capabilities(current_identity(request))}
+
+    @app.get("/api/v1/integrations")
+    async def integrations(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.integrations(current_identity(request))}
+
+    @app.post("/api/v1/integrations/{operation}")
+    async def mutate_integrations(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"set-enabled"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_INTEGRATION_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.integration_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/api/v1/devices")
     async def devices(request: Request) -> dict[str, Any]:

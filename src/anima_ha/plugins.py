@@ -763,6 +763,18 @@ class PostgresPluginStore:
             )
             return list(cursor.fetchall())
 
+    def enabled(self, plugin_id: str) -> bool | None:
+        """Return the persisted operator choice, if this plugin was seen before."""
+        with (
+            psycopg.connect(
+                self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+            ) as connection,
+            connection.cursor() as cursor,
+        ):
+            cursor.execute("SELECT enabled FROM anima_plugins WHERE plugin_id=%s", (plugin_id,))
+            row = cursor.fetchone()
+        return None if row is None else bool(row["enabled"])
+
 
 class PluginManager:
     def __init__(
