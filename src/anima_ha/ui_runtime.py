@@ -98,6 +98,7 @@ from anima_ha.policy import (
     PostgresPolicyStore,
     RequestOrigin,
 )
+from anima_ha.preferences import PREFERENCES_MANIFEST, PreferencesNativePlugin
 from anima_ha.scenes import SCENES_MANIFEST, PostgresSceneStore, SceneError, SceneNativePlugin
 from anima_ha.senseguard_alerts import (
     SENSEGUARD_ALERT_MANIFEST,
@@ -260,6 +261,7 @@ class CoreUICommandGateway:
                 "anima.senseguard-alerts": "alerts.changed",
                 "anima.provider.home-assistant": "home.invalidated",
                 "anima.scenes": "home.invalidated",
+                "anima.household-preferences": "preferences.changed",
             }.get(plugin_prefix, "capabilities.changed")
             self.events.publish(event_name)
         return _safe_result(result)
@@ -361,6 +363,18 @@ class CoreUICommandGateway:
         if name is None:
             raise UICommandError("UNKNOWN_AUTOMATION_OPERATION")
         return self._invoke(identity, AUTOMATIONS_MANIFEST.plugin_id, name, payload)
+
+    def preference_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if operation not in {"create", "update", "retract"}:
+            raise UICommandError("UNKNOWN_PREFERENCE_OPERATION")
+        return self._invoke(
+            identity,
+            PREFERENCES_MANIFEST.plugin_id,
+            f"{operation}_preference",
+            payload,
+        )
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
         """Apply a preset through the existing verified single-device action path.
@@ -787,6 +801,7 @@ class CoreRuntime:
     backup_coordinator: BackupCoordinator | None = None
     scene_store: PostgresSceneStore | None = None
     automation_store: PostgresAutomationStore | None = None
+    memory_service: Any | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -957,6 +972,9 @@ def build_postgres_core(
 
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
     notification_route_store = PostgresNotificationRouteStore(database_url)
+    from anima_ha.memory import MemoryService
+
+    memory_service = MemoryService(database_url)
     backup_coordinator = BackupCoordinator(
         database_url,
         os.environ.get("ANIMA_BACKUP_DIR", "/var/lib/anima/backups"),
@@ -987,6 +1005,11 @@ def build_postgres_core(
     register_and_enable(
         NOTIFICATION_ROUTE_MANIFEST,
         NativeRuntime(NotificationRouteNativePlugin(notification_route_store)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        PREFERENCES_MANIFEST,
+        NativeRuntime(PreferencesNativePlugin(memory_service)),
         persist_choice=False,
     )
     task_service = TaskService(PostgresTaskStore(database_url), journal)
@@ -1192,6 +1215,7 @@ def build_postgres_core(
         backup_coordinator,
         scene_store,
         automation_store,
+        memory_service,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()

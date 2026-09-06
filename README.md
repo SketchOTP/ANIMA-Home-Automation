@@ -60,6 +60,7 @@ These screenshots are captured from the tested local application with synthetic 
 - ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
 - ANIMA-owned declarative scenes from the Scenes view: compose a bounded preset from commissioned power resources, save it with optimistic versioning, and apply each step through the same verified policy/action path as a direct control.
 - ANIMA-owned bounded automations from the Automations view: trigger on an observed commissioned resource state and request one typed power action through the existing OPA, locking, freshness, idempotency, and Phase 9 verification path. This is a safe first automation slice, not a raw Home Assistant YAML/service editor.
+- Owner-managed explicit household preferences from the Preferences view: record, correct, and forget bounded notes such as overnight alert choices through the canonical governed memory service. Preferences carry explicit-input provenance and can inform context, but never grant authority or alter policy.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Server-owned PostgreSQL backup snapshots and integrity validation are available from the authenticated Backups view. Archive paths, credentials, household scope, and restore authority remain inside Core.
 - The Integrations view exposes safe Home Assistant connection health and a Core-owned reconnect/reconcile action; hosts, tokens, raw configuration, and arbitrary service calls remain outside the UI.
@@ -153,6 +154,7 @@ For the Phase 9 action lifecycle, resource conflicts, idempotency, latest-state 
 For the Phase 10 declarative durable-task model, scheduling, misfire/DST policy, leases, deterministic due events, task safety boundary, dependency decisions, and evidence limits, see [`docs/PHASE-10-DURABLE-TASK-ENGINE.md`](docs/PHASE-10-DURABLE-TASK-ENGINE.md).
 For the Phase 11 external-by-intent adapters, fixed-host egress, trust/audit boundary, provider gates, Calendar/notification write verification, and evidence limits, see [`docs/PHASE-11-EXTERNAL-CAPABILITIES.md`](docs/PHASE-11-EXTERNAL-CAPABILITIES.md).
 For the Phase 12 custom local interface, OAuth/session boundary, semantic API, SSE invalidation, UI privacy posture, and validation limits, see [`docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md`](docs/PHASE-12-CUSTOM-LOCAL-INTERFACE.md).
+For the owner-managed explicit household-preference workflow and its memory/policy boundary, see [`docs/GOAL-HOUSEHOLD-PREFERENCES-021A.md`](docs/GOAL-HOUSEHOLD-PREFERENCES-021A.md).
 
 ## Authority
 

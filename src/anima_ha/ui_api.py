@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOrigin
+from anima_ha.preferences import preference_payloads
 
 UI_VERSION = "0.1.0"
 UI_SESSION_COOKIE = "anima_session"
@@ -429,6 +430,8 @@ class HouseholdReadModel(Protocol):
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
 
+    def preferences(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
 
 def _health_view(
     capabilities: list[dict[str, Any]], *, core_available: bool = True
@@ -504,6 +507,10 @@ class UICommandGateway(Protocol):
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]: ...
 
     def automation_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def preference_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
@@ -583,6 +590,11 @@ class UnavailableCommandGateway:
     ) -> dict[str, Any]:
         return self._unavailable(f"automation.{operation}")
 
+    def preference_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"preference.{operation}")
+
 
 class ConversationIngress(Protocol):
     def submit(self, identity: UIIdentity, text: str) -> dict[str, Any]: ...
@@ -607,6 +619,7 @@ class UIEventBroadcaster:
             "activity.changed",
             "conversation.completed",
             "capabilities.changed",
+            "preferences.changed",
         }:
             raise ValueError("unsafe UI event")
         for queue in tuple(self._subscribers):
@@ -815,6 +828,10 @@ class DemoHouseholdReadModel:
         self._settings = validate_ui_preferences(value)
         return dict(self._settings)
 
+    def preferences(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
 
 class UnavailableHouseholdReadModel:
     """Explicit degraded view used when production Core dependencies are absent."""
@@ -933,6 +950,10 @@ class UnavailableHouseholdReadModel:
         del identity, value
         raise UICommandError("CORE_PREFERENCES_UNAVAILABLE")
 
+    def preferences(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
 
 class PostgresHouseholdReadModel:
     """Normalized read façade over existing Core persistence tables."""
@@ -950,6 +971,7 @@ class PostgresHouseholdReadModel:
         backup_coordinator: Any | None = None,
         scene_store: Any | None = None,
         automation_store: Any | None = None,
+        memory_service: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -961,6 +983,7 @@ class PostgresHouseholdReadModel:
         self.backup_coordinator = backup_coordinator
         self.scene_store = scene_store
         self.automation_store = automation_store
+        self.memory_service = memory_service
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1524,6 +1547,11 @@ class PostgresHouseholdReadModel:
             connection.commit()
         return preferences
 
+    def preferences(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.memory_service is None:
+            return []
+        return preference_payloads(self.memory_service, identity.household_id)
+
 
 class DemoCommandGateway:
     def __init__(self, read_model: DemoHouseholdReadModel, events: UIEventBroadcaster) -> None:
@@ -1617,6 +1645,17 @@ class DemoCommandGateway:
         del identity
         self.events.publish("home.invalidated")
         return {"status": "UNAVAILABLE", "operation": "scene.apply", "scene_id": scene_id}
+
+    def preference_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        self.events.publish("preferences.changed")
+        return {
+            "status": "SUCCEEDED",
+            "operation": f"preference.{operation}",
+            "result": {"preference": payload},
+        }
 
 
 class JournalConversationIngress:
@@ -1968,6 +2007,7 @@ def create_app(
                 backup_coordinator=core_runtime.backup_coordinator,
                 scene_store=core_runtime.scene_store,
                 automation_store=core_runtime.automation_store,
+                memory_service=core_runtime.memory_service,
             )
         svc = UIService(
             config=config,
@@ -2190,6 +2230,30 @@ def create_app(
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_UI_PREFERENCES") from exc
+
+    @app.get("/api/v1/preferences")
+    async def preferences(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.preferences(current_identity(request))}
+
+    @app.post("/api/v1/preferences/{operation}")
+    async def mutate_preference(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"create", "update", "retract"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_PREFERENCE_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.preference_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail="INVALID_PREFERENCE") from exc
 
     @app.get("/api/v1/scenes")
     async def scenes(request: Request) -> dict[str, Any]:
