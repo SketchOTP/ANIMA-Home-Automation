@@ -1887,11 +1887,7 @@ class HomeAssistantOAuth:
 
     def authorization_url(self, state: str) -> str:
         browser_base_url = self.config.ha_browser_url or self.config.ha_base_url
-        if (
-            not browser_base_url
-            or not self.config.ha_client_id
-            or not self.config.ha_redirect_uri
-        ):
+        if not browser_base_url or not self.config.ha_client_id or not self.config.ha_redirect_uri:
             raise UIAuthError("Home Assistant OAuth is not configured")
         from urllib.parse import urlencode
 
