@@ -58,6 +58,19 @@ authorized by the goal-wide completion audit.
   `main == origin/main`; exact-head hosted CI `34019836787` - PASS. This
   forward-only governance commit changed records only.
 
+## Notification-route presentation correction - 2026-09-06
+
+- Implementation/final current head: `f808d9479735a957d47e36779ad04a5c3bc3d4b1`;
+  `main == origin/main`; clean tree.
+- Exact-head hosted CI `34020850164` passed. Reviewable artifact:
+  `9985597571` (`phase12-h5-evidence-f808d9479735a957d47e36779ad04a5c3bc3d4b1`).
+- Corrected the bounded Notifications view to translate the server-safe
+  `server_configured` reference into the user-facing “Server configured” label.
+  The machine-safe value and all credential boundaries remain unchanged.
+- This is the current implementation publication; route management remains
+  pending Architect acceptance, automatic alert delivery is not claimed, and
+  Phase 15 remains unauthorized.
+
 ## Active directive
 
 ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A — expose the existing typed

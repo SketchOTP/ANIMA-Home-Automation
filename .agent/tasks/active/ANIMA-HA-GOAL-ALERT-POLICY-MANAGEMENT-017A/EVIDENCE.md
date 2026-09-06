@@ -94,3 +94,15 @@ unauthorized.
 Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`.
 Exact-head hosted CI: `34019836787` — PASS. This forward-only governance
 follow-up changed records only.
+
+## Final implementation correction
+
+Current implementation head: `f808d9479735a957d47e36779ad04a5c3bc3d4b1`.
+Exact-head hosted CI: `34020850164` — PASS.
+Reviewable artifact: `9985597571`.
+
+The Notifications view now presents the server-safe `server_configured`
+reference as “Server configured” without exposing a destination, topic, token,
+URL, or credential. This correction leaves the provider boundary unchanged.
+The route-management increment remains pending Architect acceptance; automatic
+delivery and human receipt are not claimed.

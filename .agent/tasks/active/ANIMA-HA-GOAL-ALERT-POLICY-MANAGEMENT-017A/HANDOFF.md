@@ -50,3 +50,9 @@ Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`.
 Exact-head hosted CI: `34019836787` — PASS. The follow-up was governance-only;
 runtime behavior remains at implementation head
 `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`.
+
+Current implementation publication: `f808d9479735a957d47e36779ad04a5c3bc3d4b1`.
+Exact-head hosted CI: `34020850164` — PASS. Artifact: `9985597571`.
+The presentation correction maps `server_configured` to “Server configured”
+in the Notifications view. Route management remains pending Architect
+acceptance; automatic delivery, human receipt, and Phase 15 are not claimed.

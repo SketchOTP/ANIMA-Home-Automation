@@ -331,3 +331,12 @@ Owner-facing notification-route management follow-on (2026-09-06):
   Architect acceptance.
 - Governance reconciliation head `549630a412cd8fc4fc69a608d67aeb31596c8fdf`
   passed exact-head hosted CI `34019836787`; no runtime behavior changed.
+
+Notification-route presentation correction (2026-09-06):
+
+- `ui/src/main.tsx` maps the server-safe `server_configured` destination value
+  to the user-facing “Server configured” label while preserving the fixed
+  server-owned boundary.
+- Head `f808d9479735a957d47e36779ad04a5c3bc3d4b1` passed exact-head hosted CI
+  `34020850164`; artifact `9985597571` was published. The active increment
+  remains pending Architect acceptance.

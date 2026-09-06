@@ -1070,3 +1070,16 @@ decision.
 - Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`;
   exact-head hosted CI `34019836787` — PASS. Governance-only follow-up; no
   runtime behavior changed.
+
+## Notification-route presentation correction — current publication
+
+- Date: 2026-09-06
+- Implementation/current head: `f808d9479735a957d47e36779ad04a5c3bc3d4b1`
+- Exact-head hosted CI: `34020850164` — PASS
+- Artifact: `9985597571`
+- Corrected the UI presentation of the server-owned `server_configured`
+  destination reference to “Server configured”; no authority, secret, or
+  runtime contract changed.
+- Route management remains `COMPLETE - PENDING ARCHITECT ACCEPTANCE`; automatic
+  alert delivery and human receipt are not claimed. Phase 15 remains
+  unauthorized.
