@@ -189,7 +189,10 @@ class BackupCoordinator:
                 )
             except (KeyError, TypeError, ValueError, OSError, json.JSONDecodeError):
                 continue
-            if record.household_id == household_id and (self.backup_dir / f"{record.backup_id}.dump").is_file():
+            if (
+                record.household_id == household_id
+                and (self.backup_dir / f"{record.backup_id}.dump").is_file()
+            ):
                 records.append(record)
         return records
 
@@ -230,18 +233,26 @@ class BackupNativePlugin:
     def list_tools(self) -> list[dict[str, Any]]:
         return [dict(item) for item in BACKUP_MANIFEST.tools]
 
-    def _invoke_scoped(
-        self, name: str, arguments: dict[str, Any], household_id: UUID
-    ) -> Any:
+    def _invoke_scoped(self, name: str, arguments: dict[str, Any], household_id: UUID) -> Any:
         if name == "list_backups":
             return {
                 "status": "SUCCEEDED",
-                "items": [item.to_payload() for item in self.coordinator.list_for_household(household_id)],
+                "items": [
+                    item.to_payload() for item in self.coordinator.list_for_household(household_id)
+                ],
             }
         if name == "create_backup":
-            return {"status": "SUCCEEDED", "backup": self.coordinator.create(household_id).to_payload()}
+            return {
+                "status": "SUCCEEDED",
+                "backup": self.coordinator.create(household_id).to_payload(),
+            }
         if name == "inspect_backup":
-            return {"status": "SUCCEEDED", "backup": self.coordinator.inspect(household_id, str(arguments["backup_id"])).to_payload()}
+            return {
+                "status": "SUCCEEDED",
+                "backup": self.coordinator.inspect(
+                    household_id, str(arguments["backup_id"])
+                ).to_payload(),
+            }
         raise BackupError("unknown backup operation")
 
     def invoke_for_household(
