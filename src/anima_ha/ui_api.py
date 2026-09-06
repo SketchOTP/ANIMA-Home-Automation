@@ -2230,7 +2230,7 @@ def create_app(
     app = FastAPI(title="ANIMA local interface", version=UI_VERSION, docs_url=None, redoc_url=None)
     app.state.ui_service = svc
     if svc.sentry_results is not None:
-        app.add_event_handler("shutdown", svc.sentry_results.close)
+        app.router.add_event_handler("shutdown", svc.sentry_results.close)
 
     @app.middleware("http")
     async def security_headers(
