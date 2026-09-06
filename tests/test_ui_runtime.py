@@ -36,7 +36,11 @@ from anima_ha.tasks import (
     TaskType,
 )
 from anima_ha.ui_api import UIIdentity
-from anima_ha.ui_runtime import CoreConversationPipeline, CoreUICommandGateway
+from anima_ha.ui_runtime import (
+    CoreConversationPipeline,
+    CoreUICommandGateway,
+    _safe_confirmation_result,
+)
 
 
 class AllowEvaluator:
@@ -369,3 +373,16 @@ def test_ui_control_projects_unknown_post_dispatch_state() -> None:
     result = gateway.control(_ui_control_identity(), str(uuid4()), {"desired_on": False})
 
     assert result["status"] == "UNKNOWN_RESULT"
+
+
+def test_ui_confirmation_rejection_is_distinct_from_policy_denial() -> None:
+    result = _safe_confirmation_result(
+        {"status": "POLICY_DENIED", "operation": "anima.test.set_power"},
+        decision="REJECT",
+        approval_status="REJECTED",
+        action_status="POLICY_DENIED",
+    )
+
+    assert result["status"] == "REJECTED"
+    assert result["approval_status"] == "REJECTED"
+    assert result["action_status"] == "POLICY_DENIED"

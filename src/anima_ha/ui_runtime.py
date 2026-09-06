@@ -145,6 +145,25 @@ def _safe_action_result(execution: Any, operation: str) -> dict[str, Any]:
     return response
 
 
+def _safe_confirmation_result(
+    result: dict[str, Any], *, decision: str, approval_status: str, action_status: str
+) -> dict[str, Any]:
+    """Keep an authenticated rejection distinct from a policy decision.
+
+    The action store retains ``POLICY_DENIED`` as the terminal action status
+    for a rejected confirmation because no provider dispatch was authorized.
+    The UI also needs to tell the user what happened: the principal rejected
+    the confirmation.  Preserve both facts without exposing policy internals.
+    """
+    result = dict(result)
+    result["approval_decision"] = decision
+    result["approval_status"] = approval_status
+    result["action_status"] = action_status
+    if decision == "REJECT" and approval_status == "REJECTED":
+        result["status"] = "REJECTED"
+    return result
+
+
 @dataclass(slots=True)
 class CoreUICommandGateway:
     """Route UI mutations through the existing PluginManager and coordinator."""
@@ -391,6 +410,13 @@ class CoreUICommandGateway:
             if execution is None:
                 raise UICommandError("APPROVAL_NOT_ACTIONABLE")
             result = _safe_action_result(execution, pending.tool_id)
+        action = self.action_executor.store.get(pending.action_id)
+        result = _safe_confirmation_result(
+            result,
+            decision=choice,
+            approval_status="REJECTED" if choice == "REJECT" else "APPROVED",
+            action_status=action.status.value if action is not None else "UNKNOWN_RESULT",
+        )
         if self.events:
             self.events.publish("home.invalidated")
         return result
