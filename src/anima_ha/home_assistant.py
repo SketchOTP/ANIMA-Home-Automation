@@ -1049,9 +1049,10 @@ class HomeAssistantAdapter:
             if item.get("external_object_kind") != "device":
                 continue
             external_id = str(item.get("external_id", ""))
-            if external_id and inventory_handle(
-                self.config.instance_id, "device", external_id
-            ) == handle:
+            if (
+                external_id
+                and inventory_handle(self.config.instance_id, "device", external_id) == handle
+            ):
                 return external_id
         return None
 
