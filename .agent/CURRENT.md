@@ -25,6 +25,15 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+The current owner-facing publication is the alert-inbox pagination increment:
+the Alerts view now exposes the existing stable cursor so older matched
+SenseGuard events can be loaded without a fixed-window omission. Implementation
+head `b924cfe727d432cafd225c2c62164875c32694e7` is pushed and exact-head
+hosted CI `34043747580` passed. Artifact `9992645879` has digest
+`sha256:0d9942458eebe1f4e0a89aac3ffa1e7d3025a791438109df59d98e792eef06f2`.
+This remains complete pending independent Architect acceptance; Phase 15 is
+unauthorized and unimplemented.
+
 ## Latest owner-facing alert inbox increment - 2026-09-06
 
 - The Alerts view now includes a bounded Alert inbox backed by the existing

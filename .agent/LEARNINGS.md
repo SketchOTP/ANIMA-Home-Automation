@@ -323,3 +323,13 @@ Any future history rewrite proposal, remote migration, or change to the reposito
   scope; native Pi 5 remains an explicit external hardware gate. After this
   gate, the permanent Goal—not the historical phase sequence—selects the
   next owner-usable increment.
+
+### Goal-wide alert inbox pagination - 2026-09-06
+
+- A cursor-paginated backend is not owner-usable until the browser exposes a
+  continuation control. Keep the cursor opaque, append only server-ordered
+  pages, and guard the load operation so repeated clicks cannot duplicate the
+  current page. Refreshing through SSE should still reset to the newest page.
+- Exact-head hosted CI `34043747580` passed on `b924cfe...`; this is an
+  implementation checkpoint pending Architect acceptance. Phase 15 remains
+  unauthorized.

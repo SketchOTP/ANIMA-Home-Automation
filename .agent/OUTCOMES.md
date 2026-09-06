@@ -1115,3 +1115,15 @@ decision.
   claiming human receipt or creating a second alert store.
 - Focused API tests, Ruff, strict mypy, TypeScript, Vite, and the existing
   hosted validation suite passed. Phase 15 remains unauthorized.
+
+## Alert inbox historical navigation - 2026-09-06
+
+- Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`.
+- Head `b924cfe727d432cafd225c2c62164875c32694e7` passed exact-head hosted CI
+  `34043747580`. Artifact `9992645879`, digest
+  `sha256:0d9942458eebe1f4e0a89aac3ffa1e7d3025a791438109df59d98e792eef06f2`.
+- The owner-facing Alerts view now follows the existing stable cursor and
+  provides a guarded `Load older alerts` control. Pages append in server order,
+  preserve the sanitized Event Journal projection, and cannot issue concurrent
+  duplicate page loads. No new persistence, provider, acknowledgment, or
+  human-receipt claim was added. Phase 15 remains unauthorized.
