@@ -284,9 +284,7 @@ def core_restart(results: list[dict[str, Any]]) -> None:
         decision="APPROVE",
         tool=request.tool,
         policy_service=PolicyService(Allow()),
-        refresher=lambda resources: TruthSnapshot(
-            {"power": {"state": "KNOWN", "value": "off", "version": "1"}}
-        ),
+        refresher=lambda resources: next(refresh_states),
     )
     assert resumed is not None and resumed.record.status == ActionStatus.SUCCEEDED, (
         f"restart approval terminal status={resumed.record.status.value if resumed else None} "
