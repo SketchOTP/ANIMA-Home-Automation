@@ -4,23 +4,31 @@ Last updated: 2026-09-06
 
 ## Current stage
 
-PHASE 14 RESILIENCE, REPLAY, BACKUP AND RECOVERY - 016A
+GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
+
+## Latest Architect Gate — Phase 14 accepted - 2026-09-06
+
+- **Disposition:** `ACCEPTED — ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`.
+- **Final governed head:** `1f13b4421cff819d13163eb8580d16191fd1c40a`; `main == origin/main`; clean tree.
+- **Exact-head hosted CI:** `34013571702` — PASS.
+- **Reviewable artifact:** `9983326562`; digest `sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+- The final destructive closure passed all ten mapped families, 40 explicit scenario mappings, real PostgreSQL/OPA/isolated-HA/process/plugin/SENTRY evidence, backup/restore, clean-store replay, and ARM64 software qualification. Native Pi 5 remains an explicit external-resource gate.
+- Phase 14 is complete and its packet is reconciled into completed history. Phase 15 remains unauthorized and unimplemented.
+- The next goal-directed work is a bounded owner-facing management-plane increment; no new resilience family is opened by this gate.
 
 ## Current objective
 
-Prove that the accepted ANIMA household-authority platform preserves authority,
-verification, privacy, deterministic recovery, and exactly-once side-effect
-boundaries across failure, duplication, concurrency, outage, replay, and
-backup/restore. Phases 0-13 are Architect accepted. Phase 15 remains
-unauthorized.
+Close the permanent product goal by making the supported household management
+plane usable through ANIMA without the Home Assistant frontend. Phases 0-14
+are Architect accepted; Phase 15 remains unauthorized until separately
+authorized by the goal-wide completion audit.
 
 ## Active directive
 
-ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A - build one canonical
-machine-readable destructive-scenario ledger, exercise existing lifecycle,
-action, task, calendar, HA, plugin, OPA, SENTRY, replay, restart, and restore
-boundaries, and report unrun infrastructure honestly. No new broker, database,
-workflow engine, provider, or household feature is authorized.
+GOAL-WIDE MANAGEMENT-PLANE CONVERGENCE — select the next bounded owner-facing
+increment from the current usability/support-matrix audit. Preserve the
+accepted authority, privacy, policy, verification, SENTRY, and Home Assistant
+abstraction boundaries. Phase 15 household demonstration is not authorized.
 
 ## Latest Phase 14 evidence ledger checkpoint
 
@@ -44,7 +52,8 @@ Phase 13 is Architect accepted at ANIMA
 f0456d24fa09ed6873e882c89a9dce759f73a619 with exact-head CI 33938497635.
 The accepted isolated SENTRY launcher compatibility patch is
 00aa9ac3a35b7b012581160b961e01a9480bbbdf with CI 33939908542. Phase 14 is
-active and not self-accepted. Phase 15 is unauthorized and unimplemented.
+Architect accepted at the gate above. Phase 15 is unauthorized and
+unimplemented; current work is goal-wide product convergence.
 
 ## Phase 14 initial execution - 2026-09-05
 

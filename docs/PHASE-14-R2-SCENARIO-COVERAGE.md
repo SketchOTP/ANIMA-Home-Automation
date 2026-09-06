@@ -4,7 +4,7 @@ This audit maps the explicit R2 acceptance scenarios to the final bounded
 closure evidence at `6a61e38276a086535fa933b38d5b69cabdb0a167`, hosted CI
 `34012962667`, artifact `9983142603`, digest
 `sha256:d6cb85b3234f1cb70ac2132bff6dcdc5baf8af05fa14e74d9621ed8e8348970e`.
-It is an evidence reconciliation record, not a Phase 14 acceptance claim.
+It is a retained evidence reconciliation record for the accepted Phase 14 gate.
 `VERIFIED` includes a grouped evidence mapping only when the cited output
 contains the required observable invariant. `UNKNOWN` means the current
 artifact does not prove the required scenario at the requested boundary; it
@@ -71,7 +71,7 @@ The explicit audit is now 40 `VERIFIED` and 0 `UNKNOWN` for the mapped R2
 scenarios. The prior provisional/negative records remain historical evidence;
 they are not deleted or rewritten.
 
-The implementation head is ready for the Architect Gate, but this record does
-not self-accept Phase 14. Deterministic contract fixtures remain excluded from
-destructive proof, native Pi 5 remains an external hardware gate, and Phase 15
-remains unauthorized.
+The implementation head was ready for the Architect Gate and was accepted at
+the governed checkpoint recorded above. Deterministic contract fixtures remain
+excluded from destructive proof, native Pi 5 remains an external hardware gate,
+and Phase 15 remains unauthorized.

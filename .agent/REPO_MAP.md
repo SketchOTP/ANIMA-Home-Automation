@@ -290,3 +290,12 @@ Final bounded closure evidence (2026-09-06):
 - Final mapped R2 audit is `40 VERIFIED / 0 UNKNOWN`; native Pi 5 remains an
   external hardware gate. Phase 14 is pending Architect acceptance and Phase
   15 remains unauthorized.
+
+Phase 14 acceptance and current product direction (2026-09-06):
+
+- Governed head `1f13b4421cff819d13163eb8580d16191fd1c40a` passed exact-head CI
+  `34013571702`; artifact `9983326562` is the accepted closure evidence.
+- The Phase 14 packet is under `.agent/tasks/completed/`. Current work is a
+  goal-wide owner-facing management-plane increment, beginning with typed
+  SenseGuard alert-policy management through ANIMA rather than the Home
+  Assistant frontend.

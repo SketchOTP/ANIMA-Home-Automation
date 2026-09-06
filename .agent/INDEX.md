@@ -10,29 +10,34 @@
 
 ## Current pointers
 
-- Current stage: PHASE 14 RESILIENCE, REPLAY, BACKUP AND RECOVERY - 016A; ACTIVE
-- Active directive: ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A
-- Active task packet: .agent/tasks/active/ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A/
-- Last accepted outcome: Phase 13 SENTRY-ready household authority platform,
+- Current stage: GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
+- Active directive: goal-wide owner-facing management-plane convergence
+- Active task packet: to be created for the selected bounded product increment
+- Last accepted outcome: Phase 14 resilience/recovery completion,
+  `ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`, final governed head
+  `1f13b4421cff819d13163eb8580d16191fd1c40a`, exact CI `34013571702`;
+  native Pi 5 remains an external-resource gate. Phase 13 SENTRY-ready
+  household authority platform,
   ANIMA f0456d24fa09ed6873e882c89a9dce759f73a619, CI 33938497635; isolated
   SENTRY launcher compatibility patch 00aa9ac3a35b7b012581160b961e01a9480bbbdf,
   CI 33939908542
-- Last completed outcome: Phase 13 SENTRY-ready platform; Phase 14 is the only
-  active ANIMA scope and Phase 15 remains unauthorized.
-- Last state sync: 2026-09-06; Phases 0-13 are Architect accepted. Phase 14
-  has a complete bounded implementation/evidence candidate pending Architect
-  acceptance; Phase 15 remains unauthorized.
+- Last completed outcome: Phase 14 resilience/recovery; the next scope is
+  selected from the permanent Goal usability audit. Phase 15 remains
+  unauthorized.
+- Last state sync: 2026-09-06; Phases 0-14 are Architect accepted. The
+  goal-wide management-plane increment is active; Phase 15 remains
+  unauthorized.
 
-## Phase 14 initial state
+## Phase 14 historical initial state
 
 - Starting ANIMA head f0456d24fa09ed6873e882c89a9dce759f73a619 matched origin/main
   and was clean. Existing pytest baseline passed 214 tests.
 - The Phase 13 packet was moved into completed history without deleting its
   negative/resource-gate evidence.
-- The Phase 14 packet is the only current implementation pointer. The
-  canonical scenario model and deterministic replay/restore safety metadata
-  are complete for the bounded closure contract; final Phase 14 acceptance is
-  not claimed.
+- The Phase 14 packet was the active implementation pointer during resilience
+  work. Its canonical scenario model, destructive qualification, replay, and
+  restore evidence were accepted at the current gate above and the packet is
+  now completed history.
 
 ## Mandatory kernel
 

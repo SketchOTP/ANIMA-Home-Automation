@@ -427,3 +427,12 @@ Native Pi 5 remains `EXTERNAL_RESOURCE_GATE_NATIVE_PI5`.
 
 The active task remains under `.agent/tasks/active/` pending Architect
 acceptance. Phase 15 was not implemented and remains unauthorized.
+
+## Final Architect Gate — 2026-09-06
+
+`ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE` is **ACCEPTED** at final governed
+head `1f13b4421cff819d13163eb8580d16191fd1c40a`, with exact-head CI
+`34013571702` PASS and artifact `9983326562` digest
+`sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+The packet is complete and retained for historical evidence. Phase 15 remains
+unauthorized and unimplemented.

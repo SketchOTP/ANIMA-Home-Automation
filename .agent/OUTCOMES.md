@@ -1,5 +1,17 @@
 # Outcome Ledger
 
+## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 — Phase 14 accepted
+
+- Date: 2026-09-06
+- Verdict: `ACCEPTED — ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`
+- Final governed head: `1f13b4421cff819d13163eb8580d16191fd1c40a`
+- Exact-head CI: `34013571702` — PASS
+- Artifact: `9983326562`; digest `sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`
+- Evidence: all ten mapped destructive families and 40 explicit scenario mappings verified; final approval/Core/OPA/HA residual bundle passed; clean-store replay matched behavior and durable fingerprints across two fresh runs and detected intentional divergence; 250-task/250-calendar traversal passed; ARM64 software qualification passed.
+- Native Pi 5 remains an external-resource gate. Phase 15 was not implemented.
+
+---
+
 ---
 
 ## ANIMA-HA-P9-EXECUTION-HARDENING-011H — Phase 9 execution hardening

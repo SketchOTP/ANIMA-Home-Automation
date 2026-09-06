@@ -1,13 +1,13 @@
 # Phase 14 qualification matrix
 
 This is the current evidence map for `ANIMA-HA-P14-RESILIENCE-REPLAY-BACKUP-RECOVERY-016A`.
-It is a consolidation record, not an acceptance declaration. `VERIFIED` means the
+Phase 14 was accepted at the gate recorded below. `VERIFIED` means the
 named software-controlled slice ran in hosted CI at the cited exact head;
 `PARTIAL` means important slices passed but the family still has open required
 coverage; `OPEN` means the required evidence is not yet complete. Phase 15 is
 not authorized.
 
-## Final bounded closure candidate
+## Final bounded closure and Architect acceptance
 
 The final implementation head is
 `6a61e38276a086535fa933b38d5b69cabdb0a167`, matching `origin/main` before
@@ -20,8 +20,12 @@ browser validation, safety scan, and artifact publication. The explicit R2
 scenario audit is now 40 `VERIFIED` / 0 `UNKNOWN`; the four formerly open
 residuals are documented in `docs/PHASE-14-R2-SCENARIO-COVERAGE.md`.
 
-This is the final bounded Phase 14 implementation/evidence candidate and is
-pending Architect acceptance. Phase 15 remains unauthorized.
+This was the final bounded Phase 14 implementation/evidence candidate. It was
+accepted by the Architect at governed head
+`1f13b4421cff819d13163eb8580d16191fd1c40a`, exact-head CI `34013571702`,
+artifact `9983326562`, digest
+`sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+Phase 15 remains unauthorized.
 
 ## Current exact evidence
 
@@ -65,7 +69,8 @@ as a machine-readable difference. The final artifact is ready for the
 Architect Gate.
 
 No item in this matrix authorizes a new provider, unrestricted HA administration,
-embedded intelligence fallback, or Phase 15 behavior.
+embedded intelligence fallback, or Phase 15 behavior. Phase 14 is complete;
+the next scope is the goal-wide owner-facing product increment.
 
 ## Explicit R2 scenario audit
 

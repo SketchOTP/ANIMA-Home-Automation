@@ -2,6 +2,15 @@
 
 Use this ledger for major architecture decisions, strategic reversals, project milestones, important failures, governance migrations, and other events a future Architect/Coder must understand.
 
+## ANIMA-HA-P14-FINAL-DESTRUCTIVE-CLOSURE-016A-R2 — Phase 14 accepted
+
+- Date: 2026-09-06
+- Decision: Accepted `ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE` after the final bounded destructive closure and exact-head hosted validation.
+- Final governed head: `1f13b4421cff819d13163eb8580d16191fd1c40a`; CI `34013571702` PASS; artifact `9983326562`; digest `sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+- All ten mapped families and 40 explicit scenarios were verified. Native Pi 5 remains an external gate. The next work must be selected from the permanent Goal usability audit; Phase 15 remains unauthorized.
+
+---
+
 ---
 
 ## ANIMA-HA-P0-RUNTIME-BASELINE-002 — Phase 0 runtime baseline

@@ -313,3 +313,13 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - The final bounded closure head `6a61e382...` passed exact hosted CI
   `34012962667`; the mapped R2 audit is `40 VERIFIED / 0 UNKNOWN` and the
   only remaining external gate is native Pi 5 hardware.
+### Phase 14 acceptance and goal convergence
+
+- The final bounded Phase 14 closure was accepted only after exact-head hosted
+  CI `34013571702` passed on `1f13b4421cff819d13163eb8580d16191fd1c40a`, with
+  artifact `9983326562` and digest
+  `sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+- The retained destructive matrix is complete for its software-controllable
+  scope; native Pi 5 remains an explicit external hardware gate. After this
+  gate, the permanent Goal—not the historical phase sequence—selects the
+  next owner-usable increment.

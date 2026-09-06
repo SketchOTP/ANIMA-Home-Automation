@@ -1,6 +1,6 @@
 # Evidence - Phase 14
 
-Status: COMPLETE - PENDING ARCHITECT ACCEPTANCE
+Status: COMPLETE - ARCHITECT ACCEPTED; RETAINED IN COMPLETED HISTORY
 
 Starting ANIMA SHA:
 f0456d24fa09ed6873e882c89a9dce759f73a619
@@ -689,3 +689,15 @@ unauthorized and unimplemented.
 - Native Pi 5 remains `EXTERNAL_RESOURCE_GATE_NATIVE_PI5`; Phase 15 remains
   unauthorized and unimplemented. Disposition: `COMPLETE - PENDING ARCHITECT
   ACCEPTANCE`.
+
+## Architect Gate — 2026-09-06
+
+- **Disposition:** `ACCEPTED — ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`.
+- Final governed head `1f13b4421cff819d13163eb8580d16191fd1c40a` passed exact-head
+  hosted CI `34013571702`; artifact `9983326562`, digest
+  `sha256:37c999af7169e64dd728ccc24337e387a176741419dca4c9b0fdb703728766a3`.
+- The final ledger verified all ten mapped destructive families and 40 explicit
+  scenario mappings. The four final residual closure scenarios all passed.
+- Two fresh clean-store PostgreSQL replays matched behavior and durable
+  fingerprints and detected the intentional divergence. The native Pi 5 gate
+  remains external; no Phase 15 behavior was implemented.
