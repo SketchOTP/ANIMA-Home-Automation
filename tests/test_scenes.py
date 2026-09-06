@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -9,7 +9,7 @@ from anima_ha.policy import RequestOrigin
 from anima_ha.scenes import InMemorySceneStore, SceneConflict, SceneError, SceneNativePlugin
 
 
-def _context(household_id):
+def _context(household_id: UUID) -> InvocationContext:
     return InvocationContext(
         household_id=household_id,
         principal_id=uuid4(),

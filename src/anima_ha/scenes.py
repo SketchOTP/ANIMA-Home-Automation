@@ -308,20 +308,21 @@ SCENE_STEP_SCHEMA = {
     "required": ["resource_id", "desired_on"],
     "additionalProperties": False,
 }
+SCENE_PROPERTIES: dict[str, Any] = {
+    "scene_id": {"type": "string", "format": "uuid"},
+    "expected_version": {"type": "integer", "minimum": 1},
+    "name": {"type": "string", "minLength": 1, "maxLength": MAX_SCENE_NAME},
+    "steps": {
+        "type": "array",
+        "items": SCENE_STEP_SCHEMA,
+        "minItems": 1,
+        "maxItems": MAX_SCENE_STEPS,
+    },
+    "enabled": {"type": "boolean"},
+}
 SCENE_SCHEMA = {
     "type": "object",
-    "properties": {
-        "scene_id": {"type": "string", "format": "uuid"},
-        "expected_version": {"type": "integer", "minimum": 1},
-        "name": {"type": "string", "minLength": 1, "maxLength": MAX_SCENE_NAME},
-        "steps": {
-            "type": "array",
-            "items": SCENE_STEP_SCHEMA,
-            "minItems": 1,
-            "maxItems": MAX_SCENE_STEPS,
-        },
-        "enabled": {"type": "boolean"},
-    },
+    "properties": SCENE_PROPERTIES,
     "additionalProperties": False,
 }
 
@@ -348,8 +349,8 @@ SCENES_MANIFEST = PluginManifest(
             {
                 "type": "object",
                 "properties": {
-                    "name": SCENE_SCHEMA["properties"]["name"],
-                    "steps": SCENE_SCHEMA["properties"]["steps"],
+                    "name": SCENE_PROPERTIES["name"],
+                    "steps": SCENE_PROPERTIES["steps"],
                 },
                 "required": ["name", "steps"],
                 "additionalProperties": False,
