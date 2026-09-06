@@ -838,6 +838,7 @@ def build_postgres_core(
         plugins.register(manifest, runtime, configuration=configuration)
         if persisted is not False:
             plugins.enable(manifest.plugin_id)
+
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
     notification_route_store = PostgresNotificationRouteStore(database_url)
 

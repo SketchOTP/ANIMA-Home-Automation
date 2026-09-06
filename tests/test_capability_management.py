@@ -61,9 +61,7 @@ def test_management_lists_only_registered_public_optional_integrations() -> None
     manager = PluginManager()
     manager.register(optional_manifest(), NativeRuntime(StatusPlugin()))
     management = CapabilityManagementNativePlugin(manager)
-    assert [item["plugin_id"] for item in management.integrations()] == [
-        "anima.external.weather"
-    ]
+    assert [item["plugin_id"] for item in management.integrations()] == ["anima.external.weather"]
     assert all("configuration" not in item for item in management.integrations())
 
 
@@ -98,4 +96,3 @@ def test_management_enable_disable_uses_core_policy_and_server_owned_target() ->
     )
     assert enabled.outcome.value == "SUCCESS"
     assert enabled.result["integration"]["state"] == "HEALTHY"
-
