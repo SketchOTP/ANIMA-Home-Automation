@@ -11,8 +11,8 @@
 ## Current pointers
 
 - Current stage: GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
-- Active directive: ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A
-- Active task packet: `.agent/tasks/active/ANIMA-HA-GOAL-ALERT-POLICY-MANAGEMENT-017A/`
+- Active directive: ANIMA-HA-GOAL-SENTRY-TEXT-025A
+- Active task packet: `.agent/tasks/active/ANIMA-HA-GOAL-SENTRY-TEXT-025A/`
 - Last accepted outcome: Phase 14 resilience/recovery completion,
   `ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`, final governed head
   `1f13b4421cff819d13163eb8580d16191fd1c40a`, exact CI `34013571702`;

@@ -31,6 +31,7 @@ from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
+from anima_ha.live_results import PostgresSentryLiveResultBus
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOrigin
 from anima_ha.preferences import preference_payloads
 
@@ -1961,8 +1962,10 @@ class UIService:
         core_runtime: Any | None = None,
         identity_resolver: CommissionedIdentityResolver | None = None,
         ha_user_map: dict[str, tuple[UUID, UUID]] | None = None,
+        sentry_results: PostgresSentryLiveResultBus | None = None,
     ) -> None:
         self.config = config or UIConfig()
+        self.core_runtime = core_runtime
         self.sessions = sessions or InMemorySessionStore()
         self.events = UIEventBroadcaster()
         self.read_model = read_model or (
@@ -1971,6 +1974,7 @@ class UIService:
             else UnavailableHouseholdReadModel()
         )
         self.identity_resolver = identity_resolver
+        self.sentry_results = sentry_results
         if core_runtime is not None:
             self.commands = commands or core_runtime.commands(self.events)
             self.conversation = conversation or JournalConversationIngress(
@@ -1991,6 +1995,53 @@ class UIService:
         )
         self.oauth = HomeAssistantOAuth(self.config)
         self._oauth_states: dict[str, tuple[str, datetime]] = {}
+
+    def conversation_result(self, identity: UIIdentity, request_id: str) -> dict[str, Any]:
+        """Return one household-scoped SENTRY result without durable text."""
+
+        try:
+            request_uuid = UUID(request_id)
+        except ValueError as exc:
+            raise UICommandError("CONVERSATION_RESULT_NOT_FOUND") from exc
+        store = getattr(self.core_runtime, "intelligence_store", None)
+        request = store.get(request_uuid) if store is not None else None
+        if request is None or request.household_id != identity.household_id:
+            raise UICommandError("CONVERSATION_RESULT_NOT_FOUND")
+        live = (
+            self.sentry_results.get(request_uuid, identity.household_id)
+            if self.sentry_results is not None
+            else None
+        )
+        if live is not None:
+            return {
+                "request_id": request_id,
+                "status": str(live.get("status", "UNKNOWN_RESULT")),
+                "lifecycle": request.lifecycle.value,
+                "response": live.get("response"),
+                "detail": live.get("detail"),
+                "provider_ambiguous": bool(live.get("provider_ambiguous", False)),
+                "available": True,
+            }
+        terminal = request.lifecycle.value in {
+            "COMPLETED",
+            "NO_ACTION",
+            "FAILED",
+            "UNKNOWN_RESULT",
+            "RECOVERY_REQUIRED",
+            "CANCELLED",
+        }
+        return {
+            "request_id": request_id,
+            "status": request.lifecycle.value,
+            "lifecycle": request.lifecycle.value,
+            "response": None,
+            "detail": (
+                "SENTRY response is not available in the current live delivery window"
+                if terminal
+                else "SENTRY is still reasoning through ANIMA"
+            ),
+            "available": False,
+        }
 
     def create_oauth_state(self) -> str:
         state = secrets.token_urlsafe(24)
@@ -2142,6 +2193,7 @@ def create_app(
         )
         core_runtime = None
         read_model: HouseholdReadModel | None = None
+        sentry_results: PostgresSentryLiveResultBus | None = None
         if database_url:
             from anima_ha.ui_runtime import build_postgres_core
 
@@ -2163,17 +2215,22 @@ def create_app(
                 automation_store=core_runtime.automation_store,
                 memory_service=core_runtime.memory_service,
             )
+            if core_runtime.intelligence_provider.value == "sentry":
+                sentry_results = PostgresSentryLiveResultBus(database_url)
         svc = UIService(
             config=config,
             sessions=sessions,
             read_model=read_model,
             core_runtime=core_runtime,
             identity_resolver=core_runtime.identity_resolver if core_runtime else None,
+            sentry_results=sentry_results,
         )
     else:
         svc = service
     app = FastAPI(title="ANIMA local interface", version=UI_VERSION, docs_url=None, redoc_url=None)
     app.state.ui_service = svc
+    if svc.sentry_results is not None:
+        app.add_event_handler("shutdown", svc.sentry_results.close)
 
     @app.middleware("http")
     async def security_headers(
@@ -2672,6 +2729,13 @@ def create_app(
             return svc.conversation.submit(svc.identity_from_session(session), body.text.strip())
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/api/v1/conversation/{request_id}")
+    async def conversation_result(request: Request, request_id: str) -> dict[str, Any]:
+        try:
+            return svc.conversation_result(current_identity(request), request_id)
+        except UICommandError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.post("/api/v1/controls/{control_id}")
     async def control(

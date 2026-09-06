@@ -622,3 +622,20 @@ Append new directives at the bottom; never rewrite an accepted historical direct
 - Initial status: ACTIVE; baseline full pytest passed 214 tests. Final
   implementation, exact-head CI, complete destructive matrix, and Architect
   acceptance remain open.
+
+## ANIMA-HA-GOAL-SENTRY-TEXT-025A — Owner-facing SENTRY text operation
+
+- Issued: 2026-09-06
+- Status: `ACTIVE — GOAL-WIDE PRODUCT CONVERGENCE`.
+- Baseline: `851187c8ca7e28d7823c76bcdaa604ed9d061173`, clean, with the room/zone
+  lifecycle increment validated by exact-head hosted CI `34052886439`.
+- Objective: close the largest current owner-facing gap by returning the
+  actual SENTRY result to the authenticated ANIMA conversation UI after the
+  existing Journal → Attention → Context → durable SENTRY request path.
+- Scope: bounded non-durable live result delivery over existing PostgreSQL,
+  household-scoped result retrieval, and browser polling/display. Durable
+  intelligence records continue to exclude response content; no embedded
+  fallback, raw HA access, new provider, database, broker, voice stack, or
+  Phase 15 behavior.
+- Source: permanent Goal usability scorecard and current repository/runtime
+  reconstruction.

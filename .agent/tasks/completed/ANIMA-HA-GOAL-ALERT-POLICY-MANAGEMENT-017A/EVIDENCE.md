@@ -1,0 +1,359 @@
+# Evidence — Goal Alert Policy Management 017A
+
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
+
+This packet records only the bounded owner-facing alert-policy increment. It
+does not accept Phase 15 or alter the accepted Phase 0–14 status.
+
+## Owner-managed household preferences — 2026-09-06
+
+The current goal-directed publication adds a bounded owner-facing explicit
+preference workflow. `src/anima_ha/preferences.py` defines the typed
+`anima.household-preferences` capability over the existing canonical
+`MemoryService`; the authenticated API and React Preferences view support
+list, create, correction, and retraction. Categories and content length are
+bounded, and active preferences retain explicit-input provenance.
+
+All writes use the existing Core UI gateway → PluginManager → policy path.
+Household, principal, and provenance are server-owned. Preferences are
+context only and cannot create household Truth, permissions, assurance,
+policy, or device state. The request-bound SENTRY catalogue exposes the same
+typed capability without exposing raw memory, SQL, HA, filesystem, or policy
+controls.
+
+Focused tests prove trusted manifest boundaries, household isolation,
+explicit provenance, correction/retraction lifecycle, and authenticated API
+behavior. Local validation also passed the full Python suite, Ruff check and
+format, strict mypy, TypeScript, frontend tests, Vite build, compile check,
+and `git diff --check`.
+
+Exact-head hosted qualification:
+
+- implementation/final candidate: `e2edc65b7fc0be5b5a429e15db75f7ace5112b46`;
+- hosted CI: `34038924040` — PASS;
+- reviewable artifact: `9991255680`;
+- artifact digest: `sha256:c15af9045e32d3c9bae1d9a79552253e7cc8e9d7329e297b4506fde3bc9130bd`.
+
+This is a bounded owner-facing product increment, not a goal-wide or Phase 15
+acceptance. The active packet remains pending independent Architect review.
+
+## Bounded integration-setup follow-on
+
+The current goal-wide packet also records `docs/GOAL-INTEGRATION-ONBOARDING-020A.md`.
+ANIMA exposes only the fixed Home Assistant ZHA config flow through the Core
+provider boundary. Core retains the HA credential, endpoint, and provider flow
+reference; the browser receives an opaque setup handle and only bounded ZHA
+serial/radio inputs. Unsafe paths, arbitrary handlers, raw configuration, and
+unsupported flow steps fail closed. This is owner-facing ZHA onboarding, not a
+general Home Assistant administrator surface. Exact-head hosted CI
+`34036396342` passed on `9a152d548549b13a69584cca34d186b49837ab70`; artifact
+`9990480601` digest is
+`sha256:6f82097ddf081f3877827aac5382f63896b42ec9ee753cfc00a34323de1ab13b`.
+This remains pending independent Architect acceptance, and Phase 15 remains
+unauthorized.
+
+## Result
+
+Implementation head: `95268160021f9f9b6ca97b113ffb42bb8dca1405`.
+
+Exact-head hosted CI: `34015458746` — PASS.
+
+Reviewable artifact: `9983867189` (`phase12-h5-evidence-95268160021f9f9b6ca97b113ffb42bb8dca1405`).
+
+The bounded increment is implemented and validated:
+
+- `SENSEGUARD_ALERT_MANIFEST` exposes typed `list_policies` and `save_policy`
+  operations through the existing PluginManager and policy boundary.
+- The authenticated API provides household-scoped list/create/update/enable/
+  disable behavior with optimistic version checks.
+- Household, policy identity, version, and creator provenance are server-owned;
+  updates preserve the original creator.
+- Resource IDs are validated in Core against commissioned Graph resources in
+  the current household before a policy can be saved.
+- The Alerts view supports resource selection, event type, household timezone,
+  local time window, priority, guaranteed attention, delivery mode, enabled
+  state, edit, and enable/disable.
+- Existing normalized HA event → canonical resource → enabled policy → Journal/
+  Attention routing remains unchanged.
+- No raw Home Assistant automation editor, entity/service payload, credential,
+  new provider, database, broker, or Phase 15 behavior was added.
+
+Local validation passed: full Python pytest, Ruff check/format, compileall,
+TypeScript, frontend unit tests, Vite production build, and `git diff --check`.
+
+Hosted validation passed the configured exact-head workflow, including the
+existing Phase 0–14 and SENTRY suites, PostgreSQL/OPA/HA checks, ARM64 image
+build/runtime smoke, Docker UI validation, public-safety scan, and local UI
+validation.
+
+This is a completed implementation handoff, not Architect self-acceptance.
+
+## Household room/zone management follow-on
+
+Implementation head: `4960a99d56ee49059e6e73e2b4c71e616cac8496`.
+
+Exact-head hosted CI: `34025860330` — PASS.
+
+Reviewable artifact: `9987176873`
+(`phase12-h5-evidence-4960a99d56ee49059e6e73e2b4c71e616cac8496`).
+
+The ANIMA-owned `household.topology` capability now provides typed
+`list_spaces`, `create_space`, and `rename_space` operations through trusted
+`InvocationContext`, the existing Graph/PluginManager/OPA/API boundaries, and
+the authenticated Spaces UI. Graph mutations enforce household containment,
+ROOM/ZONE kinds, bounded names, and sibling uniqueness; browser/model input
+cannot provide household authority. The owner can create a room or zone before
+commissioning a newly discovered device, so this closes the prior dependency
+on an already-existing room without exposing Home Assistant administration.
+
+Focused compile/Ruff, TypeScript, frontend tests, Vite build, and diff checks
+passed. The full hosted workflow also passed the existing Phase 0–14 and
+SENTRY validation, ARM64/container checks, H5 targets, and public-safety scan.
+This remains implementation evidence pending independent Architect review.
+
+## Follow-on management-plane increment
+
+The same active packet also contains the bounded commissioned-device lifecycle
+slice documented in `docs/GOAL-DEVICE-LIFECYCLE-017A.md`:
+
+- `rename_device` preserves the prior canonical name as an alias.
+- `reassign_device` changes only ANIMA's active `INSTALLED_IN` topology edge,
+  after server-side household and destination validation.
+- `retire_device` retires the canonical resource, capabilities, provider
+  references, Truth bindings, aliases, and active relationships while leaving
+  the Home Assistant registry unchanged.
+- The Devices view now exposes these operations for mapped devices and renders
+  canonical ANIMA names rather than stale provider labels.
+
+The focused lifecycle test, full Python pytest, Ruff, TypeScript check, and
+Vite production build pass locally. This follow-on remains part of the pending
+Architect review; no goal-wide or Phase 15 acceptance is claimed.
+
+## Notification-route management follow-on
+
+The same active packet now includes the bounded owner-facing notification-route
+slice. Implementation head: `09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`.
+
+Exact-head hosted CI: `34019264187` — PASS.
+
+Reviewable artifact: `9985073980`
+(`phase12-h5-evidence-09b0c8aff5e9b9ec59a0962381cf0d34a1d14e36`).
+
+The slice provides:
+
+- a PostgreSQL-backed, household-scoped route record with optimistic versioning;
+- typed `list_routes` and `save_route` operations through PluginManager and
+  the existing policy boundary;
+- an authenticated Notifications view for label, minimum priority, and
+  enabled-state management;
+- server-owned `ntfy` provider and configured destination references;
+- no topic, token, URL, credential, or arbitrary destination exposed to the
+  browser or model;
+- explicit provider attribution and no claim that a notification was received.
+
+Local validation passed full pytest, Ruff check/format, strict mypy, compileall,
+TypeScript, frontend tests, Vite production build, and `git diff --check`.
+Hosted validation also passed the existing Phase 0–14, SENTRY, PostgreSQL/OPA,
+isolated-HA, ARM64, Docker, safety, and UI validation workflow.
+
+This is route management, not automatic SenseGuard-to-ntfy delivery; delivery
+remains a separate existing typed capability and is not claimed here. The
+increment remains pending independent Architect acceptance. Phase 15 remains
+unauthorized.
+
+Final governed documentation head: `549630a412cd8fc4fc69a608d67aeb31596c8fdf`.
+Exact-head hosted CI: `34019836787` — PASS. This forward-only governance
+follow-up changed records only.
+
+## Final implementation correction
+
+Current implementation head: `f808d9479735a957d47e36779ad04a5c3bc3d4b1`.
+Exact-head hosted CI: `34020850164` — PASS.
+Reviewable artifact: `9985597571`.
+
+The Notifications view now presents the server-safe `server_configured`
+reference as “Server configured” without exposing a destination, topic, token,
+URL, or credential. This correction leaves the provider boundary unchanged.
+The route-management increment remains pending Architect acceptance; automatic
+delivery and human receipt are not claimed.
+
+## Automatic configured-alert delivery follow-on
+
+The `NOTIFICATION` SenseGuard delivery mode now uses the existing
+`ActionExecutionCoordinator` → `PolicyService`/OPA → `PluginManager` → ntfy
+path when a matched policy has an enabled priority-compatible route. The
+server constructs the bounded factual message from the canonical resource and
+event timestamp; the browser/model cannot provide a destination or arbitrary
+alert body. A stable event/route idempotency key prevents duplicate provider
+dispatch after retry, and `notification.delivery` records `SUCCEEDED`,
+`NO_ROUTE`, or `UNAVAILABLE` outcomes.
+
+The new narrow OPA rule authorizes only the server-generated configured-alert
+semantic path (`DURABLE_SYSTEM_TASK` plus Core-owned route/policy metadata).
+Ordinary user/model `notifications.send` remains confirmation-gated. Provider
+acceptance does not establish human receipt. Local deterministic coverage
+includes router-mode separation, no-route behavior, stable idempotency, and an
+actual ntfy-plugin/action-coordinator transport with a mock provider.
+
+Hosted qualification update:
+
+- Implementation head: `1f29ad9ab20055cc2a5f15aee1c7bea440f78807`.
+- Exact-head hosted CI: `34022620543` — PASS.
+- Reviewable artifact: `9986165454`.
+- The active packet remains complete pending Architect acceptance. No human
+  receipt, automatic voice response, or Phase 15 behavior is claimed.
+
+## Server-owned backup snapshot follow-on
+
+The current bounded recovery increment adds an authenticated Backups view and
+`/api/v1/backups` read/create/inspect routes. Requests cross the normal Core
+gateway, PluginManager, and policy boundary. The backup plugin receives
+household scope from ANIMA's trusted invocation context rather than from
+browser/model arguments. PostgreSQL credentials and archive paths remain
+server-owned; manifests are household-scoped and UI payloads are sanitized.
+
+The surface creates and validates snapshots only. It does not expose restore,
+database administration, archive downloads, or physical-state claims after a
+restore. Restore remains a separately controlled maintenance workflow with
+fresh HA reconciliation.
+
+Hosted qualification passed on the exact implementation head:
+
+- Implementation/final candidate: `240f29563e9a6326eb004bef367f3bd715624464`.
+- Exact-head CI: `34028034777` - PASS.
+- Reviewable artifact: `9987831976`
+  (`phase12-h5-evidence-240f29563e9a6326eb004bef367f3bd715624464`).
+- Artifact digest: `sha256:4c30e740e4f4995f4959adbb7e1ebddc4269c7b2b7632edc461d9a41034d8a34`.
+
+## Declarative scene-management follow-on
+
+The current goal increment adds the first reusable Scenes workflow. The
+`anima.scenes` capability stores household-scoped, versioned definitions with
+at most 16 canonical commissioned power resources. Scene resources are
+validated by Core against the current Graph; the caller cannot provide a Home
+Assistant entity, service, host, or credential.
+
+The authenticated Scenes view supports create, edit, and apply. Applying a
+scene calls the existing Core `control()` path once per step, so every step is
+independently policy-gated, resource-locked, refreshed from current Truth, and
+verified by Phase 9. A failed later step returns bounded `PARTIAL` evidence and
+stops rather than claiming an atomic batch success.
+
+Implementation is represented by `src/anima_ha/scenes.py`, migration
+`0024_scenes.sql`, the `/api/v1/scenes` routes, and the React Scenes view.
+Deterministic coverage proves household scope, commissioned-resource
+validation, duplicate-resource rejection, and stale-version rejection.
+This follow-on is complete pending hosted qualification and Architect review;
+raw Home Assistant automation editing and advanced non-power scenes remain
+outside this slice. Phase 15 remains unauthorized.
+
+The hosted run passed deterministic validation, the existing Phase 0-14 and
+SENTRY checks, ARM64/container validation, H5 targets, and the public-safety
+scan. Exact-head evidence is:
+
+- implementation/final candidate: `c59504dcb9d85daecb16972fd1dfe925431821b7`;
+- hosted CI: `34030239375` — PASS;
+- reviewable artifact: `9988522653`;
+- artifact digest: `sha256:3c452d235a538c633840a6973f7111eae1d649df4e0abf6889f3199dd37f454d`.
+
+The local SFTP checkout lacks a usable Python pytest interpreter, so the
+hosted run is the authoritative full-regression result. This remains
+implementation evidence pending independent Architect acceptance; Phase 15
+remains unauthorized.
+
+## Bounded automation-management follow-on
+
+The current goal increment adds a household-scoped, versioned `anima.automations`
+capability and authenticated Automations view. The first supported form is a
+normalized `on`/`off` observation on one commissioned resource followed by one
+typed `set_power` action on another commissioned power resource. The server
+owns household scope, creator provenance, canonical resource validation, and a
+stable `automation:{automation_id}:{event_id}` idempotency identity.
+
+The event router consumes normalized Home Assistant Truth observations and
+creates autonomous action requests through the existing PluginManager, OPA,
+PostgreSQL coordination, and Phase 9 refresh/verification path. It does not
+call Home Assistant directly, expose raw entity/service data, create a second
+scheduler, or bypass policy. A fired automation is journaled as
+`automation.fired`; disabled, unknown, stale, denied, and verification-failed
+states remain bounded outcomes rather than fabricated success.
+
+Focused validation covers household isolation, optimistic version conflicts,
+commissioned-resource enforcement, UTC timestamps, autonomous provenance, and
+stable event-to-action identity. The UI exposes only the bounded trigger,
+action, enabled state, and versioned edit controls. Full hosted qualification
+is required before this follow-on can be independently accepted.
+
+Hosted qualification completed on the exact implementation head:
+
+- Implementation/final candidate: `bdb3c2430f596cf2f9ea9ee97a6656c98d06ef75`.
+- Exact-head CI: `34032615735` — PASS.
+- Reviewable artifact: `9989311210`.
+- Artifact digest: `sha256:a576e085c3bdeb37a65b6efb857a9b980709fb8fb81586366d05f75d8df8a985`.
+
+The hosted workflow passed the full existing Phase 0–14/SENTRY validation,
+PostgreSQL/OPA/isolated-HA checks, ARM64/container checks, H5 targets, and
+public-safety scan. This remains implementation evidence pending independent
+Architect acceptance; Phase 15 remains unauthorized.
+## Goal-wide integration health and recovery follow-on — 2026-09-06
+
+The owner-facing Integrations view now exposes bounded Home Assistant health
+and a Core-owned reconnect/reconcile operation. The provider retains its
+server-side endpoint and token; the browser supplies only the fixed provider
+reference. Safe health fields include connection state, version, sync/event
+timestamps, subscription state, inventory counts, and error category.
+
+The typed `reconnect` tool runs through the existing authenticated UI/API →
+PluginManager → policy → Home Assistant adapter boundary. It does not expose
+raw Home Assistant services, configuration, credentials, or arbitrary hosts.
+The increment is implementation evidence pending independent Architect
+acceptance; Phase 15 remains unauthorized.
+
+## Owner-facing alert inbox follow-on — 2026-09-06
+
+The Alerts view now includes a bounded read projection of matched SenseGuard
+events from the authoritative PostgreSQL Event Journal. It shows the
+canonical resource name, source-observation time, event type, priority,
+configured delivery mode, and latest notification disposition when available.
+
+`GET /api/v1/alerts/events` is authenticated, household-scoped, sanitized,
+and cursor-paginated by `(occurred_at, alert_id)`. It does not create a second
+alert store, expose raw journal/provider data, or claim human receipt. The
+empty-state/API contract is covered by `tests/test_ui_api.py`; the existing
+SSE invalidation path refreshes the projection after alert activity.
+
+This is a bounded owner-facing read surface, not an acknowledgement workflow,
+raw Home Assistant editor, new provider, or Phase 15 behavior. At draft time
+the increment was pending exact-head hosted qualification; that qualification
+is recorded below.
+
+## Owner-facing alert inbox qualification
+
+The alert inbox implementation passed exact-head hosted qualification on
+`87a990f5452f85ab748a1f7ea4a88d84a03d86f4` with CI `34041527112` — PASS.
+The reviewable artifact is `9992007435`, digest
+`sha256:917058baa013dc3a08e7756b083c0c19b48e04c1d22e23d886c3bfe943776686`.
+Local focused validation also passed 19 tests, Ruff, strict mypy, TypeScript,
+the Vite production build, and `git diff --check`.
+
+The bounded projection is now published, with the existing management-plane
+test matrix remaining green. Architect acceptance of this increment is still
+pending. Phase 15 remains unauthorized.
+
+## Opaque device-handle boundary — 2026-09-06
+
+The owner-facing device discovery and commissioning path now uses a stable
+ANIMA-owned `device_handle`. Core validates the handle and the Home Assistant
+adapter resolves the provider identifier internally. The browser/API contract
+therefore exposes no raw Home Assistant registry identifier while preserving
+bounded device metadata, canonical mapping, Truth state, and observation time.
+
+The plugin refresh projection and commission schema follow the same contract;
+the provider `device_id` is not accepted from the owner-facing path. Focused
+validation passed 42 backend tests, Ruff, strict mypy, TypeScript, frontend
+tests, Vite build, and `git diff --check`.
+
+Implementation head `4ba98cc14e07eb095616352ede4c46ff0753d070` passed exact-head
+hosted CI `34048949078` and published artifact `9994126375`; the artifact
+endpoint exposed no digest. This remains implementation evidence pending
+independent Architect acceptance. Phase 15 remains unauthorized.

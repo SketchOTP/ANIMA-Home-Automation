@@ -33,6 +33,7 @@ from anima_ha.intelligence import (
     IntelligenceResult,
     IntelligenceResultStatus,
 )
+from anima_ha.live_results import PostgresSentryLivePublisher, live_result_payload
 from anima_ha.sentry_boundary import (
     CoreSentryBoundary,
     SentryBoundaryError,
@@ -252,12 +253,14 @@ class CoreSentryHTTPService:
         service_principal: SentryServicePrincipal | None = None,
         profile_principal_resolver: Callable[[UUID, str], UUID | None] | None = None,
         principal_registry: PostgresSentryPrincipalRegistry | None = None,
+        live_result_publisher: PostgresSentryLivePublisher | None = None,
     ) -> None:
         self.boundary = boundary
         self.token_loader = token_loader
         self.service_principal = service_principal
         self.profile_principal_resolver = profile_principal_resolver
         self.principal_registry = principal_registry
+        self.live_result_publisher = live_result_publisher
         self.bindings = SentryBindingCodec("unused-until-authenticated")
 
     def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
@@ -530,11 +533,26 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         action_references=tuple(str(x) for x in body.get("action_references", [])),
                         provider_ambiguous=bool(body.get("provider_ambiguous", False)),
                     )
-                    response = {
-                        "status": "RECORDED"
-                        if service.boundary.submit_result(request, str(request.claim_owner), result)
-                        else "CLAIM_LOST"
-                    }
+                    recorded = service.boundary.submit_result(
+                        request, str(request.claim_owner), result
+                    )
+                    if recorded and service.live_result_publisher is not None:
+                        try:
+                            service.live_result_publisher.publish(
+                                live_result_payload(
+                                    request_id=request.request_id,
+                                    household_id=request.household_id,
+                                    status=result.status.value,
+                                    response=result.response_text,
+                                    detail=result.detail,
+                                    provider_ambiguous=result.provider_ambiguous,
+                                )
+                            )
+                        except psycopg.Error:
+                            # Durable status remains authoritative; live text
+                            # is intentionally best-effort and non-durable.
+                            pass
+                    response = {"status": "RECORDED" if recorded else "CLAIM_LOST"}
                 elif operation == "status":
                     response = {
                         "request_id": str(request.request_id),
@@ -626,6 +644,7 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         service_principal=principal,
         principal_registry=principal_registry,
         profile_principal_resolver=profile_principal_resolver,
+        live_result_publisher=PostgresSentryLivePublisher(database_url),
     )
     try:
         server.serve_forever()

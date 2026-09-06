@@ -26,14 +26,26 @@ authorized by the goal-wide completion audit.
 ## Latest repository publication - 2026-09-06
 
 The current repository head is the room/zone lifecycle governance head
-`7cdedb29f877087dbbec884f4e71a002cc53aa4e`, with `main == origin/main` and a
-clean tree. Implementation head `60ac3e7958f39932f37f519789b6e66d4f2b8b48`
-passed exact-head CI `34051465103`; governance head passed exact-head CI
-`34051680528` and published artifact `9994893147` with downloaded archive hash
-`sha256:b10b3529fd86a86c64319d0c6a247ddbb110d0e7f26d782d01d17cf81b2d5b79`.
-This increment gives the owner bounded create, rename, move, and empty-place
-removal controls through ANIMA's existing Core path; independent Architect
-acceptance remains pending. Phase 15 remains unauthorized and unimplemented.
+`851187c8ca7e28d7823c76bcdaa604ed9d061173`, with `main == origin/main` and a
+clean tree. The room/zone implementation passed exact-head CI `34051465103`
+and the evidence-bound governance head passed exact-head CI `34052886439`.
+Artifact `9995274751` was published; its downloaded archive hash is
+`sha256:7e1b4942146745351a37682c37221cb38291cfbfc6b86eddf0b75e11737b0bfc`.
+The next owner-facing increment is now active: bounded asynchronous SENTRY
+text-result delivery through ANIMA, with no durable response-content storage.
+Phase 15 remains unauthorized and unimplemented.
+
+## Active goal increment — SENTRY text result delivery - 2026-09-06
+
+The selected largest coherent product gap is the missing owner-facing return
+path after ANIMA queues SENTRY cognition. `ANIMA-HA-GOAL-SENTRY-TEXT-025A`
+adds a non-durable bounded PostgreSQL notification channel from the
+ANIMA-owned SENTRY service to the UI process, a household-scoped result route,
+and a SENTRY-labeled browser polling flow. Durable intelligence rows retain
+status/digest metadata only; missed live text is reported as unavailable.
+The previous alert-policy packet was reconciled into completed history without
+rewriting its evidence. Implementation validation and hosted exact-head CI
+are pending. Phase 14 remains accepted; Phase 15 remains unauthorized.
 
 ## Latest owner-facing room/zone lifecycle increment - 2026-09-06
 
