@@ -2353,7 +2353,7 @@ def create_app(
         body: MutationRequest,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
-        if operation not in {"set-enabled", "reconnect"}:
+        if operation not in {"set-enabled", "reconnect", "setup-zha", "continue-zha"}:
             raise HTTPException(status_code=404, detail="UNKNOWN_INTEGRATION_OPERATION")
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)

@@ -25,6 +25,21 @@ authorized by the goal-wide completion audit.
 
 ## Latest owner-facing publication - 2026-09-06
 
+## Latest owner-facing bounded integration-setup increment - 2026-09-06
+
+- The Integrations view now starts and continues only Home Assistant's fixed
+  ZHA config flow through the authenticated UI → Core → PluginManager → OPA →
+  HA boundary. Core retains the HA token, endpoint, and HA flow ID; the browser
+  receives only an opaque setup handle and bounded serial/radio fields.
+- Unsafe serial paths, unsupported fields, arbitrary handlers, and unsupported
+  flow steps fail closed. Successful setup reconciles the existing HA adapter;
+  device pairing and commissioning remain typed workflows in Devices.
+- Local validation passed full pytest (235), Ruff, strict mypy, TypeScript,
+  frontend tests, Vite build, compile check, and `git diff --check`.
+- Implementation evidence is pending exact hosted qualification and Architect
+  acceptance. This is bounded ZHA onboarding, not general Home Assistant
+  administration. Phase 15 remains unauthorized.
+
 ## Latest owner-facing integration health and recovery increment - 2026-09-06
 
 - The Integrations view now projects bounded Home Assistant operational health

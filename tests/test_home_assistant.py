@@ -219,6 +219,16 @@ class FakeConnection:
         self.start_error = start_error
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
         self.data_calls: list[tuple[str, str, dict[str, Any]]] = []
+        self.config_flow_calls: list[tuple[str, str, dict[str, Any] | None]] = []
+        self.config_flow_results: list[dict[str, Any]] = [
+            {
+                "flow_id": "ha-flow",
+                "type": "form",
+                "step_id": "choose_serial_port",
+                "data_schema": [{"name": "device_path", "required": True, "type": "string"}],
+            },
+            {"type": "create_entry", "title": "ZHA", "result": {}},
+        ]
         self.stopped = False
 
     def start(self) -> HADiscoverySnapshot:
@@ -251,6 +261,16 @@ class FakeConnection:
     def ping(self) -> None:
         if not self.connected:
             raise HAAdapterError("offline")
+
+    def start_config_flow(self, handler: str) -> dict[str, Any]:
+        result = self.config_flow_results.pop(0)
+        self.config_flow_calls.append((handler, "start", None))
+        return result
+
+    def continue_config_flow(self, flow_id: str, user_input: dict[str, Any]) -> dict[str, Any]:
+        result = self.config_flow_results.pop(0)
+        self.config_flow_calls.append((flow_id, "continue", user_input))
+        return result
 
 
 @pytest.fixture
@@ -503,6 +523,8 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
     assert set(tools) == {
         "refresh_inventory",
         "reconnect",
+        "start_zha_setup",
+        "continue_zha_setup",
         "permit_zigbee_join",
         "commission_device",
         "rename_device",
@@ -554,6 +576,47 @@ def test_reconnect_is_core_owned_and_status_projection_is_secret_free(
     assert result["status"] == "SUCCEEDED"
     assert result["health"]["health"] == "ONLINE"
     plugin.stop()
+
+
+def test_zha_setup_is_bounded_core_owned_and_keeps_ha_flow_reference_private(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    connection = FakeConnection()
+    adapter.start(connection)
+    plugin = HomeAssistantPlugin(adapter, lambda token: connection)
+
+    started = plugin.invoke_for_household("start_zha_setup", {}, 5.0, uuid4())
+    setup_id = str(started["setup_id"])
+    assert started["status"] == "IN_PROGRESS"
+    assert started["step_id"] == "choose_serial_port"
+    assert "ha-flow" not in started
+
+    with pytest.raises(PluginValidationError, match="outside the supported serial boundary"):
+        plugin.invoke_for_household(
+            "continue_zha_setup",
+            {"setup_id": setup_id, "user_input": {"device_path": "/tmp/anything"}},
+            5.0,
+            uuid4(),
+        )
+    assert len(connection.config_flow_calls) == 1
+
+    completed = plugin.invoke_for_household(
+        "continue_zha_setup",
+        {
+            "setup_id": setup_id,
+            "user_input": {"device_path": "/dev/serial/by-id/usb-sonoff-dongle"},
+        },
+        5.0,
+        uuid4(),
+    )
+    assert completed["status"] == "SUCCEEDED"
+    assert completed["state"] == "CONFIGURED"
+    assert connection.config_flow_calls[-1] == (
+        "ha-flow",
+        "continue",
+        {"device_path": "/dev/serial/by-id/usb-sonoff-dongle"},
+    )
 
 
 def test_pairing_window_uses_bounded_internal_zha_service(

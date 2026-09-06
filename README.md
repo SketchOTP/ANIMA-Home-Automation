@@ -63,6 +63,7 @@ These screenshots are captured from the tested local application with synthetic 
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Server-owned PostgreSQL backup snapshots and integrity validation are available from the authenticated Backups view. Archive paths, credentials, household scope, and restore authority remain inside Core.
 - The Integrations view exposes safe Home Assistant connection health and a Core-owned reconnect/reconcile action; hosts, tokens, raw configuration, and arbitrary service calls remain outside the UI.
+- The Integrations view can start and complete the bounded ZHA integration setup flow through Core using server-held Home Assistant credentials; unsupported integration administration remains explicit rather than becoming a raw HA console.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly. Owners can configure typed SenseGuard alert policies and the server-owned notification route from ANIMA.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
 

@@ -16,6 +16,14 @@ and preserves household/creator/version authority. Event routing remains the
 existing normalized HA event → canonical resource → enabled policy → Journal /
 Attention path.
 
+The same goal-wide packet now includes bounded ZHA integration onboarding:
+Integrations UI → authenticated API → Core UI gateway → PluginManager → OPA →
+Home Assistant's fixed ZHA config flow. The browser receives no HA token,
+endpoint, provider flow ID, arbitrary handler, or raw configuration payload.
+Only bounded serial/radio fields are accepted, and unsupported steps fail
+explicitly. This setup flow is separate from the existing typed pairing and
+device-commissioning workflow.
+
 Limitations and next candidates: this increment does not add notification
 destination management, plugin/integration administration, backup/restore UI,
 scenes/automation management, or Phase 15 behavior. The current packet remains

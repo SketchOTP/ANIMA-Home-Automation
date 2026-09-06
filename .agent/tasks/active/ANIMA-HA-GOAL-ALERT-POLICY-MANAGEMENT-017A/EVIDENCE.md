@@ -5,6 +5,16 @@ Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`
 This packet records only the bounded owner-facing alert-policy increment. It
 does not accept Phase 15 or alter the accepted Phase 0–14 status.
 
+## Bounded integration-setup follow-on
+
+The current goal-wide packet also records `docs/GOAL-INTEGRATION-ONBOARDING-020A.md`.
+ANIMA exposes only the fixed Home Assistant ZHA config flow through the Core
+provider boundary. Core retains the HA credential, endpoint, and provider flow
+reference; the browser receives an opaque setup handle and only bounded ZHA
+serial/radio inputs. Unsafe paths, arbitrary handlers, raw configuration, and
+unsupported flow steps fail closed. This is owner-facing ZHA onboarding, not a
+general Home Assistant administrator surface, and Phase 15 remains unauthorized.
+
 ## Result
 
 Implementation head: `95268160021f9f9b6ca97b113ffb42bb8dca1405`.

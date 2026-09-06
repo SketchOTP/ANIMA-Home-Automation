@@ -309,6 +309,15 @@ class CoreUICommandGateway:
     ) -> dict[str, Any]:
         if operation == "reconnect" and payload.get("plugin_id") == "anima.provider.home-assistant":
             return self._invoke(identity, "anima.provider.home-assistant", "reconnect", {})
+        if operation == "setup-zha":
+            return self._invoke(identity, "anima.provider.home-assistant", "start_zha_setup", {})
+        if operation == "continue-zha":
+            return self._invoke(
+                identity,
+                "anima.provider.home-assistant",
+                "continue_zha_setup",
+                payload,
+            )
         operation_map = {"set-enabled": "set_integration_enabled"}
         name = operation_map.get(operation)
         if name is None:

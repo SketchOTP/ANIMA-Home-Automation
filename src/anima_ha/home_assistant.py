@@ -18,7 +18,8 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Protocol, cast
-from uuid import NAMESPACE_URL, UUID, uuid5
+from urllib.parse import urlsplit, urlunsplit
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 import psycopg
 from aiohttp import ClientSession
@@ -249,6 +250,8 @@ class HAConnection(Protocol):
     def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> Any: ...
     def get_state(self, entity_id: str) -> dict[str, Any] | None: ...
     def ping(self) -> None: ...
+    def start_config_flow(self, handler: str) -> dict[str, Any]: ...
+    def continue_config_flow(self, flow_id: str, user_input: dict[str, Any]) -> dict[str, Any]: ...
 
 
 class HassClientConnection:
@@ -435,6 +438,63 @@ class HassClientConnection:
 
     def ping(self) -> None:
         self._submit(self._ping_async(), self.config.command_timeout)
+
+    def _http_base_url(self) -> str:
+        parsed = urlsplit(self.config.websocket_url)
+        scheme = "https" if parsed.scheme == "wss" else "http"
+        path = parsed.path.removesuffix("/api/websocket")
+        return urlunsplit((scheme, parsed.netloc, path.rstrip("/"), "", ""))
+
+    async def _post_config_flow_async(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if self._session is None or not self._token:
+            raise HAAdapterError("Home Assistant config flow is unavailable")
+        url = f"{self._http_base_url()}{path}"
+        async with self._session.post(
+            url,
+            headers={"Authorization": f"Bearer {self._token}"},
+            json=payload,
+        ) as response:
+            if response.status in {401, 403}:
+                raise HAAuthenticationError("Home Assistant configuration authorization failed")
+            if response.status != 200:
+                raise HAAdapterError(
+                    f"Home Assistant configuration flow failed ({response.status})"
+                )
+            body = await response.content.read(512 * 1024 + 1)
+            if len(body) > 512 * 1024:
+                raise HAAdapterError("Home Assistant configuration response is too large")
+            try:
+                value = json.loads(body.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise HAAdapterError("Home Assistant configuration response is invalid") from exc
+            if not isinstance(value, dict):
+                raise HAAdapterError("Home Assistant configuration response is not an object")
+            return cast(dict[str, Any], value)
+
+    def start_config_flow(self, handler: str) -> dict[str, Any]:
+        if handler != "zha":
+            raise HAAdapterError("only the bounded ZHA setup flow is supported")
+        return cast(
+            dict[str, Any],
+            self._submit(
+                self._post_config_flow_async("/api/config/config_entries/flow", {"handler": "zha"}),
+                self.config.command_timeout,
+            ),
+        )
+
+    def continue_config_flow(self, flow_id: str, user_input: dict[str, Any]) -> dict[str, Any]:
+        if not flow_id or len(flow_id) > 128:
+            raise HAAdapterError("invalid Home Assistant configuration flow reference")
+        return cast(
+            dict[str, Any],
+            self._submit(
+                self._post_config_flow_async(
+                    f"/api/config/config_entries/flow/{flow_id}",
+                    {"user_input": user_input},
+                ),
+                self.config.command_timeout,
+            ),
+        )
 
 
 class PostgresHAStore:
@@ -1082,6 +1142,68 @@ class HomeAssistantAdapter:
         )
 
 
+@dataclass(slots=True)
+class _ZHASetupFlow:
+    """Core-owned handle for one short-lived Home Assistant config flow."""
+
+    ha_flow_id: str
+    step_id: str
+    allowed_values: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
+
+_ZHA_FLOW_STEPS = frozenset(
+    {"choose_serial_port", "manual_pick_radio_type", "manual_port_config", "confirm"}
+)
+_ZHA_FIELDS = frozenset({"device_path", "radio_type", "baudrate", "flow_control"})
+_ZHA_DEVICE_PREFIXES = ("/dev/serial/by-id/", "/dev/ttyUSB", "/dev/ttyACM", "socket://")
+
+
+def _selector_options(field_schema: dict[str, Any]) -> tuple[str, ...]:
+    selector = field_schema.get("selector")
+    if not isinstance(selector, dict):
+        return ()
+    select = selector.get("select")
+    if not isinstance(select, dict):
+        return ()
+    options = select.get("options")
+    if not isinstance(options, list):
+        return ()
+    values: list[str] = []
+    for option in options[:32]:
+        value = option.get("value") if isinstance(option, dict) else option
+        if isinstance(value, str) and value and len(value) <= 120:
+            values.append(value)
+    return tuple(dict.fromkeys(values))
+
+
+def _safe_zha_fields(
+    result: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, tuple[str, ...]]]:
+    raw_schema = result.get("data_schema")
+    if not isinstance(raw_schema, list):
+        return [], {}
+    fields: list[dict[str, Any]] = []
+    allowed_values: dict[str, tuple[str, ...]] = {}
+    for raw_field in raw_schema[:8]:
+        if not isinstance(raw_field, dict):
+            continue
+        name = str(raw_field.get("name", ""))
+        if name not in _ZHA_FIELDS:
+            continue
+        field_type = str(raw_field.get("type", "string"))
+        descriptor: dict[str, Any] = {
+            "name": name,
+            "required": bool(raw_field.get("required", False)),
+            "type": "integer" if field_type in {"integer", "number"} else "string",
+        }
+        options = _selector_options(raw_field)
+        if options:
+            descriptor["options"] = list(options)
+            allowed_values[name] = options
+        fields.append(descriptor)
+    return fields, allowed_values
+
+
 class HomeAssistantPlugin:
     """Trusted built-in plugin exposing only bounded semantic HA operations."""
 
@@ -1093,6 +1215,8 @@ class HomeAssistantPlugin:
         self.adapter = adapter
         self.connection_factory = connection_factory
         self._token: str | None = None
+        self._zha_flows: dict[str, _ZHASetupFlow] = {}
+        self._zha_flows_lock = threading.RLock()
         self.started = False
 
     def start(self, secret_env: dict[str, str]) -> None:
@@ -1117,6 +1241,140 @@ class HomeAssistantPlugin:
     def safe_status(self) -> dict[str, Any]:
         """Return connection health without exposing endpoint or credentials."""
         return self.adapter.status.to_payload()
+
+    @staticmethod
+    def _safe_flow_reason(result: dict[str, Any]) -> str:
+        reason = str(result.get("reason", "configuration_rejected"))
+        known = {
+            "single_instance_allowed",
+            "already_configured",
+            "cannot_connect",
+            "usb_probe_failed",
+            "wrong_firmware_installed",
+            "aborted",
+        }
+        return reason.upper() if reason in known else "CONFIGURATION_REJECTED"
+
+    def _project_zha_flow(self, setup_id: str, result: dict[str, Any]) -> dict[str, Any]:
+        result_type = str(result.get("type", ""))
+        if result_type == "create_entry":
+            with self._zha_flows_lock:
+                self._zha_flows.pop(setup_id, None)
+            try:
+                self.adapter.reconcile()
+            except HAAdapterError:
+                # The config entry was created successfully.  Surface that
+                # success while preserving the adapter's current health.
+                pass
+            return {
+                "status": "SUCCEEDED",
+                "operation": "configure_zha",
+                "setup_id": setup_id,
+                "state": "CONFIGURED",
+                "health": self.safe_status(),
+            }
+        if result_type == "abort":
+            with self._zha_flows_lock:
+                self._zha_flows.pop(setup_id, None)
+            return {
+                "status": "FAILED",
+                "operation": "configure_zha",
+                "setup_id": setup_id,
+                "state": "ABORTED",
+                "reason": self._safe_flow_reason(result),
+            }
+        step_id = str(result.get("step_id", ""))
+        if result_type != "form" or step_id not in _ZHA_FLOW_STEPS:
+            with self._zha_flows_lock:
+                self._zha_flows.pop(setup_id, None)
+            return {
+                "status": "FAILED",
+                "operation": "configure_zha",
+                "setup_id": setup_id,
+                "state": "UNSUPPORTED_STEP",
+                "reason": "UNSUPPORTED_ZHA_CONFIGURATION_STEP",
+            }
+        fields, allowed_values = _safe_zha_fields(result)
+        with self._zha_flows_lock:
+            flow = self._zha_flows.get(setup_id)
+            if flow is not None:
+                flow.step_id = step_id
+                flow.allowed_values = allowed_values
+        return {
+            "status": "IN_PROGRESS",
+            "operation": "configure_zha",
+            "setup_id": setup_id,
+            "state": "AWAITING_INPUT",
+            "step_id": step_id,
+            "fields": fields,
+        }
+
+    def _start_zha_setup(self) -> dict[str, Any]:
+        connection = self.adapter.connection
+        start = getattr(connection, "start_config_flow", None)
+        if connection is None or not connection.connected or not callable(start):
+            raise PluginValidationError("Home Assistant ZHA setup is unavailable")
+        result = start("zha")
+        setup_id = str(uuid4())
+        with self._zha_flows_lock:
+            self._zha_flows[setup_id] = _ZHASetupFlow(str(result.get("flow_id", "")), "")
+        if not self._zha_flows[setup_id].ha_flow_id:
+            with self._zha_flows_lock:
+                self._zha_flows.pop(setup_id, None)
+            raise PluginValidationError("Home Assistant returned no configuration flow reference")
+        return self._project_zha_flow(setup_id, result)
+
+    @staticmethod
+    def _validate_zha_input(flow: _ZHASetupFlow, user_input: Any) -> dict[str, Any]:
+        if not isinstance(user_input, dict):
+            raise PluginValidationError("ZHA setup input must be an object")
+        if flow.step_id == "confirm" and user_input:
+            raise PluginValidationError("ZHA confirmation does not accept fields")
+        if not set(user_input).issubset(_ZHA_FIELDS):
+            raise PluginValidationError("unsupported ZHA setup field")
+        values = dict(user_input)
+        if "device_path" in values:
+            path = str(values["device_path"])
+            if len(path) > 256 or not path.startswith(_ZHA_DEVICE_PREFIXES):
+                raise PluginValidationError(
+                    "ZHA device path is outside the supported serial boundary"
+                )
+            values["device_path"] = path
+        if "radio_type" in values:
+            radio_type = str(values["radio_type"])
+            if (
+                flow.allowed_values.get("radio_type")
+                and radio_type not in flow.allowed_values["radio_type"]
+            ):
+                raise PluginValidationError("radio type is not offered by Home Assistant")
+            values["radio_type"] = radio_type
+        if "baudrate" in values:
+            try:
+                baudrate = int(values["baudrate"])
+            except (TypeError, ValueError) as exc:
+                raise PluginValidationError("ZHA baud rate must be an integer") from exc
+            if baudrate not in {9600, 19200, 38400, 57600, 115200, 230400, 460800}:
+                raise PluginValidationError("unsupported ZHA baud rate")
+            values["baudrate"] = baudrate
+        if "flow_control" in values and str(values["flow_control"]) not in {
+            "none",
+            "software",
+            "hardware",
+        }:
+            raise PluginValidationError("unsupported ZHA flow control mode")
+        return values
+
+    def _continue_zha_setup(self, setup_id: str, user_input: Any) -> dict[str, Any]:
+        with self._zha_flows_lock:
+            flow = self._zha_flows.get(setup_id)
+        if flow is None or not flow.ha_flow_id or flow.step_id not in _ZHA_FLOW_STEPS:
+            raise PluginValidationError("ZHA setup flow is missing or expired")
+        values = self._validate_zha_input(flow, user_input)
+        connection = self.adapter.connection
+        continue_flow = getattr(connection, "continue_config_flow", None)
+        if connection is None or not connection.connected or not callable(continue_flow):
+            raise PluginValidationError("Home Assistant ZHA setup is unavailable")
+        return self._project_zha_flow(setup_id, continue_flow(flow.ha_flow_id, values))
 
     def _resource_in_household(self, household_id: UUID, resource_id: UUID) -> CanonicalNode:
         resource = self.adapter.graph.get_node(resource_id)
@@ -1152,6 +1410,14 @@ class HomeAssistantPlugin:
                 "health": self.safe_status(),
                 "operation": "reconnect_home_assistant",
             }
+        if name == "start_zha_setup":
+            del arguments, timeout, household_id
+            return self._start_zha_setup()
+        if name == "continue_zha_setup":
+            del timeout, household_id
+            return self._continue_zha_setup(
+                str(arguments.get("setup_id", "")), arguments.get("user_input", {})
+            )
         if name == "refresh_inventory":
             self.adapter.reconcile()
             return {
@@ -1408,6 +1674,32 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
         "properties": {},
         "additionalProperties": False,
     }
+    start_zha_setup_schema: dict[str, Any] = {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    }
+    continue_zha_setup_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["setup_id", "user_input"],
+        "properties": {
+            "setup_id": id_schema,
+            "user_input": {
+                "type": "object",
+                "properties": {
+                    "device_path": {"type": "string", "minLength": 1, "maxLength": 256},
+                    "radio_type": {"type": "string", "minLength": 1, "maxLength": 120},
+                    "baudrate": {"type": "integer", "minimum": 9600, "maximum": 460800},
+                    "flow_control": {
+                        "type": "string",
+                        "enum": ["none", "software", "hardware"],
+                    },
+                },
+                "additionalProperties": False,
+            },
+        },
+        "additionalProperties": False,
+    }
     permit_schema: dict[str, Any] = {
         "type": "object",
         "required": ["duration_seconds"],
@@ -1487,6 +1779,28 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                 "risk_class": "LOW_RISK_HOME_CONTROL",
                 "read_only": False,
                 "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "start_zha_setup",
+                "description": "Start the supported Home Assistant ZHA setup flow",
+                "input_schema": start_zha_setup_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "configure_zha",
+                "risk_class": "SECURITY_SECURE_ACTION",
+                "read_only": False,
+                "idempotency": "NONE",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "continue_zha_setup",
+                "description": "Continue the server-owned supported ZHA setup flow",
+                "input_schema": continue_zha_setup_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "configure_zha",
+                "risk_class": "SECURITY_SECURE_ACTION",
+                "read_only": False,
+                "idempotency": "NONE",
                 "external_content_trust": "PLUGIN_TRUSTED",
             },
             {
