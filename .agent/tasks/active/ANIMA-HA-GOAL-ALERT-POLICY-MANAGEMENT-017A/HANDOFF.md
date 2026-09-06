@@ -142,3 +142,24 @@ Hosted qualification is now complete for this scene-management follow-on:
 The scene provider remains a bounded sequential power-preset capability, not a
 raw automation editor or atomic batch executor. This publication is complete
 pending independent Architect acceptance; Phase 15 remains unauthorized.
+
+## Bounded automation-management follow-on
+
+The active goal packet now also contains the bounded automation capability
+documented in `docs/GOAL-AUTOMATION-MANAGEMENT-017A.md`. Owners can create and
+edit household-scoped rules that match an observed commissioned resource
+state (`on`/`off`) and request one typed power action on a commissioned
+resource. The Automations view uses optimistic versions and never accepts raw
+Home Assistant entities, services, hosts, credentials, or arbitrary payloads.
+
+Automation firing is Core-owned: normalized HA observation → matching enabled
+rule → journaled `automation.fired` → autonomous `set_power` request → existing
+PluginManager/OPA/ActionExecutionCoordinator → fresh observation and Phase 9
+verification. Stable event-derived idempotency prevents duplicate dispatch;
+connector acknowledgement cannot override the terminal verification result.
+
+Focused checks pass for household isolation, commissioned-resource validation,
+version conflicts, provenance, timestamps, and deterministic event identity.
+This is implementation evidence pending exact-head hosted qualification and
+independent Architect acceptance. It is not a raw HA automation editor or
+Phase 15 behavior.

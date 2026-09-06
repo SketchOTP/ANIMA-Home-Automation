@@ -34,6 +34,12 @@ from anima_ha.attention import (
     PostgresAttentionService,
     default_attention_profile,
 )
+from anima_ha.automations import (
+    AUTOMATIONS_MANIFEST,
+    AutomationEventRouter,
+    AutomationNativePlugin,
+    PostgresAutomationStore,
+)
 from anima_ha.backup import BACKUP_MANIFEST, BackupCoordinator, BackupNativePlugin
 from anima_ha.calendar import (
     CALENDAR_MANIFEST,
@@ -197,6 +203,7 @@ class CoreUICommandGateway:
     agent: AgentRuntime | None = None
     home_assistant_adapter: HomeAssistantAdapter | None = None
     scene_store: PostgresSceneStore | None = None
+    automation_store: PostgresAutomationStore | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -334,6 +341,15 @@ class CoreUICommandGateway:
         if name is None:
             raise UICommandError("UNKNOWN_SCENE_OPERATION")
         return self._invoke(identity, SCENES_MANIFEST.plugin_id, name, payload)
+
+    def automation_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        operation_map = {"create": "create_automation", "update": "update_automation"}
+        name = operation_map.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_AUTOMATION_OPERATION")
+        return self._invoke(identity, AUTOMATIONS_MANIFEST.plugin_id, name, payload)
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
         """Apply a preset through the existing verified single-device action path.
@@ -759,6 +775,7 @@ class CoreRuntime:
     notification_route_store: PostgresNotificationRouteStore | None = None
     backup_coordinator: BackupCoordinator | None = None
     scene_store: PostgresSceneStore | None = None
+    automation_store: PostgresAutomationStore | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -803,6 +820,7 @@ class CoreRuntime:
             agent=self.agent,
             home_assistant_adapter=self.home_assistant_adapter,
             scene_store=self.scene_store,
+            automation_store=self.automation_store,
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -933,6 +951,7 @@ def build_postgres_core(
         os.environ.get("ANIMA_BACKUP_DIR", "/var/lib/anima/backups"),
     )
     scene_store = PostgresSceneStore(database_url)
+    automation_store = PostgresAutomationStore(database_url)
 
     def alert_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
         node = graph.get_node(resource_id)
@@ -998,6 +1017,29 @@ def build_postgres_core(
     register_and_enable(
         SCENES_MANIFEST,
         NativeRuntime(SceneNativePlugin(scene_store, scene_resource_is_commissioned)),
+        persist_choice=False,
+    )
+
+    def automation_resource_is_commissioned(household_id: UUID, resource_id: UUID) -> bool:
+        node = graph.get_node(resource_id)
+        if node is None or node.kind != NodeKind.RESOURCE:
+            return False
+        if not any(
+            resource_id == resource.canonical_id
+            for place in graph.places_in_household(household_id)
+            for resource in graph.resources_in_place(place.canonical_id)
+        ):
+            return False
+        return any(
+            str(capability.metadata.get("capability_type", "")).startswith("power.")
+            for capability in graph.resource_capabilities(resource_id)
+        )
+
+    register_and_enable(
+        AUTOMATIONS_MANIFEST,
+        NativeRuntime(
+            AutomationNativePlugin(automation_store, automation_resource_is_commissioned)
+        ),
         persist_choice=False,
     )
 
@@ -1138,6 +1180,7 @@ def build_postgres_core(
         notification_route_store,
         backup_coordinator,
         scene_store,
+        automation_store,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()
@@ -1186,7 +1229,24 @@ def build_postgres_core(
             dispatch_attention=dispatch_attention,
             dispatch_notification=notification_dispatcher.dispatch,
         )
-        ha_adapter.set_normalized_event_callback(router.handle)
+        automation_router = AutomationEventRouter(
+            household_id=household_id,
+            store=automation_store,
+            resource_resolver=resolve_resource,
+            manager=plugins,
+            action_executor=action_executor,
+            policy_service=policy_service,
+            action_refresher=action_refresher,
+            action_verifier=None,
+            role_resolver=identity_resolver.resolve_role,
+            journal=journal,
+        )
+
+        def handle_normalized_event(event: EventEnvelope) -> None:
+            router.handle(event)
+            automation_router.handle(event)
+
+        ha_adapter.set_normalized_event_callback(handle_normalized_event)
     return runtime
 
 

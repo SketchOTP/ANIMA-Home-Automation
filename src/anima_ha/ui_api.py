@@ -423,6 +423,8 @@ class HouseholdReadModel(Protocol):
 
     def scenes(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def automations(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]: ...
 
     def update_settings(self, identity: UIIdentity, value: dict[str, Any]) -> dict[str, Any]: ...
@@ -501,6 +503,10 @@ class UICommandGateway(Protocol):
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]: ...
 
+    def automation_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 class UnavailableCommandGateway:
     """Fail closed until the host wires the existing Core gateway adapters."""
@@ -571,6 +577,11 @@ class UnavailableCommandGateway:
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
         return self._unavailable(f"scene.apply.{scene_id}")
+
+    def automation_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"automation.{operation}")
 
 
 class ConversationIngress(Protocol):
@@ -791,6 +802,10 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def automations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return dict(self._settings)
@@ -906,6 +921,10 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def automations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
     def settings(self, identity: UIIdentity) -> dict[str, Any]:
         del identity
         return validate_ui_preferences({})
@@ -930,6 +949,7 @@ class PostgresHouseholdReadModel:
         notification_route_store: Any | None = None,
         backup_coordinator: Any | None = None,
         scene_store: Any | None = None,
+        automation_store: Any | None = None,
     ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
@@ -940,6 +960,7 @@ class PostgresHouseholdReadModel:
         self.notification_route_store = notification_route_store
         self.backup_coordinator = backup_coordinator
         self.scene_store = scene_store
+        self.automation_store = automation_store
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1419,6 +1440,14 @@ class PostgresHouseholdReadModel:
         if self.scene_store is None:
             return []
         return [scene.to_payload() for scene in self.scene_store.list(identity.household_id)]
+
+    def automations(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.automation_store is None:
+            return []
+        return [
+            automation.to_payload()
+            for automation in self.automation_store.list(identity.household_id)
+        ]
 
     def _latest_external_health(self, providers: tuple[str, ...]) -> tuple[str, str | None] | None:
         if not providers:
@@ -1938,6 +1967,7 @@ def create_app(
                 notification_route_store=core_runtime.notification_route_store,
                 backup_coordinator=core_runtime.backup_coordinator,
                 scene_store=core_runtime.scene_store,
+                automation_store=core_runtime.automation_store,
             )
         svc = UIService(
             config=config,
@@ -2164,6 +2194,26 @@ def create_app(
     @app.get("/api/v1/scenes")
     async def scenes(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.scenes(current_identity(request))}
+
+    @app.get("/api/v1/automations")
+    async def automations(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.automations(current_identity(request))}
+
+    @app.post("/api/v1/automations")
+    async def save_automation(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        operation = "update" if body.payload.get("automation_id") else "create"
+        try:
+            return svc.commands.automation_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.post("/api/v1/scenes")
     async def save_scene(

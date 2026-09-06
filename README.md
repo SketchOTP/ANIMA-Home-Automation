@@ -59,10 +59,17 @@ These screenshots are captured from the tested local application with synthetic 
 - ANIMA-owned commissioned-device lifecycle from the same Devices view: rename a device, move it between existing rooms/zones, or retire it from ANIMA’s canonical model. These mutations preserve the Home Assistant registry and remain household-scoped, policy-gated Graph operations.
 - ANIMA-owned typed SenseGuard alert policies from the Alerts view: select canonical resources, define an event type and household-local time window, choose priority/delivery, and enable or disable versioned policies without opening the Home Assistant frontend.
 - ANIMA-owned declarative scenes from the Scenes view: compose a bounded preset from commissioned power resources, save it with optimistic versioning, and apply each step through the same verified policy/action path as a direct control.
+- ANIMA-owned bounded automations from the Automations view: trigger on an observed commissioned resource state and request one typed power action through the existing OPA, locking, freshness, idempotency, and Phase 9 verification path. This is a safe first automation slice, not a raw Home Assistant YAML/service editor.
 - Core-owned identity roles are re-resolved for every governed operation; UI preferences are allowlisted and persisted in PostgreSQL; OAuth state is browser-bound, expiring, and single-use.
 - Server-owned PostgreSQL backup snapshots and integrity validation are available from the authenticated Backups view. Archive paths, credentials, household scope, and restore authority remain inside Core.
 - Bounded external capabilities: Open-Meteo, private SearXNG, OSM Overpass, TheMealDB, UPCitemdb, local PostgreSQL calendar, and ntfy; provider activation is composed by Core and unavailable providers are reported honestly. Owners can configure typed SenseGuard alert policies and the server-owned notification route from ANIMA.
 - Restart-safe durable tasks, guaranteed scheduled-reasoning events, fresh due-time context, restricted external-content handling, and the SENTRY durable request/result boundary.
+
+The current management plane is intentionally converging through typed owner
+workflows—devices and rooms, alert policies and notification routes, backups,
+scenes, and bounded automations—rather than exposing Home Assistant's raw
+administration model. Each workflow remains subordinate to ANIMA's identity,
+Truth, policy, and verified-execution boundaries.
 
 ## Safety and trust model
 

@@ -213,3 +213,26 @@ The local SFTP checkout lacks a usable Python pytest interpreter, so the
 hosted run is the authoritative full-regression result. This remains
 implementation evidence pending independent Architect acceptance; Phase 15
 remains unauthorized.
+
+## Bounded automation-management follow-on
+
+The current goal increment adds a household-scoped, versioned `anima.automations`
+capability and authenticated Automations view. The first supported form is a
+normalized `on`/`off` observation on one commissioned resource followed by one
+typed `set_power` action on another commissioned power resource. The server
+owns household scope, creator provenance, canonical resource validation, and a
+stable `automation:{automation_id}:{event_id}` idempotency identity.
+
+The event router consumes normalized Home Assistant Truth observations and
+creates autonomous action requests through the existing PluginManager, OPA,
+PostgreSQL coordination, and Phase 9 refresh/verification path. It does not
+call Home Assistant directly, expose raw entity/service data, create a second
+scheduler, or bypass policy. A fired automation is journaled as
+`automation.fired`; disabled, unknown, stale, denied, and verification-failed
+states remain bounded outcomes rather than fabricated success.
+
+Focused validation covers household isolation, optimistic version conflicts,
+commissioned-resource enforcement, UTC timestamps, autonomous provenance, and
+stable event-to-action identity. The UI exposes only the bounded trigger,
+action, enabled state, and versioned edit controls. Full hosted qualification
+is required before this follow-on can be independently accepted.
