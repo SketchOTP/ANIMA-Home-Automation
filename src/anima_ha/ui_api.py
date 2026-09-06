@@ -1482,7 +1482,7 @@ class PostgresHouseholdReadModel:
                 f"""
                 SELECT event_id, occurred_at, payload, metadata
                 FROM anima_event_journal
-                WHERE {' AND '.join(clauses)}
+                WHERE {" AND ".join(clauses)}
                 ORDER BY occurred_at DESC, event_id DESC
                 LIMIT %s
                 """,
