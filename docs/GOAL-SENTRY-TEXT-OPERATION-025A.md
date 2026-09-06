@@ -1,6 +1,6 @@
 # Goal increment — SENTRY text household operation
 
-Status: implementation in progress; Phase 15 remains unauthorized.
+Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`; Phase 15 remains unauthorized.
 
 ## Product outcome
 
@@ -41,6 +41,19 @@ Phase 15 scenarios.
 
 ## Evidence boundary
 
-The implementation is locally compile- and frontend-build-verified at the
-working checkpoint. Full Python dependency validation and hosted exact-head CI
-remain required before this increment can be called complete.
+Implementation head `97be56fac54a848982d5767fe792ea66083412e9` is pushed with
+`main == origin/main` and a clean tree. Exact-head hosted CI `34055080097`
+passed. The reviewable artifact is `9995888935`,
+`phase12-h5-evidence-97be56fac54a848982d5767fe792ea66083412e9`, with digest
+`sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`.
+
+The hosted run passed deterministic validation, strict mypy, the existing
+Phase 13 boundary and MCP checks, Phase 14 regression/recovery checks,
+ARM64/container checks, frontend checks, and the H5 browser validation.
+Local validation was limited by the mounted checkout's unavailable Python
+environment; hosted CI is the authoritative Python result.
+
+This increment proves bounded asynchronous delivery from the ANIMA-owned
+SENTRY service to the authenticated ANIMA conversation view. It does not claim
+that a live external SENTRY host has been commissioned; that remains a later
+runtime/resource qualification. No durable response text is introduced.

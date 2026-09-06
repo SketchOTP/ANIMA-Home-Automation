@@ -1196,3 +1196,17 @@ decision.
   `git diff --check`.
 - Status: implementation-verified, pending independent Architect acceptance.
   Phase 15 remains unauthorized and unimplemented.
+
+## Goal SENTRY text operation - 2026-09-06
+
+- Status: `COMPLETE - PENDING ARCHITECT ACCEPTANCE`.
+- Implementation head `97be56fac54a848982d5767fe792ea66083412e9`; exact-head
+  hosted CI `34055080097` passed. Artifact `9995888935`, digest
+  `sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`.
+- ANIMA now delivers a bounded SENTRY response to the authenticated
+  conversation UI through PostgreSQL `NOTIFY` and short-lived process memory.
+  The durable request row remains response-content free; household checks,
+  bounded payloads, and honest unavailable behavior are preserved.
+- This is a meaningful owner-facing increment, not a claim of a live external
+  SENTRY host turn. Phase 14 remains accepted and Phase 15 remains
+  unauthorized.

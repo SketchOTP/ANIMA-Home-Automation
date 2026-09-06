@@ -25,27 +25,28 @@ authorized by the goal-wide completion audit.
 
 ## Latest repository publication - 2026-09-06
 
-The current repository head is the room/zone lifecycle governance head
-`851187c8ca7e28d7823c76bcdaa604ed9d061173`, with `main == origin/main` and a
-clean tree. The room/zone implementation passed exact-head CI `34051465103`
-and the evidence-bound governance head passed exact-head CI `34052886439`.
-Artifact `9995274751` was published; its downloaded archive hash is
-`sha256:7e1b4942146745351a37682c37221cb38291cfbfc6b86eddf0b75e11737b0bfc`.
-The next owner-facing increment is now active: bounded asynchronous SENTRY
-text-result delivery through ANIMA, with no durable response-content storage.
-Phase 15 remains unauthorized and unimplemented.
+The current repository head is `97be56fac54a848982d5767fe792ea66083412e9`,
+with `main == origin/main` and a clean tree. Exact-head hosted CI
+`34055080097` passed. Artifact `9995888935` was published with digest
+`sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`.
+The owner-facing SENTRY text-result increment is complete pending Architect
+acceptance. Phase 15 remains unauthorized and unimplemented.
 
 ## Active goal increment — SENTRY text result delivery - 2026-09-06
 
-The selected largest coherent product gap is the missing owner-facing return
+The selected largest coherent product gap was the missing owner-facing return
 path after ANIMA queues SENTRY cognition. `ANIMA-HA-GOAL-SENTRY-TEXT-025A`
 adds a non-durable bounded PostgreSQL notification channel from the
 ANIMA-owned SENTRY service to the UI process, a household-scoped result route,
 and a SENTRY-labeled browser polling flow. Durable intelligence rows retain
 status/digest metadata only; missed live text is reported as unavailable.
+Exact-head hosted CI `34055080097` passed on `97be56fac54a848982d5767fe792ea66083412e9`;
+artifact `9995888935` carries digest
+`sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`.
 The previous alert-policy packet was reconciled into completed history without
-rewriting its evidence. Implementation validation and hosted exact-head CI
-are pending. Phase 14 remains accepted; Phase 15 remains unauthorized.
+rewriting its evidence. The live external SENTRY host remains a later runtime
+resource qualification; no live-host claim is made here. Phase 14 remains
+accepted; Phase 15 remains unauthorized.
 
 ## Latest owner-facing room/zone lifecycle increment - 2026-09-06
 

@@ -639,3 +639,18 @@ Append new directives at the bottom; never rewrite an accepted historical direct
   Phase 15 behavior.
 - Source: permanent Goal usability scorecard and current repository/runtime
   reconstruction.
+
+## ANIMA-HA-GOAL-SENTRY-TEXT-025A — validation result
+
+- Implementation head: `97be56fac54a848982d5767fe792ea66083412e9`.
+- Exact-head hosted CI: `34055080097` — PASS.
+- Artifact `9995888935`, digest
+  `sha256:9c077a0ed861bee7378ba8e79178248eab16243f1dfa80a2a0448ced29630833`.
+- The bounded UI result-delivery path is validated: the ANIMA-owned SENTRY
+  service publishes only after a durable result transition; the authenticated
+  UI reads a household-scoped, short-lived in-memory result and honestly
+  reports missed delivery. Durable request records do not retain response
+  text, and no browser storage or embedded fallback was added.
+- Status: `COMPLETE — PENDING ARCHITECT ACCEPTANCE`. A live external SENTRY
+  host is not claimed by this increment and remains a later runtime/resource
+  qualification. Phase 14 remains accepted; Phase 15 remains unauthorized.
