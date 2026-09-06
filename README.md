@@ -66,7 +66,7 @@ Identity and policy are ANIMA-owned. Tool schemas expose intent, not secrets or 
 
 ## Evidence
 
-Phases 0–12 are Architect accepted. The active work is the SENTRY-ready intelligence platform: its ANIMA-side boundary is implemented and being validated. The [Authority state](.agent/CURRENT.md), [SENTRY integration guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish implemented contracts from host-level SENTRY service commissioning.
+Phases 0–13 are Architect accepted. The active work is Phase 14 resilience, replay, backup, and recovery qualification. The [Authority state](.agent/CURRENT.md), [SENTRY integration guide](docs/SENTRY-ANIMA-INTEGRATION.md), and active task packet distinguish accepted platform contracts from remaining destructive qualification evidence.
 
 ## Implemented Phase 0 through Phase 11 baseline
 

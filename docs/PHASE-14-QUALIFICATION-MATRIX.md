@@ -18,6 +18,7 @@ not authorized.
 | Consolidated ledger governance publication | `76453a3f38e2abfbd52dcad78f6128f97bf4af8c` | `34000794948` PASS | `9979518862` (`sha256:c4b2b2ba6e818b6ae37f7f488eddd0bfb55027007ee9e73a211e48a735d6cb17`) |
 | Explicit-status ledger correction | `527810827728fc8242fbc4069b9eecb5c8060f6a` | `34001997325` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
 | Current exact-head mapped-family ledger | `4006bcde922eb3c86c827db5700ece2ce46e98a9` | `34002634015` PASS | `9979858475` (`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`) |
+| Current exact-head destructive ledger | `a84d318e491e78ce5d7e7d0cdd59d2fbf74a2048` | `34003443720` PASS | `9980299813` |
 
 ## Clustered status
 
@@ -80,19 +81,20 @@ that status; the ledger therefore reports all ten named evidence families as
 not promote deterministic-contract fixtures or erase the broader lifecycle,
 process-state, and final-replay breadth still tracked as `PARTIAL` above.
 
-## Current exact-head mapped-family ledger
+## Current exact-head destructive ledger
 
-The current exact-head hosted run `34002634015` passed on
-`4006bcde922eb3c86c827db5700ece2ce46e98a9` and published artifact
-`9979858475` with digest
-`sha256:c749ca63200ab46f32473e70976e107858796005cbef63153bd37ba76dc948b9`.
+The current exact-head hosted run `34003443720` passed on
+`a84d318e491e78ce5d7e7d0cdd59d2fbf74a2048` and published artifact
+`9980299813`. Its evidence metadata confirms that exact tested SHA.
 The evidence auditor found all 22 required real-store files, no missing files,
 and no non-passing mapped scenarios; all ten mapped evidence families are
-therefore `VERIFIED` for their named exercised scenarios at this exact head.
-The overall Phase 14 disposition remains `CONTINUE`: this is evidence
-integrity/coverage, not self-acceptance, and deterministic-contract fixtures
-remain excluded from destructive proof. The broader clustered closure and
-final replay requirements remain tracked below. Phase 15 remains unauthorized.
+`VERIFIED` for their named exercised scenarios at this exact head. The
+possible-dispatch/manual-reality and policy-reauthorization evidence is also
+present in the exact-head bundle. The overall Phase 14 disposition remains
+`CONTINUE`: this is evidence integrity and exercised-slice coverage, not
+self-acceptance, and deterministic-contract fixtures remain excluded from
+destructive proof. The broader final acceptance boundary remains tracked
+below. Phase 15 remains unauthorized.
 
 ## Next consolidated closure bundle
 
