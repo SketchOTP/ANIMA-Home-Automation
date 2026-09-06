@@ -799,8 +799,18 @@ class DemoHouseholdReadModel:
     def places(self, identity: UIIdentity) -> list[dict[str, Any]]:
         del identity
         return [
-            {"place_id": "household-demo", "name": "Anima Home", "kind": "HOUSEHOLD"},
-            {"place_id": "room-demo", "name": "Living room", "kind": "ROOM"},
+            {
+                "place_id": "household-demo",
+                "name": "Anima Home",
+                "kind": "HOUSEHOLD",
+                "parent_id": None,
+            },
+            {
+                "place_id": "room-demo",
+                "name": "Living room",
+                "kind": "ROOM",
+                "parent_id": "household-demo",
+            },
         ]
 
     def alert_policies(self, identity: UIIdentity) -> list[dict[str, Any]]:
@@ -1479,7 +1489,20 @@ class PostgresHouseholdReadModel:
             return []
         places = [root, *self.graph.places_in_household(identity.household_id)]
         return [
-            {"place_id": str(place.canonical_id), "name": place.name, "kind": place.kind.value}
+            {
+                "place_id": str(place.canonical_id),
+                "name": place.name,
+                "kind": place.kind.value,
+                "parent_id": (
+                    str(parent_id)
+                    if (
+                        parent_id := self.graph.parent_of_place(
+                            identity.household_id, place.canonical_id
+                        )
+                    )
+                    else None
+                ),
+            }
             for place in places
         ]
 
@@ -2530,7 +2553,7 @@ def create_app(
         body: MutationRequest,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
-        if operation not in {"create", "rename"}:
+        if operation not in {"create", "rename", "move", "remove"}:
             raise HTTPException(status_code=404, detail="UNKNOWN_SPACE_OPERATION")
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)

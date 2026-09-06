@@ -161,6 +161,20 @@ def test_space_routes_use_session_identity_and_bounded_payload() -> None:
     )
     assert response.status_code == 200
     assert response.json()["result"]["space"]["kind"] == "ROOM"
+    moved = client.post(
+        "/api/v1/places/move",
+        json={"payload": {"place_id": "room-demo", "parent_id": "household-demo"}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert moved.status_code == 200
+    assert moved.json()["operation"] == "move"
+    removed = client.post(
+        "/api/v1/places/remove",
+        json={"payload": {"place_id": "room-demo"}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert removed.status_code == 200
+    assert removed.json()["operation"] == "remove"
 
 
 def test_preference_route_is_authenticated_and_semantically_bounded() -> None:

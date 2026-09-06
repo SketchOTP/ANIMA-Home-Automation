@@ -641,6 +641,33 @@ class PostgresHouseholdGraph:
             (household_id,),
         )
 
+    def parent_of_place(self, household_id: UUID, place_id: UUID) -> UUID | None:
+        """Return the active parent of one household place, if it has one."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                WITH RECURSIVE descendants(canonical_id) AS (
+                    SELECT %s::uuid
+                    UNION
+                    SELECT r.target_id
+                    FROM anima_graph_relationships r
+                    JOIN descendants d ON d.canonical_id = r.source_id
+                    WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                )
+                SELECT r.source_id
+                FROM anima_graph_relationships r
+                JOIN descendants d ON d.canonical_id = r.target_id
+                WHERE r.relationship_type = 'CONTAINS'
+                  AND r.target_id = %s
+                  AND r.retired_at IS NULL
+                ORDER BY r.created_at
+                LIMIT 1
+                """,
+                (household_id, place_id),
+            )
+            row = cursor.fetchone()
+        return UUID(str(row["source_id"])) if row else None
+
     def _list_nodes(
         self, predicate: str = "TRUE", params: tuple[Any, ...] = ()
     ) -> list[CanonicalNode]:
@@ -1093,6 +1120,228 @@ class PostgresHouseholdGraph:
                         )
                     connection.commit()
                 return CanonicalNode(UUID(str(place_id)), NodeKind(str(row["kind"])), display_name)
+            except Exception:
+                connection.rollback()
+                raise
+
+    def move_place(self, household_id: UUID, place_id: UUID, parent_id: UUID) -> CanonicalNode:
+        """Move one room/zone within the household graph without creating cycles."""
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT n.name, n.kind, r.relationship_id, r.source_id AS parent_id
+                        FROM anima_graph_nodes n
+                        JOIN descendants d ON d.canonical_id = n.canonical_id
+                        JOIN anima_graph_relationships r
+                          ON r.target_id = n.canonical_id
+                         AND r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        WHERE n.canonical_id = %s AND n.retired_at IS NULL
+                        ORDER BY r.created_at
+                        LIMIT 1
+                        """,
+                        (household_id, place_id),
+                    )
+                    place = cursor.fetchone()
+                    if place is None or str(place["kind"]) not in {
+                        NodeKind.ROOM.value,
+                        NodeKind.ZONE.value,
+                    }:
+                        raise GraphValidationError("place is unknown or outside this household")
+
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT n.kind
+                        FROM anima_graph_nodes n
+                        JOIN descendants d ON d.canonical_id = n.canonical_id
+                        WHERE n.canonical_id = %s AND n.retired_at IS NULL
+                        """,
+                        (household_id, parent_id),
+                    )
+                    parent = cursor.fetchone()
+                    if parent is None or str(parent["kind"]) not in {
+                        item.value for item in CONTAINER_KINDS
+                    }:
+                        raise GraphValidationError("destination is not in this household")
+
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT 1 FROM descendants WHERE canonical_id = %s
+                        """,
+                        (place_id, parent_id),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise GraphConflict("a place cannot be moved inside itself or a descendant")
+
+                    if UUID(str(place["parent_id"])) == parent_id:
+                        return CanonicalNode(
+                            UUID(str(place_id)), NodeKind(str(place["kind"])), str(place["name"])
+                        )
+
+                    cursor.execute(
+                        """
+                        SELECT n.name
+                        FROM anima_graph_nodes n
+                        JOIN anima_graph_relationships r ON r.target_id = n.canonical_id
+                        WHERE r.source_id = %s AND r.relationship_type = 'CONTAINS'
+                          AND r.retired_at IS NULL AND n.retired_at IS NULL
+                          AND n.canonical_id <> %s
+                        """,
+                        (parent_id, place_id),
+                    )
+                    normalized = normalize_alias(str(place["name"]))
+                    if any(normalize_alias(str(item["name"])) == normalized for item in cursor):
+                        raise GraphConflict("a place with this name already exists under parent")
+
+                    cursor.execute(
+                        "UPDATE anima_graph_relationships SET retired_at=now() WHERE relationship_id=%s",
+                        (place["relationship_id"],),
+                    )
+                    relationship_id = uuid4()
+                    cursor.execute(
+                        """
+                        INSERT INTO anima_graph_relationships
+                            (relationship_id, relationship_type, source_id, target_id, metadata)
+                        VALUES (%s, 'CONTAINS', %s, %s, '{}'::jsonb)
+                        """,
+                        (relationship_id, parent_id, place_id),
+                    )
+                    self._audit(
+                        connection,
+                        "place.moved",
+                        place_id,
+                        {
+                            "from_parent_id": str(place["parent_id"]),
+                            "to_parent_id": str(parent_id),
+                            "relationship_id": str(relationship_id),
+                        },
+                    )
+                connection.commit()
+                return CanonicalNode(
+                    UUID(str(place_id)), NodeKind(str(place["kind"])), str(place["name"])
+                )
+            except Exception:
+                connection.rollback()
+                raise
+
+    def retire_place(self, household_id: UUID, place_id: UUID) -> CanonicalNode:
+        """Retire an empty room/zone while preserving graph history."""
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE descendants(canonical_id) AS (
+                            SELECT %s::uuid
+                            UNION
+                            SELECT r.target_id
+                            FROM anima_graph_relationships r
+                            JOIN descendants d ON d.canonical_id = r.source_id
+                            WHERE r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        )
+                        SELECT n.name, n.kind, r.relationship_id
+                        FROM anima_graph_nodes n
+                        JOIN descendants d ON d.canonical_id = n.canonical_id
+                        JOIN anima_graph_relationships r
+                          ON r.target_id = n.canonical_id
+                         AND r.relationship_type = 'CONTAINS' AND r.retired_at IS NULL
+                        WHERE n.canonical_id = %s AND n.retired_at IS NULL
+                        ORDER BY r.created_at
+                        LIMIT 1
+                        """,
+                        (household_id, place_id),
+                    )
+                    place = cursor.fetchone()
+                    if place is None or str(place["kind"]) not in {
+                        NodeKind.ROOM.value,
+                        NodeKind.ZONE.value,
+                    }:
+                        raise GraphValidationError("place is unknown or outside this household")
+
+                    cursor.execute(
+                        """
+                        SELECT 1 FROM anima_graph_relationships
+                        WHERE relationship_type = 'CONTAINS' AND source_id = %s
+                          AND retired_at IS NULL
+                        LIMIT 1
+                        """,
+                        (place_id,),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise GraphConflict("place must be empty before removal")
+                    cursor.execute(
+                        """
+                        SELECT 1 FROM anima_graph_relationships
+                        WHERE relationship_type = 'INSTALLED_IN' AND target_id = %s
+                          AND retired_at IS NULL
+                        LIMIT 1
+                        """,
+                        (place_id,),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise GraphConflict("place still contains commissioned resources")
+                    cursor.execute(
+                        """
+                        SELECT relationship_type FROM anima_graph_relationships
+                        WHERE (source_id = %s OR target_id = %s) AND retired_at IS NULL
+                          AND NOT (relationship_id = %s)
+                        LIMIT 1
+                        """,
+                        (place_id, place_id, place["relationship_id"]),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise GraphConflict("place has active relationships and cannot be removed")
+
+                    cursor.execute(
+                        "UPDATE anima_graph_relationships SET retired_at=now() WHERE relationship_id=%s",
+                        (place["relationship_id"],),
+                    )
+                    cursor.execute(
+                        "UPDATE anima_graph_aliases SET retired_at=now() WHERE canonical_id=%s AND retired_at IS NULL",
+                        (place_id,),
+                    )
+                    cursor.execute(
+                        "UPDATE anima_graph_nodes SET retired_at=now(), updated_at=now() WHERE canonical_id=%s",
+                        (place_id,),
+                    )
+                    self._audit(
+                        connection,
+                        "place.retired",
+                        place_id,
+                        {"name": str(place["name"]), "kind": str(place["kind"])},
+                    )
+                connection.commit()
+                return CanonicalNode(
+                    UUID(str(place_id)),
+                    NodeKind(str(place["kind"])),
+                    str(place["name"]),
+                    retired_at=datetime.now(UTC),
+                )
             except Exception:
                 connection.rollback()
                 raise

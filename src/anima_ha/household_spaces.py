@@ -24,8 +24,13 @@ from anima_ha.plugins import (
 )
 
 
-def _space_payload(node: Any) -> dict[str, str]:
-    return {"place_id": str(node.canonical_id), "name": node.name, "kind": node.kind.value}
+def _space_payload(node: Any, parent_id: UUID | None = None) -> dict[str, str | None]:
+    return {
+        "place_id": str(node.canonical_id),
+        "name": node.name,
+        "kind": node.kind.value,
+        "parent_id": str(parent_id) if parent_id else None,
+    }
 
 
 class HouseholdSpacesNativePlugin:
@@ -61,23 +66,45 @@ class HouseholdSpacesNativePlugin:
                 "status": "SUCCEEDED",
                 "items": [_space_payload(root)]
                 + [
-                    _space_payload(item)
+                    _space_payload(
+                        item, self.graph.parent_of_place(context.household_id, item.canonical_id)
+                    )
                     for item in self.graph.places_in_household(context.household_id)
                 ],
             }
         if name == "create_space":
+            parent_id = UUID(str(arguments["parent_id"]))
             node = self.graph.create_place(
                 context.household_id,
-                UUID(str(arguments["parent_id"])),
+                parent_id,
                 str(arguments["name"]),
                 NodeKind(str(arguments["kind"])),
             )
-            return {"status": "SUCCEEDED", "space": _space_payload(node)}
+            return {"status": "SUCCEEDED", "space": _space_payload(node, parent_id)}
         if name == "rename_space":
-            node = self.graph.rename_place(
-                context.household_id, UUID(str(arguments["place_id"])), str(arguments["name"])
+            place_id = UUID(str(arguments["place_id"]))
+            node = self.graph.rename_place(context.household_id, place_id, str(arguments["name"]))
+            return {
+                "status": "SUCCEEDED",
+                "space": _space_payload(
+                    node, self.graph.parent_of_place(context.household_id, place_id)
+                ),
+            }
+        if name == "move_space":
+            node = self.graph.move_place(
+                context.household_id,
+                UUID(str(arguments["place_id"])),
+                UUID(str(arguments["parent_id"])),
             )
-            return {"status": "SUCCEEDED", "space": _space_payload(node)}
+            return {
+                "status": "SUCCEEDED",
+                "space": _space_payload(
+                    node, self.graph.parent_of_place(context.household_id, node.canonical_id)
+                ),
+            }
+        if name == "remove_space":
+            node = self.graph.retire_place(context.household_id, UUID(str(arguments["place_id"])))
+            return {"status": "SUCCEEDED", "removed": _space_payload(node)}
         raise PluginValidationError("unknown household-spaces tool")
 
 
@@ -141,6 +168,41 @@ HOUSEHOLD_SPACES_MANIFEST = PluginManifest(
                 "additionalProperties": False,
             },
             "output_schema": {"type": "object", "required": ["status", "space"]},
+            "semantic_action": "capabilities.configure",
+            "risk_class": "SECURITY_SECURE_ACTION",
+            "read_only": False,
+            "idempotency": Idempotency.KEYED.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+        {
+            "name": "move_space",
+            "description": "Move one room or zone to another household container",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "place_id": {"type": "string", "format": "uuid"},
+                    "parent_id": {"type": "string", "format": "uuid"},
+                },
+                "required": ["place_id", "parent_id"],
+                "additionalProperties": False,
+            },
+            "output_schema": {"type": "object", "required": ["status", "space"]},
+            "semantic_action": "capabilities.configure",
+            "risk_class": "SECURITY_SECURE_ACTION",
+            "read_only": False,
+            "idempotency": Idempotency.KEYED.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+        {
+            "name": "remove_space",
+            "description": "Remove an empty room or zone from the canonical household map",
+            "input_schema": {
+                "type": "object",
+                "properties": {"place_id": {"type": "string", "format": "uuid"}},
+                "required": ["place_id"],
+                "additionalProperties": False,
+            },
+            "output_schema": {"type": "object", "required": ["status", "removed"]},
             "semantic_action": "capabilities.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,

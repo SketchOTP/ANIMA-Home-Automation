@@ -330,7 +330,12 @@ class CoreUICommandGateway:
     def space_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        operation_map = {"create": "create_space", "rename": "rename_space"}
+        operation_map = {
+            "create": "create_space",
+            "rename": "rename_space",
+            "move": "move_space",
+            "remove": "remove_space",
+        }
         name = operation_map.get(operation)
         if name is None:
             raise UICommandError("UNKNOWN_SPACE_OPERATION")
