@@ -126,6 +126,11 @@ from anima_ha.senseguard_alerts import (
     SenseGuardEventRouter,
 )
 from anima_ha.sentry_boundary import CoreSentryBoundary
+from anima_ha.sentry_voice_settings import (
+    SENTRY_CONTROL_MANIFEST,
+    SentryControlNativePlugin,
+    SentryVoiceSettingsStore,
+)
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
 from anima_ha.users import HOUSEHOLD_USERS_MANIFEST, HouseholdUsersNativePlugin
 
@@ -1190,6 +1195,7 @@ def build_postgres_core(
 
     alert_policy_store = PostgresSenseGuardAlertPolicyStore(database_url)
     notification_route_store = PostgresNotificationRouteStore(database_url)
+    sentry_voice_settings_store = SentryVoiceSettingsStore(database_url)
     from anima_ha.memory import MemoryService
 
     memory_service = MemoryService(database_url)
@@ -1223,6 +1229,11 @@ def build_postgres_core(
     register_and_enable(
         NOTIFICATION_ROUTE_MANIFEST,
         NativeRuntime(NotificationRouteNativePlugin(notification_route_store)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        SENTRY_CONTROL_MANIFEST,
+        NativeRuntime(SentryControlNativePlugin(sentry_voice_settings_store)),
         persist_choice=False,
     )
     register_and_enable(

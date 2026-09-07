@@ -1,6 +1,13 @@
 import unittest
+from uuid import uuid4
 
-from anima_ha.sentry_voice_settings import validate_voice_settings
+from anima_ha.plugins import InvocationContext, PluginValidationError
+from anima_ha.policy import RequestOrigin
+from anima_ha.sentry_voice_settings import (
+    SENTRY_CONTROL_MANIFEST,
+    SentryControlNativePlugin,
+    validate_voice_settings,
+)
 
 
 class SentryVoiceSettingsTests(unittest.TestCase):
@@ -14,3 +21,41 @@ class SentryVoiceSettingsTests(unittest.TestCase):
     def test_sleep_mode_rejects_non_boolean_values(self):
         with self.assertRaises(ValueError):
             validate_voice_settings({"sleep_enabled": "true"})
+
+    def test_voice_catalogue_exposes_only_one_way_sleep_control(self):
+        tool = SENTRY_CONTROL_MANIFEST.tools[0]
+        self.assertEqual(tool["name"], "enter_sleep_mode")
+        self.assertNotIn("wake", tool["name"])
+        self.assertEqual(tool["input_schema"]["additionalProperties"], False)
+
+    def test_sleep_control_preserves_voice_settings_and_cannot_wake(self):
+        class Store:
+            def __init__(self):
+                self.value = {"voice_id": "bm_george", "speech_speed": 0.9, "sleep_enabled": False}
+                self.updates = []
+
+            def get(self, household_id):
+                return dict(self.value)
+
+            def update(self, household_id, value):
+                self.updates.append((household_id, dict(value)))
+                self.value = dict(value)
+                return dict(value)
+
+        store = Store()
+        plugin = SentryControlNativePlugin(store)
+        context = InvocationContext(
+            household_id=uuid4(), principal_id=uuid4(), episode_id=None,
+            tool_request_id=uuid4(), ordinal=1,
+            system_idempotency_key="test:sentry-sleep", origin=RequestOrigin.DIRECT_USER,
+        )
+        result = plugin.invoke_with_invocation_context("enter_sleep_mode", {}, 1.0, context)
+        self.assertEqual(
+            result,
+            {"status": "SUCCEEDED", "sleep_enabled": True, "wake_available": False},
+        )
+        self.assertTrue(store.value["sleep_enabled"])
+        self.assertEqual(store.value["voice_id"], "bm_george")
+        self.assertEqual(store.value["speech_speed"], 0.9)
+        with self.assertRaises(PluginValidationError):
+            plugin.invoke_with_invocation_context("exit_sleep_mode", {}, 1.0, context)
