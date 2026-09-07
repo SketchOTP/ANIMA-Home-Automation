@@ -38,7 +38,11 @@ def test_ha_power_and_notification_boundaries_are_unchanged() -> None:
             "SYNTHETIC_NOT_READ",
         )
     )
-    internal = {"permit_zigbee_join", "commission_device"}
+    internal = {
+        "permit_zigbee_join",
+        "commission_zigbee_presence_sensor",
+        "commission_device",
+    }
     for item in manifest.tools:
         expected = (
             ExecutionBoundary.POLICY_GATED_INTERNAL

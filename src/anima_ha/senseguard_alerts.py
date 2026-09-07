@@ -33,6 +33,74 @@ from anima_ha.plugins import (
 )
 
 
+def _is_contact_opening(event: EventEnvelope) -> bool:
+    """Qualify live HA contact evidence, never names, snapshots or attribution."""
+    metadata = event.payload.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    attributes = metadata.get("attributes")
+    if not isinstance(attributes, dict):
+        return False
+    try:
+        changed_at = datetime.fromisoformat(str(metadata["last_changed"]))
+        updated_at = datetime.fromisoformat(str(metadata["last_updated"]))
+    except (KeyError, TypeError, ValueError):
+        return False
+    external_id = event.metadata.get("external_id")
+    return (
+        event.event_type == "truth.observation"
+        and event.metadata.get("provider") == "home_assistant"
+        and isinstance(external_id, str)
+        and external_id.startswith("binary_sensor.")
+        and metadata.get("external_id") == external_id
+        and event.metadata.get("snapshot") is False
+        and metadata.get("snapshot") is False
+        and not event.metadata.get("binding_attribution")
+        and not metadata.get("binding_attribution")
+        and changed_at.tzinfo is not None
+        and updated_at.tzinfo is not None
+        and changed_at == updated_at == event.occurred_at
+        and event.payload.get("state") == "KNOWN"
+        and event.payload.get("evidence_kind") == "DIRECT"
+        and event.payload.get("value") in ("on", "open")
+        and attributes.get("device_class") in ("door", "window", "opening")
+    )
+
+
+def _is_presence_detection(event: EventEnvelope) -> bool:
+    """Qualify one live HA presence/occupancy transition as a detection."""
+    metadata = event.payload.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    attributes = metadata.get("attributes")
+    if not isinstance(attributes, dict):
+        return False
+    try:
+        changed_at = datetime.fromisoformat(str(metadata["last_changed"]))
+        updated_at = datetime.fromisoformat(str(metadata["last_updated"]))
+    except (KeyError, TypeError, ValueError):
+        return False
+    external_id = event.metadata.get("external_id")
+    return (
+        event.event_type == "truth.observation"
+        and event.metadata.get("provider") == "home_assistant"
+        and isinstance(external_id, str)
+        and external_id.startswith("binary_sensor.")
+        and metadata.get("external_id") == external_id
+        and event.metadata.get("snapshot") is False
+        and metadata.get("snapshot") is False
+        and not event.metadata.get("binding_attribution")
+        and not metadata.get("binding_attribution")
+        and changed_at.tzinfo is not None
+        and updated_at.tzinfo is not None
+        and changed_at == updated_at == event.occurred_at
+        and event.payload.get("state") == "KNOWN"
+        and event.payload.get("evidence_kind") == "DIRECT"
+        and event.payload.get("value") == "on"
+        and attributes.get("device_class") in ("presence", "occupancy")
+    )
+
+
 class SenseGuardPolicyError(ValueError):
     """A policy is outside the bounded alert contract."""
 
@@ -285,6 +353,22 @@ def _policy_input_schema(name: str) -> dict[str, Any]:
             ],
             "additionalProperties": False,
         }
+    if name == "save_spoken_presence_policy":
+        return {
+            "type": "object",
+            "properties": {
+                "policy_id": {"type": "string", "format": "uuid"},
+                "expected_version": {"type": "integer", "minimum": 1},
+                "resource_id": {"type": "string", "format": "uuid"},
+                "timezone": {"type": "string", "minLength": 1, "maxLength": 64},
+                "start_local": {"type": "string", "maxLength": 16},
+                "end_local": {"type": "string", "maxLength": 16},
+                "priority": {"type": "integer", "minimum": 0, "maximum": 100},
+                "enabled": {"type": "boolean"},
+            },
+            "required": ["resource_id", "timezone", "start_local", "end_local"],
+            "additionalProperties": False,
+        }
     raise PluginValidationError("unknown SenseGuard policy tool")
 
 
@@ -314,6 +398,19 @@ SENSEGUARD_ALERT_MANIFEST = PluginManifest(
             "name": "save_policy",
             "description": "Create or update a typed household alert policy",
             "input_schema": _policy_input_schema("save_policy"),
+            "output_schema": {"type": "object"},
+            "semantic_action": "configure_alerts",
+            "risk_class": "LOW_RISK_HOME_CONTROL",
+            "read_only": False,
+            "idempotency": Idempotency.KEYED.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+        {
+            "name": "save_spoken_presence_policy",
+            "description": (
+                "Create or update a bounded presence policy that queues a spoken SENTRY notice"
+            ),
+            "input_schema": _policy_input_schema("save_spoken_presence_policy"),
             "output_schema": {"type": "object"},
             "semantic_action": "configure_alerts",
             "risk_class": "LOW_RISK_HOME_CONTROL",
@@ -360,13 +457,18 @@ class SenseGuardAlertNativePlugin:
                     item.to_payload() for item in self.store.list_all(context.household_id)
                 ]
             }
-        if name != "save_policy":
+        if name not in {"save_policy", "save_spoken_presence_policy"}:
             raise PluginValidationError("unknown SenseGuard policy operation")
+        spoken_presence = name == "save_spoken_presence_policy"
         policy_id = UUID(str(arguments["policy_id"])) if arguments.get("policy_id") else uuid4()
         current = self.store.get(context.household_id, policy_id)
         if current is not None and arguments.get("expected_version") is None:
             raise SenseGuardPolicyError("SENSEGUARD_POLICY_VERSION_REQUIRED")
-        resource_ids = tuple(UUID(str(item)) for item in arguments["resource_ids"])
+        resource_ids = (
+            (UUID(str(arguments["resource_id"])),)
+            if spoken_presence
+            else tuple(UUID(str(item)) for item in arguments["resource_ids"])
+        )
         if self.resource_validator is not None and any(
             not self.resource_validator(context.household_id, resource_id)
             for resource_id in resource_ids
@@ -377,13 +479,21 @@ class SenseGuardAlertNativePlugin:
             policy_id=policy_id,
             household_id=context.household_id,
             resource_ids=resource_ids,
-            event_type=str(arguments["event_type"]),
+            event_type="presence.detected" if spoken_presence else str(arguments["event_type"]),
             timezone=str(arguments["timezone"]),
             start_local=_clock(arguments["start_local"]),
             end_local=_clock(arguments["end_local"]),
             priority=int(arguments.get("priority", 90)),
-            guaranteed_attention=bool(arguments.get("guaranteed_attention", True)),
-            delivery_mode=str(arguments.get("delivery_mode", "SENTRY_COGNITION")),
+            guaranteed_attention=(
+                True
+                if spoken_presence
+                else bool(arguments.get("guaranteed_attention", True))
+            ),
+            delivery_mode=(
+                "SENTRY_COGNITION"
+                if spoken_presence
+                else str(arguments.get("delivery_mode", "SENTRY_COGNITION"))
+            ),
             enabled=bool(arguments.get("enabled", True)),
             creator_principal_id=(
                 current.creator_principal_id if current is not None else context.principal_id
@@ -405,6 +515,7 @@ class SenseGuardEventRouter:
         resource_resolver: Any,
         event_sink: Any,
         dispatch_attention: Any | None = None,
+        dispatch_attention_event: Any | None = None,
         dispatch_notification: Any | None = None,
     ) -> None:
         self.household_id = household_id
@@ -412,6 +523,7 @@ class SenseGuardEventRouter:
         self.resource_resolver = resource_resolver
         self.event_sink = event_sink
         self.dispatch_attention = dispatch_attention
+        self.dispatch_attention_event = dispatch_attention_event
         self.dispatch_notification = dispatch_notification
 
     def handle(self, event: EventEnvelope) -> list[EventEnvelope]:
@@ -429,9 +541,18 @@ class SenseGuardEventRouter:
         )
         alerts: list[EventEnvelope] = []
         for policy in self.policy_store.list_enabled(self.household_id):
+            matched_event_type = normalized_event_type
+            if policy.event_type == "senseguard.opened":
+                if not _is_contact_opening(event):
+                    continue
+                matched_event_type = "senseguard.opened"
+            elif policy.event_type == "presence.detected":
+                if not _is_presence_detection(event):
+                    continue
+                matched_event_type = "presence.detected"
             if not policy.matches(
                 resource_id=resource_id,
-                event_type=normalized_event_type,
+                event_type=matched_event_type,
                 occurred_at=event.occurred_at,
             ):
                 continue
@@ -459,6 +580,8 @@ class SenseGuardEventRouter:
                     "source_event_id": event.event_id,
                     "occurred_at": event.occurred_at.isoformat(),
                     "event_type": policy.event_type,
+                    "spoken_notice": policy.event_type == "presence.detected"
+                    and policy.delivery_mode == "SENTRY_COGNITION",
                 },
                 importance=(
                     EventImportance.CRITICAL if policy.priority >= 90 else EventImportance.IMPORTANT
@@ -472,6 +595,13 @@ class SenseGuardEventRouter:
             )
             appended = self.event_sink.append(alert)
             if (
+                policy.delivery_mode == "SENTRY_COGNITION"
+                and self.dispatch_attention_event is not None
+            ):
+                # The scoped path can safely recover append/dispatch crashes:
+                # trigger and request identities remain durable and idempotent.
+                self.dispatch_attention_event(alert, appended.journal_position)
+            elif (
                 policy.delivery_mode == "SENTRY_COGNITION"
                 and not appended.deduplicated
                 and self.dispatch_attention is not None

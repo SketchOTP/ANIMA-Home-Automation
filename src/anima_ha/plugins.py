@@ -307,6 +307,9 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
         "anima.calendar.cancel_event",
         "anima.provider.home-assistant.permit_zigbee_join",
         "anima.provider.home-assistant.commission_device",
+        "anima.provider.home-assistant.commission_zigbee_presence_sensor",
+        "anima.senseguard-alerts.save_spoken_presence_policy",
+        "anima.senseguard-alerts.save_policy",
         "anima.scenes.create_scene",
         "anima.scenes.update_scene",
     }
@@ -314,11 +317,39 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
 
 
 _TRUSTED_SPACE_TOOL_SOURCES = {
+    "anima.household-learning.configure": "builtin:anima_ha.household_learning",
+    "anima.household-learning.propose": "builtin:anima_ha.household_learning",
+    "anima.household-learning.review": "builtin:anima_ha.household_learning",
+    "anima.family-routines.create_routine": "builtin:anima_ha.family_routines",
+    "anima.family-routines.add_member": "builtin:anima_ha.family_routines",
+    "anima.family-routines.update_routine": "builtin:anima_ha.family_routines",
+    "anima.family-routines.disable_routine": "builtin:anima_ha.family_routines",
+    "anima.family-routines.retract_routine": "builtin:anima_ha.family_routines",
+    "anima.knowledge.create_note": "builtin:anima_ha.knowledge",
+    "anima.knowledge.update_note": "builtin:anima_ha.knowledge",
+    "anima.knowledge.retract_note": "builtin:anima_ha.knowledge",
+    "anima.knowledge.purge_expired": "builtin:anima_ha.knowledge",
     "anima.household-spaces.create_space": "builtin:anima_ha.household_spaces",
     "anima.household-spaces.rename_space": "builtin:anima_ha.household_spaces",
     "anima.household-spaces.move_space": "builtin:anima_ha.household_spaces",
     "anima.household-spaces.remove_space": "builtin:anima_ha.household_spaces",
 }
+
+# Development embedded cognition journals its turns. Knowledge remains available
+# to the separate production SENTRY boundary; no retailer retention label is used.
+EMBEDDED_KNOWLEDGE_TOOL_IDS = frozenset(
+    f"anima.knowledge.{name}"
+    for name in (
+        "list_notes",
+        "get_note",
+        "create_note",
+        "update_note",
+        "retract_note",
+        "purge_expired",
+        "search_notes",
+        "memory_index",
+    )
+)
 
 
 def _core_execution_boundary(
@@ -346,6 +377,7 @@ def _core_execution_boundary(
                 "builtin:anima_ha.tasks",
                 "builtin:anima_ha.calendar",
                 "builtin:anima_ha.home_assistant",
+                "builtin:anima_ha.senseguard_alerts",
                 "builtin:anima_ha.scenes",
             }
         ):

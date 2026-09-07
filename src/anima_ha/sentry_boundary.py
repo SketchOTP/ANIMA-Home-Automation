@@ -12,7 +12,8 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Callable
-from dataclasses import dataclass
+from contextlib import nullcontext
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from uuid import UUID, uuid5
@@ -155,6 +156,11 @@ class CoreSentryBoundary:
     action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
     context_loader: Callable[[UUID], dict[str, Any] | None] | None = None
+    reasoning_context_loader: Callable[[IntelligenceRequest], dict[str, Any]] | None = None
+    policy_role_resolver: Callable[[UUID], str | None] | None = None
+    access_level_resolver: Callable[[UUID], str] | None = None
+    agent_memory_enabled: bool = False
+    learning_service: Any | None = None
 
     def health(self) -> SentryBoundaryHealth:
         return SentryBoundaryHealth("anima-core", "available")
@@ -215,6 +221,18 @@ class CoreSentryBoundary:
         )
 
     def request_context(self, request: IntelligenceRequest) -> dict[str, Any]:
+        packet = dict(self._request_context(request))
+        if self.reasoning_context_loader is not None:
+            support = self.reasoning_context_loader(request)
+            # Context enrichment is live, non-authoritative and not written back
+            # into the original immutable packet/request or its digest.
+            if len(json.dumps({**packet, "household_context": support}).encode()) <= 60000:
+                packet["household_context"] = support
+            else:
+                packet["household_context"] = {"status": "CONTEXT_LIMIT_REQUIRES_SCOPED_READ"}
+        return packet
+
+    def _request_context(self, request: IntelligenceRequest) -> dict[str, Any]:
         if self.context_loader is None:
             direct = request.request_metadata.get("direct_context")
             if isinstance(direct, dict):
@@ -310,6 +328,15 @@ class CoreSentryBoundary:
                 assert tool is not None
                 payload = tool.to_payload()
                 payload["schema_digest"] = expected_schema
+                if not self.agent_memory_enabled and tool_id in {
+                    "anima.knowledge.create_note",
+                    "anima.knowledge.update_note",
+                    "anima.knowledge.retract_note",
+                    "anima.knowledge.purge_expired",
+                    "anima.household-learning.propose",
+                }:
+                    payload["availability"] = False
+                    payload["unavailable_reason"] = "AGENT_MEMORY_NOT_ENABLED"
                 result.append(payload)
             else:
                 unavailable = dict(original)
@@ -355,6 +382,44 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("TOOL_BINDING_INCOMPATIBLE")
         return tool
 
+    def _access_level(self, request: IntelligenceRequest) -> str:
+        """Resolve the server-owned SENTRY access level for this principal.
+
+        The value is never accepted from a SENTRY request or model argument.
+        Missing identity stays LIMITED, which is the safe default for direct
+        voice interactions whose evidence has not independently authenticated
+        a household principal.
+        """
+        # Test/deterministic boundaries constructed without a commissioned
+        # resolver retain their pre-existing policy behavior. The normal
+        # composition root always supplies the resolver, where missing identity
+        # is intentionally LIMITED.
+        if self.access_level_resolver is None:
+            return "UNRESTRICTED"
+        if request.principal_id is None:
+            return "LIMITED"
+        value = str(self.access_level_resolver(request.principal_id)).strip().upper()
+        if value not in {"LIMITED", "UNRESTRICTED"}:
+            raise SentryBoundaryError("ACCESS_LEVEL_INVALID")
+        return value
+
+    @staticmethod
+    def _limited_tool_allowed(
+        tool: ToolDescriptor, arguments: dict[str, Any], principal_id: UUID | None
+    ) -> bool:
+        """Keep limited SENTRY users inside read and personal-preference scope."""
+        if getattr(tool, "read_only", False):
+            return True
+        if principal_id is None or tool.tool_id not in {
+            "anima.household-preferences.create_preference",
+            "anima.household-preferences.update_preference",
+        }:
+            return False
+        # A limited principal may express or correct only their own personal
+        # preference. Omitting person_id would otherwise write household-wide
+        # guidance, so it is deliberately rejected here.
+        return str(arguments.get("person_id", "")) == str(principal_id)
+
     def invoke_tool(
         self,
         request: IntelligenceRequest,
@@ -374,8 +439,71 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("INVALID_TOOL_ORDINAL")
         self._assert_active(request)
         tool = self._request_tool(request, tool_id)
+        if self._access_level(request) == "LIMITED" and not self._limited_tool_allowed(
+            tool, arguments, request.principal_id
+        ):
+            return {
+                "status": "DENIED",
+                "operation": tool.tool_id,
+                "reason": "USER_ACCESS_LIMITED",
+            }
+        if (
+            request.origin
+            in {IntelligenceOrigin.AUTONOMOUS_ATTENTION, IntelligenceOrigin.DURABLE_TASK}
+            and tool.tool_id == "anima.external.notifications.send"
+        ):
+            # This is a delivery ceiling, not a replacement for current OPA.
+            # Evaluate live owner settings; model arguments cannot supply permission.
+            permission: dict[str, Any] = {}
+            if self.reasoning_context_loader is not None:
+                try:
+                    permission = (
+                        self.reasoning_context_loader(request)
+                        .get("initiative", {})
+                        .get("notification", {})
+                    )
+                except Exception:
+                    pass
+            if permission.get("allowed") is not True or permission.get("request_id") != str(
+                request.request_id
+            ):
+                return {
+                    "status": "DENIED",
+                    "operation": tool.tool_id,
+                    "reason": "UNSOLICITED_NOTIFICATION_NOT_ELIGIBLE",
+                }
         identity = _identity(request)
         origin = _origin(request.origin)
+        if tool.tool_id == "anima.household-learning.propose":
+            if not self.agent_memory_enabled or self.learning_service is None:
+                return {
+                    "status": "DENIED",
+                    "operation": tool.tool_id,
+                    "reason": "AGENT_LEARNING_NOT_ENABLED",
+                }
+            plugin = self.manager.plugins.get(tool.plugin_id)
+            if plugin is None or plugin.manifest.source != "builtin:anima_ha.household_learning":
+                raise SentryBoundaryError("AGENT_LEARNING_SOURCE_INVALID")
+            origin = RequestOrigin.AUTONOMOUS_AGENT
+        if tool.tool_id in {
+            "anima.knowledge.create_note",
+            "anima.knowledge.update_note",
+            "anima.knowledge.retract_note",
+            "anima.knowledge.purge_expired",
+        }:
+            if not self.agent_memory_enabled:
+                return {
+                    "status": "DENIED",
+                    "operation": tool.tool_id,
+                    "reason": "AGENT_MEMORY_NOT_ENABLED",
+                }
+            plugin = self.manager.plugins.get(tool.plugin_id)
+            if plugin is None or plugin.manifest.source != "builtin:anima_ha.knowledge":
+                raise SentryBoundaryError("AGENT_MEMORY_SOURCE_INVALID")
+            # A note is agent-maintained data, not an authenticated user action.
+            # Existing OPA explicit autonomy policy still authorizes or denies it.
+            # This deployment grant cannot authorize preferences, roles or HA.
+            origin = RequestOrigin.AUTONOMOUS_AGENT
         digest = hashlib.sha256(
             json.dumps(arguments, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
@@ -390,7 +518,10 @@ class CoreSentryBoundary:
             system_idempotency_key=f"{request.idempotency_key}:tool:{ordinal}",
             origin=origin,
         )
-        policy_context = PolicyContext()
+        role = self.policy_role_resolver(request.principal_id) if (
+            self.policy_role_resolver is not None and request.principal_id is not None
+        ) else None
+        policy_context = PolicyContext(principal_role=role)
         if tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL:
             if self.action_executor is None:
                 raise SentryBoundaryError("ACTION_COORDINATOR_UNAVAILABLE")
@@ -424,16 +555,28 @@ class CoreSentryBoundary:
                     "observed_at": datetime.now(UTC).isoformat(),
                 },
             }
-        result = self.manager.invoke(
-            tool.tool_id,
-            dict(arguments),
-            household_id=request.household_id,
-            identity=identity,
-            origin=origin,
-            policy_service=self.policy_service,
-            policy_context=policy_context,
-            invocation_context=invocation_context,
-        )
+        scope: Any = nullcontext()
+        if tool.tool_id == "anima.household-learning.propose":
+            from anima_ha.household_learning import learning_request_scope
+
+            assert self.learning_service is not None
+            evidence = self.learning_service.evidence(request.household_id, limit=2000)
+            scope = learning_request_scope(
+                request.request_id,
+                request.household_id,
+                (item["event_id"] for item in evidence["items"]),
+            )
+        with scope:
+            result = self.manager.invoke(
+                tool.tool_id,
+                dict(arguments),
+                household_id=request.household_id,
+                identity=identity,
+                origin=origin,
+                policy_service=self.policy_service,
+                policy_context=policy_context,
+                invocation_context=invocation_context,
+            )
         return self._safe_invocation(result)
 
     @staticmethod
@@ -461,12 +604,54 @@ class CoreSentryBoundary:
         worker_id: str,
         result: IntelligenceResult,
     ) -> bool:
+        return self.finalize_result(request, worker_id, result)[0]
+
+    def finalize_result(
+        self, request: IntelligenceRequest, worker_id: str, result: IntelligenceResult
+    ) -> tuple[bool, IntelligenceResult, dict[str, Any]]:
         self._assert_active(request)
+        permission: dict[str, Any] = {"allowed": False, "reason": "NOT_UNSOLICITED_SPEECH"}
+        if request.origin in {
+            IntelligenceOrigin.AUTONOMOUS_ATTENTION,
+            IntelligenceOrigin.DURABLE_TASK,
+        }:
+            try:
+                if self.reasoning_context_loader is not None:
+                    permission = (
+                        self.reasoning_context_loader(request)
+                        .get("initiative", {})
+                        .get("notification", {})
+                    )
+            except Exception:
+                permission = {}
+            allowed = permission.get("allowed") is True and permission.get("request_id") == str(
+                request.request_id
+            )
+            if result.status == IntelligenceResultStatus.RESPONSE and not allowed:
+                # Do not turn an actual action failure/success into a speech result.
+                # Only unsolicited response text is withheld; action references stay intact.
+                result = replace(
+                    result,
+                    status=IntelligenceResultStatus.NO_ACTION,
+                    response_text=None,
+                    detail="UNSOLICITED_DELIVERY_WITHHELD",
+                )
+            elif (
+                result.status == IntelligenceResultStatus.NO_ACTION
+                and allowed
+                and permission.get("required") is True
+            ):
+                result = replace(
+                    result,
+                    status=IntelligenceResultStatus.PARTIAL,
+                    detail="REQUIRED_NOTIFICATION_NOT_PRODUCED",
+                )
         if request.claim_owner != worker_id:
-            return False
-        return self.intelligence_store.record_result(
+            return False, result, {}
+        recorded = self.intelligence_store.record_result(
             request.request_id, worker_id, request.fencing_generation, result
         )
+        return recorded, result, permission
 
 
 class SentryReasoningProvider(Protocol):

@@ -808,14 +808,34 @@ class SentryAttentionBridge:
         principal_id: UUID | None = None,
         consumer_name: str = "sentry-attention",
         limit: int = 100,
+        source_event_id: str | None = None,
     ) -> list[IntelligenceRequest]:
-        attention_result = self.attention.process(
-            self.profile, consumer_name=consumer_name, limit=limit
+        if source_event_id is not None and (not source_event_id or limit != 1):
+            raise ValueError("event-scoped Attention requires a source event and limit=1")
+        # A retry after context/enqueue failure must reuse the durable trigger,
+        # not advance this event's isolated consumer into subsequent work.
+        existing = (
+            self.attention.list_triggers(self.profile.profile_version)
+            if source_event_id is not None
+            else []
         )
-        if attention_result.failure:
-            raise RuntimeError(f"attention processing failed: {attention_result.failure}")
+        if source_event_id is None or not any(
+            trigger.source_event_ids == (source_event_id,) for trigger in existing
+        ):
+            attention_result = self.attention.process(
+                self.profile, consumer_name=consumer_name, limit=limit
+            )
+            if attention_result.failure:
+                raise RuntimeError(f"attention processing failed: {attention_result.failure}")
         requests: list[IntelligenceRequest] = []
         for trigger in self.attention.list_triggers(self.profile.profile_version):
+            if source_event_id is not None and (
+                trigger.source_event_ids != (source_event_id,)
+                or str(trigger.metadata.get("household_id", "")) != str(household_id)
+            ):
+                # Check before even loading context. A profile is not a
+                # household boundary, and its pending triggers are global.
+                continue
             if trigger.status.value not in {"PENDING", "CONTEXT_READY"}:
                 continue
             packet = self.context.load(trigger.trigger_id)
@@ -823,6 +843,23 @@ class SentryAttentionBridge:
                 packet = self.context.assemble(
                     trigger, household_id=household_id, tools=tools, persist=True
                 ).to_payload()
+            if source_event_id is not None:
+                # Persisted packets are immutable. Never reuse a mismatched
+                # packet or overwrite historical context to repair its scope.
+                try:
+                    items = packet["sections"]["trigger"]["items"]
+                    packet_trigger = items[0]["data"]
+                    scoped = (
+                        len(items) == 1
+                        and str(packet["trigger_id"]) == str(trigger.trigger_id)
+                        and str(packet_trigger["trigger_id"]) == str(trigger.trigger_id)
+                        and packet_trigger["source_event_ids"] == [source_event_id]
+                        and str(packet_trigger["metadata"]["household_id"]) == str(household_id)
+                    )
+                except (KeyError, IndexError, TypeError):
+                    scoped = False
+                if not scoped:
+                    raise ValueError("event-scoped Attention context does not match its trigger")
             request = IntelligenceRequestFactory.for_trigger(
                 trigger.trigger_id,
                 household_id=household_id,

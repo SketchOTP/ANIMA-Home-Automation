@@ -5,13 +5,12 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
 });
 
-test("desktop conversation uses the real Core cognition pipeline", async ({ page }, testInfo) => {
+test("desktop assistant is a voice-only SENTRY handoff", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true }).click();
-  await page.getByLabel("Message Anima").fill("What is the commissioned runtime status?");
-  await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByText("The commissioned ANIMA cognition path is connected.")).toBeVisible();
-  await expect(page.getByText(/I heard you:/)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
+  await expect(page.getByLabel("Message Anima")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send", exact: true })).toHaveCount(0);
 });
 
 test("desktop task lifecycle is visible through the Core task path", async ({ page }, testInfo) => {
@@ -169,6 +168,6 @@ test("browser application traffic is same-origin and keyboard focus is visible",
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true }).focus();
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByLabel("Message Anima")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
   expect(new Set(origins)).toEqual(new Set([new URL(page.url()).origin]));
 });

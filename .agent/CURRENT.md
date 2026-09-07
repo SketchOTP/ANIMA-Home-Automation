@@ -1,12 +1,307 @@
 # Current Project State
 
-Last updated: 2026-09-06
+Last updated: 2026-09-07
+
+## SENTRY voice identity and ANIMA-owned voice settings — 2026-09-07
+
+The focused SENTRY/ANIMA increment is deployed on the Linux PC and rechecked
+against the running services. SENTRY's voice selection and speech speed are
+now household settings served by ANIMA over the authenticated private bridge;
+the SENTRY UI retains only the local sleep-mode control. Voice-led identity
+enrollment is bounded and natural-language driven through SENTRY's existing
+MCP surface: an already recognized operator is required, the new person is
+created in ANIMA, five guided head poses are quality-checked, and raw camera
+frames are not persisted. The SENTRY voice process is active/listening and
+reads the ANIMA voice settings successfully after an ANIMA process rebuild.
+
+The Linux-PC SENTRY identity path can use the authenticated RPi5 camera
+snapshot (`sketch@192.168.254.4`) while all recognition and decision-making
+remain on the PC. The RPi5 projection and I/O services are active after the
+recheck, with the camera and Hailo device present; no qualified Hailo face
+matching pipeline is claimed yet. The projection remains full-screen/kiosk
+and auto-relaunches through the existing labwc/user-service path. This is a
+local operational observation, not hosted-CI or native-Pi qualification.
+
+The broader owner goal remains incomplete: unattended event-to-SENTRY
+reasoning/TTS is still disabled pending a qualified live event path; Ring,
+Tapo, Wansview, family presence, and autonomous Obsidian learning remain
+bounded/partial or resource-gated. No raw unrestricted shell/HA-admin bridge,
+ANIMA voice stack, or Phase 14/15 behavior was added.
+
+## Owner RPi5 SENTRY projection increment — 2026-09-07
+
+The owner-authorized living-room projection is now deployed on the Linux
+network's RPi5 (`sketch@192.168.254.4`). The Pi is an I/O/display endpoint only:
+its GTK/labwc SENTRY projection renders PC-owned voice state, captures bounded
+16 kHz mono microphone PCM, and plays PC-generated WAV audio through its local
+PipeWire sink. SENTRY/ANIMA processing, STT, TTS synthesis, HA access and
+household authority remain on `atlas-desktop` (`192.168.254.5`).
+
+Observed locally: authenticated Pi I/O, PC status bridge and reconnecting status
+tunnel are active; Pi HDMI-A-2 is live at 3840×2160; NexiGo microphone bytes
+reach the PC listener; and a real PC Kokoro phrase was delivered to Pi playback.
+The Pi projection exposes a bounded USB/HDMI selector; USB is currently active,
+while HDMI has no active PipeWire sink and therefore remains truthfully
+unavailable until the TV audio profile is exposed. No HA/OPA/database/provider
+or model credentials were placed on the Pi. This is an uncommitted local E1
+deployment observation, not native Pi5 qualification or whole-goal completion.
 
 ## Current stage
 
 GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
 
 ## Current owner increment — 026A — 2026-09-06
+
+### Current live product state — voice onboarding and unattended SENTRY events — 2026-09-07 UTC
+
+The Linux-PC product path is now wired for a voice-first device workflow. The
+resident SENTRY prompt directs a compound request through the existing bounded
+sequence: open a short ZHA pairing window, tell the operator the physical
+pairing step aloud, wait for a spoken follow-up, refresh discovery, inspect the
+matching device semantics, commission it into an existing ANIMA room, and save
+the requested typed alert policy. It never asks the operator to open HA or use
+typed chat, and it never treats a pairing acknowledgement as proof of joining.
+
+The existing Core primitives remain the authority: opaque HA inventory handles,
+server-owned room/resource mapping, OPA/Phase 9 where applicable, Truth-backed
+observations, and typed SenseGuard/presence alert policies. No new provider,
+raw HA administration surface, or second intelligence was added.
+
+The unattended SENTRY event bridge is enabled for the commissioned `Home`
+household in the private Linux-PC configuration. `sentry-voice.service` is
+active and `LISTENING`; its voice status reports `wake_enabled=true`,
+`vad_healthy=true`, and the ANIMA event source is reachable with no currently
+eligible fresh autonomous event (`EMPTY`). Autonomous work is still gated by
+the existing Core initiative disposition and recorded-result-before-TTS rule.
+The listener now reports metadata-only result and delivery statuses accurately
+instead of collapsing successful recorded statuses into `UNKNOWN_RESULT`.
+
+This is live service readiness, not a fabricated physical-event claim. A real
+SenseGuard event must occur while the listener is active to produce E5 physical
+event-to-TTS evidence. No secrets, transcripts, or provider payloads were
+exposed; no owner device state was fabricated.
+
+### Latest extension — Ring and evidence-guided initiative — 2026-09-07
+
+Owner-only Ring setup and SENTRY initiative configuration are deployed on18090,
+healthy image `sha256:edd377d00075a45e1d43c6e30770c522f34c5b5675a58534253bd393a77c1758`.
+Recent canonical signals feed sparse reasoning; source-linked suggestions and
+daily/multi-day review scheduling use existing Core/OPA/Memory/tasks. No actual
+owner config, phone assignment or example routine was seeded. Ring inventory=0;
+live login/event remains a resource/setup gate. Automatic SENTRY consumption/TTS
+remains OFF, not live-qualified. Tapo/Wansview remain paused. The earlier image
+and counts below are historical. Current local Python1094/72 opt-in skips,
+separate real PG/OPA154, new browser42 fixtures+3 real Core journeys, SENTRY229,
+Ruff/mypy132/OPA9/frontend5/TypeScript/Vite/Docker/health/safety pass. No new
+commit/hosted CI. Full report and honest remaining gaps:
+`docs/RING-LEARNING-OWNER-INCREMENT-026A.md`. Goal remains incomplete.
+
+### Active owner extension — household context and SENTRY initiative — 2026-09-07 UTC
+
+The owner extended 026A to household/personal free-text preferences, source-linked
+long-term Obsidian memory, phone geofence/Wi-Fi presence, context-aware SENTRY
+reasoning, and an ATLAS-like black/white/purple ANIMA presentation. Only after
+these foundations qualify should the existing SENTRY voice process consume
+eligible household events and decide whether to speak, stay silent or use a
+configured delivery channel. No scripted greetings, invented family schedules,
+or fabricated presence are authorized. Tapo/Wansview remain paused.
+
+Current implementation/test work is PC-local and uncommitted. Shared/personal
+preferences, durable note search/correction, and coarse presence assignments
+have isolated Core/PostgreSQL/OPA evidence; the updated editors have browser
+evidence. A real automatic resident SENTRY event/voice turn is not yet qualified
+or enabled. The owner HA runtime is **2026.9.0**, directly checked in the running
+container; older 2026.8.2 harness records are not live-version evidence.
+Live discovery found no device_tracker/Companion App phone sources. Router model,
+phone setup/permissions and explicit member-source assignments remain required.
+Wi-Fi disconnection means NOT_DETECTED, not verified human departure; routines
+and phone geofences do not establish who opened a door. Preserve existing data.
+The household-context foundation is now deployed and healthy on port18090,
+image `sha256:161b4feb1b3dd90835fbd73623d65be45b80fa9fbf692702ada5f0be6018e120`;
+the routines deployment below is historical. Memory's narrow Core/OPA grant is
+enabled, automatic event consumption/TTS remains disabled pending qualification.
+Local validation: Python993 pass/47 opt-in skips, separate real PG/OPA46 pass,
+presence71 pass, Ruff/mypy119/OPA9/frontend5/TypeScript/Vite/Docker/package/safety
+pass; adjacent UI response-fixture regression84 pass. See
+`docs/HOUSEHOLD-CONTEXT-AND-INITIATIVE-026A.md` for exact evidence boundaries.
+Two explicit no-TTS diagnostics now verify real resident SENTRY context/read and
+one model-selected operational lesson written through Core/OPA into the local
+MEMORY vault. They resume the existing persistent thread and preserve the legacy
+expired authority record. These guided checks are not unattended event/voice
+evidence. No transcripts, credentials, personal profiles or physical events were
+invented for memory qualification.
+
+### Owner priority change — finish Routines; vendors paused — 2026-09-07 UTC
+
+The owner explicitly paused Tapo/Wansview development. Preserve their partial
+implementation and stopped Android runtime; do not resume vendor work unless
+requested. Current scope is completing owner Routines on the PC: add a plain
+canonical family-member profile (not a login/role), create/edit/filter routines,
+enable/disable/remove with retained history, reliable loading and truthful
+version/outcome handling. Live inspection finds one person in the owner's
+household and zero saved family routines; do not invent family schedules.
+
+Completed and deployed the bounded owner workflow using existing Graph/Memory,
+Core policy/native tools and the graphical Routines UI. Added plain member
+creation, filtering, day presets, enable/disable, confirmed retraction, safe
+draft/version/error handling and nonblocking database route execution. Final
+validation: full Python784 passed/8 opt-in skips, separate isolated PostgreSQL/
+unchanged OPA routine/API67 passed, browser126 passed (42 routine checks),
+Ruff/mypy104/OPA9/frontend/Docker/safety pass. Healthy local image
+`sha256:574e89f795ee75b49ba162fae77504fa094e1a49ac1600ff0105a07404f34908`,
+served asset `index-BC_rzd1p.js`, HA ONLINE. No owner schedules/profiles seeded.
+See `docs/FAMILY-ROUTINES-OWNER-GUIDE.md` for workflow, evidence and limitations.
+No new commit/push/hostedCI is claimed. SENTRY automatic wake/TTS and vendor source provisioning are
+not part of this focused routine completion. Earlier vendor results below are
+retained as historical partial evidence, not active work.
+
+### Tapo/Wansview and SENTRY continuation — 2026-09-07 UTC
+
+Current work is a **partial integration increment**, not finished vendor setup.
+The Linux PC has official Waydroid/Weston/ADB and verified Android images;
+headless Android boot passed. Android is stopped and autostart disabled pending
+official app setup. No vendor login, notification capture, camera/video access
+or named DL110 fingerprint observation is claimed. The live HA inventory has
+zero lock entities and no Tapo/Wansview notification source.
+
+New ANIMA Integration cards expose source readiness and missing setup gates.
+An optional separately authenticated Core relay receiver and typed Tapo/Android
+normalizers passed final local qualification and are deployed. A structured ANIMA relay
+protocol is not a real Wansview notification-text parser. Default production
+intake remains disabled. No vendor credentials or synthetic events are installed
+in the owner runtime. Final deployment/validation is recorded in
+`docs/VENDOR-SENTRY-CONTINUATION-026A.md`. Final local validation: 759 backend
+passes/7 optional skips, 45 isolated vendor/PostgreSQL passes, 36 browser checks,
+strict mypy104 files, Ruff, OPA9/9, frontend and Docker builds pass. Image
+`sha256:a334cdb892ea7691da6250a99f5249d23d6a2eb2df318c7e956ae010a10179ba`
+is healthy on18090; HA setup ONLINE. No new hosted CI or commit is claimed.
+
+The SENTRY event lease primitive is inert: it does not claim events, run a model,
+schedule speech or enable automatic wake. Automatic household alert → resident
+SENTRY reasoning → existing TTS remains **not connected**. The previously observed
+direct SENTRY read remains separate evidence; unrestricted household writes and
+autonomous Memory writes are not claimed. See
+`docs/ANDROID-NOTIFICATION-RUNTIME-026A.md` for the Android privacy correction,
+current stopped state and reproducible preparation. Preserve all earlier negative
+evidence; earlier counts/topology below are historical, not current completion.
+
+### Current deployment — PC-local consolidation completed, 2026-09-07 UTC
+
+The owner authorized and the lead completed operational consolidation on
+`atlas-desktop`. Active checkouts are `/home/sketch/Projects/ANIMA Home Automation`
+and `/home/sketch/Projects/SENTRY`, both native ext4 with dirty work preserved.
+ANIMA Core/UI, PostgreSQL, OPA, private search, SENTRY and existing HA now operate
+on the PC. Port18090 is local, not an SSH tunnel. Old laptop ANIMA services and
+tunnels are stopped/disabled; shared storage and recovery copies remain intact.
+No production dependency on the laptop share remains in the active services.
+
+Memory/Routines source is now deployed. MEMORY remains the owner's fresh local
+vault; Core accesses only `/home/sketch/Documents/MEMORY/ANIMA` with native shared
+UID/GID checks passing. No notes or schedules were seeded. Real SENTRY model
+query `df62da5f-7029-4b93-ae8b-ebb2eecaca97` read Kitchen through local MCP/Core/HA;
+request `67ceaa11-aa70-5b66-8930-47198e3a3fce` completed with provider-start recorded.
+No microphone/TTS test or full write-authority claim is implied.
+
+Two migration defects were corrected: host HA was unreachable through Docker's
+bridge (Core now binds only loopback in Linux host-network mode), and the expanded
+frozen catalogue exceeded64KiB (only catalogue responses now allow128KiB; content
+and request bounds remain64KiB). Failed diagnostics remain historical evidence.
+Private backups and rollback limitations are recorded in
+`docs/PC-LOCAL-CONSOLIDATION-026A.md`. This is an uncommitted operational checkpoint,
+not new hosted-CI evidence or whole-goal completion. The source-freeze and earlier
+topology paragraphs below are historical and superseded by this section.
+
+### Family routines and voice-only dashboard source freeze — 2026-09-07 UTC
+
+The owner-routines vertical is implemented and frozen, not deployed by its worker:
+Routines UI → authenticated/CSRF Core API → explicit Memory versions, with canonical
+member/place isolation, create/reload/edit/disable, timezone/day/time window,
+description, and provenance. The dashboard typed composer is replaced by a
+voice-only SENTRY handoff/status panel; backend conversation ingress remains intact.
+Tesla's KnowledgePanel and configuration factory hook are preserved. Focused
+backend tests 41 passed (including isolated real PostgreSQL), adjacent tests 101
+passed/1 optional skipped, browser checks 90 passed, type/lint/build passed.
+Combined Python suite remains 580 passed/4 skipped/1 failure: the concurrent
+household-spaces `list_resources` addition differs from its older manifest test.
+The lead owns reconciliation and combined deployment. No owner schedules were
+seeded and no production device/account/runtime/vault writes occurred. Full
+contracts, evidence, and deployment steps:
+`tasks/active/ANIMA-HA-OWNER-CONNECTION-VISUAL-CONSOLE-026A/FAMILY_ROUTINES_2026-09-07.md`.
+
+### Superseding live correction and desktop target
+
+Owner deployment clarification: the complete production installation belongs on
+`atlas-desktop` local storage, not Atlas laptop. Read-only host inspection found
+desktop HA using `/home/sketch/homeassistant-config`; desktop SENTRY services
+load source through laptop-backed `/srv/ATLAS`; desktop port 18090 is an SSH
+tunnel to laptop ANIMA UI/Core. Active ANIMA PostgreSQL, OPA and SearXNG run on
+the laptop. A separate desktop PostgreSQL container also exists and must not
+be overwritten or assumed current. Production consolidation is required before
+deploying the new Memory/Routines workflows. Preserve both databases, dirty
+source trees, credentials and shared folder; no stack migration is yet claimed.
+
+The owner explicitly identifies the existing SENTRY desktop application as the
+voice-only intelligence (no typed chat), and authorizes needed SENTRY source
+updates while preserving unrelated dirty V0.4 work. ANIMA is its back-office,
+household/provider/tool/settings authority. A separate Codex helper is not
+desktop integration. That helper is stopped. Existing Obsidian MEMORY vault
+`541cc65b16b387fb`, registered at `/srv/ATLAS/500_MEMORY/MEMORY`, is the authorized
+target for Dewey-numbered, evidence-backed knowledge; no second vault is chosen.
+
+Current corrective code is uncommitted beyond `435815855ffda8ff917406daeb063ca498b7b9c7`
+(exact CI `34067802116` passed for that prior head only). The corrected UI image
+`sha256:d9d71ccbb5fb98de2b662199b0b56182fcfb5c179c538dfc7471d28d9814ccd5`
+is deployed and healthy. Canonical SenseGuard names/rooms and six capabilities
+per device are reconciled through ANIMA. HA registry names remain unchanged.
+Last-reported contact state is shown separately from stale/unknown current Truth.
+
+A real owner-triggered contact opening was journaled and visible in the Alert
+inbox. Its Attention callback exposed a broad guaranteed-plugin-event backlog
+sweep: 100 unrelated requests, ten completed helper turns, one uncertain turn,
+and 89 never-started requests. Zero household action records were observed for
+the incident. The 89 never-started requests were cancelled through fenced Core
+lifecycle operations; historical completed/uncertain records were preserved.
+The temporary helper stayed stopped. HA was reconnected through ANIMA and the
+original closing timestamp recovered; closing was not observed live.
+
+The focused fix isolates Attention by exact alert ID, household and journal
+position using a fresh profile and per-event consumer. It is deployed. Delayed
+recovery of the existing physical alert created exactly one pending SENTRY
+request; a second recovery reused that same request. No model was invoked and
+no SENTRY/TTS delivery is claimed. Focused real-PostgreSQL target: 55 passed;
+full backend with isolated-PG opt-ins: 373 passed; focused typing/format/lint
+passed. Existing frontend matrix: 108 passed across desktop/tablet/phone.
+Exact-head hosted qualification of these changes remains pending.
+
+The existing resident SENTRY persistent Codex runtime has now completed one
+read-only ANIMA diagnostic through actual MCP health/catalogue/invoke calls:
+query `25283924-da01-48aa-9e6a-3d4cbd608b8b`, ANIMA request
+`4f302691-4644-5791-b1b1-f9bc078ee6c7`, one model invocation, terminal
+`COMPLETED / RESPONSE`. It reported Kitchen contact `off` with the actual last
+observation timestamp, explicitly not physical-current certainty. This was a
+host diagnostic using the voice-origin path, not an actual microphone or TTS
+test. Earlier filesystem-sandbox failure remains `UNKNOWN_RESULT`; an MCP
+approval-blocked turn remains `FAILED / PARTIAL`. Neither is counted as success.
+The tested client configuration permits only five prebound connector operations;
+ANIMA policy and terminal verification remain authoritative.
+
+Separate agents are implementing complete Memory and Routines UI/API/storage
+workflows concurrently, not only backend components. These changes are not yet
+deployed. Owner-authorized relocation copied the fresh MEMORY vault from the
+laptop-backed SSHFS mount to `/home/sketch/Documents/MEMORY` on `atlas-desktop`
+native ext4. Checksum comparison passed before reopening; Obsidian registration
+retains vault ID `541cc65b16b387fb` with the new local path. The old remote copy
+and a private registration backup are preserved for recovery. ANIMA's native
+filesystem deployment connection to the PC-local vault remains unresolved;
+the remote subtree is not the production target. No household notes or routine
+facts have been fabricated. Obsidian visibility and live UI persistence remain
+deployment acceptance targets. Independent agents also qualify Tapo DL110 and
+Wansview Android-app motion notifications. Automatic event-to-SENTRY/TTS delivery,
+full voice control, and final owner usability remain OPEN. Full goal completion
+remains unclaimed.
+
+The older 026A narrative below is retained as checkpoint history and is
+superseded by this current correction where they differ.
 
 The active request is real owner connection, graphical management across all
 fifteen UI sections, and bounded Codex-assisted household setup. The starting
@@ -23,9 +318,11 @@ Core completion and the live browser response. An initial event/request-ID
 polling defect and the commissioning trusted-context defect were reproduced and
 corrected. The active packet records all remaining deployment checks and limits.
 
-Both real SenseGuards are now assigned to their matching canonical rooms, but
-the upstream HA registry exposes zero sensor entities for them; current physical
-state is therefore unqualified. Room writes also exposed a missing Core-owned
+Both real SenseGuards are assigned to their matching canonical rooms. The initial
+upstream registry exposed zero sensor entities. One normal targeted ZHA reload
+on 2026-09-06 recovered twelve registry entities and eight current-state entries;
+ANIMA entity binding and physical alert delivery require separate readback.
+Room writes also exposed a missing Core-owned
 internal-tool mapping on the SENTRY route; the exact trusted source/ID correction
 preserves policy. The final UI partial-refresh correction prevents an unrelated
 slow section from discarding successful device updates. The installed workstation
@@ -53,7 +350,7 @@ plane usable through ANIMA without the Home Assistant frontend. Phases 0-14
 are Architect accepted; Phase 15 remains unauthorized until separately
 authorized by the goal-wide completion audit.
 
-## Latest repository publication - 2026-09-06
+## Historical repository publication — before 026A - 2026-09-06
 
 The current repository head is `97be56fac54a848982d5767fe792ea66083412e9`,
 with `main == origin/main` and a clean tree. Exact-head hosted CI
@@ -1135,3 +1432,19 @@ marker remains unclaimed.
   hosted CI `34058199339` passed and published artifact `9996805982`.
 - Final governance head: `7d57f32dda04295a0c4830849416e753490791a1`; exact-head
   hosted CI `34059183314` passed and published artifact `9997092423`.
+
+## Owner SENTRY integration continuation — 2026-09-07
+
+- The trusted Core boundary now consumes server-resolved `sentry_access` for
+  SENTRY tool calls. `LIMITED` permits bounded reads and only explicitly
+  personal preference writes; `UNRESTRICTED` removes that additional user
+  ceiling but remains subject to the existing OPA, Phase 5, and Phase 9
+  authority/verification boundaries. No raw HA, shell, filesystem, policy, or
+  permission backdoor was added.
+- Linux-PC Node.js is installed for the owner at `/home/sketch/.local/bin`
+  (`v24.20.0`) with npm/npx/corepack; login profile initialization is clean.
+- RPi5 Hailo8 hardware/runtime is detected, but official face-pipeline model
+  assets are absent. Hailo face matching remains an explicit external model
+  resource gate; no CPU result is presented as Hailo evidence.
+- This remains goal-wide product work. Phase 14 is accepted, Phase 15 is not
+  started, and no phase acceptance is claimed by Codex.

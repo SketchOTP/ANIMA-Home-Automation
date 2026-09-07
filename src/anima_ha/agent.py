@@ -37,6 +37,7 @@ from anima_ha.action import (
 from anima_ha.agent_instructions import INSTRUCTION_VERSION, INSTRUCTIONS
 from anima_ha.events import EventEnvelope
 from anima_ha.plugins import (
+    EMBEDDED_KNOWLEDGE_TOOL_IDS,
     ContentPersistence,
     ExecutionBoundary,
     ExternalContentTrust,
@@ -2242,7 +2243,11 @@ class AgentRuntime:
                 usage=episode.usage,
                 failure_class="CODEX_CHATGPT_AUTH_UNAVAILABLE",
             )
-        tools = tuple(tool for tool in request.tools if tool.availability)
+        tools = tuple(
+            tool
+            for tool in request.tools
+            if tool.availability and tool.tool_id not in EMBEDDED_KNOWLEDGE_TOOL_IDS
+        )
         tool_by_id = {tool.tool_id: tool for tool in tools}
         schema = decision_schema(tuple(tool_by_id))
         transcript: list[dict[str, Any]] = list(_transcript or [])
@@ -2275,6 +2280,19 @@ class AgentRuntime:
                 turn = self.adapter.run_turn(
                     build_prompt(projection, tools, transcript), schema, turn_timeout
                 )
+                if (
+                    isinstance(turn.decision, ToolRequestDecision)
+                    and turn.decision.tool_id in EMBEDDED_KNOWLEDGE_TOOL_IDS
+                ):
+                    # Preserve structural audit, then reject via the ordinary
+                    # unknown-tool path. Never journal a guessed note payload.
+                    turn = replace(
+                        turn,
+                        decision=ToolRequestDecision(
+                            turn.decision.tool_id,
+                            durable_arguments_projection(turn.decision.arguments),
+                        ),
+                    )
                 self.store.record_turn(
                     episode.episode_id,
                     turn_count,

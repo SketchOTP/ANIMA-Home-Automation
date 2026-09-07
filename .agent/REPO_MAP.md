@@ -23,6 +23,18 @@ The remaining historical map below is not a full current-source audit.
 
 ## Major modules / packages
 
+- `ring_setup.py`, `ring_api.py`, `ring_events.py` — HA-owned account setup and canonical event-only Ring ingestion.
+- `household_event_context.py`, `household_initiative.py` — sparse source-qualified correlation and current notification disposition.
+- `household_learning.py`, `household_learning_api.py`, `learning_review_runner.py` — owner settings, inferred suggestions and scoped existing-task review dispatch.
+- `ui/src/InitiativePanel.tsx`, `RingConnectionPanel.tsx` — learning/notification controls and Ring setup/status.
+- `docs/RING-LEARNING-OWNER-INCREMENT-026A.md` — final local deployment and qualification limits.
+
+- `src/anima_ha/household_reasoning.py` — sparse live shared/personal context and reasoning guidance, without a scripted notification engine.
+- `src/anima_ha/household_presence.py`, `household_presence_api.py`, `household_presence_runtime.py` — owner-scoped phone source binding, coarse evidence, deterministic Wi-Fi change events and Core Attention routing.
+- `src/anima_ha/knowledge.py`, `knowledge_api.py` — PC-local managed Obsidian notes, bounded source/person search, digest-checked correction and lifecycle controls.
+- `src/anima_ha/sentry_autowake.py` — opt-in fresh Core-event eligibility and exact atomic claims; no historical backlog replay.
+- `ui/src/PreferencesPanel.tsx`, `KnowledgePanel.tsx`, `HouseholdPresencePanel.tsx` — household context editors and truthful source/setup states.
+
 - `src/anima_ha/config.py` — environment-backed runtime configuration.
 - `src/anima_ha/logging_setup.py` — JSON structured logging boundary.
 - `src/anima_ha/db/` — PostgreSQL connection and runtime migration boundary.
@@ -400,3 +412,21 @@ Goal-wide usability scorecard (2026-09-06):
 - The next product candidate is bounded SENTRY text household operation via
   the accepted ANIMA MCP/Core boundary. Historical Phase 15, ANIMA voice, and
   the full A–O demonstration remain unstarted and unauthorized.
+
+Owner Routines completion (2026-09-07 UTC; supersedes text-interaction candidate):
+
+- `src/anima_ha/family_routines.py` / `family_routines_api.py`: household-scoped
+  explicit Memory routine versions and plain canonical member creation, routed
+  through existing native Core/policy; synchronous database work off ASGI loop.
+- `ui/src/FamilyRoutines.tsx` / `FamilyRoutines.css`: owner routine/member forms,
+  filtered pagination, day presets, lifecycle controls and recoverable errors.
+- `tests/test_family_routines*.py`, `tests/serve_family_routines.py`,
+  `ui/tests/family-routines.spec.ts`: contract, isolated PostgreSQL/OPA and browser
+  evidence with real and mocked scenarios distinguished.
+- `docs/FAMILY-ROUTINES-OWNER-GUIDE.md`: deployed workflow, final local checks and
+  limitations. SENTRY voice-only; vendor development paused by owner.
+
+- `src/anima_ha/sentry_boundary.py`: SENTRY access-level ceiling and
+  server-owned role propagation into policy context.
+- `src/anima_ha/ui_runtime.py`: commissioned Graph access-level resolver wired
+  into the SENTRY composition root.

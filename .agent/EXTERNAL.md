@@ -2,6 +2,16 @@
 
 Record material prior-art investigations when Authority triggers external discovery. Do not log every trivial web search.
 
+## 026A Ring / learning extension — 2026-09-07
+
+WRAP official HA Ring integration, pinned installed HA2026.9.0 flow/event source;
+REUSE existing ANIMA Journal/Memory/tasks/OPA for learning. Source matrix and
+links: `docs/RING-INTEGRATION.md`. Event-only setup requires the owner's Ring
+account and verification; no video or third-party Android notification scraping.
+HA event receipt timestamps/restoration and direct flow continuation shape were
+checked against the pinned implementation. Live account/event NOT_RUN. Do not
+infer identity from motion/no ding. No new dependency/framework/provider client.
+
 ---
 
 ## AUTHORITY-BOOTSTRAP-001 — Authority 3.0 governance package
@@ -437,3 +447,21 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
   | Best Buy | New key onboarding operationally unavailable | DEFER |
   | Walmart | Cross-project entitlement unresolved | DEFER |
 - Disposition: `ADOPT / WRAP` UPCitemdb for the active semantic `shopping.search_products` capability. Preserve Best Buy/Walmart source and history, but neither is an active fallback. Recheck provider docs/terms before production or material usage expansion.
+
+## 2026-09-07 — notification-only Android / DL110 qualification
+
+- ADOPT/PREPARE official Waydroid1.6.2, Weston13 and verified Android13 GAPPS
+  images for owner-selected PC app-notification hosting. Headless boot observed;
+  no app account/certification or real vendor alert qualified. Installed source
+  `notification_manager.py` exposes private-bus Notify forwarding but omits post
+  time/channel/group metadata. REFERENCE for the not-yet-implemented collector.
+- WRAP HA2026.9 SmartThings lock-state projection only; native TP-Link DL110
+  support and named fingerprint attribution remain unqualified. Partner API
+  cost/OAuth scope requires explicit approval before provisioning; no purchase.
+- Sources/revisions and recheck gates:
+  `docs/TAPO-DL110-INTEGRATION-QUALIFICATION.md`,
+  `docs/WANSVIEW-MOTION-INTEGRATION-QUALIFICATION.md`,
+  `docs/ANDROID-NOTIFICATION-RUNTIME-026A.md`.
+- Preserve source/receipt freshness and unknown identity. REJECT fabricated
+  notifications, private vendor API guessing, media capture, and calling a
+  structured ANIMA test report an observed Wansview notification format.

@@ -73,6 +73,15 @@ jobs:
           docker compose exec -T db pg_isready -U anima -d anima
           curl --fail --silent http://127.0.0.1:18181/health >/dev/null
           uv run --locked --group dev anima-migrate
+      - name: Qualify late device entities against isolated PostgreSQL
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          ANIMA_LATE_BINDING_TEST_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima_late_binding_test
+        run: |
+          set -euo pipefail
+          docker compose exec -T db createdb -U anima anima_late_binding_test
+          uv run --locked pytest -q tests/test_home_assistant_late_binding_postgres.py tests/test_ui_runtime_event_routing.py \
+            --junitxml=/tmp/anima-owner-evidence/late-binding-postgres.xml
       - name: Run Phase 14 R2 real-store qualification
         env:
           ANIMA_DB_PASSWORD: anima_dev_only

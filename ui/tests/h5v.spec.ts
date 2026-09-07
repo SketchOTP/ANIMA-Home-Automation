@@ -6,9 +6,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function requestNotification(page: import("@playwright/test").Page) {
-  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true }).click();
-  await page.getByLabel("Message Anima").fill("Send the deterministic H5V notification");
-  await page.getByRole("button", { name: "Send" }).click();
+  // Internal synthetic integration setup, not a typed product interaction.
+  const csrf = await page.evaluate(async () => (await (await fetch("/api/v1/bootstrap")).json()).csrf_token);
+  const response = await page.request.post("/api/v1/conversation", {
+    headers: { "X-Anima-CSRF": csrf, Origin: new URL(page.url()).origin },
+    data: { text: "Send the deterministic H5V notification" },
+  });
+  expect(response.ok()).toBeTruthy();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   await expect(page.getByText("Pending confirmation")).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve" }).first()).toBeVisible();

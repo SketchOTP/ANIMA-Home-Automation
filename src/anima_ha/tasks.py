@@ -78,6 +78,25 @@ class TaskClaimLost(TaskConflict):
     """Raised when a worker no longer owns a live task-run lease."""
 
 
+def _claim_scope(
+    household_id: UUID | None,
+    task_ids: tuple[UUID, ...] | None,
+) -> tuple[UUID, ...] | None:
+    """Optional server-owned exact scope; an empty tuple means claim nothing."""
+    if household_id is None and task_ids is None:
+        return None
+    if (
+        not isinstance(household_id, UUID)
+        or not household_id.int
+        or not isinstance(task_ids, tuple)
+        or len(task_ids) > 2
+        or any(not isinstance(task_id, UUID) or not task_id.int for task_id in task_ids)
+        or len(set(task_ids)) != len(task_ids)
+    ):
+        raise TaskValidationError("claim scope requires household and at most two unique task IDs")
+    return tuple(sorted(task_ids))
+
+
 class TaskType(StrEnum):
     REASONING_DUE = "REASONING_DUE"
     EPISODE_CONTINUATION = "EPISODE_CONTINUATION"
@@ -524,7 +543,14 @@ def _occurrence_status(task: DurableTask, now: datetime) -> tuple[TaskRunStatus,
 class InMemoryTaskStore:
     """Deterministic store used by unit tests and the simulator."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        claim_household_id: UUID | None = None,
+        claim_task_ids: tuple[UUID, ...] | None = None,
+    ) -> None:
+        self.claim_task_ids = _claim_scope(claim_household_id, claim_task_ids)
+        self.claim_household_id = claim_household_id
         self.tasks: dict[UUID, DurableTask] = {}
         self.runs: dict[UUID, DurableTaskRun] = {}
         self.by_creation_key: dict[str, tuple[UUID, str]] = {}
@@ -619,6 +645,11 @@ class InMemoryTaskStore:
                 if run.status != TaskRunStatus.PENDING:
                     continue
                 task = self.get(run.task_id)
+                if self.claim_task_ids is not None and (
+                    task.household_id != self.claim_household_id
+                    or task.task_id not in self.claim_task_ids
+                ):
+                    continue
                 if task.status not in {TaskStatus.ACTIVE, TaskStatus.COMPLETED}:
                     continue
                 claimed_run = replace(
@@ -636,6 +667,11 @@ class InMemoryTaskStore:
             for task in candidates:
                 if len(claimed) >= limit:
                     break
+                if self.claim_task_ids is not None and (
+                    task.household_id != self.claim_household_id
+                    or task.task_id not in self.claim_task_ids
+                ):
+                    continue
                 if task.status != TaskStatus.ACTIVE or task.next_run_at > at:
                     continue
                 if (
@@ -721,6 +757,11 @@ class InMemoryTaskStore:
                 if run.lease_expires_at is None or run.lease_expires_at > at:
                     continue
                 task = self.get(run.task_id)
+                if self.claim_task_ids is not None and (
+                    task.household_id != self.claim_household_id
+                    or task.task_id not in self.claim_task_ids
+                ):
+                    continue
                 if run.attempt >= task.max_attempts:
                     self.runs[run.run_id] = replace(
                         run,
@@ -859,9 +900,18 @@ def _run_from_row(row: dict[str, Any]) -> DurableTaskRun:
 class PostgresTaskStore:
     """Persistent task/run store with short database-time claim transactions."""
 
-    def __init__(self, database_url: str, connect_timeout: int = 5) -> None:
+    def __init__(
+        self,
+        database_url: str,
+        connect_timeout: int = 5,
+        *,
+        claim_household_id: UUID | None = None,
+        claim_task_ids: tuple[UUID, ...] | None = None,
+    ) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
+        self.claim_task_ids = _claim_scope(claim_household_id, claim_task_ids)
+        self.claim_household_id = claim_household_id
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1044,11 +1094,19 @@ class PostgresTaskStore:
                 SELECT run.* FROM anima_durable_task_runs AS run
                 JOIN anima_durable_tasks AS task ON task.task_id = run.task_id
                 WHERE run.status='PENDING' AND task.status IN ('ACTIVE','COMPLETED')
+                  AND (%s::uuid IS NULL OR task.household_id = %s::uuid)
+                  AND (%s::uuid[] IS NULL OR task.task_id = ANY(%s::uuid[]))
                 ORDER BY run.scheduled_for, run.run_id
                 FOR UPDATE OF run SKIP LOCKED
                 LIMIT %s
                 """,
-                (limit,),
+                (
+                    self.claim_household_id,
+                    self.claim_household_id,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                    limit,
+                ),
             )
             reclaimed_rows = list(cursor.fetchall())
             claimed: list[DurableTaskRun] = []
@@ -1071,11 +1129,20 @@ class PostgresTaskStore:
                 """
                 SELECT * FROM anima_durable_tasks
                 WHERE status='ACTIVE' AND next_run_at <= %s
+                  AND (%s::uuid IS NULL OR household_id = %s::uuid)
+                  AND (%s::uuid[] IS NULL OR task_id = ANY(%s::uuid[]))
                 ORDER BY next_run_at, task_id
                 FOR UPDATE SKIP LOCKED
                 LIMIT %s
                 """,
-                (at, remaining),
+                (
+                    at,
+                    self.claim_household_id,
+                    self.claim_household_id,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                    remaining,
+                ),
             )
             rows = list(cursor.fetchall())
             for raw in rows:
@@ -1195,8 +1262,17 @@ class PostgresTaskStore:
                 WHERE run.task_id = task.task_id
                   AND run.status IN ('CLAIMED','DISPATCHING')
                   AND run.lease_expires_at IS NOT NULL AND run.lease_expires_at <= %s
+                  AND (%s::uuid IS NULL OR task.household_id = %s::uuid)
+                  AND (%s::uuid[] IS NULL OR task.task_id = ANY(%s::uuid[]))
                 """,
-                (at, at),
+                (
+                    at,
+                    at,
+                    self.claim_household_id,
+                    self.claim_household_id,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                    list(self.claim_task_ids) if self.claim_task_ids is not None else None,
+                ),
             )
             count = cursor.rowcount
             connection.commit()

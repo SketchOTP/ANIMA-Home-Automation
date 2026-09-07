@@ -2,6 +2,31 @@
 
 Temporary observations do not belong here. Add only findings likely to remain useful across future tasks.
 
+## Ring and learned initiative — 026A
+
+- Existing task-run COMPLETED can mean dispatch completed, not model completion.
+  Evidence must join exact run/source/outcome/Journal/request identities.
+- Require observed source-day and receipt-day history for learning readiness;
+  old timestamps imported in one batch must not unlock proactive behavior.
+- A model's intended speech status is not Core's recorded status or a TTS receipt.
+  Recheck current permission at submission and before delivery; preserve action
+  results independently, and record required-but-missing notification as partial.
+- HA Ring EventEntity timestamps are receipt time and can be restored. Snapshot
+  and connection-readiness gates are necessary before treating them as new alerts.
+
+## Household context integration — 026A
+
+- Test the constructor used by the actual deployment. Standalone provider-service
+  tests did not catch missing auto-wake configuration in the UI-owned Unix service;
+  an OwnerBoundary/PostgreSQL/Unix HTTP target now covers it.
+- Treat router disconnection as device non-detection, not certain human departure;
+  initial snapshots, stale observations and recovery epochs must not invent arrivals.
+- A successful guided resident memory write proves the model/Core/OPA/vault path,
+  not unattended event capture or speech. Preserve that distinction in owner UI
+  and authority records.
+- Preserve successfully retrieved household preferences if a personal-context
+  lookup fails; report partial context rather than silently discarding both.
+
 ## Owner deployment and graphical console — 026A
 
 - A green fixture catalogue is not owner commissioning. Keep sample topology
@@ -349,3 +374,14 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - Exact-head hosted CI `34043747580` passed on `b924cfe...`; this is an
   implementation checkpoint pending Architect acceptance. Phase 15 remains
   unauthorized.
+
+### Owner Routines completion — 2026-09-07 UTC
+
+- A person selector is not a complete owner workflow when the household has only
+  its authenticated owner. Plain Graph member creation can complete routine setup
+  without granting a login, role, authentication or observed-presence claim.
+- An async FastAPI route wrapping entirely synchronous PostgreSQL/policy work
+  occupies the ASGI event loop. Use a synchronous route/threadpool for that work
+  and verify execution thread identity; do not merely increase browser timeouts.
+- Keep uncertain edits as drafts, refresh authoritative versions, and require
+  explicit review. Do not silently retry a possibly successful mutation.

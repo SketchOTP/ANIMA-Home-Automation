@@ -117,8 +117,23 @@ def _transport_error(exc: Exception) -> AnimaHouseholdError:
     return AnimaHouseholdError("ANIMA transport unavailable", transport_code=code)
 
 
-def _decode_response(raw: bytes, status: int) -> dict[str, Any]:
-    if len(raw) > 64 * 1024:
+def _response_limit(path: str) -> int:
+    # Frozen tool descriptors include schemas, not household/provider content.
+    # Keep every data/result route at the original 64 KiB boundary.
+    from uuid import UUID
+
+    parts = path.split("/")
+    if len(parts) == 5 and parts[:3] == ["", "v1", "requests"] and parts[4] == "tools":
+        try:
+            if str(UUID(parts[3])) == parts[3]:
+                return 128 * 1024
+        except ValueError:
+            pass
+    return 64 * 1024
+
+
+def _decode_response(raw: bytes, status: int, *, limit: int = 64 * 1024) -> dict[str, Any]:
+    if len(raw) > limit:
         raise AnimaHouseholdError(
             "ANIMA response exceeds transport limit",
             http_status=status,
@@ -215,6 +230,7 @@ class AnimaHouseholdClient:
         self.token = _token(self.token_file)
 
     def call(self, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        response_limit = _response_limit(path)
         body = json.dumps(payload or {}, sort_keys=True, separators=(",", ":")).encode()
         if len(body) > 64 * 1024:
             raise AnimaHouseholdError(
@@ -235,11 +251,11 @@ class AnimaHouseholdClient:
                     request, timeout=self.timeout
                 ) as response:
                     status = response.status
-                    raw = response.read(64 * 1024 + 1)
+                    raw = response.read(response_limit + 1)
             except HTTPError as exc:
                 try:
                     status = exc.code
-                    raw = exc.read(64 * 1024 + 1)
+                    raw = exc.read(response_limit + 1)
                 except Exception as read_exc:
                     raise _transport_error(read_exc) from None
                 finally:
@@ -254,14 +270,14 @@ class AnimaHouseholdClient:
                 connection.request("POST", path, body=body, headers=headers)
                 response = connection.getresponse()
                 status = response.status
-                raw = response.read(64 * 1024 + 1)
+                raw = response.read(response_limit + 1)
             except AnimaHouseholdError:
                 raise
             except Exception as exc:
                 raise _transport_error(exc) from None
             finally:
                 connection.close()
-        return _decode_response(raw, status)
+        return _decode_response(raw, status, limit=response_limit)
 
     def open_interaction(self, sentry_request_id: str, source_surface: str) -> dict[str, Any]:
         return self.call(
@@ -325,3 +341,7 @@ class AnimaHouseholdClient:
 
     def status(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/status", {"binding": binding})
+
+    def voice_settings(self) -> dict[str, Any]:
+        """Read ANIMA-owned household voice settings for the SENTRY service."""
+        return self.call("/v1/sentry/voice-settings", {})

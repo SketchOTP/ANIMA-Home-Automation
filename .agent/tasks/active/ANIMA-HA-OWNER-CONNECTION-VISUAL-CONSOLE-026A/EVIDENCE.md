@@ -1,5 +1,36 @@
 # 026A — owner connection and visual console evidence
 
+## Ring / initiative extension — 2026-09-07
+
+Current report: `docs/RING-LEARNING-OWNER-INCREMENT-026A.md`. Healthy deployed
+image edd377d00075; Python1094/72 opt-in skips, separate PG/OPA154, browser42+3,
+SENTRY229, static/frontend/OPA/Docker/health checks pass. Ring live setup/events
+and automatic resident SENTRY delivery remain unqualified. No seeded household
+facts; no new commit/hosted CI. Earlier image/test counts below remain historical.
+
+## Household context extension — 2026-09-07 UTC
+
+Preferences, knowledge, presence setup and black/white/purple UI are deployed
+on the PC. Final image, local regression boundaries, source references and
+real resident read/memory receipts are recorded in
+`docs/HOUSEHOLD-CONTEXT-AND-INITIATIVE-026A.md`. Python993/47 opt-in skips,
+separate real PG/OPA46, presence71 and contextual browser evidence pass. No
+hosted publication is claimed for these dirty local changes. One guided real
+SENTRY memory lesson is now in the owner vault; no personal data was fabricated.
+Actual phones/router sources and unattended event/TTS qualification remain;
+automatic polling is OFF. Notion ANIMA/integration/SENTRY pages read back with
+these exact limitations. Tapo/Wansview stay paused.
+
+## Latest owner Routines completion — 2026-09-07 UTC
+
+Tapo/Wansview development is paused. The Routines owner workflow is now deployed;
+see `docs/FAMILY-ROUTINES-OWNER-GUIDE.md` for changes, real PostgreSQL/OPA versus
+fixture browser evidence, final image/source checks and uncommitted-state limits.
+Full Python784/8 opt-in skips; separate routine/API67; browser126 (42 routines);
+Ruff/mypy104/OPA9/frontend/Docker/pattern scans passed. No owner data seeded.
+This supersedes the earlier worker-only Routines source freeze, not historical
+negative evidence. No whole-goal, automatic wake/TTS or vendor completion claim.
+
 ## Scope and current disposition
 
 This is an owner product increment, not a new resilience phase. Phases 0–14
@@ -10,6 +41,12 @@ qualification; this record distinguishes runtime observations from fixtures.
 Starting SHA: `11265fb6a9d84c7b4a0cf1d9dae99a570c32d7ed`.
 Starting exact CI `34063086056` failed its stale frontend login-copy assertion.
 That historical failure is retained.
+
+First owner-console implementation: `435815855ffda8ff917406daeb063ca498b7b9c7`.
+Exact-head CI `34067802116` passed. Artifact `9999684628`, digest
+`sha256:7e864843e026a87f0bc2f2bc12f733a4934fb17b010bc8b33c498810ef4949bc`.
+This checkpoint predates the following focused live-use corrections and does
+not qualify those later source changes.
 
 ## Real owner runtime observations
 
@@ -24,6 +61,13 @@ That historical failure is retained.
 - At the initial state check, both upstream devices had zero registry entities;
   the HA browser itself reported “This device has no entities” for Basement.
   Commissioning does not qualify a functioning door-state feed or physical alert.
+- At 23:49:05 UTC on 2026-09-06, one authorized normal targeted ZHA config-entry
+  reload had recovered twelve registry entities and eight current-state entries
+  (previously zero). The entry was loaded before/after, HTTP 200, no restart
+  required. No re-pairing, reset, deletion, firmware, configuration/source edit,
+  or request retry occurred. This is operator maintenance through the existing
+  private connection, not proof of an ANIMA agent-selected repair or a physical
+  trigger. The initial registration fault's root cause remains unproven.
 - A real owner UI → external Codex Luna helper → ANIMA read → browser response
   passed for request `b9c5b3ec-0fef-56c7-9b33-9bd40a454f6a`.
   Provider-start was recorded and the durable lifecycle reached COMPLETED.
@@ -51,6 +95,28 @@ That historical failure is retained.
   retry recovered. A backend read-only profile did not support a single slow
   Home query as the cause. The UI's all-or-nothing refresh was a confirmed
   contributor to stale presentation, not proof of the transport-delay cause.
+- The published Cnn frontend failed one fresh isolated Core browser scenario:
+  calendar save returned HTTP 200/SUCCEEDED with the saved version, but the edit
+  form waited on unrelated task reads. Eight other H4 desktop scenarios and
+  both H5V scenarios passed. The correction projects only Core's returned saved
+  event/version after SUCCEEDED, then refetches in the background. A generation
+  guard rejects older list overwrites; refresh failure remains explicit. Fresh
+  H4 9/9, H5V 2/2, graphical desktop 24/24, static 5/5, TypeScript and Vite passed
+  with unchanged calendar timeout assertions. No optimistic success was added.
+- After ZHA recovered its entities, inventory refresh correctly discovered them
+  but the already-commissioned devices still had zero EXPOSES/Truth bindings.
+  The existing commission path now attributes genuine pre-binding observations
+  to canonical keys through causally linked journal events. It preserves original
+  age, uncertainty, source and immutable original records, emits no physical
+  event/Attention callback, and does not invent absent observations. A disposable
+  PostgreSQL regression covers six late entities, repeated commission, journal
+  rebuild, stale/unknown status and a later genuine observation. The disabled
+  helper baseline reproduced the missing canonical observations.
+- The owner browser subsequently timed out on all fifteen snapshot routes on
+  port 18090, despite fast server probes. Restarting the transport did not cure
+  it. The same browser/session against the same backend through a temporary
+  port loaded immediately. Origin-shared connection pressure is under focused
+  investigation; this is not evidence of an authentication failure or a cure.
 
 ## Validation evidence levels
 
@@ -75,3 +141,14 @@ resident voice, persistent SENTRY conversation memory, fabricated telemetry,
 notification receipt, or whole-house automation completion is claimed.
 Existing history and the protected SENTRY worktree are preserved. Private owner
 screenshots, raw provider payloads and credentials are excluded from Git and CI.
+
+## 2026-09-07 UTC vendor/SENTRY continuation
+
+Current local deployment and full validation/negative evidence are recorded in
+`docs/VENDOR-SENTRY-CONTINUATION-026A.md`. 759 backend tests passed/7 optional
+skipped; isolated PostgreSQL vendor target45 passed; browser36 passed with
+explicit synthetic fixtures. Final image is healthy, HA ONLINE, receiver
+disabled without producer configuration. Official Android boot passed, but
+official apps, notification capture and vendor events did not run. SENTRY's
+event lease tests do not qualify an automatic wake/TTS connection. No new hosted
+CI, publication or full-integration acceptance is claimed by this checkpoint.

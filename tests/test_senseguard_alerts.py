@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
-from anima_ha.plugins import InvocationContext
+from anima_ha.plugins import InvocationContext, NativeRuntime, PluginManager
 from anima_ha.policy import RequestOrigin
 from anima_ha.senseguard_alerts import (
     SENSEGUARD_ALERT_MANIFEST,
@@ -210,3 +210,131 @@ def test_typed_alert_plugin_rejects_resource_outside_commissioned_household() ->
             1.0,
             context,
         )
+
+
+def test_spoken_presence_policy_is_fixed_to_presence_detection_and_sentry() -> None:
+    household_id = uuid4()
+    resource_id = uuid4()
+    principal_id = uuid4()
+
+    class Store:
+        def __init__(self) -> None:
+            self.saved: SenseGuardAlertPolicy | None = None
+
+        def get(self, household: UUID, policy_id: UUID) -> SenseGuardAlertPolicy | None:
+            del household, policy_id
+            return self.saved
+
+        def save(
+            self, policy: SenseGuardAlertPolicy, *, expected_version: int | None = None
+        ) -> SenseGuardAlertPolicy:
+            del expected_version
+            self.saved = policy
+            return policy
+
+    store = Store()
+    plugin = SenseGuardAlertNativePlugin(store)  # type: ignore[arg-type]
+    context = InvocationContext(
+        household_id,
+        principal_id,
+        None,
+        uuid4(),
+        1,
+        "spoken-presence-policy",
+        RequestOrigin.DIRECT_USER,
+    )
+    result = plugin.invoke_with_invocation_context(
+        "save_spoken_presence_policy",
+        {
+            "resource_id": str(resource_id),
+            "timezone": "America/New_York",
+            "start_local": "00:00",
+            "end_local": "02:00",
+        },
+        1.0,
+        context,
+    )
+    policy = store.saved
+    assert policy is not None
+    assert result["policy"]["event_type"] == "presence.detected"
+    assert policy.delivery_mode == "SENTRY_COGNITION"
+    assert policy.guaranteed_attention is True
+    assert policy.start_local == time(0)
+    assert policy.end_local == time(2)
+
+    manager = PluginManager()
+    manager.register(SENSEGUARD_ALERT_MANIFEST, NativeRuntime(plugin))
+    manager.enable(SENSEGUARD_ALERT_MANIFEST.plugin_id)
+    descriptor = next(
+        tool
+        for tool in manager.list_tools()
+        if tool.tool_id == "anima.senseguard-alerts.save_spoken_presence_policy"
+    )
+    assert descriptor.execution_boundary.value == "POLICY_GATED_INTERNAL"
+
+
+def test_presence_detection_routes_only_live_direct_on_transition_to_spoken_sentry() -> None:
+    household_id = uuid4()
+    resource_id = uuid4()
+    occurred_at = datetime(2026, 9, 7, 5, 30, tzinfo=UTC)
+    external_id = "binary_sensor.hall_presence"
+    policy = SenseGuardAlertPolicy(
+        uuid4(),
+        household_id,
+        (resource_id,),
+        "presence.detected",
+        "America/New_York",
+        time(0),
+        time(2),
+    )
+
+    class PolicyStore:
+        def list_enabled(self, household: UUID) -> list[SenseGuardAlertPolicy]:
+            return [policy] if household == household_id else []
+
+    class Sink:
+        def append(self, alert: object) -> object:
+            del alert
+            return SimpleNamespace(deduplicated=False)
+
+    def make_event(value: str, *, snapshot: bool = False) -> EventEnvelope:
+        stamp = occurred_at.isoformat()
+        metadata = {
+            "external_id": external_id,
+            "last_changed": stamp,
+            "last_updated": stamp,
+            "snapshot": snapshot,
+            "attributes": {"device_class": "presence"},
+        }
+        return EventEnvelope.create(
+            event_id=str(uuid4()),
+            event_type="truth.observation",
+            source="provider:home_assistant:test",
+            subject_key=external_id,
+            occurred_at=occurred_at,
+            payload={
+                "state": "KNOWN",
+                "value": value,
+                "evidence_kind": "DIRECT",
+                "metadata": metadata,
+            },
+            importance=EventImportance.IMPORTANT,
+            delivery_class=DeliveryClass.BEST_EFFORT,
+            metadata={
+                "provider": "home_assistant",
+                "external_id": external_id,
+                "snapshot": snapshot,
+            },
+        )
+
+    router = SenseGuardEventRouter(
+        household_id=household_id,
+        policy_store=PolicyStore(),  # type: ignore[arg-type]
+        resource_resolver=lambda value: resource_id if value == external_id else None,
+        event_sink=Sink(),
+    )
+    alerts = router.handle(make_event("on"))
+    assert len(alerts) == 1
+    assert alerts[0].payload["spoken_notice"] is True
+    assert router.handle(make_event("off")) == []
+    assert router.handle(make_event("on", snapshot=True)) == []

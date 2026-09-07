@@ -52,7 +52,7 @@ services:
         - CMD-SHELL
         - >-
           python -c 'import urllib.request;
-          urllib.request.urlopen("http://127.0.0.1:8080/search?q=health&format=json", timeout=3)'
+          urllib.request.urlopen("http://127.0.0.1:8080/healthz", timeout=3)'
       interval: 5s
       timeout: 5s
       retries: 12

@@ -45,6 +45,7 @@ class OwnerBoundary:
     ) -> None:
         # Late import avoids eagerly composing another UI from module imports.
         from anima_ha.live_results import PostgresSentryLivePublisher
+        from anima_ha.sentry_autowake import PostgresAutoWakeClaims, aware_timestamp
         from anima_ha.sentry_service import (
             CoreSentryHTTPService,
             PostgresSentryPrincipalRegistry,
@@ -52,9 +53,16 @@ class OwnerBoundary:
             _Handler,
             _UnixHTTPServer,
         )
+        from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore
 
         if core.intelligence_provider.value != "sentry":
             raise OwnerBoundaryError("SENTRY_MODE_REQUIRED")
+        enable_epoch = os.environ.get("ANIMA_SENTRY_AUTOWAKE_ENABLED_AT", "").strip()
+        auto_wake_claims = (
+            PostgresAutoWakeClaims(database_url, enabled_at=aware_timestamp(enable_epoch))
+            if enable_epoch
+            else None
+        )
         directory.mkdir(mode=0o700, parents=True, exist_ok=True)
         info = directory.lstat()
         if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or info.st_mode & 0o027:
@@ -111,13 +119,25 @@ class OwnerBoundary:
             service_principal=principal,
             principal_registry=registry,
             live_result_publisher=PostgresSentryLivePublisher(database_url),
+            auto_wake_claims=auto_wake_claims,
+            voice_settings_store=SentryVoiceSettingsStore(database_url),
         )
         self.thread = threading.Thread(
             target=self.server.serve_forever, daemon=True, name="anima-owner-boundary"
         )
         self.thread.start()
+        self.review_runner: Any | None = None
+        if getattr(core, "learning_service", None) is not None:
+            from anima_ha.learning_review_runner import LearningReviewRunner
+
+            self.review_runner = LearningReviewRunner(
+                core, core.learning_service, household_id, reconcile=True
+            )
+            self.review_runner.start()
 
     def close(self) -> None:
+        if self.review_runner is not None:
+            self.review_runner.stop()
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=3)

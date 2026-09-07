@@ -1,0 +1,56 @@
+# Owner-authorized atlas-desktop deployment. Source .env remains private.
+# Separate project/volumes preserve the previous desktop database for rollback.
+name: anima-pc
+services:
+  db:
+    ports: !override
+      - "127.0.0.1:55434:5432"
+  opa:
+    ports: !override
+      - "127.0.0.1:18181:8181"
+  searxng:
+    ports: !override
+      - "127.0.0.1:18888:8080"
+  ui:
+    image: anima-pc-ui:owner-local
+    # Linux host networking reaches host-mode HA without firewall bypass rules.
+    # Every ANIMA HTTP listener remains explicitly loopback-only.
+    network_mode: host
+    ports: !reset []
+    extra_hosts: !reset []
+    group_add: !override
+      - "1000"
+    environment:
+      ANIMA_DATABASE_URL: postgresql://${ANIMA_DB_USER:-anima}:${ANIMA_DB_PASSWORD:?set ANIMA_DB_PASSWORD in .env}@127.0.0.1:55434/${ANIMA_DB_NAME:-anima}
+      ANIMA_UI_BIND: 127.0.0.1
+      ANIMA_UI_PORT: ${ANIMA_PC_UI_PORT:-18090}
+      ANIMA_OPA_URL: http://127.0.0.1:18181
+      ANIMA_SEARXNG_URL: http://127.0.0.1:18888
+      ANIMA_SEARXNG_HOST: 127.0.0.1
+      ANIMA_INTELLIGENCE_PROVIDER: sentry
+      # Owner-authorized, exact builtin note operations still pass Core/OPA.
+      # This does not enable event polling, TTS, or unrelated household writes.
+      ANIMA_SENTRY_AGENT_MEMORY: "true"
+      ANIMA_HOUSEHOLD_TIMEZONE: America/New_York
+      ANIMA_HA_BASE_URL: http://127.0.0.1:8123
+      ANIMA_HA_WEBSOCKET_URL: ws://127.0.0.1:8123/api/websocket
+      ANIMA_HA_BROWSER_URL: http://localhost:8123
+      ANIMA_HA_EXPECTED_VERSION: "2026.9.0"
+      ANIMA_OWNER_BOUNDARY_GROUP: "1000"
+      ANIMA_KNOWLEDGE_ROOT: /var/lib/anima/knowledge
+      ANIMA_KNOWLEDGE_OWNER_UID: "1000"
+      ANIMA_KNOWLEDGE_GROUP_ID: "1000"
+    volumes: !override
+      - anima_ha_backup_data:/var/lib/anima/backups
+      - anima_ha_connection_data:/var/lib/anima/connection
+      - /home/sketch/.local/share/anima-owner-boundary:/var/lib/anima/provider-boundary
+      - /home/sketch/Documents/MEMORY/ANIMA:/var/lib/anima/knowledge
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.environ['ANIMA_UI_PORT']+'/healthz',timeout=3)"]
+volumes:
+  anima_ha_backup_data:
+    external: true
+    name: anima-pc_anima_ha_backup_data
+  anima_ha_connection_data:
+    external: true
+    name: anima-pc_anima_ha_connection_data

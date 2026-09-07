@@ -844,6 +844,178 @@ class PostgresHouseholdGraph:
             )
             return [self._node(row) for row in cursor.fetchall()]
 
+    @staticmethod
+    def _person_metadata(
+        metadata: dict[str, Any] | None = None,
+        *,
+        semantic_role: str = "member",
+        access_level: str = "LIMITED",
+        wifi_macs: list[str] | None = None,
+        sentry_profile_id: str | None = None,
+        onboarding_state: str = "NOT_STARTED",
+    ) -> dict[str, Any]:
+        """Validate the small ANIMA-owned person-management projection."""
+        value = dict(metadata or {})
+        role = str(value.get("semantic_role", semantic_role)).strip().lower()
+        access = str(value.get("sentry_access", access_level)).strip().upper()
+        state = str(value.get("sentry_onboarding_state", onboarding_state)).strip().upper()
+        if role not in {"owner", "member", "guest"}:
+            raise GraphValidationError("person role is not supported")
+        if access not in {"UNRESTRICTED", "LIMITED"}:
+            raise GraphValidationError("person access level is not supported")
+        if state not in {"NOT_STARTED", "PENDING_CAMERA_PROFILE", "ACTIVE", "REVOKED"}:
+            raise GraphValidationError("person onboarding state is not supported")
+        raw_macs = wifi_macs if wifi_macs is not None else value.get("wifi_macs", [])
+        if not isinstance(raw_macs, list) or len(raw_macs) > 8:
+            raise GraphValidationError("at most eight Wi-Fi addresses may be associated")
+        normalized_macs: list[str] = []
+        for raw in raw_macs:
+            if not isinstance(raw, str):
+                raise GraphValidationError("Wi-Fi address must be text")
+            mac = raw.strip().lower().replace("-", ":")
+            if not re.fullmatch(r"[0-9a-f]{2}(?::[0-9a-f]{2}){5}", mac):
+                raise GraphValidationError("Wi-Fi address is not a valid MAC address")
+            if mac not in normalized_macs:
+                normalized_macs.append(mac)
+        profile = sentry_profile_id if sentry_profile_id is not None else value.get("sentry_profile_id")
+        if profile is not None:
+            if not isinstance(profile, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", profile):
+                raise GraphValidationError("SENTRY profile identifier is invalid")
+        value.update(
+            {
+                "semantic_role": role,
+                "sentry_access": access,
+                "wifi_macs": normalized_macs,
+                "sentry_onboarding_state": state,
+            }
+        )
+        if profile is not None:
+            value["sentry_profile_id"] = profile
+        else:
+            value.pop("sentry_profile_id", None)
+        return value
+
+    def create_person(
+        self,
+        household_id: UUID,
+        name: str,
+        *,
+        semantic_role: str = "member",
+        access_level: str = "LIMITED",
+        wifi_macs: list[str] | None = None,
+    ) -> CanonicalNode:
+        """Create one canonical household person without touching HA identity."""
+        display_name = " ".join(name.split())
+        if not 1 <= len(display_name) <= 120:
+            raise GraphValidationError("person name must contain 1 to 120 characters")
+        metadata = self._person_metadata(
+            semantic_role=semantic_role,
+            access_level=access_level,
+            wifi_macs=wifi_macs,
+            onboarding_state="PENDING_CAMERA_PROFILE",
+        )
+        person_id = uuid4()
+        normalized = normalize_alias(display_name)
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT kind FROM anima_graph_nodes WHERE canonical_id=%s AND retired_at IS NULL",
+                        (household_id,),
+                    )
+                    household = cursor.fetchone()
+                    if household is None or str(household["kind"]) != NodeKind.HOUSEHOLD.value:
+                        raise GraphValidationError("household is not commissioned")
+                    cursor.execute(
+                        """SELECT 1 FROM anima_graph_nodes n
+                           JOIN anima_graph_relationships r ON r.source_id=n.canonical_id
+                           WHERE r.target_id=%s AND r.relationship_type='MEMBER_OF'
+                             AND r.retired_at IS NULL AND n.retired_at IS NULL
+                             AND n.kind='PERSON' AND lower(n.name)=lower(%s)""",
+                        (household_id, display_name),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise GraphConflict("a household person with this name already exists")
+                    cursor.execute(
+                        """INSERT INTO anima_graph_nodes
+                           (canonical_id, kind, name, security_sensitive, metadata)
+                           VALUES (%s, 'PERSON', %s, true, %s::jsonb)""",
+                        (person_id, display_name, self._metadata(metadata)),
+                    )
+                    relationship_id = uuid4()
+                    cursor.execute(
+                        """INSERT INTO anima_graph_relationships
+                           (relationship_id, relationship_type, source_id, target_id, metadata)
+                           VALUES (%s, 'MEMBER_OF', %s, %s, '{}'::jsonb)""",
+                        (relationship_id, person_id, household_id),
+                    )
+                    cursor.execute(
+                        """INSERT INTO anima_graph_aliases
+                           (alias_id, normalized_alias, display_alias, canonical_id, node_kind, scope_id)
+                           VALUES (%s, %s, %s, %s, 'PERSON', %s)""",
+                        (uuid4(), normalized, display_name, person_id, household_id),
+                    )
+                    self._audit(
+                        connection,
+                        "person.created",
+                        person_id,
+                        {"household_id": str(household_id), "name": display_name},
+                    )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+        return CanonicalNode(person_id, NodeKind.PERSON, display_name, True, metadata)
+
+    def update_person_profile(
+        self,
+        household_id: UUID,
+        person_id: UUID,
+        *,
+        name: str | None = None,
+        semantic_role: str | None = None,
+        access_level: str | None = None,
+        wifi_macs: list[str] | None = None,
+        sentry_profile_id: str | None = None,
+        onboarding_state: str | None = None,
+    ) -> CanonicalNode:
+        """Update bounded person metadata after proving household membership."""
+        person = self.get_node(person_id)
+        if person is None or person.kind != NodeKind.PERSON or person.retired_at is not None:
+            raise GraphValidationError("person is unknown or retired")
+        if person_id not in {item.canonical_id for item in self.members_of_household(household_id)}:
+            raise GraphValidationError("person is not a member of this household")
+        display_name = person.name if name is None else " ".join(name.split())
+        if not 1 <= len(display_name) <= 120:
+            raise GraphValidationError("person name must contain 1 to 120 characters")
+        metadata = self._person_metadata(
+            person.metadata,
+            semantic_role=semantic_role or str(person.metadata.get("semantic_role", "member")),
+            access_level=access_level or str(person.metadata.get("sentry_access", "LIMITED")),
+            wifi_macs=wifi_macs if wifi_macs is not None else list(person.metadata.get("wifi_macs", [])),
+            sentry_profile_id=(sentry_profile_id if sentry_profile_id is not None else person.metadata.get("sentry_profile_id")),
+            onboarding_state=onboarding_state or str(person.metadata.get("sentry_onboarding_state", "NOT_STARTED")),
+        )
+        with self._connect() as connection:
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """UPDATE anima_graph_nodes SET name=%s, metadata=%s::jsonb,
+                           updated_at=now() WHERE canonical_id=%s AND retired_at IS NULL""",
+                        (display_name, self._metadata(metadata), person_id),
+                    )
+                    self._audit(
+                        connection,
+                        "person.updated",
+                        person_id,
+                        {"household_id": str(household_id), "name": display_name},
+                    )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+        return CanonicalNode(person_id, NodeKind.PERSON, display_name, True, metadata)
+
     def resource_capabilities(self, resource_id: UUID) -> list[CanonicalNode]:
         return self.related(resource_id, RelationshipType.EXPOSES)
 

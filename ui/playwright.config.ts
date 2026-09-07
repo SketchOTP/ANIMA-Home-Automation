@@ -5,7 +5,8 @@ const opaUrl = process.env.ANIMA_E2E_OPA_URL ?? "http://127.0.0.1:18181";
 
 export default defineConfig({
   testDir: "./tests",
-  testIgnore: ["**/h5v.spec.ts"],
+  // Dedicated Core/Memory/vault fixtures live in their own explicit configs.
+  testIgnore: ["**/h5v.spec.ts", "**/family-routines.spec.ts", "**/knowledge.spec.ts", "**/preferences.spec.ts", "**/household-presence.spec.ts"],
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],

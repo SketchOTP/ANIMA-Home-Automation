@@ -1,0 +1,12 @@
+.preferences-panel fieldset { min-width: 0; display: grid; gap: 16px; }
+.preferences-panel .notice { display: block; }
+.preferences-panel .card-heading { flex-wrap: wrap; }
+.preferences-panel .card-heading button { font-size: .75rem; }
+.preferences-panel .preference-cards { gap: 16px; }
+.preferences-panel .preference-cards li { display: grid; align-items: start; justify-content: stretch; gap: 10px; padding: 16px; border: 1px solid var(--line); background: var(--input); border-radius: 8px; }
+.preferences-panel .preference-cards .button-row { max-width: 100%; justify-content: flex-start; }
+.preferences-panel .preference-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; color: var(--ink); }
+.preferences-panel .preference-scope { display: flex; align-items: center; gap: 8px; color: var(--teal); font-size: .76rem; }
+.preferences-panel details { min-width: 0; overflow-wrap: anywhere; }
+.preferences-panel summary { cursor: pointer; padding-block: 12px; min-height: 44px; font-size: .76rem; color: var(--muted); }
+.preferences-panel h2:focus, .preferences-panel h3:focus { outline: 2px solid var(--teal); outline-offset: 4px; }

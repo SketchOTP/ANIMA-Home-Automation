@@ -1,0 +1,10 @@
+.family-routines fieldset { min-width: 0; }
+.family-routines label { display: grid; gap: 6px; }
+.family-routines label.checkbox { display: flex; }
+.family-routines input, .family-routines select, .family-routines textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+.family-routines input[type="checkbox"] { width: auto; }
+.family-routines .preference-row { display: grid; gap: 12px; overflow-wrap: anywhere; }
+.family-routines .clean-list li > .button-row { max-width: 100%; justify-content: flex-start; }
+.family-routines .notice { display: block; }
+.family-routines button { min-height: 44px; white-space: normal; }
+.family-routines h2:focus, .family-routines h3:focus { outline: 2px solid var(--teal); outline-offset: 4px; }

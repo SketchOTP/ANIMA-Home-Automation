@@ -1,0 +1,14 @@
+.users-panel .card-heading { flex-wrap: wrap; }
+.users-panel fieldset { min-width: 0; display: grid; gap: 16px; }
+.users-panel .user-cards { gap: 16px; }
+.users-panel .user-cards > li { display: grid; gap: 14px; padding: 18px; border: 1px solid var(--line); background: var(--input); border-radius: 10px; }
+.users-panel .user-heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.users-panel .user-heading > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
+.users-panel .user-heading strong { overflow-wrap: anywhere; }
+.users-panel .user-avatar { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; color: var(--bg); background: var(--teal); font-weight: 800; }
+.users-panel .user-heading .status { margin-left: auto; }
+.users-panel .user-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.users-panel .user-facts span { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--line); border-radius: 7px; }
+.users-panel .user-facts small { color: var(--muted); }
+.users-panel h2:focus { outline: 2px solid var(--teal); outline-offset: 4px; }
+@media (max-width: 640px) { .users-panel .user-facts { grid-template-columns: 1fr; } .users-panel .user-heading { align-items: flex-start; flex-wrap: wrap; } .users-panel .user-heading .status { margin-left: 50px; } }

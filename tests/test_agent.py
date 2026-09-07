@@ -248,6 +248,41 @@ class Gateway:
         )
 
 
+def test_embedded_knowledge_gate_omits_guessed_prose_and_preserves_ordinary_tools() -> None:
+    class UncheckedAdapter(ScriptedCodexAdapter):
+        def run_turn(
+            self, prompt: str, output_schema: dict[str, Any], timeout_seconds: float
+        ) -> CodexTurnResult:
+            self.prompts.append(prompt)
+            self.schemas.append(output_schema)
+            response = self.responses.pop(0)
+            if isinstance(response, Exception):
+                raise response
+            return response
+
+    sentinel = "KNOWLEDGE_PROSE_SENTINEL_NEVER_PERSIST"
+    knowledge_id = "anima.knowledge.create_note"
+    adapter = UncheckedAdapter(
+        [
+            CodexTurnResult(
+                ToolRequestDecision(knowledge_id, {"body": sentinel}), TokenUsage(), 1, ()
+            ),
+            CodexTurnResult(
+                ToolRequestDecision("anima.test.read", {"query": "ordinary"}), TokenUsage(), 1, ()
+            ),
+            final(),
+        ]
+    )
+    store = InMemoryEpisodeStore()
+    gateway = Gateway()
+    AgentRuntime(adapter, gateway, store).run(request((tool(knowledge_id), tool())))
+    assert knowledge_id not in json.dumps(adapter.schemas[0])
+    assert gateway.calls == [("anima.test.read", {"query": "ordinary"})]
+    assert sentinel not in repr(store.turns) + repr(store.tool_requests) + repr(store.episodes)
+    assert sentinel not in repr(adapter.prompts)
+    assert store.tool_requests[0]["result"].error_class == "TOOL_NOT_IN_EPISODE_CATALOGUE"
+
+
 class CountingNative:
     def __init__(self) -> None:
         self.invocations = 0

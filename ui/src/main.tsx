@@ -2,22 +2,32 @@ import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
+import { PreferencesPanel } from "./PreferencesPanel";
 import { Icon, StatusRing, Meter } from "./visuals";
+import { KnowledgePanel } from "./KnowledgePanel";
+import { FamilyRoutines } from "./FamilyRoutines";
+import { HouseholdPresencePanel } from "./HouseholdPresencePanel";
+import { VendorConnectionsPanel } from "./VendorConnectionsPanel";
+import { InitiativePanel } from "./InitiativePanel";
+import { RingConnectionPanel } from "./RingConnectionPanel";
+import { UsersPanel } from "./UsersPanel";
 
 type Status = "CURRENT" | "STALE" | "UNKNOWN" | "UNAVAILABLE" | "CONFLICTING";
 type Settings = {
-  version: number; appearance: "system" | "light" | "night"; accent: "ember" | "sage" | "sky";
+  version: number; appearance: "system" | "light" | "night"; accent: "ember" | "sage" | "sky" | "purple";
   density: "comfortable" | "compact"; reduced_motion: boolean; text_scale: "small" | "normal" | "large";
   display_mode: "wall" | "tablet" | "phone" | "desktop"; visible_widgets: string[]; widget_order: string[];
 };
+type SentryVoiceSettings = { voice_id: string; speech_speed: number };
 type Bootstrap = { identity: { display_name: string; assurance: string }; household: { name: string }; theme: Pick<Settings, "appearance" | "accent" | "density" | "reduced_motion" | "text_scale">; layout: Pick<Settings, "display_mode" | "visible_widgets" | "widget_order">; csrf_token: string };
 type Task = { task_id: string; title: string; status: string; next_run_at?: string };
 type CalendarEvent = { event_id: string; title: string; start_at: string; end_at: string; status: string; version?: number };
 type Device = { device_id: string; name: string; kind: string; state: string };
 type Room = { place_id: string; name: string; kind: string; devices: Device[] };
 type Space = { place_id: string; name: string; kind: string; parent_id?: string | null };
-type DeviceCapability = { type: string; label: string; readable: boolean; writable: boolean; state: string; truth_status: string; observed_at?: string | null };
-type ProviderDevice = { external_object_kind: string; device_handle: string; present: boolean; state?: string; truth_status?: string; observed_at?: string | null; capabilities?: DeviceCapability[]; metadata: Record<string, string | null> };
+type LastReportedState = { last_reported_state?: string; last_reported_at?: string; last_reported_source?: string };
+type DeviceCapability = LastReportedState & { type: string; label: string; readable: boolean; writable: boolean; state: string; truth_status: string; observed_at?: string | null };
+type ProviderDevice = LastReportedState & { external_object_kind: string; device_handle: string; canonical_name?: string; present: boolean; state?: string; truth_status?: string; observed_at?: string | null; capabilities?: DeviceCapability[]; metadata: Record<string, string | null> };
 type AlertPolicy = { policy_id: string; resource_ids: string[]; event_type: string; timezone: string; start_local: string; end_local: string; priority: number; guaranteed_attention: boolean; delivery_mode: "SENTRY_COGNITION" | "NOTIFICATION"; enabled: boolean; version: number };
 type AlertEvent = { alert_id: string; source_event_id?: string | null; resource_id: string; resource_name: string; event_type: string; occurred_at: string; priority: number; delivery_mode: string; delivery_status: string };
 type Page<T> = { items: T[]; next_cursor: string | null };
@@ -35,8 +45,8 @@ type ZHASetup = { setup_id: string; step_id: string; fields: ZHASetupField[] };
 type MutationOutcome = { status: string; operation: string; reason?: string; detail?: string; result?: unknown; evidence?: unknown };
 type Connection = { configured: boolean; connected: boolean; state: string; can_connect: boolean; setup_required: boolean; household_source: string };
 type SetupStatus = { state: string; available: boolean };
-type ConversationResult = { request_id: string; status: string; lifecycle: string; response?: string | null; detail?: string | null; available: boolean };
 type Preference = { preference_id: string; content: string; category: "alerts" | "comfort" | "meals" | "shopping" | "privacy" | "other"; created_at: string; status: string; provenance?: { kind?: string } };
+type User = { person_id: string; name: string; role: string; access_level: string; sentry_profile_id: string | null; sentry_onboarding_state: string; wifi_macs: string[] };
 
 class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
@@ -105,39 +115,42 @@ function PowerControls({ id, label, state, mutate }: { id: string; label: string
   const setPower = async (desired_on: boolean) => { if (lock.current) return; lock.current = true; setBusy(true); try { await mutate(`/api/v1/controls/${id}`, { desired_on }); } finally { lock.current = false; setBusy(false); } };
   return <span className="button-row" role="group" aria-label={`Power for ${label}`} aria-busy={busy}><button disabled={busy} aria-label={`Turn ${label} on`} aria-pressed={state.toLowerCase() === "on"} onClick={() => void setPower(true)}><Icon name="Power" /> On</button><button disabled={busy} aria-label={`Turn ${label} off`} aria-pressed={state.toLowerCase() === "off"} onClick={() => void setPower(false)}>Off</button></span>;
 }
-function useMutation(csrf: string, refresh: () => Promise<void>, setError: (value: string) => void, setOutcome: (value: MutationOutcome) => void) {
-  return async (path: string, payload: Record<string, unknown> = {}): Promise<MutationOutcome | null> => { try { setError(""); const result = await api<MutationOutcome>(path, { method: "POST", body: JSON.stringify({ payload }), headers: { "Content-Type": "application/json", "X-Anima-CSRF": csrf, Origin: window.location.origin } }); setOutcome(result); window.setTimeout(() => { void refresh(); }, 0); return result; } catch (err) { setError(err instanceof Error ? err.message : "ANIMA could not complete that request"); return null; } };
+function useMutation(csrf: string, refresh: () => Promise<void>, setError: (value: string) => void, setOutcome: (value: MutationOutcome) => void, onAuthFailure: () => void) {
+  return async (path: string, payload: Record<string, unknown> = {}): Promise<MutationOutcome | null> => { try { setError(""); const result = await api<MutationOutcome>(path, { method: "POST", body: JSON.stringify({ payload }), headers: { "Content-Type": "application/json", "X-Anima-CSRF": csrf, Origin: window.location.origin } }); setOutcome(result); window.setTimeout(() => { void refresh(); }, 0); return result; } catch (err) { if (err instanceof ApiError && err.status === 401) onAuthFailure(); else setError(err instanceof Error ? err.message : "ANIMA could not complete that request"); return null; } };
 }
 
 function App() {
-  const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null); const [home, setHome] = useState<Home | null>(null); const [settings, setSettings] = useState<Settings | null>(null); const [capabilities, setCapabilities] = useState<Capability[]>([]); const [integrations, setIntegrations] = useState<Integration[]>([]); const [devices, setDevices] = useState<ProviderDevice[]>([]); const [spaces, setSpaces] = useState<Space[]>([]); const [alertPolicies, setAlertPolicies] = useState<AlertPolicy[]>([]); const [alertEvents, setAlertEvents] = useState<AlertEvent[]>([]); const [alertNextCursor, setAlertNextCursor] = useState<string | null>(null); const [alertLoading, setAlertLoading] = useState(false); const [notificationRoutes, setNotificationRoutes] = useState<NotificationRoute[]>([]); const [backups, setBackups] = useState<BackupRecord[]>([]); const [scenes, setScenes] = useState<Scene[]>([]); const [automations, setAutomations] = useState<Automation[]>([]); const [preferences, setPreferences] = useState<Preference[]>([]); const [tab, setTab] = useState("Home"); const [message, setMessage] = useState(""); const [reply, setReply] = useState(""); const [conversationStatus, setConversationStatus] = useState<string | null>(null); const [error, setError] = useState(""); const [outcome, setOutcome] = useState<MutationOutcome | null>(null);
+  const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null); const [home, setHome] = useState<Home | null>(null); const [settings, setSettings] = useState<Settings | null>(null); const [voiceSettings, setVoiceSettings] = useState<SentryVoiceSettings | null>(null); const [capabilities, setCapabilities] = useState<Capability[]>([]); const [integrations, setIntegrations] = useState<Integration[]>([]); const [devices, setDevices] = useState<ProviderDevice[]>([]); const [spaces, setSpaces] = useState<Space[]>([]); const [alertPolicies, setAlertPolicies] = useState<AlertPolicy[]>([]); const [alertEvents, setAlertEvents] = useState<AlertEvent[]>([]); const [alertNextCursor, setAlertNextCursor] = useState<string | null>(null); const [alertLoading, setAlertLoading] = useState(false); const [notificationRoutes, setNotificationRoutes] = useState<NotificationRoute[]>([]); const [backups, setBackups] = useState<BackupRecord[]>([]); const [scenes, setScenes] = useState<Scene[]>([]); const [automations, setAutomations] = useState<Automation[]>([]); const [preferences, setPreferences] = useState<Preference[]>([]); const [users, setUsers] = useState<User[]>([]); const [tab, setTab] = useState("Home"); const reply = ""; const [error, setError] = useState(""); const [outcome, setOutcome] = useState<MutationOutcome | null>(null);
   const refreshGeneration = useRef(0);
   const authGeneration = useRef(0);
   const refreshInFlight = useRef<Promise<void> | null>(null);
   const refreshPending = useRef(false);
   const snapshotAbort = useRef<AbortController | null>(null);
+  const initialSnapshotStarted = useRef(false);
+  const pauseStream = useRef<(() => void) | null>(null);
+  const resumeStream = useRef<(() => void) | null>(null);
   const [connection, setConnection] = useState<Connection | null>(null);
-  const [replySource, setReplySource] = useState("Anima");
-  const [conversationError, setConversationError] = useState("");
-  const [conversationAuthRequired, setConversationAuthRequired] = useState(false);
-  const sending = useRef(false);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
-  const prepare = (intent: string) => { setMessage(intent); setTab("Anima"); window.requestAnimationFrame(() => composerRef.current?.focus()); };
+  const [voiceSuggestion, setVoiceSuggestion] = useState("");
+  const voicePanelRef = useRef<HTMLHeadingElement>(null);
+  const prepare = (intent: string) => { setVoiceSuggestion(intent); setTab("Anima"); window.requestAnimationFrame(() => voicePanelRef.current?.focus()); };
+  const clearProtectedState = () => {
+      authGeneration.current += 1;
+      setBootstrap(null); setHome(null); setSettings(null); setVoiceSettings(null); setConnection(null);
+      setCapabilities([]); setIntegrations([]); setDevices([]); setSpaces([]);
+      setAlertPolicies([]); setAlertEvents([]); setAlertNextCursor(null); setAlertLoading(false);
+      setNotificationRoutes([]); setBackups([]); setScenes([]); setAutomations([]); setPreferences([]); setUsers([]);
+      setVoiceSuggestion(""); setOutcome(null);
+  };
+  const expireSession = () => {
+    refreshGeneration.current += 1; snapshotAbort.current?.abort(); pauseStream.current?.();
+    clearProtectedState(); setError("AUTHENTICATION_REQUIRED");
+  };
   const loadSnapshot = async () => {
     const generation = ++refreshGeneration.current;
     const controller = new AbortController(); snapshotAbort.current = controller;
     let timedOut = false;
     let authFailure = "";
     const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 10000);
-    const clearProtectedState = () => {
-      authGeneration.current += 1;
-      setBootstrap(null); setHome(null); setSettings(null); setConnection(null);
-      setCapabilities([]); setIntegrations([]); setDevices([]); setSpaces([]);
-      setAlertPolicies([]); setAlertEvents([]); setAlertNextCursor(null); setAlertLoading(false);
-      setNotificationRoutes([]); setBackups([]); setScenes([]); setAutomations([]); setPreferences([]);
-      setReply(""); setMessage(""); setReplySource("Anima"); setConversationStatus(null);
-      setConversationError(""); setConversationAuthRequired(false); setOutcome(null);
-    };
     const read = <T,>(path: string): Promise<T> => api<T>(path, { signal: controller.signal }).catch((err) => {
       if (err instanceof ApiError && (err.status === 401 || ["AUTHENTICATION_REQUIRED", "SESSION_EXPIRED"].includes(err.message))) {
         if (generation === refreshGeneration.current && !authFailure) {
@@ -158,6 +171,7 @@ function App() {
       section<{ items: Capability[] }>("Capabilities", "/api/v1/capabilities", (value) => setCapabilities(value.items)),
       section<{ items: Integration[] }>("Integrations", "/api/v1/integrations", (value) => setIntegrations(value.items)),
       section<{ settings: Settings }>("Settings", "/api/v1/settings", (value) => setSettings(value.settings)),
+      section<{ settings: SentryVoiceSettings }>("SENTRY voice settings", "/api/v1/sentry/voice-settings", (value) => setVoiceSettings(value.settings)),
       section<{ items: ProviderDevice[] }>("Devices", "/api/v1/devices", (value) => setDevices(value.items)),
       section<{ items: Space[] }>("Spaces", "/api/v1/places", (value) => setSpaces(value.items)),
       section<{ items: AlertPolicy[] }>("Alert policies", "/api/v1/alerts/policies", (value) => setAlertPolicies(value.items)),
@@ -167,6 +181,7 @@ function App() {
       section<{ items: Scene[] }>("Scenes", "/api/v1/scenes", (value) => setScenes(value.items)),
       section<{ items: Automation[] }>("Automations", "/api/v1/automations", (value) => setAutomations(value.items)),
       section<{ items: Preference[] }>("Preferences", "/api/v1/preferences", (value) => setPreferences(value.items)),
+      section<{ items: User[] }>("Users", "/api/v1/users", (value) => setUsers(value.items)),
       section<Connection>("Connection", "/api/v1/connection", setConnection),
     ];
     try {
@@ -192,12 +207,15 @@ function App() {
   };
   const refresh = (): Promise<void> => {
     refreshPending.current = true;
-    if (document.hidden) return Promise.resolve();
+    if (document.hidden || (!document.hasFocus() && initialSnapshotStarted.current)) return Promise.resolve();
     if (refreshInFlight.current) return refreshInFlight.current;
+    initialSnapshotStarted.current = true;
+    // Release this tab's HTTP/1 stream slot before competing snapshot reads.
+    pauseStream.current?.();
     const run = async () => {
-      do { refreshPending.current = false; await loadSnapshot(); } while (refreshPending.current && !document.hidden);
+      do { refreshPending.current = false; await loadSnapshot(); } while (refreshPending.current && !document.hidden && document.hasFocus());
     };
-    const pending = run().finally(() => { refreshInFlight.current = null; });
+    const pending = run().finally(() => { refreshInFlight.current = null; resumeStream.current?.(); });
     refreshInFlight.current = pending;
     return pending;
   };
@@ -206,84 +224,49 @@ function App() {
   useEffect(() => {
     let events: EventSource | null = null;
     let invalidationTimer: number | undefined;
-    const close = () => { events?.close(); events = null; window.clearTimeout(invalidationTimer); };
+    let fallbackTimer: number | undefined;
+    const close = () => { events?.close(); events = null; window.clearTimeout(invalidationTimer); window.clearTimeout(fallbackTimer); };
     const invalidate = () => {
       window.clearTimeout(invalidationTimer);
       invalidationTimer = window.setTimeout(() => { void refresh(); }, 75);
     };
     const synchronize = (refetch: boolean) => {
       if (document.hidden) { close(); snapshotAbort.current?.abort(); refreshPending.current = true; return; }
-      if (bootstrap && !events) {
+      if (!document.hasFocus()) { close(); refreshPending.current = true; return; }
+      if (bootstrap && !events && !refreshInFlight.current) {
         events = new EventSource("/api/v1/events");
+        events.onerror = () => {
+          // EventSource hides HTTP status (including the per-session stream cap).
+          // Stop its automatic reconnect; retry reads at a bounded foreground cadence.
+          events?.close(); events = null;
+          window.clearTimeout(fallbackTimer);
+          if (!document.hidden && document.hasFocus()) fallbackTimer = window.setTimeout(() => { void refresh(); }, 15000);
+        };
         ["home.invalidated", "tasks.changed", "calendar.changed", "alerts.changed", "activity.changed", "conversation.completed", "capabilities.changed", "preferences.changed", "refresh.required"].forEach((name) => events!.addEventListener(name, invalidate));
       }
       if (refetch) void refresh();
     };
     const visibility = () => synchronize(true);
+    const blur = () => { close(); refreshPending.current = true; };
     const suspend = () => { close(); snapshotAbort.current?.abort(); };
+    pauseStream.current = close;
+    resumeStream.current = () => synchronize(false);
     document.addEventListener("visibilitychange", visibility);
+    window.addEventListener("blur", blur);
+    window.addEventListener("focus", visibility);
     window.addEventListener("pagehide", suspend);
     window.addEventListener("pageshow", visibility);
     synchronize(false);
-    return () => { close(); document.removeEventListener("visibilitychange", visibility); window.removeEventListener("pagehide", suspend); window.removeEventListener("pageshow", visibility); };
+    return () => { close(); pauseStream.current = null; resumeStream.current = null; document.removeEventListener("visibilitychange", visibility); window.removeEventListener("blur", blur); window.removeEventListener("focus", visibility); window.removeEventListener("pagehide", suspend); window.removeEventListener("pageshow", visibility); };
   }, [Boolean(bootstrap)]);
   useEffect(() => { if (!settings) return; const root = document.documentElement; root.dataset.appearance = settings.appearance; root.dataset.accent = settings.accent; root.dataset.density = settings.density; root.dataset.textScale = settings.text_scale; root.dataset.reducedMotion = settings.reduced_motion ? "true" : "false"; root.dataset.displayMode = settings.display_mode; }, [settings]);
-  const send = async () => {
-    if (!message.trim() || !bootstrap || sending.current) return;
-    sending.current = true;
-    const generation = authGeneration.current;
-    const submitted = message.trim();
-    try {
-      setConversationError(""); setConversationAuthRequired(false); setConversationStatus("SENDING"); setReplySource("Anima"); setReply("");
-      const result = await api<{ response: string; disposition?: string; request_id?: string }>("/api/v1/conversation", { method: "POST", body: JSON.stringify({ text: submitted }), headers: { "Content-Type": "application/json", "X-Anima-CSRF": bootstrap.csrf_token, Origin: window.location.origin } });
-      if (generation !== authGeneration.current) return;
-      const sentry = result.disposition === "QUEUED_FOR_SENTRY";
-      setReplySource(sentry ? "SENTRY" : "Anima"); setReply(result.response); setMessage((current) => current.trim() === submitted ? "" : current);
-      if (sentry && !result.request_id) throw new Error("The queued acknowledgement did not include a result request ID.");
-      if (sentry && result.request_id) {
-        setConversationStatus("WAITING_FOR_SENTRY"); let completed = false;
-        const deadline = performance.now() + 300_000;
-        let transportFailures = 0;
-        while (performance.now() < deadline) {
-          await new Promise((resolve) => window.setTimeout(resolve, Math.min(transportFailures ? 3000 : 1000, deadline - performance.now())));
-          if (generation !== authGeneration.current) return;
-          if (performance.now() >= deadline) break;
-          const controller = new AbortController();
-          const timeout = window.setTimeout(() => controller.abort(), Math.min(10_000, deadline - performance.now()));
-          try {
-            const current = await api<ConversationResult>(`/api/v1/conversation/${encodeURIComponent(result.request_id)}`, { signal: controller.signal });
-            if (generation !== authGeneration.current) return;
-            transportFailures = 0; setConversationError("");
-            if (["COMPLETED", "NO_ACTION", "FAILED", "UNKNOWN_RESULT", "RECOVERY_REQUIRED", "CANCELLED", "RESPONSE", "UNAVAILABLE"].includes(current.status) || current.available) {
-              setConversationStatus(current.status); setReply(current.response ?? current.detail ?? "SENTRY completed without a retained live response."); completed = true; break;
-            }
-          } catch (err) {
-            if (generation !== authGeneration.current) return;
-            // Only a failed transport or our GET timeout is retryable. Never replay the POST.
-            if (!(err instanceof ApiError) && (err instanceof TypeError || controller.signal.aborted)) {
-              transportFailures += 1;
-              setReply(""); setConversationError("Result connection interrupted. Retrying the result lookup only; your request has not been sent again.");
-            } else { throw err; }
-          } finally { window.clearTimeout(timeout); }
-        }
-        if (!completed) { setConversationStatus("UNKNOWN_RESULT"); setReply(""); setConversationError("No result was received within 300 seconds. The request may still be running. Check Activity before sending again; nothing was resent."); }
-      } else { setConversationStatus(null); }
-    } catch (err) {
-      if (generation !== authGeneration.current) return;
-      const authRequired = err instanceof ApiError && (err.status === 401 || ["AUTHENTICATION_REQUIRED", "SESSION_EXPIRED"].includes(err.message));
-      const detail = err instanceof Error ? err.message.replaceAll("_", " ") : "Anima could not respond";
-      setConversationStatus(authRequired ? "AUTHENTICATION_REQUIRED" : "UNKNOWN_RESULT"); setReply(""); setConversationAuthRequired(authRequired);
-      setConversationError(`${authRequired ? "Sign in again to check your request." : "The request outcome could not be confirmed."} ${detail}${err instanceof ApiError ? ` (HTTP ${err.status})` : ""}. Nothing was resent; check Activity before sending again.`);
-    }
-    finally { sending.current = false; }
-  };
-  const mutate = useMutation(bootstrap?.csrf_token ?? "", refresh, setError, setOutcome); const greeting = useMemo(() => bootstrap ? `Welcome, ${bootstrap.identity.display_name}.` : "Connecting to Anima…", [bootstrap]);
-  if (!bootstrap || !home || !settings) { if (error === "AUTHENTICATION_REQUIRED") return <AuthenticationView notice={conversationError} />; if (error === "SESSION_EXPIRED") return <AuthenticationView expired notice={conversationError} />; return <main className="shell centered"><div className="brand-mark">A</div><h1>Anima</h1><p>{error || "Connecting to your home…"}</p>{error && <button onClick={() => void refresh()}>Try again</button>}</main>; }
+  const mutate = useMutation(bootstrap?.csrf_token ?? "", refresh, setError, setOutcome, expireSession); const greeting = useMemo(() => bootstrap ? `Welcome, ${bootstrap.identity.display_name}.` : "Connecting to Anima…", [bootstrap]);
+  if (!bootstrap || !home || !settings) { if (error === "AUTHENTICATION_REQUIRED") return <AuthenticationView />; if (error === "SESSION_EXPIRED") return <AuthenticationView expired />; return <main className="shell centered"><div className="brand-mark">A</div><h1>Anima</h1><p>{error || "Connecting to your home…"}</p>{error && <button onClick={() => void refresh()}>Try again</button>}</main>; }
   const degraded = capabilities.some((item) => ["degraded", "unavailable"].includes(item.state.toLowerCase()));
   const navGroups = [
-    ["Household", ["Home", "Devices", "Spaces", "Scenes", "Automations"]],
+    ["Household", ["Home", "Devices", "Spaces", "Scenes", "Automations", "Routines"]],
     ["Assistant", ["Alerts", "Notifications", "Anima", "Tasks & Calendar", "Activity"]],
-    ["Manage", ["Capabilities", "Integrations", "Backups", "Preferences", "Settings"]],
+    ["Manage", ["Users", "Capabilities", "Integrations", "Backups", "Preferences", "Settings"]],
   ] as const;
   const presentDevices = devices.filter((item) => item.external_object_kind === "device" && item.present);
   const enabled = <T extends { enabled: boolean },>(items: T[]) => items.filter((item) => item.enabled).length;
@@ -300,13 +283,15 @@ function App() {
     Integrations: [["Registered", integrations.length, "Integrations"], ["Enabled", enabled(integrations), "Power"]],
     Backups: [["Snapshots", backups.length, "Backups"], ["Valid snapshots", backups.filter((item) => item.restorable).length, "Check"]],
     Preferences: [["Saved preferences", preferences.length, "Preferences"]],
+    Users: [["Household users", users.length, "Users"], ["Face profiles", users.filter((item) => item.sentry_onboarding_state === "ACTIVE").length, "Person"], ["Wi‑Fi hints", users.filter((item) => item.wifi_macs.length > 0).length, "Integrations"]],
   };
   const descriptions: Record<string, string> = {
+    Routines: "Your household's owner-declared schedules and expectations.",
     Home: "Your household at a glance.", Devices: "Pair, place, and control your devices.", Spaces: "A place for every device.",
     Scenes: "Set the mood with saved device states.", Automations: "When something changes, put your routine to work.", Alerts: "Choose what deserves attention.",
-    Notifications: "Choose when and where household alerts are routed.", Anima: "Ask, plan, and review household actions.", "Tasks & Calendar": "Make room for what matters.",
+    Notifications: "Choose when and where household alerts are routed.", Anima: "Voice control through your existing SENTRY desktop.", "Tasks & Calendar": "Make room for what matters.",
     Activity: "Recent observations and recorded outcomes.", Capabilities: "See what your household can use.", Integrations: "Manage your connected services.",
-    Backups: "Protect and recover your household records.", Preferences: "Help Anima understand your household choices.", Settings: "Make this screen feel at home.",
+    Backups: "Protect and recover your household records.", Preferences: "Help Anima understand your household choices.", Settings: "Make this screen feel at home.", Users: "Manage household identity, SENTRY access, and Wi‑Fi presence hints.",
   };
   return <div className="app-shell">
     <aside className="sidebar"><a className="skip-link" href="#main-content">Skip to content</a><div className="brand"><div className="brand-mark"><Icon name="Home" /></div><div><strong>Anima</strong><small>home intelligence</small></div></div>
@@ -317,22 +302,24 @@ function App() {
       <header className="topbar"><div><p className="eyebrow">{bootstrap.household.name}</p><h1>{tab === "Home" ? greeting : tab}</h1></div><div className="topbar-actions"><button className="avatar" aria-label="Current household member" title={bootstrap.identity.display_name} onClick={() => setTab("Settings")}>{bootstrap.identity.display_name.slice(0, 1).toUpperCase()}</button></div></header>
       <OutcomeNotice outcome={outcome} />{error && <div className="notice error" role="alert">{error}</div>}
       <ConnectionBanner connection={connection} retry={() => void refresh()} />
-      <section className="section-intro" aria-label={`${tab} overview`}><div className="section-heading"><p className="section-description">{descriptions[tab]}</p><span className="assistant-note">Quick actions open a draft for you to review.</span></div><QuickActions section={tab} prepare={prepare} />{summaries[tab] && <SummaryCards items={summaries[tab]} />}</section>
+      <section className="section-intro" aria-label={`${tab} overview`}><div className="section-heading"><p className="section-description">{descriptions[tab]}</p><span className="assistant-note">Assistant shortcuts show suggestions to ask SENTRY by voice; nothing is sent.</span></div><QuickActions section={tab} prepare={prepare} />{summaries[tab] && <SummaryCards items={summaries[tab]} />}</section>
       {tab === "Home" && <HomeView home={home} settings={settings} mutate={mutate} reply={reply} />}
       {tab === "Devices" && <DevicesView devices={devices} rooms={home.rooms} mutate={mutate} />}
       {tab === "Spaces" && <SpacesView spaces={spaces} mutate={mutate} />}
+      {tab === "Routines" && <><FamilyRoutines mutate={mutate} onAuthFailure={expireSession} /><HouseholdPresencePanel mutate={mutate} onAuthFailure={expireSession} /></>}
       {tab === "Scenes" && <ScenesView scenes={scenes} controls={home.controls} mutate={mutate} />}
       {tab === "Automations" && <AutomationsView automations={automations} devices={devices} controls={home.controls} mutate={mutate} />}
-      {tab === "Alerts" && <AlertPoliciesView policies={alertPolicies} devices={devices} mutate={mutate} events={alertEvents} nextCursor={alertNextCursor} loading={alertLoading} loadOlder={loadOlderAlerts} />}
+      {tab === "Alerts" && <AlertPoliciesView policies={alertPolicies} devices={devices} rooms={home.rooms} mutate={mutate} events={alertEvents} nextCursor={alertNextCursor} loading={alertLoading} loadOlder={loadOlderAlerts} />}
       {tab === "Notifications" && <NotificationRoutesView routes={notificationRoutes} mutate={mutate} />}
-      {tab === "Anima" && <Card title="Talk with Anima" className="conversation"><p className="muted">Review your message, then send. Actions use household permissions.</p><Composer message={message} setMessage={setMessage} send={send} inputRef={composerRef} busy={conversationStatus === "SENDING" || conversationStatus === "WAITING_FOR_SENTRY"} />{conversationStatus && <p className="muted" role="status">{replySource} · {conversationStatus.replaceAll("_", " ")}</p>}{conversationError && <div className="notice error" role="alert"><p>{conversationError}</p>{conversationAuthRequired && <a href="/auth/login">Sign in again</a>}</div>}{reply && <div className="reply" aria-live="polite"><strong>{replySource}</strong><p>{reply}</p></div>}</Card>}
+      {tab === "Anima" && <section className="card conversation" aria-labelledby="sentry-voice-heading"><h2 id="sentry-voice-heading" ref={voicePanelRef} tabIndex={-1}><Icon name="Anima" /> SENTRY voice control</h2><p>Speak to your existing SENTRY desktop using its wake and microphone controls. SENTRY handles voice replies and speech playback.</p><p className="muted">This dashboard does not start a microphone, send conversational text, or confirm that the desktop is listening.</p><p role="status">Reported household voice status: <StatusPill status={home.voice.status} /> · {home.voice.label}</p>{voiceSuggestion && <aside className="assistant-note"><strong>You can ask SENTRY by voice</strong><p>{voiceSuggestion}</p><small>Suggestion only — nothing has been sent.</small></aside>}<button type="button" onClick={() => setTab("Activity")}>View household activity</button></section>}
       {tab === "Tasks & Calendar" && <TaskCalendar mutate={mutate} />}
       {tab === "Activity" && <Card title="Recent activity"><ul className="clean-list activity-timeline">{home.activity.length ? home.activity.map((item, index) => <li key={`${item.summary}-${index}`}><Icon name="Activity" /><span>{item.summary}</span><StatusPill status={item.status} /></li>) : <li className="empty-state">No household activity recorded.</li>}</ul></Card>}
       {tab === "Capabilities" && <Capabilities items={capabilities} />}
-      {tab === "Integrations" && <ManagedIntegrationsView items={integrations} mutate={mutate} />}
+      {tab === "Integrations" && <><RingConnectionPanel csrfToken={bootstrap.csrf_token} onAuthFailure={expireSession} /><VendorConnectionsPanel onAuthFailure={expireSession} /><ManagedIntegrationsView items={integrations} mutate={mutate} /></>}
       {tab === "Backups" && <BackupsView backups={backups} mutate={mutate} />}
-      {tab === "Preferences" && <PreferencesView preferences={preferences} mutate={mutate} />}
-      {tab === "Settings" && <SettingsPanel value={settings} csrf={bootstrap.csrf_token} onSaved={setSettings} setError={setError} setOutcome={setOutcome} />}
+      {tab === "Preferences" && <><PreferencesPanel mutate={mutate} onAuthFailure={expireSession} /><InitiativePanel mutate={mutate} onAuthFailure={expireSession} /><KnowledgePanel mutate={mutate} onAuthFailure={expireSession} /></>}
+      {tab === "Users" && <UsersPanel mutate={mutate} onAuthFailure={expireSession} />}
+      {tab === "Settings" && <SettingsPanel value={settings} voice={voiceSettings} csrf={bootstrap.csrf_token} onSaved={setSettings} onVoiceSaved={setVoiceSettings} setError={setError} setOutcome={setOutcome} />}
     </main>
   </div>;
 }
@@ -348,7 +335,7 @@ function HomeView({ home, settings, mutate, reply }: { home: Home; settings: Set
     agenda: <Card title="Coming up"><ul className="clean-list">{home.calendar.map((event) => <li key={event.event_id}><span>{event.title}</span><time>{new Date(event.start_at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}</time></li>)}</ul></Card>,
     tasks: <Card title="Things to do"><ul className="clean-list">{home.tasks.map((task) => <li key={task.task_id}><span>{task.title}</span><StatusPill status={task.status} /></li>)}</ul></Card>,
     controls: <Card title="Home controls"><ul className="clean-list">{home.controls.length ? home.controls.map((control) => <li key={control.control_id}><span>{control.label}<small className="muted control-state">{control.state}</small></span><PowerControls id={control.control_id} label={control.label} state={control.state} mutate={mutate} /></li>) : <li className="muted">No commissioned controls are available.</li>}</ul></Card>,
-    conversation: <Card title="Anima"><p className="muted">{reply || "I’m here when you need a hand."}</p></Card>,
+    conversation: <Card title="Anima"><p className="muted">{reply || "Use SENTRY on your desktop for voice control."}</p></Card>,
     activity: <Card title="Activity"><ul className="clean-list">{home.activity.length ? home.activity.map((item, index) => <li key={`${item.summary}-${index}`}><span>{item.summary}</span><StatusPill status={item.status} /></li>) : <li className="muted">No household activity recorded.</li>}</ul></Card>,
     household: <Card title="Rooms & devices"><div className="room-list">{home.rooms.length ? home.rooms.map((room) => <div className="room" key={room.place_id}><strong>{room.name}</strong><small className="muted">{room.kind}</small>{room.devices.length ? <ul className="clean-list nested-list">{room.devices.map((device) => <li key={device.device_id}><span>{device.name}<small className="muted">{device.kind}</small></span><StatusPill status={device.state} /></li>)}</ul> : <p className="muted">No commissioned devices in this place.</p>}</div>) : <p className="muted">No commissioned rooms or devices are available.</p>}</div></Card>,
     reports: <Card title="Notifications & recent actions"><h3>Notifications</h3><ul className="clean-list">{home.notifications.length ? home.notifications.map((item) => <li key={item.notification_id}><span>{item.summary}<small className="muted">{item.importance ?? "household"}</small></span><StatusPill status={item.status} /></li>) : <li className="muted">No notifications recorded.</li>}</ul><h3 className="subheading">Reports</h3><ul className="clean-list">{home.reports.length ? home.reports.map((item) => <li key={item.report_id}><span>{item.summary}<small className="muted">{item.disposition ?? "No disposition"}</small></span><StatusPill status={item.status} /></li>) : <li className="muted">No episode reports recorded.</li>}</ul><h3 className="subheading">Recent actions</h3><ul className="clean-list">{home.recent_actions.length ? home.recent_actions.map((item) => <li key={item.action_id}><span>{item.tool_id}<small className="muted">{item.detail}</small></span><StatusPill status={item.status} /></li>) : <li className="muted">No governed actions recorded.</li>}</ul>{home.pending_approvals.length > 0 && <div className="pending-approval"><strong>Pending confirmation</strong>{home.pending_approvals.map((approval) => <div className="notice warning" key={approval.approval_id}><span>{approval.summary}<small className="muted">Expires {new Date(approval.expires_at).toLocaleTimeString()}</small></span><span className="button-row"><button onClick={() => void mutate(`/api/v1/approvals/${approval.approval_id}`, { decision: "APPROVE" })}>Approve</button><button onClick={() => void mutate(`/api/v1/approvals/${approval.approval_id}`, { decision: "REJECT" })}>Reject</button></span></div>)}</div>}</Card>,
@@ -369,6 +356,22 @@ function SpacesView({ spaces, mutate }: { spaces: Space[]; mutate: (path: string
   const descendantsOf = (placeId: string) => { const descendants = new Set<string>(); let changed = true; while (changed) { changed = false; spaces.forEach((candidate) => { if (candidate.parent_id && (candidate.parent_id === placeId || descendants.has(candidate.parent_id)) && !descendants.has(candidate.place_id)) { descendants.add(candidate.place_id); changed = true; } }); } return descendants; };
   return <div className="dashboard"><Card title="Create a room or zone"><p className="muted">Create a place, then assign your devices.</p><form className="stack" onSubmit={(event) => void create(event)}><label>Name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Type<select value={kind} onChange={(event) => setKind(event.target.value as "ROOM" | "ZONE")}><option value="ROOM">Room</option><option value="ZONE">Zone</option></select></label><label>Contained in<select required value={parentId} onChange={(event) => setParentId(event.target.value)}>{parents.map((parent) => <option key={parent.place_id} value={parent.place_id}>{parent.name} · {parent.kind.toLowerCase()}</option>)}</select></label><button type="submit" disabled={!parentId}>Create place</button></form></Card><Card title="Household places"><p className="muted">Move places within this household. Only empty places can be removed.</p>{spaces.length ? <ul className="clean-list list-spaced">{spaces.map((space) => <li className="space-row" key={space.place_id}>{editing === space.place_id ? <div className="stack"><form className="stack" onSubmit={(event) => void saveName(event, space)}><label>Name<input required maxLength={120} aria-label={`Name for ${space.name}`} value={editName} onChange={(event) => setEditName(event.target.value)} /><button type="submit">Save name</button></label></form><form className="stack" onSubmit={(event) => void move(event, space)}><label>Contained in<select required aria-label={`Parent for ${space.name}`} value={editParentId} onChange={(event) => setEditParentId(event.target.value)}>{parents.filter((parent) => parent.place_id !== space.place_id && !descendantsOf(space.place_id).has(parent.place_id)).map((parent) => <option key={parent.place_id} value={parent.place_id}>{parent.name} · {parent.kind.toLowerCase()}</option>)}</select><button type="submit">Move place</button></label></form><button type="button" onClick={() => setEditing(null)}>Done</button></div> : <><span><strong>{space.name}</strong><small className="muted">{space.kind}{space.parent_id ? ` · in ${spaces.find((parent) => parent.place_id === space.parent_id)?.name ?? "household"}` : ""}</small></span>{["ROOM", "ZONE"].includes(space.kind) && <span className="button-row"><button onClick={() => beginEdit(space)}>Manage</button><button onClick={() => { if (window.confirm(`Remove ${space.name}? It must be empty.`)) void mutate("/api/v1/places/remove", { place_id: space.place_id }); }}>Remove</button></span>}</>}</li>)}</ul> : <p className="muted">No commissioned household places are available.</p>}</Card></div>;
 }
+function deviceDisplayName(item: ProviderDevice, rooms: Room[] = []) {
+  if (item.metadata.mapping_status === "MAPPED" && item.metadata.canonical_target_id) {
+    if (item.canonical_name?.trim()) return item.canonical_name;
+    const matches = rooms.flatMap(room => room.devices.filter(device => device.device_id === item.metadata.canonical_target_id));
+    if (matches.length === 1 && matches[0].name?.trim()) return matches[0].name;
+  }
+  return String(item.metadata.name_by_user ?? item.metadata.name ?? "Unnamed device");
+}
+function LastReported({ reading }: { reading: LastReportedState & { truth_status?: string } }) {
+  if (reading.truth_status !== "STALE" || !["OPEN", "CLOSED"].includes(reading.last_reported_state ?? "") || reading.last_reported_source !== "ANIMA_TRUTH" || !reading.last_reported_at || Number.isNaN(Date.parse(reading.last_reported_at))) return null;
+  return <small className="muted">Last reported: {reading.last_reported_state} · <time dateTime={reading.last_reported_at}>{new Date(reading.last_reported_at).toLocaleString()}</time> · ANIMA Truth · not current</small>;
+}
+function CapabilityDetails({ capabilities, label }: { capabilities: DeviceCapability[]; label: string }) {
+  const chips = <span className="state-grid">{capabilities.map((capability, index) => <span className="capability-chip" key={`${capability.type}-${index}`}>{capability.label || capability.type}<small>State: {capability.state} · Truth: {capability.truth_status}</small><LastReported reading={capability} /></span>)}</span>;
+  return capabilities.length > 2 ? <details className="integration-details" aria-label={`Capabilities for ${label}`}><summary>Capabilities ({capabilities.length})</summary>{chips}</details> : chips;
+}
 function DevicesView({ devices, rooms, mutate }: { devices: ProviderDevice[]; rooms: Room[]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
   const [duration, setDuration] = useState("60");
   const [commissioningId, setCommissioningId] = useState<string | null>(null);
@@ -379,11 +382,32 @@ function DevicesView({ devices, rooms, mutate }: { devices: ProviderDevice[]; ro
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [roomFilter, setRoomFilter] = useState("all");
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const syncPending = useRef(false);
+  const canonicalPlacement = (item: ProviderDevice) => {
+    if (!item.present || item.metadata.mapping_status !== "MAPPED" || !item.metadata.canonical_target_id) return null;
+    const matches = rooms.flatMap((room) => room.devices.filter((device) => device.device_id === item.metadata.canonical_target_id).map((device) => ({ room, device })));
+    if (matches.length !== 1) return null;
+    const match = matches[0];
+    return ["ROOM", "ZONE"].includes(match.room.kind) && match.room.place_id?.trim() && match.device.name?.trim() ? match : null;
+  };
+  const syncCapabilities = async (item: ProviderDevice) => {
+    const placement = canonicalPlacement(item);
+    if (!placement || syncPending.current) return;
+    syncPending.current = true;
+    setSyncingId(item.device_handle);
+    try {
+      await mutate("/api/v1/devices/commission", { device_handle: item.device_handle, name: placement.device.name, place_id: placement.room.place_id });
+    } finally {
+      syncPending.current = false;
+      setSyncingId(null);
+    }
+  };
   const deviceRoom = (item: ProviderDevice) => rooms.find((room) => room.devices.some((device) => device.device_id === item.metadata.canonical_target_id));
   const filtered = discovered.filter((item) => {
     const mapped = item.metadata.mapping_status === "MAPPED";
     const matchesFilter = filter === "all" || (filter === "commissioned" && mapped) || (filter === "new" && !mapped) || (filter === "attention" && mapped && item.truth_status !== "CURRENT");
-    const searchText = [item.metadata.name_by_user, item.metadata.name, item.metadata.manufacturer, item.metadata.model, deviceRoom(item)?.name].filter(Boolean).join(" ").toLowerCase();
+    const searchText = [deviceDisplayName(item, rooms), item.metadata.manufacturer, item.metadata.model, deviceRoom(item)?.name].filter(Boolean).join(" ").toLowerCase();
     return matchesFilter && searchText.includes(query.trim().toLowerCase()) && (roomFilter === "all" || deviceRoom(item)?.place_id === roomFilter);
   });
   const beginCommission = (item: ProviderDevice) => {
@@ -397,7 +421,7 @@ function DevicesView({ devices, rooms, mutate }: { devices: ProviderDevice[]; ro
     const currentRoom = rooms.find((room) => room.devices.some((device) => device.device_id === resourceId));
     setCommissioningId(null);
     setEditing(item);
-    setName(String(item.metadata.name_by_user ?? item.metadata.name ?? "New device"));
+    setName(deviceDisplayName(item, rooms));
     setPlaceId(currentRoom?.place_id ?? rooms[0]?.place_id ?? "");
   };
   const saveDevice = async (event: React.FormEvent) => {
@@ -411,14 +435,11 @@ function DevicesView({ devices, rooms, mutate }: { devices: ProviderDevice[]; ro
   const resourceId = editing ? String(editing.metadata.canonical_target_id ?? "") : "";
   return <div className="dashboard">
     <Card title="Add a device"><p className="muted">Put your Zigbee device in pairing mode, open the window, then refresh.</p><div className="stack"><label>Pairing window (seconds)<input type="number" min="1" max="120" value={duration} onChange={(event) => setDuration(event.target.value)} /></label><div className="button-row"><button onClick={() => void mutate("/api/v1/devices/permit-pairing", { duration_seconds: Number(duration) })}>Open pairing window</button><button onClick={() => void mutate("/api/v1/devices/refresh")}>Refresh discovered devices</button></div></div></Card>
-    <Card title="Discovered Home Assistant devices" className="device-catalog"><div className="filter-bar"><label>Search devices<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, model, or room" /></label><label>Device status<select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All devices</option><option value="commissioned">Commissioned</option><option value="new">Needs a room</option><option value="attention">State needs attention</option></select></label><label>Filter by room<select value={roomFilter} onChange={(event) => setRoomFilter(event.target.value)}><option value="all">All rooms</option>{rooms.map((room) => <option key={room.place_id} value={room.place_id}>{room.name}</option>)}</select></label></div><p className="muted" role="status">{filtered.length} of {discovered.length} devices</p>{filtered.length ? <ul className="clean-list list-spaced device-grid">{filtered.map((item) => { const mapped = item.metadata.mapping_status === "MAPPED"; const resourceId = String(item.metadata.canonical_target_id ?? ""); const power = item.capabilities?.find((capability) => capability.type === "power.set" && capability.writable); const label = String(item.metadata.name_by_user ?? item.metadata.name ?? "Unnamed device"); const observed = item.observed_at ? new Date(item.observed_at).toLocaleString() : "No current observation"; return <li className="device-row" key={item.device_handle}><span><span className="device-icon"><Icon name={power ? "Power" : "Devices"} /></span><strong>{label}</strong><small className="muted">{deviceRoom(item)?.name ?? (mapped ? "No room assigned" : "Awaiting commissioning")}</small><small className="muted">{item.metadata.manufacturer ?? ""}{item.metadata.model ? ` · ${item.metadata.model}` : ""} · {mapped ? "Commissioned" : "Needs a room"}</small>{mapped && <small className="device-state">State: {item.state ?? "UNKNOWN"} · <StatusPill status={item.truth_status ?? "UNKNOWN"} /></small>}{mapped && <small className="muted">Observed: {observed}</small>}{mapped && item.capabilities && item.capabilities.length > 0 && <span className="state-grid">{item.capabilities.map((capability) => <span className="capability-chip" key={capability.type}>{capability.label || capability.type}<small>{capability.state} · {capability.truth_status}</small></span>)}</span>}</span><span className="button-row">{mapped && power && resourceId && <PowerControls id={resourceId} label={label} state={power.truth_status === "CURRENT" ? power.state : "UNKNOWN"} mutate={mutate} />}{mapped ? <button onClick={() => beginEdit(item)}>Manage</button> : <button onClick={() => beginCommission(item)}>Add to Anima</button>}</span></li>; })}</ul> : <p className="empty-state">{discovered.length ? "No devices match these filters." : "No discovered devices yet. Pair a device, then refresh."}</p>}
+    <Card title="Discovered Home Assistant devices" className="device-catalog"><div className="filter-bar"><label>Search devices<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, model, or room" /></label><label>Device status<select value={filter} onChange={(event) => setFilter(event.target.value)}><option value="all">All devices</option><option value="commissioned">Commissioned</option><option value="new">Needs a room</option><option value="attention">State needs attention</option></select></label><label>Filter by room<select value={roomFilter} onChange={(event) => setRoomFilter(event.target.value)}><option value="all">All rooms</option>{rooms.map((room) => <option key={room.place_id} value={room.place_id}>{room.name}</option>)}</select></label></div><p className="muted" role="status">{filtered.length} of {discovered.length} devices</p>{filtered.length ? <ul className="clean-list list-spaced device-grid">{filtered.map((item) => { const mapped = item.metadata.mapping_status === "MAPPED"; const resourceId = String(item.metadata.canonical_target_id ?? ""); const power = item.capabilities?.find((capability) => capability.type === "power.set" && capability.writable); const label = deviceDisplayName(item, rooms); const observed = item.observed_at ? new Date(item.observed_at).toLocaleString() : "No current observation"; return <li className="device-row" key={item.device_handle}><span><span className="device-icon"><Icon name={power ? "Power" : "Devices"} /></span><strong>{label}</strong><small className="muted">{deviceRoom(item)?.name ?? (mapped ? "No room assigned" : "Awaiting commissioning")}</small><small className="muted">{item.metadata.manufacturer ?? ""}{item.metadata.model ? ` · ${item.metadata.model}` : ""} · {mapped ? "Commissioned" : "Needs a room"}</small>{mapped && <small className="device-state">Current state: {["CURRENT", "CURRENT/KNOWN"].includes(item.truth_status ?? "") ? item.state ?? "UNKNOWN" : "UNKNOWN"}</small>}{mapped && <small className="muted">Truth: <StatusPill status={item.truth_status ?? "UNKNOWN"} /></small>}{mapped && <LastReported reading={item} />}{mapped && <small className="muted">Observed: {observed}</small>}{mapped && item.capabilities && item.capabilities.length > 0 && <CapabilityDetails capabilities={item.capabilities} label={label} />}</span><span className="button-row">{mapped && power && resourceId && <PowerControls id={resourceId} label={label} state={power.truth_status === "CURRENT" ? power.state : "UNKNOWN"} mutate={mutate} />}{mapped && <button type="button" disabled={!canonicalPlacement(item) || syncingId !== null} aria-describedby={!canonicalPlacement(item) ? `sync-mapping-${item.device_handle}` : undefined} onClick={() => void syncCapabilities(item)}><Icon name="Refresh" />{syncingId === item.device_handle ? "Syncing capabilities…" : "Sync capabilities"}</button>}{mapped && !canonicalPlacement(item) && <small className="muted" id={`sync-mapping-${item.device_handle}`}>Cannot sync: canonical device name or room mapping is missing or ambiguous. Refresh household data first.</small>}{mapped ? <button onClick={() => beginEdit(item)}>Manage</button> : <button onClick={() => beginCommission(item)}>Add to Anima</button>}</span></li>; })}</ul> : <p className="empty-state">{discovered.length ? "No devices match these filters." : "No discovered devices yet. Pair a device, then refresh."}</p>}
       {commissioningId && <form className="stack commission-form" onSubmit={(event) => { event.preventDefault(); void mutate("/api/v1/devices/commission", { device_handle: commissioningId, name, place_id: placeId }).then((result) => { if (result?.status === "SUCCEEDED") setCommissioningId(null); }); }}><h3>Place device in Anima</h3><label>Display name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Room<select required value={placeId} onChange={(event) => setPlaceId(event.target.value)}><option value="" disabled>Select a room</option>{rooms.map((room) => <option key={room.place_id} value={room.place_id}>{room.name}</option>)}</select></label><div className="button-row"><button type="submit" disabled={!placeId}>Commission device</button><button type="button" onClick={() => setCommissioningId(null)}>Cancel</button></div></form>}
       {editing && <form className="stack commission-form" onSubmit={(event) => void saveDevice(event)}><h3>Manage commissioned device</h3><p className="muted">Update the Anima name and room. The provider registry is preserved.</p><label>Display name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label><label>Room<select required value={placeId} onChange={(event) => setPlaceId(event.target.value)}><option value="" disabled>Select a room</option>{rooms.map((room) => <option key={room.place_id} value={room.place_id}>{room.name}</option>)}</select></label><div className="button-row"><button type="submit" disabled={!placeId || !resourceId}>Save device</button><button type="button" onClick={() => { if (resourceId) void mutate("/api/v1/devices/retire", { resource_id: resourceId }).then((result) => { if (result?.status === "SUCCEEDED") setEditing(null); }); }}>Remove from Anima</button><button type="button" onClick={() => setEditing(null)}>Cancel</button></div></form>}
     </Card>
   </div>;
-}
-function Composer({ message, setMessage, send, inputRef, busy }: { message: string; setMessage: (value: string) => void; send: () => Promise<void>; inputRef: React.RefObject<HTMLTextAreaElement | null>; busy: boolean }) {
-  return <div className="composer"><label htmlFor="message">Message Anima</label><textarea ref={inputRef} id="message" value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!busy) void send(); } }} placeholder="What would you like to know?" /><button disabled={busy || !message.trim()} onClick={() => void send()}><Icon name="Send" />Send</button></div>;
 }
 function NotificationRoutesView({ routes, mutate }: { routes: NotificationRoute[]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
   const current = routes[0];
@@ -431,8 +452,8 @@ function NotificationRoutesView({ routes, mutate }: { routes: NotificationRoute[
   return <div className="dashboard notification-routes"><Card title="Notification route"><p className="muted">Set alert priority and enable your route. Credentials stay on the server.</p><form className="stack" onSubmit={(event) => void save(event)}><label>Route label<input required maxLength={80} value={label} onChange={(event) => setLabel(event.target.value)} /></label><label>Minimum alert priority<input required type="number" min="0" max="100" value={minimumPriority} onChange={(event) => setMinimumPriority(Number(event.target.value))} /></label><label className="checkbox"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Route enabled</label><button type="submit">{current ? "Save route" : "Create route"}</button></form></Card><Card title="Delivery boundary"><dl className="settings-grid"><dt>Provider</dt><dd><strong>{current?.provider ?? "ntfy"}</strong></dd><dt>Destination</dt><dd><strong>{destinationLabel}</strong></dd><dt>Status</dt><dd><StatusPill status={current ? (current.enabled ? "ACTIVE" : "DISABLED") : "NOT_CONFIGURED"} /></dd></dl><p className="muted">Provider acceptance does not confirm that someone received or read an alert.</p></Card></div>;
 }
 
-function AlertPoliciesView({ policies, devices, mutate, events, nextCursor, loading, loadOlder }: { policies: AlertPolicy[]; devices: ProviderDevice[]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null>; events: AlertEvent[]; nextCursor: string | null; loading: boolean; loadOlder: () => Promise<void> }) {
-  const resources = devices.filter((item) => item.present && item.metadata.canonical_target_id).map((item) => ({ id: String(item.metadata.canonical_target_id), label: String(item.metadata.name_by_user ?? item.metadata.name ?? "Unnamed device") }));
+function AlertPoliciesView({ policies, devices, rooms, mutate, events, nextCursor, loading, loadOlder }: { policies: AlertPolicy[]; devices: ProviderDevice[]; rooms: Room[]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null>; events: AlertEvent[]; nextCursor: string | null; loading: boolean; loadOlder: () => Promise<void> }) {
+  const resources = devices.filter((item) => item.present && item.metadata.canonical_target_id).map((item) => ({ id: String(item.metadata.canonical_target_id), label: deviceDisplayName(item, rooms) }));
   const blank: Omit<AlertPolicy, "policy_id" | "version"> = { event_type: "senseguard.event", timezone: "America/New_York", start_local: "00:00", end_local: "05:00", priority: 90, guaranteed_attention: true, delivery_mode: "SENTRY_COGNITION", enabled: true, resource_ids: resources[0] ? [resources[0].id] : [] };
   const [draft, setDraft] = useState(blank); const [editing, setEditing] = useState<AlertPolicy | null>(null);
   useEffect(() => { if (!editing && resources[0] && draft.resource_ids.length === 0) setDraft({ ...draft, resource_ids: [resources[0].id] }); }, [resources.length, editing]);
@@ -446,29 +467,32 @@ function inputDate(value: string) { const date = new Date(value); const offset =
 function TaskCalendar({ mutate }: { mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
   const [title, setTitle] = useState(""); const [when, setWhen] = useState(""); const [note, setNote] = useState(""); const [eventTitle, setEventTitle] = useState(""); const [start, setStart] = useState(""); const [end, setEnd] = useState(""); const [editing, setEditing] = useState<string | null>(null); const [editTitle, setEditTitle] = useState(""); const [editStart, setEditStart] = useState(""); const [editEnd, setEditEnd] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]); const [calendar, setCalendar] = useState<CalendarEvent[]>([]);
-  const reload = async () => { const [taskItems, calendarItems] = await Promise.all([allPages<Task>("/api/v1/tasks"), allPages<CalendarEvent>("/api/v1/calendar")]); setTasks(taskItems); setCalendar(calendarItems); };
+  const [readError, setReadError] = useState("");
+  const readGeneration = useRef(0);
+  const reload = async () => { const generation = ++readGeneration.current; const [taskItems, calendarItems] = await Promise.all([allPages<Task>("/api/v1/tasks"), allPages<CalendarEvent>("/api/v1/calendar")]); if (generation !== readGeneration.current) return; setTasks(taskItems); setCalendar(calendarItems); };
   useEffect(() => { void reload(); }, []);
-  const runMutation = async (path: string, payload?: Record<string, unknown>) => { const result = await mutate(path, payload); await reload(); return result; };
-  const edit = (event: CalendarEvent) => { setEditing(event.event_id); setEditTitle(event.title); setEditStart(inputDate(event.start_at)); setEditEnd(inputDate(event.end_at)); };
-  return <div className="dashboard"><Card title="Tasks"><form className="stack" onSubmit={(event) => { event.preventDefault(); void runMutation("/api/v1/tasks", { title, when, note }).then((result) => { if (result?.status === "SUCCEEDED") { setTitle(""); setWhen(""); setNote(""); } }); }}><label>Reminder title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label><label>When<input required type="datetime-local" value={when} onChange={(event) => setWhen(event.target.value)} /></label><label>Note<input value={note} onChange={(event) => setNote(event.target.value)} /></label><button type="submit">Create task</button></form><ul className="clean-list list-spaced">{tasks.map((task) => <li key={task.task_id}><span>{task.title}<small className="muted">{task.next_run_at ? new Date(task.next_run_at).toLocaleString() : ""}</small></span><span className="button-row"><StatusPill status={task.status} />{task.status === "ACTIVE" && <><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/pause`)}>Pause</button><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/cancel`)}>Cancel</button></>}{task.status === "PAUSED" && <><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/resume`)}>Resume</button><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/cancel`)}>Cancel</button></>}</span></li>)}</ul></Card><Card title="Calendar"><form className="stack" onSubmit={(event) => { event.preventDefault(); void runMutation("/api/v1/calendar", { title: eventTitle, start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), timezone: "UTC" }).then((result) => { if (result?.status === "SUCCEEDED") { setEventTitle(""); setStart(""); setEnd(""); } }); }}><label>Event title<input required value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} /></label><label>Starts<input required type="datetime-local" value={start} onChange={(event) => setStart(event.target.value)} /></label><label>Ends<input required type="datetime-local" value={end} onChange={(event) => setEnd(event.target.value)} /></label><button type="submit">Create event</button></form><ul className="clean-list list-spaced">{calendar.map((event) => <li className="calendar-row" key={event.event_id}>{editing === event.event_id ? <form className="edit-form" onSubmit={(submit) => { submit.preventDefault(); void runMutation(`/api/v1/calendar/${event.event_id}/update`, { expected_version: event.version ?? 1, title: editTitle, start_at: new Date(editStart).toISOString(), end_at: new Date(editEnd).toISOString(), timezone: "UTC" }).then((result) => { if (result?.status === "SUCCEEDED") setEditing(null); }); }}><label>Title<input required value={editTitle} onChange={(input) => setEditTitle(input.target.value)} /></label><label>Starts<input required type="datetime-local" value={editStart} onChange={(input) => setEditStart(input.target.value)} /></label><label>Ends<input required type="datetime-local" value={editEnd} onChange={(input) => setEditEnd(input.target.value)} /></label><span className="button-row"><button type="submit">Save edit</button><button type="button" onClick={() => setEditing(null)}>Close</button></span></form> : <><span>{event.title}<small className="muted">{new Date(event.start_at).toLocaleString()}</small></span><span className="button-row"><StatusPill status={event.status} />{event.status === "ACTIVE" && <><button onClick={() => edit(event)}>Edit</button><button onClick={() => void runMutation(`/api/v1/calendar/${event.event_id}/cancel`, { expected_version: event.version ?? 1 })}>Cancel</button></>}</span></>}</li>)}</ul></Card></div>;
-}
-function PreferencesView({ preferences, mutate }: { preferences: Preference[]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
-  const [content, setContent] = useState("");
-  const [category, setCategory] = useState<Preference["category"]>("other");
-  const [editing, setEditing] = useState<Preference | null>(null);
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const result = await mutate(`/api/v1/preferences/${editing ? "update" : "create"}`, editing ? { preference_id: editing.preference_id, content, category } : { content, category });
-    if (result?.status === "SUCCEEDED") { setContent(""); setCategory("other"); setEditing(null); }
+  const runMutation = async (path: string, payload?: Record<string, unknown>) => {
+    const result = await mutate(path, payload);
+    const event = (result?.result as { event?: CalendarEvent } | null)?.event;
+    if (result?.status === "SUCCEEDED" && path.startsWith("/api/v1/calendar") && event && typeof event.event_id === "string" && typeof event.title === "string" && typeof event.start_at === "string" && typeof event.end_at === "string" && typeof event.version === "number" && typeof event.status === "string") {
+      // Core returns the authoritative saved row; do not gate it on an unrelated task read.
+      readGeneration.current += 1;
+      setCalendar((current) => [...current.filter((item) => item.event_id !== event.event_id), event].sort((a, b) => a.start_at.localeCompare(b.start_at)));
+      setReadError("");
+      void reload().catch(() => setReadError("Task/calendar refresh failed. Showing the last confirmed data; reopen Tasks & Calendar to refresh."));
+      return result;
+    }
+    await reload(); return result;
   };
-  const beginEdit = (preference: Preference) => { setEditing(preference); setContent(preference.content); setCategory(preference.category); };
-  const cancel = () => { setEditing(null); setContent(""); setCategory("other"); };
-  return <div className="dashboard"><Card title={editing ? "Correct a preference" : "Add a household preference"}><p className="muted">Household context only. Preferences never grant permissions or change device state.</p><form className="stack" onSubmit={(event) => void submit(event)}><label>Preference<textarea required maxLength={1000} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Example: notify me immediately about SenseGuard events overnight" /></label><label>Category<select value={category} onChange={(event) => setCategory(event.target.value as Preference["category"])}>{["alerts", "comfort", "meals", "shopping", "privacy", "other"].map((item) => <option key={item} value={item}>{item}</option>)}</select></label><div className="button-row"><button type="submit">{editing ? "Save correction" : "Save preference"}</button>{editing && <button type="button" onClick={cancel}>Cancel</button>}</div></form></Card><Card title="Active household preferences"><p className="muted">Your saved household choices.</p>{preferences.length ? <ul className="clean-list list-spaced">{preferences.map((preference) => <li className="preference-row" key={preference.preference_id}><span><strong>{preference.content}</strong><small className="muted">{preference.category} · {new Date(preference.created_at).toLocaleString()} · {preference.provenance?.kind ?? "EXPLICIT_INPUT"}</small></span><span className="button-row"><button onClick={() => beginEdit(preference)}>Edit</button><button onClick={() => void mutate("/api/v1/preferences/retract", { preference_id: preference.preference_id })}>Forget</button></span></li>)}</ul> : <p className="muted">No explicit preferences recorded.</p>}</Card></div>;
+  const edit = (event: CalendarEvent) => { setEditing(event.event_id); setEditTitle(event.title); setEditStart(inputDate(event.start_at)); setEditEnd(inputDate(event.end_at)); };
+  return <div className="dashboard">{readError && <div className="notice error" role="alert">{readError}</div>}<Card title="Tasks"><form className="stack" onSubmit={(event) => { event.preventDefault(); void runMutation("/api/v1/tasks", { title, when, note }).then((result) => { if (result?.status === "SUCCEEDED") { setTitle(""); setWhen(""); setNote(""); } }); }}><label>Reminder title<input required value={title} onChange={(event) => setTitle(event.target.value)} /></label><label>When<input required type="datetime-local" value={when} onChange={(event) => setWhen(event.target.value)} /></label><label>Note<input value={note} onChange={(event) => setNote(event.target.value)} /></label><button type="submit">Create task</button></form><ul className="clean-list list-spaced">{tasks.map((task) => <li key={task.task_id}><span>{task.title}<small className="muted">{task.next_run_at ? new Date(task.next_run_at).toLocaleString() : ""}</small></span><span className="button-row"><StatusPill status={task.status} />{task.status === "ACTIVE" && <><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/pause`)}>Pause</button><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/cancel`)}>Cancel</button></>}{task.status === "PAUSED" && <><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/resume`)}>Resume</button><button onClick={() => void runMutation(`/api/v1/tasks/${task.task_id}/cancel`)}>Cancel</button></>}</span></li>)}</ul></Card><Card title="Calendar"><form className="stack" onSubmit={(event) => { event.preventDefault(); void runMutation("/api/v1/calendar", { title: eventTitle, start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), timezone: "UTC" }).then((result) => { if (result?.status === "SUCCEEDED") { setEventTitle(""); setStart(""); setEnd(""); } }); }}><label>Event title<input required value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} /></label><label>Starts<input required type="datetime-local" value={start} onChange={(event) => setStart(event.target.value)} /></label><label>Ends<input required type="datetime-local" value={end} onChange={(event) => setEnd(event.target.value)} /></label><button type="submit">Create event</button></form><ul className="clean-list list-spaced">{calendar.map((event) => <li className="calendar-row" key={event.event_id}>{editing === event.event_id ? <form className="edit-form" onSubmit={(submit) => { submit.preventDefault(); void runMutation(`/api/v1/calendar/${event.event_id}/update`, { expected_version: event.version ?? 1, title: editTitle, start_at: new Date(editStart).toISOString(), end_at: new Date(editEnd).toISOString(), timezone: "UTC" }).then((result) => { if (result?.status === "SUCCEEDED") setEditing(null); }); }}><label>Title<input required value={editTitle} onChange={(input) => setEditTitle(input.target.value)} /></label><label>Starts<input required type="datetime-local" value={editStart} onChange={(input) => setEditStart(input.target.value)} /></label><label>Ends<input required type="datetime-local" value={editEnd} onChange={(input) => setEditEnd(input.target.value)} /></label><span className="button-row"><button type="submit">Save edit</button><button type="button" onClick={() => setEditing(null)}>Close</button></span></form> : <><span>{event.title}<small className="muted">{new Date(event.start_at).toLocaleString()}</small></span><span className="button-row"><StatusPill status={event.status} />{event.status === "ACTIVE" && <><button onClick={() => edit(event)}>Edit</button><button onClick={() => void runMutation(`/api/v1/calendar/${event.event_id}/cancel`, { expected_version: event.version ?? 1 })}>Cancel</button></>}</span></>}</li>)}</ul></Card></div>;
 }
-function SettingsPanel({ value, csrf, onSaved, setError, setOutcome }: { value: Settings; csrf: string; onSaved: (value: Settings) => void; setError: (value: string) => void; setOutcome: (value: MutationOutcome) => void }) {
+function SettingsPanel({ value, voice, csrf, onSaved, onVoiceSaved, setError, setOutcome }: { value: Settings; voice: SentryVoiceSettings | null; csrf: string; onSaved: (value: Settings) => void; onVoiceSaved: (value: SentryVoiceSettings) => void; setError: (value: string) => void; setOutcome: (value: MutationOutcome) => void }) {
   const [draft, setDraft] = useState(value); useEffect(() => setDraft(value), [value]); const update = <K extends keyof Settings>(key: K, next: Settings[K]) => setDraft({ ...draft, [key]: next }); const toggleWidget = (id: string) => update("visible_widgets", draft.visible_widgets.includes(id) ? draft.visible_widgets.filter((item) => item !== id) : [...draft.visible_widgets, id]); const moveWidget = (id: string, direction: -1 | 1) => { const order = [...draft.widget_order]; const index = order.indexOf(id); const next = index + direction; if (index < 0 || next < 0 || next >= order.length) return; [order[index], order[next]] = [order[next], order[index]]; update("widget_order", order); };
   const save = async () => { try { const result = await api<{ settings: Settings }>("/api/v1/settings", { method: "PUT", body: JSON.stringify({ payload: draft }), headers: { "Content-Type": "application/json", "X-Anima-CSRF": csrf, Origin: window.location.origin } }); onSaved(result.settings); setOutcome({ status: "SUCCEEDED", operation: "settings.update", detail: "Preferences saved" }); setError(""); } catch (err) { setError(err instanceof Error ? err.message : "Settings could not be saved"); } }; const widgets = ["status", "presence", "weather", "agenda", "tasks", "controls", "conversation", "activity", "household", "reports", "health"];
-  return <Card title="Household interface"><p className="muted">Personalize appearance, layout, and accessibility.</p><div className="settings-form"><label>Appearance<select value={draft.appearance} onChange={(event) => update("appearance", event.target.value as Settings["appearance"])}><option value="system">System</option><option value="light">Light</option><option value="night">Night</option></select></label><label>Accent<select value={draft.accent} onChange={(event) => update("accent", event.target.value as Settings["accent"])}><option value="ember">Ember</option><option value="sage">Sage</option><option value="sky">Sky</option></select></label><label>Density<select value={draft.density} onChange={(event) => update("density", event.target.value as Settings["density"])}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><label>Text scale<select value={draft.text_scale} onChange={(event) => update("text_scale", event.target.value as Settings["text_scale"])}><option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select></label><label>Layout profile<select value={draft.display_mode} onChange={(event) => update("display_mode", event.target.value as Settings["display_mode"])}><option value="wall">Wall</option><option value="tablet">Tablet</option><option value="phone">Phone</option><option value="desktop">Desktop</option></select></label><label className="checkbox"><input type="checkbox" checked={draft.reduced_motion} onChange={(event) => update("reduced_motion", event.target.checked)} /> Reduce motion</label></div><fieldset className="widget-settings"><legend>Home widgets</legend>{widgets.map((id) => { const index = draft.widget_order.indexOf(id); return <label className="widget-setting" key={id}><input type="checkbox" checked={draft.visible_widgets.includes(id)} onChange={() => toggleWidget(id)} /><span>{id}</span><button type="button" aria-label={`Move ${id} up`} disabled={index <= 0} onClick={() => moveWidget(id, -1)}>↑</button><button type="button" aria-label={`Move ${id} down`} disabled={index < 0 || index >= draft.widget_order.length - 1} onClick={() => moveWidget(id, 1)}>↓</button></label>; })}</fieldset><button onClick={() => void save()}>Save preferences</button></Card>;
+  const [voiceDraft, setVoiceDraft] = useState(voice || { voice_id: "bm_george", speech_speed: 0.9 }); useEffect(() => { if (voice) setVoiceDraft(voice); }, [voice]);
+  const saveVoice = async () => { try { const result = await api<{ status: string; settings: SentryVoiceSettings }>("/api/v1/sentry/voice-settings", { method: "PUT", body: JSON.stringify({ payload: voiceDraft }), headers: { "Content-Type": "application/json", "X-Anima-CSRF": csrf, Origin: window.location.origin } }); onVoiceSaved(result.settings); setOutcome({ status: "SUCCEEDED", operation: "sentry.voice-settings.update", detail: "SENTRY voice settings saved in ANIMA" }); } catch (err) { setError(err instanceof Error ? err.message : "SENTRY voice settings could not be saved"); } };
+  return <><Card title="Household interface"><p className="muted">Personalize appearance, layout, and accessibility.</p><div className="settings-form"><label>Appearance<select value={draft.appearance} onChange={(event) => update("appearance", event.target.value as Settings["appearance"])}><option value="system">System</option><option value="light">Light</option><option value="night">Night</option></select></label><label>Accent<select value={draft.accent} onChange={(event) => update("accent", event.target.value as Settings["accent"])}><option value="purple">Neon purple</option><option value="ember">Ember</option><option value="sage">Sage</option><option value="sky">Sky</option></select></label><label>Density<select value={draft.density} onChange={(event) => update("density", event.target.value as Settings["density"])}><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><label>Text scale<select value={draft.text_scale} onChange={(event) => update("text_scale", event.target.value as Settings["text_scale"])}><option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select></label><label>Layout profile<select value={draft.display_mode} onChange={(event) => update("display_mode", event.target.value as Settings["display_mode"])}><option value="wall">Wall</option><option value="tablet">Tablet</option><option value="phone">Phone</option><option value="desktop">Desktop</option></select></label><label className="checkbox"><input type="checkbox" checked={draft.reduced_motion} onChange={(event) => update("reduced_motion", event.target.checked)} /> Reduce motion</label></div><fieldset className="widget-settings"><legend>Home widgets</legend>{widgets.map((id) => { const index = draft.widget_order.indexOf(id); return <label className="widget-setting" key={id}><input type="checkbox" checked={draft.visible_widgets.includes(id)} onChange={() => toggleWidget(id)} /><span>{id}</span><button type="button" aria-label={`Move ${id} up`} disabled={index <= 0} onClick={() => moveWidget(id, -1)}>↑</button><button type="button" aria-label={`Move ${id} down`} disabled={index < 0 || index >= draft.widget_order.length - 1} onClick={() => moveWidget(id, 1)}>↓</button></label>; })}</fieldset><button onClick={() => void save()}>Save preferences</button></Card><Card title="SENTRY voice"><p className="muted">ANIMA owns this household setting. Every SENTRY projection reads it through the authenticated ANIMA bridge.</p><div className="settings-form"><label>Voice<select value={voiceDraft.voice_id} onChange={event => setVoiceDraft({ ...voiceDraft, voice_id: event.target.value })}><option value="bm_george">George</option><option value="bm_lewis">Lewis</option><option value="am_adam">Adam</option><option value="am_michael">Michael</option><option value="af_bella">Bella</option><option value="af_sarah">Sarah</option><option value="bf_emma">Emma</option><option value="bf_isabella">Isabella</option></select></label><label>Speech speed<input type="range" min="0.75" max="1.30" step="0.05" value={voiceDraft.speech_speed} onChange={event => setVoiceDraft({ ...voiceDraft, speech_speed: Number(event.target.value) })} /><output>{voiceDraft.speech_speed.toFixed(2)}×</output></label></div><button onClick={() => void saveVoice()}>Save SENTRY voice</button></Card></>;
 }
 function ScenesView({ scenes, controls, mutate }: { scenes: Scene[]; controls: Home["controls"]; mutate: (path: string, payload?: Record<string, unknown>) => Promise<MutationOutcome | null> }) {
   const [name, setName] = useState(""); const [resourceId, setResourceId] = useState(controls[0]?.control_id ?? ""); const [desiredOn, setDesiredOn] = useState(true); const [steps, setSteps] = useState<SceneStep[]>([]); const [editing, setEditing] = useState<Scene | null>(null);

@@ -21,6 +21,7 @@ from collections.abc import Awaitable, Callable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from threading import Lock
 from typing import Any, Protocol
 from uuid import UUID, uuid4
 
@@ -31,17 +32,32 @@ from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
+from starlette.types import Receive, Scope, Send
 
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
+from anima_ha.family_routines_api import install_family_routines_api
 from anima_ha.ha_connection_setup import (
     HAConnectionStore,
     HASetupError,
     VerifiedHAOwner,
     commission_owner,
 )
+from anima_ha.household_learning_api import install_household_learning_api
+from anima_ha.household_presence_api import install_household_presence_api
+from anima_ha.knowledge_api import install_knowledge_api
 from anima_ha.live_results import PostgresSentryLiveResultBus
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOrigin
-from anima_ha.preferences import preference_payloads
+from anima_ha.preferences import PreferenceValidationError, preference_payloads, preferences_page
+from anima_ha.ring_api import install_ring_api
+from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore, validate_voice_settings
+from anima_ha.users import user_payload
+from anima_ha.vendor_event_ingress import (
+    ExactVendorAttention,
+    VendorEventIngress,
+    VendorIngressError,
+    VendorRelayConfig,
+    install_vendor_event_api,
+)
 
 UI_VERSION = "0.1.0"
 UI_SESSION_COOKIE = "anima_session"
@@ -75,6 +91,168 @@ class UICommandError(RuntimeError):
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def device_capability_projection(
+    graph: Any,
+    truth: Any,
+    resource_id: UUID,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """One semantic primary for Home and inventory; never promote stale values.
+
+    Provider references are used locally only to distinguish entity domains.
+    Class evidence comes from explicit metadata or the latest resolved Truth
+    observations, never names, model guesses, or an older observation lookup.
+    """
+    unknown: dict[str, Any] = {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
+    contacts = {"door", "window", "opening"}
+    diagnostic_binary = {"battery", "battery_charging", "connectivity", "problem", "update"}
+    primary_sensors = {
+        "temperature",
+        "humidity",
+        "illuminance",
+        "pressure",
+        "atmospheric_pressure",
+        "carbon_dioxide",
+        "carbon_monoxide",
+        "pm1",
+        "pm10",
+        "pm25",
+        "moisture",
+    }
+    descriptors: list[dict[str, Any]] = []
+    candidates: list[tuple[int, dict[str, Any]]] = []
+    for capability in graph.resource_capabilities(resource_id):
+        metadata = capability.metadata
+        capability_type = str(metadata.get("capability_type", ""))
+        if not capability_type:
+            continue
+        entity = metadata.get("provider_entity_id", "")
+        domain = metadata.get("provider_domain")
+        if not isinstance(domain, str) and isinstance(entity, str) and "." in entity:
+            domain = entity.split(".", 1)[0]
+        readings = (
+            [
+                resolution
+                for binding, resolution in graph.truth_for_node(capability.canonical_id, truth)
+                if binding.semantic_attribute in {"power.state", "state"}
+            ]
+            if truth is not None
+            else []
+        )
+        resolution = readings[0] if len(readings) == 1 else None
+        classes = []
+        explicit_class = metadata.get("provider_device_class")
+        if explicit_class is not None:
+            classes.append(explicit_class)
+        if resolution is not None:
+            for observation in getattr(resolution, "observations", ()):
+                if observation.observed_at != resolution.last_observed_at:
+                    continue
+                attributes = observation.metadata.get("attributes", {})
+                if isinstance(attributes, dict) and attributes.get("device_class") is not None:
+                    classes.append(attributes["device_class"])
+        qualified_classes = {
+            value
+            for value in classes
+            if isinstance(value, str)
+            and 1 <= len(value) <= 48
+            and all(c in "abcdefghijklmnopqrstuvwxyz_0123456789" for c in value)
+        }
+        device_class = next(iter(qualified_classes)) if len(qualified_classes) == 1 else None
+        snapshot = dict(unknown)
+        if device_class is not None:
+            snapshot["provider_device_class"] = device_class
+        if resolution is not None:
+            status = getattr(resolution.status, "value", str(resolution.status))
+            state = "UNKNOWN"
+            if status == "CURRENT/KNOWN":
+                value = resolution.value
+                normalized = str(value).casefold()
+                on = value is True or normalized in {"on", "true"}
+                off = value is False or normalized in {"off", "false"}
+                contact = domain == "binary_sensor" and device_class in contacts
+                if contact and (on or normalized == "open"):
+                    state = "OPEN"
+                elif contact and (off or normalized == "closed"):
+                    state = "CLOSED"
+                elif on or off:
+                    state = "ON" if on else "OFF"
+                elif (
+                    domain != "binary_sensor"
+                    and capability_type != "power.set"
+                    and normalized not in {"open", "closed"}
+                    and isinstance(value, (str, int, float))
+                    and not isinstance(value, bool)
+                ):
+                    state = str(value)[:80]
+            elif status in {"STALE", "UNKNOWN", "UNAVAILABLE", "CONFLICTING"}:
+                state = status
+            if status == "STALE" and domain == "binary_sensor" and device_class in contacts:
+                normalized = str(resolution.value).casefold()
+                last_state = (
+                    "OPEN"
+                    if normalized in {"on", "true", "open"}
+                    else "CLOSED"
+                    if normalized in {"off", "false", "closed"}
+                    else None
+                )
+                reported_at = [
+                    observation.observed_at
+                    for observation in getattr(resolution, "observations", ())
+                    if getattr(observation, "state", None) == "KNOWN"
+                    and getattr(observation, "evidence_kind", None) == "DIRECT"
+                    and observation.value == resolution.value
+                    and isinstance(observation.observed_at, datetime)
+                ]
+                if last_state is not None and reported_at:
+                    # Separate historical provenance, never current state or
+                    # the timestamp of a newer unknown/other-source observation.
+                    snapshot["last_reported_state"] = last_state
+                    snapshot["last_reported_at"] = max(reported_at).isoformat()
+                    snapshot["last_reported_source"] = "ANIMA_TRUTH"
+            snapshot.update(
+                truth_status=status,
+                state=state,
+                observed_at=(
+                    resolution.last_observed_at.isoformat()
+                    if resolution.last_observed_at is not None
+                    else None
+                ),
+            )
+        readable = bool(metadata.get("readable", True))
+        descriptors.append(
+            {
+                "type": capability_type,
+                "label": capability.name,
+                "readable": readable,
+                "writable": bool(metadata.get("writable", False)),
+                **snapshot,
+            }
+        )
+        rank = None
+        if readable and capability_type == "power.set":
+            rank = 0
+        elif readable and capability_type == "state.read":
+            if domain == "binary_sensor" and device_class in contacts:
+                rank = 1
+            elif domain == "binary_sensor" and device_class not in diagnostic_binary:
+                rank = 2
+            elif domain == "sensor" and device_class in primary_sensors:
+                rank = 3
+        if rank is not None:
+            candidates.append((rank, snapshot))
+    primary = []
+    if candidates:
+        best = min(rank for rank, _ in candidates)
+        primary = [snapshot for rank, snapshot in candidates if rank == best]
+    # Multiple equally eligible primaries are ambiguous, not first-row wins.
+    selected = dict(primary[0] if len(primary) == 1 else unknown)
+    resource = graph.get_node(resource_id)
+    if resource is not None and isinstance(resource.name, str) and resource.name.strip():
+        # Display authority is the canonical graph name, not provider name_by_user.
+        selected["canonical_name"] = resource.name
+    return descriptors, selected
 
 
 def _hash(value: str) -> str:
@@ -278,11 +456,13 @@ class CommissionedIdentityResolver(Protocol):
 
     def resolve_role(self, principal_id: UUID) -> str | None: ...
 
+    def resolve_access_level(self, principal_id: UUID) -> str: ...
+
 
 DEFAULT_UI_PREFERENCES: dict[str, Any] = {
     "version": 2,
     "appearance": "night",
-    "accent": "ember",
+    "accent": "purple",
     "density": "comfortable",
     "reduced_motion": False,
     "text_scale": "normal",
@@ -331,7 +511,7 @@ def validate_ui_preferences(value: dict[str, Any]) -> dict[str, Any]:
             result[key] = list(dict.fromkeys([*result[key], "household", "reports", "health"]))
     if result["appearance"] not in {"system", "light", "night"}:
         raise ValueError("appearance is not supported")
-    if result["accent"] not in {"ember", "sage", "sky"}:
+    if result["accent"] not in {"ember", "sage", "sky", "purple"}:
         raise ValueError("accent is not supported")
     if result["density"] not in {"comfortable", "compact"}:
         raise ValueError("density is not supported")
@@ -454,6 +634,14 @@ class HouseholdReadModel(Protocol):
 
     def preferences(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
 
+    def users(self, identity: UIIdentity) -> list[dict[str, Any]]: ...
+
+    def sentry_voice_settings(self, identity: UIIdentity) -> dict[str, Any]: ...
+
+    def update_sentry_voice_settings(
+        self, identity: UIIdentity, value: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 def _health_view(
     capabilities: list[dict[str, Any]], *, core_available: bool = True
@@ -533,6 +721,10 @@ class UICommandGateway(Protocol):
     ) -> dict[str, Any]: ...
 
     def preference_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+    def user_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
@@ -617,6 +809,11 @@ class UnavailableCommandGateway:
     ) -> dict[str, Any]:
         return self._unavailable(f"preference.{operation}")
 
+    def user_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._unavailable(f"user.{operation}")
+
 
 class ConversationIngress(Protocol):
     def submit(self, identity: UIIdentity, text: str) -> dict[str, Any]: ...
@@ -626,11 +823,16 @@ class ConversationPipeline(Protocol):
     def run(self, identity: UIIdentity, event: EventEnvelope) -> dict[str, Any]: ...
 
 
+class UIEventCapacityError(RuntimeError):
+    """This session already holds its bounded live-update connections."""
+
+
 class UIEventBroadcaster:
     """Bounded invalidation-only event fanout."""
 
     def __init__(self) -> None:
-        self._subscribers: list[deque[str]] = []
+        self._subscribers: dict[int, tuple[UUID | None, deque[str]]] = {}
+        self._lock = Lock()
 
     def publish(self, name: str) -> None:
         if name not in {
@@ -642,25 +844,66 @@ class UIEventBroadcaster:
             "conversation.completed",
             "capabilities.changed",
             "preferences.changed",
+            "household.changed",
         }:
             raise ValueError("unsafe UI event")
-        for queue in tuple(self._subscribers):
-            if len(queue) >= MAX_SSE_BUFFER:
-                queue.clear()
-                queue.append("refresh.required")
-            else:
-                queue.append(name)
+        with self._lock:
+            for _, queue in self._subscribers.values():
+                if len(queue) >= MAX_SSE_BUFFER:
+                    queue.clear()
+                    queue.append("refresh.required")
+                else:
+                    queue.append(name)
 
-    def subscribe(self) -> deque[str]:
+    def subscribe(self, session_id: UUID | None = None) -> deque[str]:
         queue: deque[str] = deque(maxlen=MAX_SSE_BUFFER)
-        self._subscribers.append(queue)
+        with self._lock:
+            # HTTP/1 browsers share six connections per origin across tabs.
+            # Leave capacity for authenticated reads/mutations and new tabs.
+            if (
+                session_id is not None
+                and sum(owner == session_id for owner, _ in self._subscribers.values()) >= 2
+            ):
+                raise UIEventCapacityError("LIVE_UPDATE_CONNECTION_LIMIT")
+            self._subscribers[id(queue)] = (session_id, queue)
         return queue
 
     def unsubscribe(self, queue: deque[str]) -> None:
+        with self._lock:
+            # Empty deques compare equal; removal must use identity.
+            self._subscribers.pop(id(queue), None)
+
+    def drain(self, queue: deque[str]) -> list[str]:
+        with self._lock:
+            names = list(queue)
+            queue.clear()
+            return names
+
+
+class _UIEventStreamingResponse(StreamingResponse):
+    """Release the reserved slot even when headers fail before iteration."""
+
+    def __init__(
+        self,
+        stream: Iterator[str],
+        broadcaster: UIEventBroadcaster,
+        queue: deque[str],
+    ) -> None:
+        super().__init__(
+            stream,
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+        )
+        self._broadcaster = broadcaster
+        self._queue = queue
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         try:
-            self._subscribers.remove(queue)
-        except ValueError:
-            pass
+            await super().__call__(scope, receive, send)
+        finally:
+            # No await: cancellation cannot interrupt identity-based release.
+            # Generator-finally cleanup remains safe to run a second time.
+            self._broadcaster.unsubscribe(self._queue)
 
 
 class DemoHouseholdReadModel:
@@ -871,6 +1114,20 @@ class DemoHouseholdReadModel:
         del identity
         return []
 
+    def users(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def sentry_voice_settings(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return validate_voice_settings(None)
+
+    def update_sentry_voice_settings(
+        self, identity: UIIdentity, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        return validate_voice_settings(value)
+
 
 class UnavailableHouseholdReadModel:
     """Explicit degraded view used when production Core dependencies are absent."""
@@ -1000,6 +1257,20 @@ class UnavailableHouseholdReadModel:
         del identity
         return []
 
+    def users(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        del identity
+        return []
+
+    def sentry_voice_settings(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return validate_voice_settings(None)
+
+    def update_sentry_voice_settings(
+        self, identity: UIIdentity, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity, value
+        raise UICommandError("CORE_PREFERENCES_UNAVAILABLE")
+
 
 class PostgresHouseholdReadModel:
     """Normalized read façade over existing Core persistence tables."""
@@ -1030,6 +1301,7 @@ class PostgresHouseholdReadModel:
         self.scene_store = scene_store
         self.automation_store = automation_store
         self.memory_service = memory_service
+        self.sentry_voice_settings_store = SentryVoiceSettingsStore(database_url)
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -1210,36 +1482,6 @@ class PostgresHouseholdReadModel:
         capabilities = self.capabilities(identity)
         rooms: list[dict[str, Any]] = []
         if self.graph is not None and callable(getattr(self.graph, "places_in_household", None)):
-
-            def device_state(resource: Any) -> str:
-                if self.truth is None or self.graph is None:
-                    return "UNKNOWN"
-                bindings_to_check: list[Any] = []
-                for capability in self.graph.resource_capabilities(resource.canonical_id):
-                    bindings_to_check.extend(
-                        self.graph.truth_for_node(capability.canonical_id, self.truth)
-                    )
-                bindings_to_check.sort(
-                    key=lambda item: 0 if item[0].semantic_attribute == "power.state" else 1
-                )
-                for binding, resolution in bindings_to_check:
-                    if binding.semantic_attribute not in {"power.state", "state"}:
-                        continue
-                    status = getattr(resolution.status, "value", str(resolution.status))
-                    if status != TruthStatus.CURRENT_KNOWN.value:
-                        return status.split("/", 1)[0]
-                    value = resolution.value
-                    return (
-                        "ON"
-                        if value is True or str(value).casefold() == "on"
-                        else "OFF"
-                        if value is False or str(value).casefold() == "off"
-                        else str(value)[:80]
-                        if value is not None
-                        else "UNKNOWN"
-                    )
-                return "UNKNOWN"
-
             places = self.graph.places_in_household(identity.household_id)
             for place in places:
                 if place.kind not in {NodeKind.ROOM, NodeKind.ZONE}:
@@ -1250,12 +1492,17 @@ class PostgresHouseholdReadModel:
                         UUID(str(item["device_id"])) for room in rooms for item in room["devices"]
                     }:
                         continue
+                    _, device_state = device_capability_projection(
+                        self.graph,
+                        self.truth,
+                        resource.canonical_id,
+                    )
                     devices.append(
                         {
                             "device_id": str(resource.canonical_id),
                             "name": resource.name,
                             "kind": resource.kind.value,
-                            "state": device_state(resource),
+                            **device_state,
                         }
                     )
                 rooms.append(
@@ -1724,6 +1971,22 @@ class PostgresHouseholdReadModel:
             return []
         return preference_payloads(self.memory_service, identity.household_id)
 
+    def users(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        if self.graph is None:
+            return []
+        return [
+            user_payload(person)
+            for person in self.graph.members_of_household(identity.household_id)
+        ]
+
+    def sentry_voice_settings(self, identity: UIIdentity) -> dict[str, Any]:
+        return self.sentry_voice_settings_store.get(identity.household_id)
+
+    def update_sentry_voice_settings(
+        self, identity: UIIdentity, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self.sentry_voice_settings_store.update(identity.household_id, value)
+
 
 class DemoCommandGateway:
     def __init__(self, read_model: DemoHouseholdReadModel, events: UIEventBroadcaster) -> None:
@@ -1827,6 +2090,17 @@ class DemoCommandGateway:
             "status": "SUCCEEDED",
             "operation": f"preference.{operation}",
             "result": {"preference": payload},
+        }
+
+    def user_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        self.events.publish("household.changed")
+        return {
+            "status": "SUCCEEDED",
+            "operation": f"user.{operation}",
+            "result": {"user": payload},
         }
 
 
@@ -2493,6 +2767,71 @@ def create_app(
         ):
             raise HTTPException(status_code=403, detail="CSRF_REJECTED")
 
+    install_knowledge_api(app, svc, current_identity, current_session, require_mutation)
+    install_household_learning_api(
+        app,
+        svc,
+        current_identity=current_identity,
+        current_session=current_session,
+        require_mutation=require_mutation,
+    )
+    install_ring_api(
+        app,
+        svc,
+        current_identity=current_identity,
+        current_session=current_session,
+        require_mutation=require_mutation,
+    )
+    install_household_presence_api(
+        app,
+        svc,
+        current_identity=current_identity,
+        current_session=current_session,
+        require_mutation=require_mutation,
+    )
+    install_family_routines_api(
+        app,
+        svc,
+        current_identity=current_identity,
+        current_session=current_session,
+        require_mutation=require_mutation,
+    )
+
+    # The optional relay is separate from owner/SENTRY authentication. Resolve
+    # the current Core lazily so first-time HA commissioning cannot leave a
+    # receiver attached to obsolete stores. No parser or token comes from UI.
+    vendor_ingress_lock = Lock()
+    vendor_ingress: VendorEventIngress | None = None
+    vendor_runtime: Any = None
+
+    def current_vendor_ingress() -> VendorEventIngress:
+        nonlocal vendor_ingress, vendor_runtime
+        with vendor_ingress_lock:
+            runtime = svc.core_runtime
+            if vendor_ingress is None or vendor_runtime is not runtime:
+                try:
+                    relay_config = VendorRelayConfig.from_environment()
+                except (VendorIngressError, OSError, ValueError):
+                    raise HTTPException(503, "VENDOR_CONFIGURATION_UNAVAILABLE") from None
+                dispatch = None
+                if runtime is not None and runtime.intelligence_store is not None:
+                    dispatch = ExactVendorAttention(
+                        runtime.attention,
+                        runtime.context,
+                        runtime.intelligence_store,
+                        runtime.plugins.list_tools,
+                    )
+                vendor_ingress = VendorEventIngress(
+                    relay_config,
+                    journal=getattr(runtime, "journal", None),
+                    graph=getattr(runtime, "graph", None),
+                    dispatch=dispatch,
+                )
+                vendor_runtime = runtime
+            return vendor_ingress
+
+    install_vendor_event_api(app, current_identity, current_vendor_ingress)
+
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok", "service": "anima-ui", "version": UI_VERSION}
@@ -2680,12 +3019,80 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_UI_PREFERENCES") from exc
 
+    @app.get("/api/v1/sentry/voice-settings")
+    async def sentry_voice_settings(request: Request) -> dict[str, Any]:
+        return {"settings": svc.read_model.sentry_voice_settings(current_identity(request))}
+
+    @app.put("/api/v1/sentry/voice-settings")
+    async def update_sentry_voice_settings(
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            settings = svc.read_model.update_sentry_voice_settings(
+                svc.identity_from_session(session), body.payload
+            )
+            return {"status": "SUCCEEDED", "settings": settings}
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_SENTRY_VOICE_SETTINGS") from exc
+
     @app.get("/api/v1/preferences")
-    async def preferences(request: Request) -> dict[str, Any]:
-        return {"items": svc.read_model.preferences(current_identity(request))}
+    def preferences(
+        request: Request,
+        scope: str | None = None,
+        person_id: str | None = None,
+        category: str | None = None,
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> dict[str, Any]:
+        from anima_ha.family_routines import family_routine_options
+
+        identity = current_identity(request)
+        memory = getattr(svc.read_model, "memory_service", None)
+        graph = getattr(svc.read_model, "graph", None)
+        if memory is None or graph is None:
+            return {
+                "items": svc.read_model.preferences(identity),
+                "next_cursor": None,
+                "members": [],
+                "can_edit": False,
+            }
+        try:
+            page = preferences_page(
+                memory,
+                identity.household_id,
+                graph=graph,
+                scope=scope,
+                person_id=person_id,
+                category=category,
+                limit=limit,
+                cursor=cursor,
+            )
+            options = family_routine_options(graph, identity.household_id)
+            principal = graph.get_node(identity.principal_id)
+            return {
+                **page,
+                "members": options["members"],
+                "can_edit": bool(
+                    principal
+                    and principal.retired_at is None
+                    and principal.metadata.get("semantic_role") == "owner"
+                    and any(
+                        item["person_id"] == str(identity.principal_id)
+                        for item in options["members"]
+                    )
+                ),
+            }
+        except (PreferenceValidationError, ValueError, TypeError):
+            raise HTTPException(400, "INVALID_PREFERENCE_FILTER") from None
 
     @app.post("/api/v1/preferences/{operation}")
-    async def mutate_preference(
+    def mutate_preference(
         operation: str,
         request: Request,
         body: MutationRequest,
@@ -2703,6 +3110,30 @@ def create_app(
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except (ValueError, TypeError) as exc:
             raise HTTPException(status_code=400, detail="INVALID_PREFERENCE") from exc
+
+    @app.get("/api/v1/users")
+    async def users(request: Request) -> dict[str, Any]:
+        return {"items": svc.read_model.users(current_identity(request))}
+
+    @app.post("/api/v1/users/{operation}")
+    async def mutate_users(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        if operation not in {"create", "update"}:
+            raise HTTPException(status_code=404, detail="UNKNOWN_USER_OPERATION")
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            return svc.commands.user_mutation(
+                svc.identity_from_session(session), operation, body.payload
+            )
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except (ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail="INVALID_USER") from exc
 
     @app.get("/api/v1/scenes")
     async def scenes(request: Request) -> dict[str, Any]:
@@ -3016,27 +3447,29 @@ def create_app(
 
     @app.get("/api/v1/events")
     async def events(request: Request) -> StreamingResponse:
-        current_session(request)
-        queue = svc.events.subscribe()
+        session = current_session(request)
+        try:
+            queue = svc.events.subscribe(session.session_id)
+        except UIEventCapacityError as exc:
+            raise HTTPException(
+                status_code=429,
+                detail="LIVE_UPDATE_CONNECTION_LIMIT",
+                headers={"Retry-After": "15"},
+            ) from exc
 
         def stream() -> Iterator[str]:
             try:
                 yield ": connected\n\n"
                 deadline = time.monotonic() + 15
                 while time.monotonic() < deadline:
-                    while queue:
-                        name = queue.popleft()
+                    for name in svc.events.drain(queue):
                         yield f"event: {name}\ndata: {{}}\n\n"
                     time.sleep(0.05)
                 yield "event: refresh.required\ndata: {}\n\n"
             finally:
                 svc.events.unsubscribe(queue)
 
-        return StreamingResponse(
-            stream(),
-            media_type="text/event-stream",
-            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
-        )
+        return _UIEventStreamingResponse(stream(), svc.events, queue)
 
     static_dir = svc.config.static_dir
     if static_dir.is_dir():

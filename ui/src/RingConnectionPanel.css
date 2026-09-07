@@ -1,0 +1,15 @@
+.ring-connection-panel { margin-block: 24px; }
+.ring-connection-panel header { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.ring-connection-panel h2 { display: flex; gap: 10px; align-items: center; }
+.ring-connection-panel h2 .icon { color: var(--teal); }
+.ring-connection-panel header p { margin: 8px 0; }
+.ring-readiness { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; margin-block: 20px; }
+.ring-readiness > div { display: grid; gap: 8px; border: 1px solid var(--line); padding: 16px; border-radius: 10px; background: var(--input); }
+.ring-readiness span { font-size: .75rem; color: var(--muted); }
+.ring-readiness strong { font-size: .9rem; overflow-wrap: anywhere; }
+.ring-connection-panel .notice { display: block; }
+.ring-setup-form { margin-top: 22px; max-width: 600px; }
+.ring-setup-form fieldset { display: grid; gap: 10px; min-width: 0; }
+.ring-setup-form label { font-size: .83rem; }
+.ring-setup-form .button-row { margin-top: 12px; justify-content: flex-start; }
+.ring-setup-form h3:focus { outline: 2px solid var(--teal); outline-offset: 4px; }

@@ -34,11 +34,13 @@ from anima_ha.intelligence import (
     IntelligenceResultStatus,
 )
 from anima_ha.live_results import PostgresSentryLivePublisher, live_result_payload
+from anima_ha.sentry_autowake import PostgresAutoWakeClaims, aware_timestamp
 from anima_ha.sentry_boundary import (
     CoreSentryBoundary,
     SentryBoundaryError,
     SentryIdentityEvidenceEnvelope,
 )
+from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore
 from anima_ha.ui_runtime import build_postgres_core
 
 MAX_BODY = 64 * 1024
@@ -140,6 +142,34 @@ class PostgresSentryPrincipalRegistry:
                 ),
             )
             return cursor.fetchone() is not None
+
+    def resolve_active(self, token: str) -> SentryServicePrincipal | None:
+        """Resolve the current bearer token to its durable service principal."""
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with psycopg.connect(self.database_url) as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT client_id, household_id, provider_id, credential_generation,
+                       token_digest, enabled, allowed_origins
+                FROM anima_sentry_service_principals
+                WHERE token_digest=%s AND enabled
+                """,
+                (digest,),
+            )
+            row = cursor.fetchone()
+        if row is None:
+            return None
+        raw_origins = row[6] if isinstance(row[6], list) else json.loads(row[6])
+        origins = tuple(value for value in raw_origins if isinstance(value, str))
+        return SentryServicePrincipal(
+            client_id=str(row[0]),
+            household_id=UUID(str(row[1])),
+            provider_id=str(row[2]),
+            credential_generation=int(row[3]),
+            token_digest=str(row[4]),
+            enabled=bool(row[5]),
+            allowed_origins=origins,
+        )
 
 
 def read_credential_file(path_value: str) -> str:
@@ -254,6 +284,8 @@ class CoreSentryHTTPService:
         profile_principal_resolver: Callable[[UUID, str], UUID | None] | None = None,
         principal_registry: PostgresSentryPrincipalRegistry | None = None,
         live_result_publisher: PostgresSentryLivePublisher | None = None,
+        auto_wake_claims: PostgresAutoWakeClaims | None = None,
+        voice_settings_store: SentryVoiceSettingsStore | None = None,
     ) -> None:
         self.boundary = boundary
         self.token_loader = token_loader
@@ -261,6 +293,8 @@ class CoreSentryHTTPService:
         self.profile_principal_resolver = profile_principal_resolver
         self.principal_registry = principal_registry
         self.live_result_publisher = live_result_publisher
+        self.auto_wake_claims = auto_wake_claims
+        self.voice_settings_store = voice_settings_store
         self.bindings = SentryBindingCodec("unused-until-authenticated")
 
     def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
@@ -274,12 +308,26 @@ class CoreSentryHTTPService:
         if self.service_principal is not None:
             if self.service_principal.provider_id != "sentry":
                 raise ServiceAuthError("service principal provider is not allowed")
-            if not self.service_principal.authenticates(self.service_token):
+            # The durable registration is authoritative after startup.  The
+            # in-memory principal may predate a safe token-file rotation or a
+            # service restart, so do not let its cached digest disagree with
+            # the current PostgreSQL registration.
+            if self.principal_registry is not None:
+                resolved = self.principal_registry.resolve_active(self.service_token)
+                # Keep the configured principal as a bounded fallback for
+                # deployments whose PostgreSQL driver cannot decode the
+                # JSONB registration query result.  The fallback still
+                # requires the exact durable client/household/provider,
+                # generation, digest, and enabled-row match.
+                if resolved is None and self.principal_registry.active(
+                    self.service_principal, self.service_token
+                ):
+                    resolved = self.service_principal
+                if resolved is None or resolved.provider_id != "sentry":
+                    raise ServiceAuthError("service principal is not active")
+                self.service_principal = resolved
+            elif not self.service_principal.authenticates(self.service_token):
                 raise ServiceAuthError("service principal is revoked or rotated")
-            if self.principal_registry is not None and not self.principal_registry.active(
-                self.service_principal, self.service_token
-            ):
-                raise ServiceAuthError("service principal is not active")
         return self.service_principal
 
     def _request(
@@ -344,6 +392,61 @@ class CoreSentryHTTPService:
         ):
             raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
         return {"status": "CLAIMED", **self.request_payload(request, binding)}
+
+    def provider_auto_wake(
+        self, body: dict[str, Any], principal: SentryServicePrincipal | None, *, exact: bool
+    ) -> dict[str, Any]:
+        if principal is None or "SENTRY_PROVIDER" not in principal.allowed_origins:
+            raise ServiceAuthError("auto-wake requires a scoped provider principal")
+        allowed = {"origin", "not_before", "max_age_seconds"}
+        allowed |= (
+            {"request_id", "worker_id", "sentry_request_id", "source_surface"}
+            if exact
+            else {"limit"}
+        )
+        if set(body) - allowed:
+            raise ValueError("unexpected auto-wake fields")
+        claims = self.auto_wake_claims
+        if claims is None:
+            return {"status": "EMPTY"} if exact else {"status": "EMPTY", "items": []}
+        window = claims.window(body)
+        if not exact:
+            items = claims.eligible(
+                principal.household_id, principal.provider_id, window, limit=body.get("limit", 1)
+            )
+            return {"status": "AVAILABLE" if items else "EMPTY", "items": items}
+        if body.get("source_surface") != "anima_attention":
+            raise ValueError("auto-wake source_surface must be anima_attention")
+        sentry_request_id = str(UUID(str(body.get("sentry_request_id", ""))))
+        claimed = claims.claim(
+            UUID(str(body["request_id"])),
+            principal.household_id,
+            principal.provider_id,
+            principal.client_id,
+            window,
+        )
+        if claimed is None:
+            return {"status": "EMPTY"}
+        request, created_at = claimed
+        binding = self.bindings.issue(
+            request,
+            sentry_request_id=sentry_request_id,
+            source_surface="anima_attention",
+            principal=principal,
+        )
+        if not self.boundary.intelligence_store.transition(
+            request.request_id,
+            principal.client_id,
+            request.fencing_generation,
+            IntelligenceLifecycle.DELIVERED_TO_PROVIDER,
+        ):
+            raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
+        return {
+            "status": "CLAIMED",
+            **self.request_payload(request, binding),
+            "created_at": created_at.isoformat(),
+            "provider_started": False,
+        }
 
     def direct_interaction(
         self,
@@ -455,7 +558,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         try:
-            self._service().authenticate(self.headers)
+            principal = self._service().authenticate(self.headers)
+            if self.path == "/v1/sentry/voice-settings":
+                service = self._service()
+                store = service.voice_settings_store
+                if principal is None or store is None:
+                    raise ServiceAuthError("service principal is not active")
+                self._write(200, store.get(principal.household_id))
+                return
             if self.path != "/v1/health":
                 self._write(404, {"error": "NOT_FOUND"})
                 return
@@ -469,8 +579,21 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             principal = service.authenticate(self.headers)
             body = self._json()
             response: dict[str, Any]
-            if self.path == "/v1/health":
+            if self.path == "/v1/sentry/voice-settings":
+                if principal is None or service.voice_settings_store is None:
+                    raise ServiceAuthError("service principal is not active")
+                response = service.voice_settings_store.get(principal.household_id)
+            elif self.path == "/v1/health":
                 response = service.boundary.health().to_payload()
+            elif self.path in {"/v1/provider/requests/eligible", "/v1/provider/claims/exact"}:
+                try:
+                    response = service.provider_auto_wake(
+                        body, principal, exact=self.path == "/v1/provider/claims/exact"
+                    )
+                except psycopg.Error:
+                    # A failed/ambiguous claim is not EMPTY and must not be replayed.
+                    self._write(503, {"error": "AUTOWAKE_UNAVAILABLE"})
+                    return
             elif self.path == "/v1/interactions/open":
                 response = service.claim_and_bind(
                     str(body.get("worker_id", "")),
@@ -533,7 +656,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         action_references=tuple(str(x) for x in body.get("action_references", [])),
                         provider_ambiguous=bool(body.get("provider_ambiguous", False)),
                     )
-                    recorded = service.boundary.submit_result(
+                    recorded, result, disposition = service.boundary.finalize_result(
                         request, str(request.claim_owner), result
                     )
                     if recorded and service.live_result_publisher is not None:
@@ -552,7 +675,11 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                             # Durable status remains authoritative; live text
                             # is intentionally best-effort and non-durable.
                             pass
-                    response = {"status": "RECORDED" if recorded else "CLAIM_LOST"}
+                    response = {
+                        "status": "RECORDED" if recorded else "CLAIM_LOST",
+                        "result_status": result.status.value,
+                        "notification": disposition,
+                    }
                 elif operation == "status":
                     response = {
                         "request_id": str(request.request_id),
@@ -645,6 +772,15 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         principal_registry=principal_registry,
         profile_principal_resolver=profile_principal_resolver,
         live_result_publisher=PostgresSentryLivePublisher(database_url),
+        voice_settings_store=SentryVoiceSettingsStore(database_url),
+        auto_wake_claims=(
+            PostgresAutoWakeClaims(
+                database_url,
+                enabled_at=aware_timestamp(os.environ["ANIMA_SENTRY_AUTOWAKE_ENABLED_AT"]),
+            )
+            if os.environ.get("ANIMA_SENTRY_AUTOWAKE_ENABLED_AT", "").strip()
+            else None
+        ),
     )
     try:
         server.serve_forever()

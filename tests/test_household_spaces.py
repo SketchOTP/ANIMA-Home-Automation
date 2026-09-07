@@ -119,6 +119,7 @@ def test_household_spaces_manifest_has_no_household_authority_argument() -> None
     assert create["input_schema"]["additionalProperties"] is False
     assert {item["name"] for item in HOUSEHOLD_SPACES_MANIFEST.tools} == {
         "list_spaces",
+        "list_resources",
         "create_space",
         "rename_space",
         "move_space",

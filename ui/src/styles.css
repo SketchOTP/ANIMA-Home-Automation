@@ -505,3 +505,41 @@ legend { font-size: .8rem; }
   .connection-actions > .primary-link { width: 100%; }
   .filter-bar { padding: 12px; }
 }
+
+/* ATLAS-inspired flat palette. Layout, persisted display/density settings,
+   motion preferences and contrast modes above remain authoritative. */
+:root {
+  --canvas: #000000; --surface: #08060a; --surface-2: #141017;
+  --surface-raised: #221a28; --sidebar: #050306; --line: #493650;
+  --ink: #ffffff; --muted: #c0b6c8; --input: #0d0a10;
+  --purple: #d84bff; --teal: var(--purple); --teal-wash: #21082e;
+  --ember: var(--purple); --legacy-ember: #efb184; --on-accent: #000000;
+  --success-bg: #170c20; --glow: transparent; --shadow: none; --radius: 10px;
+}
+[data-appearance="light"] {
+  --canvas: #f7f5fa; --surface: #ffffff; --surface-2: #eee9f2;
+  --surface-raised: #e2d8ea; --sidebar: #f0ebf5; --line: #c3b4cf;
+  --ink: #18101f; --muted: #62516e; --input: #faf8fc;
+  --purple: #8b16b3; --teal: var(--purple); --teal-wash: #f1defa;
+  --ember: var(--purple); --legacy-ember: #985024; --on-accent: #ffffff;
+  --success-bg: #f1defa; --glow: transparent; --shadow: none;
+}
+@media (prefers-color-scheme: light) {
+  [data-appearance="system"] {
+    --canvas: #f7f5fa; --surface: #ffffff; --surface-2: #eee9f2;
+    --surface-raised: #e2d8ea; --sidebar: #f0ebf5; --line: #c3b4cf;
+    --ink: #18101f; --muted: #62516e; --input: #faf8fc;
+    --purple: #8b16b3; --teal: var(--purple); --teal-wash: #f1defa;
+    --ember: var(--purple); --legacy-ember: #985024; --on-accent: #ffffff;
+    --success-bg: #f1defa; --glow: transparent; --shadow: none;
+  }
+}
+[data-accent="purple"] { --ember: var(--purple); }
+[data-accent="ember"] { --ember: var(--legacy-ember); }
+[data-accent="sage"] { --ember: var(--sage); }
+[data-accent="sky"] { --ember: var(--sky); }
+body, [data-appearance="light"] body, [data-appearance="system"] body { background: var(--canvas); }
+.hero, .assistant-card { background: var(--surface); }
+.summary-card, .stat-card, .quick-action, .room, .device-card, .room-card,
+.device-grid .device-row, .connection-banner, .connection-cta, .filter-bar { border-radius: 10px; }
+.brand-mark { border-radius: 10px; }

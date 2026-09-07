@@ -1,0 +1,8 @@
+.knowledge-panel { margin-top: var(--layout-gap, 16px); overflow-wrap: anywhere; }
+.knowledge-panel fieldset { min-width: 0; }
+.knowledge-panel .form-grid { margin-block: 14px; align-items: end; }
+.knowledge-panel .knowledge-body { white-space: pre-wrap; }
+.knowledge-panel .knowledge-status { padding: 10px; border: 1px solid var(--border, #718096); border-radius: 8px; }
+.knowledge-panel select, .knowledge-panel input:not([type="checkbox"]), .knowledge-panel textarea { max-width: 100%; min-width: 0; }
+.knowledge-panel dd { margin-inline-start: 0; margin-block-end: 8px; }
+@media (max-width: 600px) { .knowledge-panel .form-grid { grid-template-columns: minmax(0, 1fr); } }

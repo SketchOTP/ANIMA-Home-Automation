@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -54,7 +55,8 @@ from anima_ha.capability_management import (
 from anima_ha.context import ContextBroker
 from anima_ha.events import EventEnvelope
 from anima_ha.external import ExternalAuditJournalSink, external_plugin
-from anima_ha.graph import NodeKind, PostgresHouseholdGraph
+from anima_ha.family_routines import FAMILY_ROUTINES_MANIFEST, FamilyRoutinesNativePlugin
+from anima_ha.graph import NodeKind, PostgresHouseholdGraph, ProviderReference, RelationshipType
 from anima_ha.home_assistant import (
     HAInstanceConfig,
     HassClientConnection,
@@ -64,6 +66,20 @@ from anima_ha.home_assistant import (
     home_assistant_manifest,
     inventory_handle,
 )
+from anima_ha.household_event_context import HouseholdEventEvidence
+from anima_ha.household_initiative import HouseholdInitiativeContext
+from anima_ha.household_learning import (
+    HOUSEHOLD_LEARNING_MANIFEST,
+    HouseholdLearningNativePlugin,
+    HouseholdLearningService,
+)
+from anima_ha.household_presence import (
+    HOUSEHOLD_PRESENCE_MANIFEST,
+    HouseholdPresenceNativePlugin,
+    HouseholdPresenceService,
+    SignalKind,
+)
+from anima_ha.household_presence_runtime import HouseholdPresenceEventRouter
 from anima_ha.household_spaces import (
     HOUSEHOLD_SPACES_MANIFEST,
     HouseholdSpacesNativePlugin,
@@ -71,11 +87,13 @@ from anima_ha.household_spaces import (
 from anima_ha.intelligence import (
     IntelligenceOrigin,
     IntelligenceProviderMode,
+    IntelligenceRequest,
     IntelligenceRequestFactory,
     PostgresIntelligenceStore,
     SentryAttentionBridge,
 )
 from anima_ha.journal import PostgresEventJournal, PostgresRealityStore
+from anima_ha.knowledge import KNOWLEDGE_MANIFEST, KnowledgeConfig, KnowledgeNativePlugin
 from anima_ha.notification_routes import (
     NOTIFICATION_ROUTE_MANIFEST,
     NotificationRouteNativePlugin,
@@ -109,6 +127,89 @@ from anima_ha.senseguard_alerts import (
 )
 from anima_ha.sentry_boundary import CoreSentryBoundary
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
+from anima_ha.users import HOUSEHOLD_USERS_MANIFEST, HouseholdUsersNativePlugin
+
+
+def _dispatch_senseguard_attention(
+    *,
+    alert: EventEnvelope,
+    journal_position: int,
+    household_id: UUID,
+    attention: Any,
+    context: Any,
+    store: Any,
+    tools: list[Any],
+) -> list[IntelligenceRequest]:
+    """Dispatch one already-journaled policy alert, including delayed recovery."""
+    if (
+        alert.source != "anima:senseguard-policy"
+        or str(alert.metadata.get("household_id", "")) != str(household_id)
+        or journal_position < 1
+    ):
+        raise ValueError("SenseGuard dispatch requires a journaled same-household policy alert")
+    # Fresh trigger identities cannot reuse contexts from the old broad bridge.
+    profile = AttentionProfile("phase13.senseguard.event.v2", ())
+    consumer = f"senseguard-alert:{household_id}:{alert.event_id}"
+    attention.prime_consumer_before(profile, consumer, journal_position - 1)
+    return SentryAttentionBridge(
+        attention=attention,
+        context=context,
+        store=store,
+        profile=profile,
+    ).run_once(
+        household_id=household_id,
+        tools=tools,
+        consumer_name=consumer,
+        limit=1,
+        source_event_id=alert.event_id,
+    )
+
+
+def _resolve_ha_event_resource(
+    graph: PostgresHouseholdGraph, provider_scope: str, household_id: UUID, external_id: str
+) -> UUID | None:
+    """Resolve an HA entity to one active device owned only by this household."""
+    nodes = graph.resolve_provider_references(
+        "home_assistant", provider_scope, "entity", external_id
+    )
+    if len(nodes) != 1:
+        return None
+    node = nodes[0]
+    if node.kind == NodeKind.CAPABILITY:
+        capability_type = str(node.metadata.get("capability_type", ""))
+        if not capability_type:
+            return None
+        # Candidate lookup is global: a second owner outside this household is
+        # still ambiguous. resource_capabilities checks the exact, active EXPOSES
+        # edge (the broader type lookup can also return retired relationships).
+        owners = {
+            resource.canonical_id
+            for resource in graph.resources_with_capability(capability_type)
+            if resource.kind in {NodeKind.RESOURCE, NodeKind.SENSOR}
+            and any(
+                capability.canonical_id == node.canonical_id
+                for capability in graph.resource_capabilities(resource.canonical_id)
+            )
+        }
+        if len(owners) != 1:
+            return None
+        resource_id = next(iter(owners))
+    elif node.kind in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+        resource_id = node.canonical_id
+    else:
+        return None
+    if len(graph.related(resource_id, RelationshipType.INSTALLED_IN)) != 1:
+        return None
+    households = {
+        place.canonical_id
+        for place in graph.list_places()
+        if place.kind == NodeKind.HOUSEHOLD
+        and any(
+            resource.canonical_id == resource_id
+            for resource in graph.resources_in_place(place.canonical_id)
+        )
+    }
+    return resource_id if households == {household_id} else None
 
 
 def _identity(identity: UIIdentity) -> IdentityContext:
@@ -255,7 +356,7 @@ class CoreUICommandGateway:
             policy_context=self._policy_context(identity),
             invocation_context=invocation_context,
         )
-        if self.events:
+        if self.events and not (plugin_prefix == KNOWLEDGE_MANIFEST.plugin_id and tool.read_only):
             event_name = {
                 "anima.durable-tasks": "tasks.changed",
                 "anima.calendar": "calendar.changed",
@@ -263,6 +364,7 @@ class CoreUICommandGateway:
                 "anima.provider.home-assistant": "home.invalidated",
                 "anima.scenes": "home.invalidated",
                 "anima.household-preferences": "preferences.changed",
+                "anima.household-users": "household.changed",
             }.get(plugin_prefix, "capabilities.changed")
             self.events.publish(event_name)
         return _safe_result(result)
@@ -374,6 +476,39 @@ class CoreUICommandGateway:
             raise UICommandError("UNKNOWN_AUTOMATION_OPERATION")
         return self._invoke(identity, AUTOMATIONS_MANIFEST.plugin_id, name, payload)
 
+    def family_routine_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if operation not in {"create", "update", "disable", "retract", "add-member"}:
+            raise UICommandError("UNKNOWN_ROUTINE_OPERATION")
+        return self._invoke(
+            identity,
+            FAMILY_ROUTINES_MANIFEST.plugin_id,
+            "add_member" if operation == "add-member" else f"{operation}_routine",
+            payload,
+        )
+
+    def knowledge_operation(
+        self, identity: UIIdentity, name: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if name not in {tool["name"] for tool in KNOWLEDGE_MANIFEST.tools}:
+            raise UICommandError("UNKNOWN_KNOWLEDGE_OPERATION")
+        return self._invoke(identity, KNOWLEDGE_MANIFEST.plugin_id, name, payload)
+
+    def learning_operation(
+        self, identity: UIIdentity, name: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if name not in {"configure", "review"}:
+            raise UICommandError("UNKNOWN_LEARNING_OPERATION")
+        return self._invoke(identity, HOUSEHOLD_LEARNING_MANIFEST.plugin_id, name, payload)
+
+    def presence_operation(
+        self, identity: UIIdentity, name: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        if name not in {"snapshot", "list_sources", "bind_source"}:
+            raise UICommandError("UNKNOWN_PRESENCE_OPERATION")
+        return self._invoke(identity, HOUSEHOLD_PRESENCE_MANIFEST.plugin_id, name, payload)
+
     def preference_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
@@ -385,6 +520,14 @@ class CoreUICommandGateway:
             f"{operation}_preference",
             payload,
         )
+
+    def user_mutation(
+        self, identity: UIIdentity, operation: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        name = {"create": "create_user", "update": "update_user"}.get(operation)
+        if name is None:
+            raise UICommandError("UNKNOWN_USER_OPERATION")
+        return self._invoke(identity, HOUSEHOLD_USERS_MANIFEST.plugin_id, name, payload)
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
         """Apply a preset through the existing verified single-device action path.
@@ -441,37 +584,6 @@ class CoreUICommandGateway:
         if not callable(getattr(truth, "get", None)):
             truth = None
 
-        def truth_state(capability_id: UUID) -> dict[str, Any]:
-            if truth is None:
-                return {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
-            for binding, resolution in graph.truth_for_node(capability_id, truth):
-                if binding.semantic_attribute not in {"power.state", "state"}:
-                    continue
-                status = getattr(resolution.status, "value", str(resolution.status))
-                value = resolution.value
-                if status == "CURRENT/KNOWN":
-                    state = (
-                        "ON"
-                        if value is True or str(value).casefold() == "on"
-                        else "OFF"
-                        if value is False or str(value).casefold() == "off"
-                        else str(value)[:80]
-                        if value is not None
-                        else "UNKNOWN"
-                    )
-                else:
-                    state = status.split("/", 1)[0]
-                return {
-                    "truth_status": status,
-                    "state": state,
-                    "observed_at": (
-                        resolution.last_observed_at.isoformat()
-                        if resolution.last_observed_at is not None
-                        else None
-                    ),
-                }
-            return {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
-
         for item in self.home_assistant_adapter.provider_inventory():
             if item.get("external_object_kind") != "device":
                 continue
@@ -499,21 +611,11 @@ class CoreUICommandGateway:
             capabilities: list[dict[str, Any]] = []
             device_state = {"truth_status": "UNKNOWN", "state": "UNKNOWN", "observed_at": None}
             if mapped and canonical_target is not None:
-                for capability in graph.resource_capabilities(canonical_target.canonical_id):
-                    capability_type = str(capability.metadata.get("capability_type", ""))
-                    if not capability_type:
-                        continue
-                    snapshot = truth_state(capability.canonical_id)
-                    descriptor = {
-                        "type": capability_type,
-                        "label": capability.name,
-                        "readable": bool(capability.metadata.get("readable", True)),
-                        "writable": bool(capability.metadata.get("writable", False)),
-                        **snapshot,
-                    }
-                    capabilities.append(descriptor)
-                    if capability_type == "power.set":
-                        device_state = snapshot
+                capabilities, device_state = device_capability_projection(
+                    graph,
+                    truth,
+                    canonical_target.canonical_id,
+                )
             items.append(
                 {
                     "external_object_kind": str(item.get("external_object_kind", "")),
@@ -535,9 +637,7 @@ class CoreUICommandGateway:
                         if key in metadata
                     }
                     | mapped_metadata,
-                    "state": device_state["state"],
-                    "truth_status": device_state["truth_status"],
-                    "observed_at": device_state["observed_at"],
+                    **device_state,
                     "capabilities": capabilities,
                 }
             )
@@ -880,6 +980,8 @@ class CoreRuntime:
     scene_store: PostgresSceneStore | None = None
     automation_store: PostgresAutomationStore | None = None
     memory_service: Any | None = None
+    learning_service: Any | None = None
+    initiative_context: Any | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -928,6 +1030,8 @@ class CoreRuntime:
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
+        from anima_ha.household_reasoning import household_reasoning_context
+
         if self.intelligence_store is None:
             raise UICommandError("SENTRY_INTELLIGENCE_STORE_UNAVAILABLE")
         return CoreSentryBoundary(
@@ -938,6 +1042,13 @@ class CoreRuntime:
             action_refresher=self.action_refresher,
             action_verifier=self.action_verifier,
             context_loader=lambda trigger_id: self.context.load(trigger_id),
+            reasoning_context_loader=lambda request: household_reasoning_context(
+                request, self.memory_service, self.graph, initiative=self.initiative_context
+            ),
+            policy_role_resolver=self.identity_resolver.resolve_role,
+            access_level_resolver=self.identity_resolver.resolve_access_level,
+            agent_memory_enabled=os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true",
+            learning_service=self.learning_service,
         )
 
 
@@ -996,6 +1107,15 @@ class PostgresCommissionedIdentityResolver:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         role = person.metadata.get("semantic_role")
         return role.strip() if isinstance(role, str) and role.strip() else None
+
+    def resolve_access_level(self, principal_id: UUID) -> str:
+        person = self.graph.get_node(principal_id)
+        if person is None or person.kind != NodeKind.PERSON:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
+        value = str(person.metadata.get("sentry_access", "LIMITED")).strip().upper()
+        if value not in {"LIMITED", "UNRESTRICTED"}:
+            raise PrincipalMappingRequired("ACCESS_LEVEL_MAPPING_REQUIRED")
+        return value
 
 
 def owner_ha_version() -> str:
@@ -1107,10 +1227,50 @@ def build_postgres_core(
     )
     register_and_enable(
         PREFERENCES_MANIFEST,
-        NativeRuntime(PreferencesNativePlugin(memory_service)),
+        NativeRuntime(PreferencesNativePlugin(memory_service, graph)),
         persist_choice=False,
     )
+    register_and_enable(
+        FAMILY_ROUTINES_MANIFEST,
+        NativeRuntime(FamilyRoutinesNativePlugin(memory_service, graph)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        HOUSEHOLD_USERS_MANIFEST,
+        NativeRuntime(HouseholdUsersNativePlugin(graph)),
+        persist_choice=False,
+    )
+    knowledge_root = os.environ.get("ANIMA_KNOWLEDGE_ROOT", "").strip()
+    if knowledge_root:
+        register_and_enable(
+            KNOWLEDGE_MANIFEST,
+            NativeRuntime(
+                KnowledgeNativePlugin(
+                    KnowledgeConfig.from_environment(),
+                    person_validator=lambda household, person: any(
+                        item.canonical_id == person
+                        and item.kind == NodeKind.PERSON
+                        and item.retired_at is None
+                        for item in graph.members_of_household(household)
+                    ),
+                )
+            ),
+        )
     task_service = TaskService(PostgresTaskStore(database_url), journal)
+    household_evidence = HouseholdEventEvidence(database_url, graph)
+    learning_service = HouseholdLearningService(
+        memory_service,
+        graph,
+        journal,
+        evidence_reader=household_evidence.recent_household_evidence,
+        task_service=task_service,
+        timezone=os.environ.get("ANIMA_HOUSEHOLD_TIMEZONE", "UTC"),
+    )
+    register_and_enable(
+        HOUSEHOLD_LEARNING_MANIFEST,
+        NativeRuntime(HouseholdLearningNativePlugin(learning_service)),
+        persist_choice=False,
+    )
     calendar_service = CalendarService(PostgresCalendarStore(database_url), journal)
     register_and_enable(
         TASK_MANIFEST, NativeRuntime(TaskNativePlugin(task_service)), persist_choice=False
@@ -1326,27 +1486,62 @@ def build_postgres_core(
         owner_connection = configured_connection()
         if owner_connection is not None:
             household_value = str(owner_connection["household_id"])
+    runtime.learning_service = learning_service
+    runtime.initiative_context = HouseholdInitiativeContext(
+        database_url, learning_service, household_evidence
+    )
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
 
-        def resolve_resource(external_id: str) -> UUID | None:
-            node = graph.resolve_provider_reference(
-                "home_assistant", provider_scope, "entity", external_id
-            )
-            if node is None or node.kind not in {NodeKind.RESOURCE, NodeKind.SENSOR}:
+        def classify_presence_source(reference: ProviderReference) -> SignalKind | None:
+            # HA's configured home zone and router association belong to this
+            # commissioned household instance. Nothing is supplied by SENTRY.
+            if reference.provider_scope != provider_scope or ha_adapter is None:
                 return None
-            return node.canonical_id
+            connection = ha_adapter.connection
+            if connection is None or not connection.connected:
+                return None
+            if reference.external_id.startswith("person."):
+                return (
+                    SignalKind.HA_PERSON
+                    if isinstance(connection.get_state(reference.external_id), dict)
+                    else None
+                )
+            if not reference.external_id.startswith("device_tracker."):
+                return None
+            read_kind = getattr(connection, "presence_source_kind", None)
+            if not callable(read_kind):
+                return None
+            kind = read_kind(reference.external_id)
+            return (
+                {"gps": SignalKind.GEOFENCE, "router": SignalKind.ROUTER_WIFI}.get(kind)
+                if isinstance(kind, str)
+                else None
+            )
 
-        def dispatch_attention() -> None:
-            SentryAttentionBridge(
+        presence_service = HouseholdPresenceService(
+            graph, truth.projection, classify_source=classify_presence_source
+        )
+        register_and_enable(
+            HOUSEHOLD_PRESENCE_MANIFEST,
+            NativeRuntime(
+                HouseholdPresenceNativePlugin(presence_service, ha_adapter.config.instance_id)
+            ),
+        )
+
+        def resolve_resource(external_id: str) -> UUID | None:
+            return _resolve_ha_event_resource(graph, provider_scope, household_id, external_id)
+
+        def dispatch_attention_event(alert: EventEnvelope, journal_position: int) -> None:
+            _dispatch_senseguard_attention(
+                alert=alert,
+                journal_position=journal_position,
+                household_id=household_id,
                 attention=attention,
                 context=context,
                 store=intelligence_store,
-                # SenseGuard alerts are already classified as guaranteed
-                # attention.  Do not apply the broad SENTRY profile here or
-                # every ordinary HA state observation would trigger cognition.
-                profile=AttentionProfile("phase13.senseguard.v1", ()),
-            ).run_once(household_id=household_id, tools=plugins.list_tools())
+                tools=plugins.list_tools(),
+            )
 
         def resource_name(resource_id: UUID) -> str | None:
             resource = graph.get_node(resource_id)
@@ -1366,7 +1561,7 @@ def build_postgres_core(
             policy_store=alert_policy_store,
             resource_resolver=resolve_resource,
             event_sink=journal,
-            dispatch_attention=dispatch_attention,
+            dispatch_attention_event=dispatch_attention_event,
             dispatch_notification=notification_dispatcher.dispatch,
         )
         automation_router = AutomationEventRouter(
@@ -1382,9 +1577,82 @@ def build_postgres_core(
             journal=journal,
         )
 
+        def presence_continuity() -> tuple[bool, Any]:
+            if ha_adapter is None:
+                return False, None
+            connection = ha_adapter.connection
+            return (
+                connection is not None
+                and connection.connected
+                and ha_adapter.status.last_error_category is None,
+                (id(connection), ha_adapter.status.last_successful_state_sync),
+            )
+
+        def dispatch_presence_event(event: EventEnvelope, position: int) -> None:
+            if event.source != "anima.household_presence" or event.metadata.get(
+                "household_id"
+            ) != str(household_id):
+                raise ValueError("Presence attention requires same-household Core event")
+            profile = AttentionProfile("household.presence.event.v1", ())
+            consumer = f"household-presence:{household_id}:{event.event_id}"
+            attention.prime_consumer_before(profile, consumer, position - 1)
+            SentryAttentionBridge(
+                attention=attention, context=context, store=intelligence_store, profile=profile
+            ).run_once(
+                household_id=household_id,
+                tools=plugins.list_tools(),
+                consumer_name=consumer,
+                limit=1,
+                source_event_id=event.event_id,
+            )
+
+        presence_router = HouseholdPresenceEventRouter(
+            presence_service,
+            household_id,
+            ha_adapter.config.instance_id,
+            continuity=presence_continuity,
+            journal=journal,
+            dispatch=dispatch_presence_event,
+        )
+
+        from anima_ha.ring_events import RingEventRouter
+
+        def dispatch_ring_event(event: EventEnvelope, position: int) -> None:
+            if event.source != "anima.ring" or event.metadata.get("household_id") != str(
+                household_id
+            ):
+                raise ValueError("Ring attention requires same-household Core event")
+            profile = AttentionProfile("household.ring.event.v1", ())
+            consumer = f"household-ring:{household_id}:{event.event_id}"
+            attention.prime_consumer_before(profile, consumer, position - 1)
+            SentryAttentionBridge(
+                attention=attention, context=context, store=intelligence_store, profile=profile
+            ).run_once(
+                household_id=household_id,
+                tools=plugins.list_tools(),
+                consumer_name=consumer,
+                limit=1,
+                source_event_id=event.event_id,
+            )
+
+        def ring_continuity() -> tuple[bool, Any, datetime]:
+            online, epoch = presence_continuity()
+            ready = ha_adapter.status.last_successful_state_sync if ha_adapter is not None else None
+            return online and ready is not None, epoch, ready or datetime.now(UTC)
+
+        ring_router = RingEventRouter(
+            ha_adapter,
+            household_id,
+            journal,
+            continuity=ring_continuity,
+            dispatch=dispatch_ring_event,
+        )
+
         def handle_normalized_event(event: EventEnvelope) -> None:
             router.handle(event)
             automation_router.handle(event)
+            presence_router.handle(event)
+            ring_router.handle(event)
 
         ha_adapter.set_normalized_event_callback(handle_normalized_event)
     return runtime
@@ -1400,4 +1668,5 @@ from anima_ha.ui_api import (  # noqa: E402  # isort: skip
     UICommandError,
     UIEventBroadcaster,
     UIIdentity,
+    device_capability_projection,
 )

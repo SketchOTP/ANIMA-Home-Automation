@@ -4,6 +4,36 @@ This scorecard is a product-planning snapshot, not an acceptance claim. It
 compares the permanent completion goal with the current ANIMA repository and
 the accepted Phase 0–14 evidence.
 
+## 026A owner-runtime correction
+
+The table below remains the earlier implementation inventory, not proof that
+every operation has worked in the owner's household. The 026A deployment now
+has a distinct HA-verified owner household, real inventory, four canonical rooms,
+two room-assigned SenseGuards, and a real UI → scoped Codex helper → ANIMA read
+→ browser result. Fifteen graphical sections use bounded existing API routes.
+
+- MO-02/04/07/08/14: **PARTIAL — real connection and commissioning exercised**.
+  Device late-entity binding/state presentation exposed concrete integration
+  gaps. A normal targeted ZHA reload recovered twelve entities/eight current
+  state entries; a complete physical event/alert loop is not yet proven.
+- MO-03/05: the accepted bounded API/MCP architecture is preserved. It does not
+  imply every management write is already executable by the external worker;
+  `OWNER-VISUAL-CONSOLE-026A.md` lists the UI-only execution-profile gaps.
+- MO-06/13: **PARTIAL — real ephemeral Codex read passed**. The prior HTTP 401
+  attempt is historical negative evidence, not the current authentication gate.
+  Resident SENTRY persona/thread memory/voice remains unqualified. Two later
+  room mutations ended UNKNOWN_RESULT and were not replayed.
+- MO-09: **PARTIAL — provider implementation is not live usefulness**. SearXNG
+  answers its local liveness route, but a synthetic search returned zero results
+  and an unresponsive engine. No working-search claim follows from liveness.
+- MO-11: owner UI, Core tunnel and isolated worker are deployed as services;
+  actual device/notification/voice claims still require their own runtime proof.
+- MO-12/15 remain open. No full A–O or whole-goal completion is claimed.
+
+The current product benchmark remains the owner's real sensor → HA → ANIMA
+Truth/Journal/Attention → visible alert/notification loop, not another broad
+resilience cycle. Historical Phase 15 is not started automatically.
+
 | Objective | Current disposition | Evidence boundary / remaining gap |
 | --- | --- | --- |
 | MO-01 resilience and recovery | ACCEPTED | Phase 14 is accepted; native Pi 5 remains an external hardware gate. |
@@ -22,7 +52,7 @@ the accepted Phase 0–14 evidence.
 | MO-14 zero HA frontend dependency | PARTIAL | Supported bounded workflows are exposed through ANIMA; a final published support-matrix audit remains to be completed. |
 | MO-15 project complete | OPEN | Requires MO-02–MO-14 simultaneously plus final exact-head evidence and owner acceptance. |
 
-## Current product decision
+## Historical product decision — before 026A owner connection
 
 The bounded SENTRY text-delivery increment and the owner-facing backup-restore
 increment are implemented and hosted-qualified as separate goal slices. The

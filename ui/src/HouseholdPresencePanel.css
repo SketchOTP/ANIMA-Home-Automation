@@ -1,0 +1,12 @@
+.presence-panel { padding: var(--card-padding, 1.2rem); border: 1px solid var(--border, #38303f); border-radius: 1rem; background: var(--panel, #101014); }
+.presence-panel > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.presence-panel h2, .presence-panel h3 { margin-top: 0; }
+.presence-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1rem; margin: 1rem 0; }
+.presence-cards article { padding: 1rem; border: 1px solid var(--border, #38303f); border-radius: .75rem; min-width: 0; overflow-wrap: anywhere; }
+.presence-cards strong { color: var(--accent, #bd49ff); }
+.presence-cards small { display: block; margin-top: .35rem; }
+.presence-panel form { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); align-items: end; }
+.presence-panel label { display: grid; gap: .35rem; min-width: 0; }
+.presence-panel input, .presence-panel select { width: 100%; min-width: 0; }
+.presence-panel button { min-height: 44px; }
+.presence-caveat, .presence-setup { line-height: 1.5; max-width: 80ch; }

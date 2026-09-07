@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
 
-from anima_ha.events import ObservationState
+from anima_ha.events import ObservationState, TruthObservation
 from anima_ha.graph import (
     CanonicalNode,
     NodeKind,
@@ -39,6 +39,7 @@ from anima_ha.plugins import (
     SecretBroker,
 )
 from anima_ha.policy import Assurance, IdentityContext, PolicyService, RequestOrigin
+from anima_ha.truth import InMemoryTruthState, TruthStatus
 
 NOW = datetime(2026, 8, 29, 18, 0, tzinfo=UTC)
 
@@ -47,12 +48,18 @@ class FakeReality:
     def __init__(self) -> None:
         self.events: list[Any] = []
         self.ids: set[str] = set()
+        self.projection = InMemoryTruthState()
 
     def ingest(self, event: Any, *, project: bool = True) -> tuple[Any, None]:
-        if event.event_id not in self.ids:
+        deduplicated = event.event_id in self.ids
+        if not deduplicated:
             self.events.append(event)
             self.ids.add(event.event_id)
-        return SimpleNamespace(deduplicated=event.event_id in self.ids), None
+            if project and event.event_type == "truth.observation":
+                self.projection.add(
+                    TruthObservation.from_payload(event.payload, event_id=event.event_id)
+                )
+        return SimpleNamespace(deduplicated=deduplicated), None
 
 
 class FakeStore:
@@ -211,6 +218,26 @@ def snapshot(states: tuple[dict[str, Any], ...] | None = None) -> HADiscoverySna
     )
 
 
+def presence_snapshot() -> HADiscoverySnapshot:
+    return HADiscoverySnapshot(
+        version="2026.8.2",
+        config={"version": "2026.8.2"},
+        states=(state("binary_sensor.hall_presence", "off"),),
+        services={"zha": {"permit": {}}},
+        areas=({"area_id": "lab", "name": "Mutable Lab"},),
+        devices=({"id": "presence-device", "name": "ZHA Presence", "area_id": "lab"},),
+        entities=(
+            {
+                "entity_id": "binary_sensor.hall_presence",
+                "device_id": "presence-device",
+                "area_id": "lab",
+                "platform": "zha",
+                "device_class": "presence",
+            },
+        ),
+    )
+
+
 class FakeConnection:
     def __init__(
         self,
@@ -344,6 +371,141 @@ def test_refresh_inventory_projects_opaque_device_handles(
     )
     assert "external_id" not in item
     assert "device_id" not in item
+
+
+def test_inspect_discovered_device_verifies_bounded_semantics_without_provider_ids(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    door = state("binary_sensor.front_door", "on")
+    door["attributes"] = {
+        **door["attributes"],
+        "friendly_name": "Front Door",
+        "device_class": "door",
+    }
+    temperature = state("sensor.entry_temperature", "21.5")
+    temperature["attributes"] = {
+        **temperature["attributes"],
+        "friendly_name": "Entry Temperature",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C",
+    }
+    unclassified = state("sensor.unknown_value", "7")
+    discovery = replace(
+        snapshot(states=(door, temperature, unclassified)),
+        devices=(
+            {
+                "id": "ha-device",
+                "name": "Provider Device",
+                "manufacturer": "Acme",
+                "model": "Sensor Hub",
+                "area_id": "lab",
+            },
+        ),
+        entities=(
+            {
+                "entity_id": "binary_sensor.front_door",
+                "device_id": "ha-device",
+                "platform": "zha",
+            },
+            {
+                "entity_id": "sensor.entry_temperature",
+                "device_id": "ha-device",
+                "platform": "zha",
+            },
+            {
+                "entity_id": "sensor.unknown_value",
+                "device_id": "ha-device",
+                "platform": "zha",
+            },
+        ),
+    )
+    adapter.start(FakeConnection(initial=discovery))
+    plugin = HomeAssistantPlugin(adapter, lambda token: FakeConnection())
+
+    handle = inventory_handle(adapter.config.instance_id, "device", "ha-device")
+    result = plugin.invoke_for_household("inspect_device", {"device_handle": handle}, 5.0, uuid4())
+
+    assert result["status"] == "SUCCEEDED"
+    assert result["device_handle"] == handle
+    assert result["identity"] == {
+        "name": "Provider Device",
+        "manufacturer": "Acme",
+        "model": "Sensor Hub",
+    }
+    assert [item["type"] for item in result["capabilities"]] == [
+        "opening.state",
+        "temperature.read",
+        "state.read",
+    ]
+    assert [item["semantic_verification"] for item in result["capabilities"]] == [
+        "VERIFIED",
+        "VERIFIED",
+        "GENERIC_FALLBACK",
+    ]
+    assert result["semantic_verification"] == {
+        "status": "PARTIAL",
+        "verified_count": 2,
+        "capability_count": 3,
+    }
+    assert result["capabilities"][0]["state_status"] == "OBSERVED"
+    assert result["capabilities"][0]["device_class"] == "door"
+    assert result["capabilities"][1]["observed_state"] == "21.5"
+    rendered = json_text(result)
+    assert "ha-device" not in rendered
+    assert "binary_sensor.front_door" not in rendered
+
+
+def test_voice_presence_onboarding_qualifies_only_zha_presence_and_reuses_commissioning(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    _adapter, _graph, _reality, _store = adapter_parts
+    instance_id = uuid4()
+    config = HAInstanceConfig(
+        instance_id,
+        "ws://home-assistant.test/api/websocket",
+        "ANIMA_HA_TOKEN",
+        ssl=False,
+        verification_timeout=0.01,
+    )
+    graph = CommissioningGraph(str(instance_id), uuid4(), uuid4())
+    reality, store = FakeReality(), FakeStore()
+    adapter = HomeAssistantAdapter(config, reality, graph, store)  # type: ignore[arg-type]
+    connection = FakeConnection(initial=presence_snapshot())
+    adapter.start(connection)
+    plugin = HomeAssistantPlugin(adapter, lambda token: connection)
+    handle = inventory_handle(instance_id, "device", "presence-device")
+
+    inspected = plugin.invoke_for_household(
+        "inspect_zigbee_presence_device", {"device_handle": handle}, 5.0, graph.household_id
+    )
+    assert inspected["classification"] == "ZIGBEE_PRESENCE_SENSOR"
+    assert inspected["presence_entity_count"] == 1
+    assert inspected["event_type"] == "presence.detected"
+    assert "binary_sensor.hall_presence" not in json_text(inspected)
+
+    commissioned = plugin.invoke_for_household(
+        "commission_zigbee_presence_sensor",
+        {"device_handle": handle, "name": "Hall Presence", "place_id": str(graph.place_id)},
+        5.0,
+        graph.household_id,
+    )
+    assert commissioned["entity_count"] == 1
+    assert commissioned["place_id"] == str(graph.place_id)
+    assert connection.data_calls == []
+
+
+def test_voice_presence_onboarding_rejects_non_presence_discovery(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _graph, _reality, _store = adapter_parts
+    adapter.start(FakeConnection())
+    plugin = HomeAssistantPlugin(adapter, lambda token: FakeConnection())
+    handle = inventory_handle(adapter.config.instance_id, "device", "ha-device")
+    with pytest.raises(PluginValidationError, match="ZIGBEE_PRESENCE_SENSOR_NOT_FOUND"):
+        plugin.invoke_for_household(
+            "inspect_zigbee_presence_device", {"device_handle": handle}, 5.0, uuid4()
+        )
 
 
 def test_snapshot_idempotency_and_buffered_newer_event(
@@ -554,6 +716,9 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
         "start_zha_setup",
         "continue_zha_setup",
         "permit_zigbee_join",
+        "inspect_device",
+        "inspect_zigbee_presence_device",
+        "commission_zigbee_presence_sensor",
         "commission_device",
         "rename_device",
         "reassign_device",
@@ -655,6 +820,85 @@ def test_pairing_window_uses_bounded_internal_zha_service(
     adapter.start(connection)
     assert adapter.permit_zigbee_join(999)["duration_seconds"] == 120
     assert connection.data_calls == [("zha", "permit", {"duration": 120})]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("off", TruthStatus.STALE),
+        ("unknown", TruthStatus.UNKNOWN),
+        ("unavailable", TruthStatus.UNAVAILABLE),
+    ],
+)
+def test_late_truth_binding_preserves_evidence_and_deduplicates(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+    value: str,
+    expected: TruthStatus,
+) -> None:
+    adapter, graph, reality, _ = adapter_parts
+    entity_id = "binary_sensor.senseguard_contact"
+    raw = state(entity_id, value)
+    original = adapter.normalize_state_event(raw)
+    reality.ingest(original)
+    original_payload = dict(original.payload)
+    target = CanonicalNode(uuid4(), NodeKind.CAPABILITY, "Contact")
+    graph.mapped[("entity", entity_id)] = target
+    callbacks: list[Any] = []
+    adapter.set_normalized_event_callback(callbacks.append)
+
+    # The unchanged snapshot is still the same event, even after mapping.
+    remapped = adapter.normalize_state_event(raw, snapshot=True)
+    assert remapped.event_id == original.event_id
+    assert remapped.source_event_id == original.source_event_id
+    assert reality.ingest(remapped)[0].deduplicated
+    canonical_key = adapter._truth_key(entity_id)
+    assert reality.projection.get(canonical_key).status == TruthStatus.UNKNOWN
+
+    adapter.seed_commissioned_truth(entity_id)
+    adapter.seed_commissioned_truth(entity_id)
+    assert len(reality.events) == 2
+    assert reality.events[0].payload == original_payload
+    attributed = reality.events[1]
+    assert attributed.causation_id == original.event_id
+    assert attributed.event_id != original.event_id
+    assert attributed.occurred_at == original.occurred_at
+    assert attributed.payload["metadata"]["binding_source_event_id"] == original.event_id
+    for field in (
+        "observed_at",
+        "received_at",
+        "freshness_seconds",
+        "source",
+        "state",
+        "value",
+        "confidence",
+        "evidence_kind",
+    ):
+        assert attributed.payload[field] == original.payload[field]
+    expired_at = NOW + timedelta(seconds=adapter.config.freshness_seconds + 1)
+    assert reality.projection.get(canonical_key, now=expired_at).status == expected
+    assert callbacks == []
+
+    # A genuinely newer provider event wins; replay cannot roll it back.
+    later = adapter.normalize_state_event(
+        state(entity_id, "on", (expired_at + timedelta(seconds=1)).isoformat())
+    )
+    reality.ingest(later)
+    adapter.seed_commissioned_truth(entity_id)
+    current = reality.projection.get(canonical_key, now=later.occurred_at)
+    assert current.status == TruthStatus.CURRENT_KNOWN
+    assert current.value == "on"
+    assert current.last_observed_at == later.occurred_at
+    assert len(reality.events) == 3
+
+
+def test_truth_binding_without_provider_observation_invents_nothing(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, graph, reality, _ = adapter_parts
+    entity_id = "sensor.no_state"
+    graph.mapped[("entity", entity_id)] = CanonicalNode(uuid4(), NodeKind.CAPABILITY, "No state")
+    adapter.seed_commissioned_truth(entity_id)
+    assert reality.events == []
 
 
 def test_discovered_device_commissions_from_registry_into_canonical_graph(

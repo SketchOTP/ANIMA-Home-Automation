@@ -66,6 +66,24 @@ HA_IMAGE = (
     "sha256:56690a89c79a0de98035e1719f8324a92d5859c1192ff45adb0230ea81cb42a5"
 )
 
+_CONTACT_DEVICE_CLASSES = frozenset({"door", "window", "opening"})
+_MEASUREMENT_DEVICE_CLASSES = frozenset(
+    {
+        "temperature",
+        "humidity",
+        "illuminance",
+        "pressure",
+        "atmospheric_pressure",
+        "carbon_dioxide",
+        "carbon_monoxide",
+        "pm1",
+        "pm10",
+        "pm25",
+        "moisture",
+    }
+)
+_POWER_DOMAINS = frozenset({"input_boolean", "light", "switch"})
+
 
 class HAAdapterError(RuntimeError):
     """Base exception for bounded adapter failures."""
@@ -134,7 +152,32 @@ def _bounded_attributes(value: Any) -> dict[str, Any]:
         "icon",
         "supported_features",
     }
-    return {key: attributes[key] for key in sorted(allowed & attributes.keys())}
+    result = {key: attributes[key] for key in sorted(allowed & attributes.keys())}
+    # Preserve bounded HA 2026.9 Ring event kinds, never arbitrary event payloads.
+    # Ring routing still requires platform and canonical provider qualification.
+    event_type = attributes.get("event_type")
+    if isinstance(event_type, str) and event_type in {"ring", "motion", "intercom_unlock"}:
+        result["event_type"] = event_type
+    return result
+
+
+def _semantic_capability(entity_id: str, attributes: dict[str, Any]) -> tuple[str, bool]:
+    """Classify only semantic capabilities ANIMA can currently verify.
+
+    The boolean distinguishes a known bounded semantic from the safe generic
+    state fallback.  It is deliberately based on HA's domain/device_class,
+    never on a device name or manufacturer guess.
+    """
+
+    domain = entity_id.split(".", 1)[0] if "." in entity_id else ""
+    device_class = attributes.get("device_class")
+    if domain in _POWER_DOMAINS:
+        return "power.set", True
+    if domain == "binary_sensor" and device_class in _CONTACT_DEVICE_CLASSES:
+        return "opening.state", True
+    if domain == "sensor" and device_class in _MEASUREMENT_DEVICE_CLASSES:
+        return f"{device_class}.read", True
+    return "state.read", False
 
 
 @dataclass(frozen=True, slots=True)
@@ -448,6 +491,35 @@ class HassClientConnection:
             (state for state in snapshot.states if state.get("entity_id") == entity_id), None
         )
 
+    async def _presence_source_kind_async(self, entity_id: str) -> str | None:
+        if self._client is None or not entity_id.startswith("device_tracker."):
+            return None
+        entry = _json(await self._client.get_entity_registry_entry(entity_id))
+        # Exact registry/get includes options; a sparse list entry cannot prove
+        # that the associated zone uses HA's home default.
+        if entry.get("entity_id") != entity_id or entry.get("disabled_by"):
+            return None
+        options = entry.get("options")
+        tracker = options.get("device_tracker", {}) if isinstance(options, dict) else None
+        if (
+            not isinstance(tracker, dict)
+            or tracker.get("associated_zone", "zone.home") != "zone.home"
+        ):
+            return None
+        for state in await self._client.get_states():
+            if isinstance(state, dict) and state.get("entity_id") == entity_id:
+                attributes = state.get("attributes")
+                kind = attributes.get("source_type") if isinstance(attributes, dict) else None
+                return kind if isinstance(kind, str) and kind in {"gps", "router"} else None
+        return None
+
+    def presence_source_kind(self, entity_id: str) -> str | None:
+        """Private fixed-purpose HA read; never returns registry/network data."""
+        return cast(
+            str | None,
+            self._submit(self._presence_source_kind_async(entity_id), self.config.command_timeout),
+        )
+
     async def _ping_async(self) -> None:
         if self._client is None:
             raise HAAdapterError("Home Assistant client is not started")
@@ -489,12 +561,14 @@ class HassClientConnection:
             return cast(dict[str, Any], value)
 
     def start_config_flow(self, handler: str) -> dict[str, Any]:
-        if handler != "zha":
-            raise HAAdapterError("only the bounded ZHA setup flow is supported")
+        if handler not in {"zha", "ring"}:
+            raise HAAdapterError("only bounded ZHA and Ring setup flows are supported")
         return cast(
             dict[str, Any],
             self._submit(
-                self._post_config_flow_async("/api/config/config_entries/flow", {"handler": "zha"}),
+                self._post_config_flow_async(
+                    "/api/config/config_entries/flow", {"handler": handler}
+                ),
                 self.config.command_timeout,
             ),
         )
@@ -508,6 +582,30 @@ class HassClientConnection:
                 self._post_config_flow_async(
                     f"/api/config/config_entries/flow/{flow_id}",
                     {"user_input": user_input},
+                ),
+                self.config.command_timeout,
+            ),
+        )
+
+    def continue_ring_config_flow(self, flow_id: str, user_input: dict[str, Any]) -> dict[str, Any]:
+        """HA 2026.9 FlowManagerResourceView takes the form fields directly.
+
+        UI-only Ring wrapper owns flow scope; no plugin/MCP credential tool.
+        Existing ZHA continuation is intentionally unchanged.
+        """
+        if (
+            not flow_id
+            or len(flow_id) > 128
+            or not all(char.isascii() and (char.isalnum() or char in "-_") for char in flow_id)
+        ):
+            raise HAAdapterError("invalid Ring configuration flow reference")
+        if set(user_input) not in ({"username", "password"}, {"2fa"}):
+            raise HAAdapterError("invalid Ring configuration fields")
+        return cast(
+            dict[str, Any],
+            self._submit(
+                self._post_config_flow_async(
+                    f"/api/config/config_entries/flow/{flow_id}", user_input
                 ),
                 self.config.command_timeout,
             ),
@@ -709,9 +807,28 @@ class HomeAssistantAdapter:
                 "manufacturer",
                 "model",
             },
-            "entity": {"name", "original_name", "device_id", "area_id", "platform", "disabled_by"},
+            "entity": {
+                "name",
+                "original_name",
+                "device_id",
+                "area_id",
+                "platform",
+                "device_class",
+                "disabled_by",
+            },
         }[kind]
         metadata = {key: item.get(key) for key in sorted(metadata_keys) if key in item}
+        if kind == "entity" and external_id.startswith("device_tracker."):
+            # HA scanner trackers may associate with a zone other than home.
+            # Persist only the qualified boolean, not registry options, network
+            # identifiers or coordinates, for the Core presence classifier.
+            options = item.get("options", {})
+            tracker = options.get("device_tracker", {}) if isinstance(options, dict) else None
+            metadata["presence_home_zone_qualified"] = (
+                "options" in item
+                and isinstance(tracker, dict)
+                and tracker.get("associated_zone", "zone.home") == "zone.home"
+            )
         if kind == "device":
             # Older HA snapshots exposed config_entries as a list. Preserve a
             # deterministic singular projection when the new field is absent.
@@ -745,6 +862,52 @@ class HomeAssistantAdapter:
         if target is not None:
             return f"state/{target.kind.value.casefold()}/{target.canonical_id}/value"
         return f"provider/{PROVIDER}/{self.config.provider_scope}/entity/{entity_id}/state"
+
+    def seed_commissioned_truth(self, entity_id: str) -> None:
+        """Attribute existing provider evidence to an explicitly commissioned binding.
+
+        A snapshot ingested before commissioning already owns its journal ID.
+        Re-ingesting it after mapping cannot change that immutable payload. Append
+        a separate, deterministic attribution through the ordinary projection,
+        retaining the original observation's age, source and uncertainty. This
+        is not a new physical observation and does not rewrite provider history.
+        """
+        provider_key = f"provider/{PROVIDER}/{self.config.provider_scope}/entity/{entity_id}/state"
+        canonical_key = self._truth_key(entity_id)
+        if canonical_key == provider_key:
+            return
+        source = f"provider:{PROVIDER}:{self.config.provider_scope}:{entity_id}"
+        for observation in self.reality.projection.get(provider_key).observations:
+            if observation.source != source or observation.event_id is None:
+                continue
+            attribution = {
+                "binding_attribution": True,
+                "binding_source_event_id": observation.event_id,
+                "binding_source_truth_key": provider_key,
+            }
+            bound = replace(
+                observation,
+                truth_key=canonical_key,
+                metadata=observation.metadata | attribution,
+            )
+            identity = f"ha-truth-binding:{observation.event_id}:{canonical_key}"
+            _, projected = self.reality.ingest(
+                EventEnvelope.create(
+                    event_id=str(uuid5(NAMESPACE_URL, identity)),
+                    event_type="truth.observation",
+                    source=f"provider:{PROVIDER}:{self.config.provider_scope}",
+                    source_event_id=identity,
+                    subject_key=canonical_key,
+                    occurred_at=observation.observed_at,
+                    causation_id=observation.event_id,
+                    payload=bound.to_payload(),
+                    confidence=observation.confidence,
+                    evidence_kind=observation.evidence_kind,
+                    metadata=attribution,
+                )
+            )
+            if projected is not None and projected.failure is not None:
+                raise HAAdapterError("canonical Truth binding projection failed")
 
     def normalize_state_event(
         self, state: dict[str, Any], *, snapshot: bool = False
@@ -1087,6 +1250,116 @@ class HomeAssistantAdapter:
                 }
             )
         return result
+
+    def _device_entity_records(
+        self, device_id: str
+    ) -> list[tuple[dict[str, Any], dict[str, Any] | None]]:
+        """Return current private entity/state pairs for trusted plugin use."""
+
+        connection = self.connection
+        if connection is None or not connection.connected:
+            raise HAAdapterError("Home Assistant is offline")
+        snapshot = connection.snapshot()
+        if snapshot.version != self.config.expected_version:
+            raise HAAdapterError(
+                f"Home Assistant version mismatch: expected={self.config.expected_version} "
+                f"observed={snapshot.version}"
+            )
+        states = {
+            str(item.get("entity_id")): item for item in snapshot.states if item.get("entity_id")
+        }
+        return [
+            (
+                item,
+                states.get(str(item.get("external_id"))),
+            )
+            for item in self.provider_inventory()
+            if item.get("external_object_kind") == "entity"
+            and bool(item.get("present"))
+            and str(dict(item.get("metadata") or {}).get("device_id", "")) == device_id
+        ]
+
+    def inspect_device(self, device_handle: str) -> dict[str, Any]:
+        """Identify one discovered device and verify bounded semantics read-only."""
+
+        device_id = self.resolve_device_handle(device_handle)
+        if device_id is None:
+            raise HAAdapterError("discovered Home Assistant device handle is unavailable")
+        device = next(
+            (
+                item
+                for item in self.provider_inventory()
+                if item.get("external_object_kind") == "device"
+                and str(item.get("external_id")) == device_id
+                and bool(item.get("present"))
+            ),
+            None,
+        )
+        if device is None:
+            raise HAAdapterError("discovered Home Assistant device is unavailable")
+        metadata = dict(device.get("metadata") or {})
+        records = self._device_entity_records(device_id)
+        capabilities: list[dict[str, Any]] = []
+        for item, state in records:
+            entity_id = str(item.get("external_id", ""))
+            attributes = _bounded_attributes((state or {}).get("attributes"))
+            capability_type, semantic_verified = _semantic_capability(entity_id, attributes)
+            raw_state = state.get("state") if state is not None else None
+            state_status = (
+                "UNKNOWN"
+                if raw_state is None or str(raw_state).casefold() == "unknown"
+                else "UNAVAILABLE"
+                if str(raw_state).casefold() == "unavailable"
+                else "OBSERVED"
+            )
+            entity_metadata = dict(item.get("metadata") or {})
+            capabilities.append(
+                {
+                    "label": str(
+                        entity_metadata.get("name")
+                        or entity_metadata.get("original_name")
+                        or capability_type
+                    )[:120],
+                    "type": capability_type,
+                    "semantic_verification": (
+                        "VERIFIED" if semantic_verified else "GENERIC_FALLBACK"
+                    ),
+                    "readable": True,
+                    "writable": capability_type == "power.set",
+                    "state_status": state_status,
+                    "observed_state": raw_state,
+                    "observed_at": state.get("last_updated") if state is not None else None,
+                    **(
+                        {"device_class": attributes["device_class"]}
+                        if isinstance(attributes.get("device_class"), str)
+                        else {}
+                    ),
+                }
+            )
+        verified = sum(item["semantic_verification"] == "VERIFIED" for item in capabilities)
+        verification_status = (
+            "UNVERIFIED"
+            if not capabilities or not verified
+            else "VERIFIED"
+            if verified == len(capabilities)
+            else "PARTIAL"
+        )
+        return {
+            "status": "SUCCEEDED",
+            "operation": "inspect_home_device",
+            "device_handle": device_handle,
+            "identity": {
+                key: metadata[key]
+                for key in ("name", "name_by_user", "manufacturer", "model")
+                if metadata.get(key) is not None
+            },
+            "capabilities": capabilities,
+            "semantic_verification": {
+                "status": verification_status,
+                "verified_count": verified,
+                "capability_count": len(capabilities),
+            },
+        }
 
     def permit_zigbee_join(self, duration_seconds: int) -> dict[str, Any]:
         """Open a bounded ZHA pairing window through the configured HA instance."""
@@ -1466,6 +1739,43 @@ class HomeAssistantPlugin:
         ):
             raise PluginValidationError("destination is not in the commissioned household")
 
+    def _presence_sensor_entities(self, device_id: str) -> list[dict[str, Any]]:
+        """Return only live ZHA binary sensors with a presence semantic class."""
+        return [
+            item
+            for item in self.adapter.provider_inventory()
+            if item.get("external_object_kind") == "entity"
+            and bool(item.get("present"))
+            and str(item.get("external_id", "")).startswith("binary_sensor.")
+            and str(dict(item.get("metadata") or {}).get("device_id", "")) == device_id
+            and str(dict(item.get("metadata") or {}).get("platform", "")) == "zha"
+            and str(dict(item.get("metadata") or {}).get("device_class", ""))
+            in {"presence", "occupancy"}
+        ]
+
+    def _resolve_presence_sensor(
+        self, device_handle: str
+    ) -> tuple[str, dict[str, Any], list[dict[str, Any]]]:
+        device_id = self.adapter.resolve_device_handle(device_handle)
+        if device_id is None:
+            raise PluginValidationError("discovered Home Assistant device handle is unavailable")
+        device = next(
+            (
+                item
+                for item in self.adapter.provider_inventory()
+                if item.get("external_object_kind") == "device"
+                and str(item.get("external_id")) == device_id
+                and bool(item.get("present"))
+            ),
+            None,
+        )
+        if device is None:
+            raise PluginValidationError("discovered Home Assistant device is unavailable")
+        entities = self._presence_sensor_entities(device_id)
+        if not entities:
+            raise PluginValidationError("ZIGBEE_PRESENCE_SENSOR_NOT_FOUND")
+        return device_id, device, entities
+
     def invoke_with_invocation_context(
         self,
         name: str,
@@ -1506,18 +1816,53 @@ class HomeAssistantPlugin:
                 "household_id": str(household_id),
                 "items": self.adapter.public_device_inventory(),
             }
+        if name == "inspect_device":
+            del timeout, household_id
+            return self.adapter.inspect_device(str(arguments["device_handle"]))
+        if name == "inspect_zigbee_presence_device":
+            del timeout, household_id
+            _device_id, device, entities = self._resolve_presence_sensor(
+                str(arguments["device_handle"])
+            )
+            metadata = dict(device.get("metadata") or {})
+            return {
+                "status": "READY",
+                "device_handle": str(arguments["device_handle"]),
+                "classification": "ZIGBEE_PRESENCE_SENSOR",
+                "device": {
+                    key: metadata[key]
+                    for key in ("name", "name_by_user", "manufacturer", "model")
+                    if key in metadata
+                },
+                "presence_entity_count": len(entities),
+                "event_type": "presence.detected",
+                "next_operations": [
+                    "commission_zigbee_presence_sensor",
+                    "save_spoken_presence_policy",
+                ],
+            }
         if name == "permit_zigbee_join":
             return self.adapter.permit_zigbee_join(int(arguments["duration_seconds"]))
+        if name == "commission_zigbee_presence_sensor":
+            device_handle = str(arguments["device_handle"])
+            device_id, _device, _entities = self._resolve_presence_sensor(device_handle)
+            return self._commission_device(
+                household_id,
+                device_id,
+                str(arguments["name"]),
+                UUID(str(arguments["place_id"])),
+                device_handle,
+            )
         if name == "commission_device":
             device_handle = str(arguments["device_handle"])
-            device_id = self.adapter.resolve_device_handle(device_handle)
-            if device_id is None:
+            generic_device_id = self.adapter.resolve_device_handle(device_handle)
+            if generic_device_id is None:
                 raise PluginValidationError(
                     "discovered Home Assistant device handle is unavailable"
                 )
             return self._commission_device(
                 household_id,
-                device_id,
+                generic_device_id,
                 str(arguments["name"]),
                 UUID(str(arguments["place_id"])),
                 device_handle,
@@ -1596,13 +1941,9 @@ class HomeAssistantPlugin:
         )
         if device is None:
             raise PluginValidationError("discovered Home Assistant device is unavailable")
-        entities = [
-            item
-            for item in inventory
-            if item.get("external_object_kind") == "entity"
-            and bool(item.get("present"))
-            and str(dict(item.get("metadata") or {}).get("device_id", "")) == device_id
-        ]
+        entity_records = self.adapter._device_entity_records(device_id)
+        entities = [item for item, _state in entity_records]
+        entity_states = {str(item.get("external_id")): state for item, state in entity_records}
         resource_id = uuid5(
             NAMESPACE_URL,
             f"anima://home-assistant/{self.adapter.config.provider_scope}/device/{device_id}",
@@ -1658,6 +1999,10 @@ class HomeAssistantPlugin:
             domain = entity_id.split(".", 1)[0]
             writable = domain in {"input_boolean", "light", "switch"}
             capability_type = "power.set" if writable else "state.read"
+            entity_attributes = _bounded_attributes(
+                (entity_states.get(entity_id) or {}).get("attributes")
+            )
+            semantic_type, semantic_verified = _semantic_capability(entity_id, entity_attributes)
             nodes.append(
                 CanonicalNode(
                     capability_id,
@@ -1668,6 +2013,15 @@ class HomeAssistantPlugin:
                         "readable": True,
                         "writable": writable,
                         "provider_entity_id": entity_id,
+                        "semantic_capability": semantic_type,
+                        "semantic_verification": (
+                            "VERIFIED" if semantic_verified else "GENERIC_FALLBACK"
+                        ),
+                        **(
+                            {"provider_device_class": entity_attributes["device_class"]}
+                            if isinstance(entity_attributes.get("device_class"), str)
+                            else {}
+                        ),
                     },
                 )
             )
@@ -1717,12 +2071,17 @@ class HomeAssistantPlugin:
             )
         )
         self.adapter.reconcile()
+        for item in entities:
+            self.adapter.seed_commissioned_truth(str(item["external_id"]))
+        inspection = self.adapter.inspect_device(device_handle)
         return {
             "resource_id": str(resource_id),
             "device_handle": device_handle,
             "place_id": str(place_id),
             "entity_count": len(entities),
             "power_capability_count": capabilities,
+            "capabilities": inspection["capabilities"],
+            "semantic_verification": inspection["semantic_verification"],
             "commission": {
                 "created_nodes": result.created_nodes,
                 "created_relationships": result.created_relationships,
@@ -1800,6 +2159,28 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
         "additionalProperties": False,
     }
     commission_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["device_handle", "name", "place_id"],
+        "properties": {
+            "device_handle": id_schema,
+            "name": {"type": "string", "minLength": 1, "maxLength": 120},
+            "place_id": id_schema,
+        },
+        "additionalProperties": False,
+    }
+    inspect_presence_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["device_handle"],
+        "properties": {"device_handle": id_schema},
+        "additionalProperties": False,
+    }
+    inspect_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["device_handle"],
+        "properties": {"device_handle": id_schema},
+        "additionalProperties": False,
+    }
+    commission_presence_schema: dict[str, Any] = {
         "type": "object",
         "required": ["device_handle", "name", "place_id"],
         "properties": {
@@ -1902,6 +2283,46 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                 "input_schema": permit_schema,
                 "output_schema": {"type": "object"},
                 "semantic_action": "permit_zigbee_join",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "inspect_device",
+                "description": (
+                    "Identify one discovered Home Assistant device and verify its bounded "
+                    "semantic capabilities"
+                ),
+                "input_schema": inspect_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "inspect_home_assistant_discovery",
+                "risk_class": "READ_ONLY",
+                "read_only": True,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "inspect_zigbee_presence_device",
+                "description": (
+                    "Verify that one discovered ZHA device exposes a presence binary sensor"
+                ),
+                "input_schema": inspect_presence_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "inspect_home_assistant_discovery",
+                "risk_class": "READ_ONLY",
+                "read_only": True,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "commission_zigbee_presence_sensor",
+                "description": (
+                    "Commission one discovered ZHA presence sensor into an existing room"
+                ),
+                "input_schema": commission_presence_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "commission_home_device",
                 "risk_class": "LOW_RISK_HOME_CONTROL",
                 "read_only": False,
                 "idempotency": "IDEMPOTENT",

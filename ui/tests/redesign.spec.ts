@@ -1,9 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
 
 // Browser contract fixtures: these tests do not claim a live household connection.
 const widgets = ["status", "presence", "weather", "agenda", "tasks", "controls", "conversation", "activity", "household", "reports", "health"];
 const settings = { version: 1, appearance: "night", accent: "ember", density: "comfortable", reduced_motion: true, text_scale: "normal", display_mode: "desktop", visible_widgets: widgets, widget_order: widgets };
-const nav = ["Home", "Devices", "Spaces", "Scenes", "Automations", "Alerts", "Notifications", "Anima", "Tasks & Calendar", "Activity", "Capabilities", "Integrations", "Backups", "Preferences", "Settings"];
+const nav = ["Home", "Devices", "Spaces", "Scenes", "Automations", "Routines", "Alerts", "Notifications", "Anima", "Tasks & Calendar", "Activity", "Capabilities", "Integrations", "Backups", "Preferences", "Settings"];
 const home = {
   household: { name: "UI contract household", status: "CURRENT", summary: "Fixture household" },
   security: { status: "UNKNOWN", label: "Unknown" }, presence: { people: [] }, weather: { status: "UNAVAILABLE", summary: "No weather observation" },
@@ -28,6 +30,7 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
     }
     if (path === "/api/v1/connection" && connection === null) { await route.fulfill({ status: 503, json: { detail: "UNAVAILABLE" } }); return; }
     const data: Record<string, unknown> = {
+      "/api/v1/family-routines": { items: [], next_cursor: null, members: [], places: [], can_edit: false },
       "/api/v1/setup/status": { state: "SETUP_REQUIRED", available: true },
       "/api/v1/bootstrap": { identity: { display_name: "Fixture", assurance: "OWNER" }, household: home.household, theme: settings, layout: settings, csrf_token: "fixture-csrf" },
       "/api/v1/home": home, "/api/v1/settings": { settings },
@@ -43,15 +46,16 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
   await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
   return writes;
 }
-test("each section opens an editable assistant draft without sending", async ({ page }) => {
+test("assistant shortcuts show voice suggestions without sending", async ({ page }) => {
   const writes = await fixture(page);
-  for (const section of nav) {
+  for (const section of nav.filter(name => name !== "Routines")) {
     await page.getByRole("navigation").getByRole("button", { name: section, exact: true }).click();
     const actions = page.getByLabel(`Assistant quick actions for ${section}`);
     await actions.getByRole("button").first().click();
-    await expect(page.getByRole("heading", { name: "Talk with Anima" })).toBeVisible();
-    await expect(page.getByLabel("Message Anima")).not.toHaveValue("");
-    await expect(page.getByLabel("Message Anima")).toBeFocused();
+    await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
+    await expect(page.getByLabel("Message Anima")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeFocused();
+    await expect(page.getByText("Suggestion only — nothing has been sent.")).toBeVisible();
     expect(writes).toHaveLength(0);
   }
 });
@@ -88,6 +92,127 @@ test("device filters preserve explicit power payloads and observed selection", a
   await page.getByLabel("Filter by room").selectOption("study");
   await expect(page.locator(".device-grid .device-row")).toHaveCount(1);
 });
+for (const source of ["projection", "rooms fallback"]) {
+  test(`canonical ${source} name replaces stale provider labels in devices manage and alerts`, async ({ page }) => {
+    const writes = await fixture(page);
+    const canonicalName = "Kitchen SenseGuard";
+    await page.route("**/api/v1/devices", route => route.fulfill({ json: { items: [{
+      ...device("lamp", "Old Basement provider name", true),
+      ...(source === "projection" ? { canonical_name: canonicalName } : {}),
+      metadata: { name: "Old Basement provider name", name_by_user: "Old Basement override", mapping_status: "MAPPED", canonical_target_id: "lamp" },
+    }] } }));
+    await page.route("**/api/v1/home", route => route.fulfill({ json: { ...home, rooms: [{ ...home.rooms[0], devices: [{ ...home.rooms[0].devices[0], name: source === "projection" ? "Older canonical snapshot" : canonicalName }] }] } }));
+    await page.reload();
+    await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
+    await expect(page.locator(".device-row strong")).toHaveText(canonicalName);
+    await page.getByLabel("Search devices").fill("Kitchen");
+    await expect(page.locator(".device-row")).toHaveCount(1);
+    await page.getByRole("button", { name: "Manage", exact: true }).click();
+    await expect(page.getByLabel("Display name", { exact: true })).toHaveValue(canonicalName);
+    await page.getByRole("button", { name: "Save device", exact: true }).click();
+    await expect.poll(() => writes.length).toBe(2);
+    expect(writes).toEqual([
+      { path: "/api/v1/devices/rename", body: { payload: { resource_id: "lamp", name: canonicalName } } },
+      { path: "/api/v1/devices/reassign", body: { payload: { resource_id: "lamp", place_id: "study" } } },
+    ]);
+    await page.getByRole("navigation").getByRole("button", { name: "Alerts", exact: true }).click();
+    await expect(page.getByRole("option", { name: canonicalName, exact: true })).toHaveAttribute("value", "lamp");
+    await expect(page.getByRole("option", { name: /Old Basement/ })).toHaveCount(0);
+  });
+}
+
+test("stale contact keeps historical report separate from current state and collapses diagnostics", async ({ page }, testInfo) => {
+  await fixture(page, { configured: true, connected: true, state: "ONLINE", can_connect: true, setup_required: false, household_source: "owner_connected" });
+  const historical = { last_reported_state: "CLOSED", last_reported_at: "2026-09-06T19:49:00Z", last_reported_source: "ANIMA_TRUTH" };
+  const contact = { type: "state.read", label: "Contact diagnostic", readable: true, writable: false, state: "STALE", truth_status: "STALE", observed_at: "2026-09-06T20:12:00Z", ...historical };
+  const capabilities = [contact, ...Array.from({ length: 5 }, (_, index) => ({ type: "state.read", label: `Diagnostic ${index + 1}`, readable: true, writable: false, state: "UNKNOWN", truth_status: "UNKNOWN" }))];
+  await page.route("**/api/v1/devices", route => route.fulfill({ json: { items: [{ ...device("lamp", "Old provider name", true), canonical_name: "Kitchen SenseGuard", state: "STALE", truth_status: "STALE", observed_at: contact.observed_at, ...historical, capabilities }] } }));
+  await page.reload();
+  await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
+  const row = page.locator(".device-row");
+  await expect(row.getByText("Current state: UNKNOWN", { exact: true })).toBeVisible();
+  await expect(row.locator(":scope > span > small").filter({ hasText: /^Truth:/ })).toHaveText("Truth: STALE");
+  const lastReport = row.locator(":scope > span > small").filter({ hasText: /^Last reported:/ });
+  await expect(lastReport).toContainText("Last reported: CLOSED");
+  await expect(lastReport).toContainText("ANIMA Truth · not current");
+  await expect(lastReport.locator("time")).toHaveAttribute("datetime", historical.last_reported_at);
+  await expect(page.getByText("Home Assistant connected", { exact: true })).toBeVisible();
+  await expect(row).not.toContainText(/offline|disconnected/i);
+  await expect(row.getByText("Current state: CLOSED", { exact: true })).toHaveCount(0);
+  const details = row.locator("details");
+  await expect(details).toHaveAccessibleName("Capabilities for Kitchen SenseGuard");
+  await expect(details).toHaveJSProperty("open", false);
+  await expect(details.locator(".capability-chip").filter({ hasText: "Contact diagnostic" })).not.toBeVisible();
+  const collapsedHeight = (await row.boundingBox())!.height;
+  await page.screenshot({ path: testInfo.outputPath("stale-contact-collapsed.png"), fullPage: true });
+  await details.locator("summary").focus(); await details.locator("summary").press("Enter");
+  await expect(details).toHaveJSProperty("open", true);
+  await expect(details.locator(".capability-chip").filter({ hasText: "Contact diagnostic" })).toBeVisible();
+  await expect(details.locator(".capability-chip")).toHaveCount(6);
+  expect((await row.boundingBox())!.height).toBeGreaterThan(collapsedHeight);
+  await page.screenshot({ path: testInfo.outputPath("stale-contact-expanded.png"), fullPage: true });
+});
+
+for (const status of ["SUCCEEDED", "POLICY_DENIED"]) {
+  test(`capability sync preserves canonical identity and reports ${status} without duplicate submission`, async ({ page }) => {
+    const writes = await fixture(page);
+    let homeReads = 0;
+    await page.route("**/api/v1/home", async (route) => {
+      homeReads += 1;
+      await route.fulfill({ json: { ...home, rooms: [
+        { place_id: "draft-room", name: "Draft room", kind: "ROOM", devices: [] },
+        { place_id: "canonical-room", name: "Kitchen", kind: "ROOM", devices: [{ device_id: "lamp", name: "Canonical SenseGuard", kind: "DEVICE", state: "UNKNOWN" }] },
+      ] } });
+    });
+    await page.route("**/api/v1/devices", (route) => route.fulfill({ json: { items: [{ ...device("lamp", "Stale provider name", true), capabilities: [], metadata: { name: "Stale provider name", name_by_user: "Stale provider override", mapping_status: "MAPPED", canonical_target_id: "lamp" } }] } }));
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    await page.route("**/api/v1/devices/commission", async (route) => {
+      writes.push({ path: new URL(route.request().url()).pathname, body: route.request().postDataJSON() });
+      await pending;
+      await route.fulfill({ json: { status, operation: "commission_device", detail: `Capability sync ${status}` } });
+    });
+    await page.reload();
+    await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
+    await page.getByRole("button", { name: "Manage", exact: true }).click();
+    await page.getByLabel("Display name", { exact: true }).fill("Unsaved rename");
+    await page.getByRole("combobox", { name: "Room", exact: true }).selectOption("draft-room");
+    const before = homeReads;
+    await page.getByRole("button", { name: "Sync capabilities", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Syncing capabilities…", exact: true })).toBeDisabled();
+    await expect.poll(() => writes.length).toBe(1);
+    expect(writes[0]).toEqual({ path: "/api/v1/devices/commission", body: { payload: { device_handle: "lamp", name: "Canonical SenseGuard", place_id: "canonical-room" } } });
+    await expect(page.getByText(`Capability sync ${status}`, { exact: true })).toHaveCount(0);
+    finish();
+    await expect(page.getByText(`Capability sync ${status}`, { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sync capabilities", exact: true })).toBeEnabled();
+    await expect.poll(() => homeReads).toBeGreaterThan(before);
+    await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("Unsaved rename");
+    expect(writes).toHaveLength(1);
+  });
+}
+
+for (const mapping of ["missing", "ambiguous", "unnamed", "household"]) {
+  test(`capability sync refuses ${mapping} canonical placement without a default room`, async ({ page }) => {
+    const writes = await fixture(page);
+    const canonicalRoom = home.rooms[0];
+    const rooms = mapping === "missing" ? [{ ...canonicalRoom, devices: [] }]
+      : mapping === "ambiguous" ? [canonicalRoom, { ...canonicalRoom, place_id: "other", name: "Other room" }]
+      : mapping === "unnamed" ? [{ ...canonicalRoom, devices: [{ ...canonicalRoom.devices[0], name: "" }] }]
+      : [{ ...canonicalRoom, kind: "HOUSEHOLD" }];
+    await page.route("**/api/v1/home", (route) => route.fulfill({ json: { ...home, rooms } }));
+    await page.reload();
+    await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
+    const sync = page.getByRole("button", { name: "Sync capabilities", exact: true });
+    await expect(sync).toHaveCount(1);
+    await expect(sync).toBeDisabled();
+    await expect(sync).toHaveAccessibleDescription("Cannot sync: canonical device name or room mapping is missing or ambiguous. Refresh household data first.");
+    await expect(page.getByText(/Cannot sync: canonical device name or room mapping/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Add to Anima", exact: true })).toBeEnabled();
+    expect(writes).toHaveLength(0);
+  });
+}
+
 test("connection setup CTA is explicit and snapshot charts use returned counts", async ({ page }) => {
   const writes = await fixture(page);
   await expect(page.getByRole("link", { name: "Connect Home Assistant", exact: true })).toHaveAttribute("href", "/auth/login?connect=1");
@@ -123,132 +248,20 @@ test("automation enable control retains complete versioned definition", async ({
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0]).toEqual({ path: "/api/v1/automations", body: { payload: { automation_id: "rule", expected_version: 3, name: "Reading routine", trigger_resource_id: "lamp", trigger_state: "on", action_resource_id: "lamp", action_desired_on: false, enabled: false } } });
 });
-test("ordinary response stays Anima-labeled until SENTRY disposition is observed", async ({ page }) => {
+test("voice panel cannot submit or poll conversations and keeps status truthful", async ({ page }) => {
   const writes = await fixture(page);
+  const requests: string[] = [];
+  page.on("request", request => { if (request.url().includes("/conversation")) requests.push(request.url()); });
   await page.getByRole("navigation").getByRole("button", { name: "Anima", exact: true }).click();
-  await page.getByLabel("Message Anima").fill("Review my home");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.locator(".reply strong")).toHaveText("Anima");
-  expect(writes[0]).toEqual({ path: "/api/v1/conversation", body: { text: "Review my home" } });
-});
-async function queueConversation(page: Page) {
-  let posts = 0;
-  await page.route("**/api/v1/conversation", async (route) => {
-    posts += 1;
-    await route.fulfill({ json: { response: "SENTRY received request and is reasoning", disposition: "QUEUED_FOR_SENTRY", request_id: "result-request" } });
-  });
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
-  await page.getByRole("navigation").getByRole("button", { name: "Anima", exact: true }).click();
-  await page.getByLabel("Message Anima").fill("Synthetic result lookup");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.locator(".conversation")).toContainText("WAITING FOR SENTRY");
-  return () => posts;
-}
-
-for (const status of [404, 401, 403]) {
-  test(`result HTTP ${status} replaces stale acknowledgement and survives refresh without retry`, async ({ page }) => {
-    await fixture(page);
-    let gets = 0;
-    await page.route("**/api/v1/conversation/result-request", async (route) => {
-      gets += 1;
-      await route.fulfill({ status, json: { detail: status === 401 ? "SESSION_EXPIRED" : "RESULT_NOT_ACCESSIBLE" } });
-    });
-    const posts = await queueConversation(page);
-    await page.clock.runFor(1000);
-    const alert = page.locator(".conversation").getByRole("alert");
-    await expect(alert).toContainText(`HTTP ${status}`);
-    await expect(page.locator(".reply")).toHaveCount(0);
-    if (status === 401) await expect(alert.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/auth/login");
-    const refreshed = page.waitForResponse("**/api/v1/home");
-    await page.getByRole("button", { name: "Refresh connection status" }).click();
-    await refreshed;
-    await page.clock.runFor(5000);
-    await expect(alert).toContainText(`HTTP ${status}`);
-    expect(gets).toBe(1); expect(posts()).toBe(1);
-  });
-}
-
-test("result transport failure retries only GET and displays recovered reply", async ({ page }) => {
-  await fixture(page);
-  let gets = 0;
-  await page.route("**/api/v1/conversation/result-request", async (route) => {
-    gets += 1;
-    if (gets === 1) { await route.abort("connectionreset"); return; }
-    await route.fulfill({ json: { request_id: "result-request", status: "COMPLETED", available: true, response: "Recovered actual result" } });
-  });
-  const posts = await queueConversation(page);
-  await page.clock.runFor(1000);
-  await expect(page.locator(".conversation").getByRole("alert")).toContainText("Retrying the result lookup only");
-  await expect(page.locator(".reply")).toHaveCount(0);
-  await page.clock.runFor(3000);
-  await expect(page.locator(".reply")).toContainText("Recovered actual result");
-  await expect(page.locator(".conversation").getByRole("alert")).toHaveCount(0);
-  expect(gets).toBe(2); expect(posts()).toBe(1);
-});
-
-test("result arriving at 270 seconds is still polled without a second POST", async ({ page }) => {
-  await fixture(page);
-  let ready = false;
-  await page.route("**/api/v1/conversation/result-request", async (route) => {
-    await route.fulfill({ json: { request_id: "result-request", status: ready ? "COMPLETED" : "RUNNING", available: ready, response: ready ? "Late actual result" : null } });
-  });
-  const posts = await queueConversation(page);
-  await page.clock.fastForward(120_000);
-  await expect(page.locator(".conversation")).toContainText("WAITING FOR SENTRY");
-  ready = true;
-  await page.clock.fastForward(150_000);
-  await expect(page.locator(".reply")).toContainText("Late actual result");
-  expect(posts()).toBe(1);
-});
-
-test("result window expires at 300 seconds and stops GET polling", async ({ page }) => {
-  await fixture(page);
-  let gets = 0;
-  await page.route("**/api/v1/conversation/result-request", async (route) => {
-    gets += 1;
-    await route.fulfill({ json: { request_id: "result-request", status: "RUNNING", available: false } });
-  });
-  const posts = await queueConversation(page);
-  await page.clock.fastForward(299_000);
-  await expect.poll(() => gets).toBe(1);
-  await page.clock.runFor(1000);
-  await expect(page.locator(".conversation").getByRole("alert")).toContainText("within 300 seconds");
-  await expect(page.locator(".reply")).toHaveCount(0);
-  const stoppedAt = gets;
-  await page.clock.fastForward(30_000);
-  expect(gets).toBe(stoppedAt); expect(posts()).toBe(1);
-});
-
-test("stalled result GET is aborted and retried without resubmission", async ({ page }) => {
-  await fixture(page);
-  let gets = 0;
-  await page.route("**/api/v1/conversation/result-request", async (route) => {
-    gets += 1;
-    if (gets === 1) return; // Leave the intercepted GET pending until its AbortController fires.
-    await route.fulfill({ json: { request_id: "result-request", status: "COMPLETED", available: true, response: "Reply after GET timeout" } });
-  });
-  const posts = await queueConversation(page);
-  await page.clock.runFor(1000);
-  await expect.poll(() => gets).toBe(1);
-  await page.clock.runFor(10_000);
-  await expect(page.locator(".conversation").getByRole("alert")).toContainText("Retrying the result lookup only");
-  await page.clock.runFor(3000);
-  await expect(page.locator(".reply")).toContainText("Reply after GET timeout");
-  expect(gets).toBe(2); expect(posts()).toBe(1);
-});
-
-test("submission transport failure is never automatically retried", async ({ page }) => {
-  await fixture(page);
-  let posts = 0;
-  await page.route("**/api/v1/conversation", async (route) => { posts += 1; await route.abort("connectionreset"); });
-  await page.getByRole("navigation").getByRole("button", { name: "Anima", exact: true }).click();
-  await page.getByLabel("Message Anima").fill("Synthetic failed submission");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
-  await expect(page.locator(".conversation").getByRole("alert")).toContainText("Nothing was resent");
+  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
+  await expect(page.locator(".conversation")).toContainText("UNAVAILABLE");
+  await expect(page.locator(".conversation input, .conversation textarea")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Send", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Refresh connection status" }).click();
-  await expect(page.locator(".conversation").getByRole("alert")).toContainText("Nothing was resent");
-  expect(posts).toBe(1);
+  await expect(page.locator(".conversation")).toContainText("does not start a microphone");
+  expect(writes).toHaveLength(0); expect(requests).toHaveLength(0);
+  await page.getByRole("button", { name: "View household activity" }).click();
+  await expect(page.getByLabel("Activity overview", { exact: true })).toBeVisible();
 });
 
 test("unauthenticated first-use offers owner sign-in without credential fields", async ({ page }) => {
@@ -338,6 +351,175 @@ test("failed bootstrap prevents successful protected reads from being committed"
   await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
   await expect(page.getByText("Unverified session device", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Reading lamp", { exact: true })).toBeVisible();
+});
+
+test("calendar save uses the authoritative event and version without waiting for task reads", async ({ page }) => {
+  await fixture(page);
+  const initial = { event_id: "calendar-fixture", title: "Original appointment", start_at: "2026-09-08T12:00:00Z", end_at: "2026-09-08T13:00:00Z", status: "ACTIVE", version: 1 };
+  await page.route("**/api/v1/calendar?*", (route) => route.fulfill({ json: { items: [initial], next_cursor: null } }));
+  await page.getByRole("navigation").getByRole("button", { name: "Tasks & Calendar", exact: true }).click();
+  const row = page.getByRole("listitem").filter({ hasText: initial.title });
+  await expect(row).toBeVisible();
+  let taskReads = 0;
+  await page.route("**/api/v1/tasks?*", () => { taskReads += 1; });
+  const commands: { path: string; payload: Record<string, unknown> }[] = [];
+  await page.route("**/api/v1/calendar/calendar-fixture/*", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    commands.push({ path, payload: route.request().postDataJSON().payload });
+    await route.fulfill({ json: { status: "SUCCEEDED", operation: "calendar.save", result: { event: { ...initial, title: "Authoritative saved appointment", status: path.endsWith("/cancel") ? "CANCELLED" : "ACTIVE", version: path.endsWith("/cancel") ? 3 : 2 } } } });
+  });
+  await row.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.locator("form.edit-form").getByLabel("Title", { exact: true }).fill("Submitted edit");
+  await page.getByRole("button", { name: "Save edit" }).click();
+  await expect(page.locator("form.edit-form")).toHaveCount(0);
+  const saved = page.getByRole("listitem").filter({ hasText: "Authoritative saved appointment" });
+  await expect(saved).toBeVisible();
+  await saved.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(saved).toContainText("CANCELLED");
+  expect(commands).toHaveLength(2);
+  expect(commands[0].payload.expected_version).toBe(1);
+  expect(commands[1].payload.expected_version).toBe(2);
+  await expect.poll(() => taskReads).toBeGreaterThan(0);
+});
+
+test("initial visible unfocused view loads household without a stream and focus enables updates", async ({ page }) => {
+  await page.addInitScript(() => {
+    let focused = false;
+    Object.defineProperty(document, "hasFocus", { value: () => focused, configurable: true });
+    const state = window as unknown as { streams: { closed: boolean }[]; focusView: () => void };
+    state.streams = [];
+    window.EventSource = class extends EventTarget {
+      closed = false;
+      constructor() { super(); state.streams.push(this); }
+      close() { this.closed = true; }
+    } as unknown as typeof EventSource;
+    state.focusView = () => { focused = true; window.dispatchEvent(new Event("focus")); };
+  });
+  let snapshots = 0;
+  page.on("request", request => { if (new URL(request.url()).pathname === "/api/v1/bootstrap") snapshots++; });
+  const writes = await fixture(page);
+  await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
+  expect(await page.evaluate(() => document.hasFocus())).toBe(false);
+  const streamCount = () => page.evaluate(() => (window as unknown as { streams: { closed: boolean }[] }).streams.filter(stream => !stream.closed).length);
+  expect(await streamCount()).toBe(0);
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await page.clock.runFor(30000);
+  expect(snapshots).toBe(1);
+  await page.evaluate(() => (window as unknown as { focusView: () => void }).focusView());
+  await expect.poll(() => snapshots).toBe(2);
+  await expect.poll(streamCount).toBe(1);
+  expect(writes).toHaveLength(0);
+});
+
+test("visible but unfocused views close streams and defer bounded error fallback until focus", async ({ page }) => {
+  await page.addInitScript(() => {
+    let focused = true;
+    Object.defineProperty(document, "hasFocus", { value: () => focused, configurable: true });
+    const state = window as unknown as { streams: { closed: boolean; onerror: (() => void) | null; close(): void }[]; setFocused: (value: boolean) => void };
+    state.streams = [];
+    window.EventSource = class extends EventTarget {
+      closed = false;
+      onerror = null;
+      constructor() { super(); state.streams.push(this); }
+      close() { this.closed = true; }
+    } as unknown as typeof EventSource;
+    state.setFocused = (value) => { focused = value; window.dispatchEvent(new Event(value ? "focus" : "blur")); };
+  });
+  await fixture(page);
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  const state = () => page.evaluate(() => {
+    const streams = (window as unknown as { streams: { closed: boolean }[] }).streams;
+    return { total: streams.length, active: streams.filter(stream => !stream.closed).length };
+  });
+  await expect.poll(state).toEqual({ total: 1, active: 1 });
+  let snapshots = 0;
+  page.on("request", request => { if (new URL(request.url()).pathname === "/api/v1/bootstrap") snapshots++; });
+  await page.evaluate(() => (window as unknown as { streams: { onerror: () => void }[] }).streams[0].onerror());
+  await expect.poll(state).toEqual({ total: 1, active: 0 });
+  await page.clock.runFor(14900);
+  expect(snapshots).toBe(0);
+  await page.clock.runFor(100);
+  await expect.poll(() => snapshots).toBe(1);
+  await expect.poll(state).toEqual({ total: 2, active: 1 });
+  await page.evaluate(() => (window as unknown as { setFocused: (value: boolean) => void }).setFocused(false));
+  await expect.poll(state).toEqual({ total: 2, active: 0 });
+  await page.clock.runFor(60000);
+  expect(snapshots).toBe(1);
+  await page.evaluate(() => (window as unknown as { setFocused: (value: boolean) => void }).setFocused(true));
+  await expect.poll(() => snapshots).toBe(2);
+  await expect.poll(() => state().then(value => value.active)).toBe(1);
+});
+
+test("two-stream HTTP1 quota leaves initial seventh tab readable and client retries only at foreground cadence", async ({ page }) => {
+  // Real Chromium sockets and EventSource, not intercepted API requests. This models
+  // the server's session quota; its actual enforcement is separately backend-tested.
+  let active = 0; let accepted = 0; let rejected = 0; let bootstrapReads = 0; let posts = 0;
+  const server = createServer(async (request, response) => {
+    const path = new URL(request.url!, "http://synthetic").pathname;
+    if (request.method !== "GET") { posts++; response.writeHead(405).end(); return; }
+    if (path.startsWith("/api/") && request.headers.cookie !== "fixture=synthetic-session") { response.writeHead(401).end(); return; }
+    if (path === "/api/v1/events") {
+      if (active >= 2) { rejected++; response.writeHead(429, { "Retry-After": "15" }).end(); return; }
+      active++; accepted++;
+      response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store" });
+      response.write(": connected\n\n");
+      const lifetime = setTimeout(() => response.end("event: refresh.required\ndata: {}\n\n"), 15000);
+      response.on("close", () => { active--; clearTimeout(lifetime); });
+      return;
+    }
+    if (path.startsWith("/api/")) {
+      if (path === "/api/v1/bootstrap") bootstrapReads++;
+      const data: Record<string, unknown> = {
+        "/api/v1/bootstrap": { identity: { display_name: "Fixture", assurance: "OWNER" }, household: home.household, theme: settings, layout: settings, csrf_token: "synthetic" },
+        "/api/v1/home": home, "/api/v1/settings": { settings },
+        "/api/v1/connection": { configured: true, connected: true, state: "ONLINE", can_connect: true, setup_required: false, household_source: "synthetic" },
+      };
+      response.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }).end(JSON.stringify(data[path] ?? { items: [], next_cursor: null }));
+      return;
+    }
+    if (path === "/legacy") { response.writeHead(200, { "Content-Type": "text/html" }).end("<!doctype html><title>Synthetic legacy tab</title><script>window.stream = new EventSource('/api/v1/events')</script>"); return; }
+    const file = path === "/" ? "index.html" : path.slice(1);
+    if (!/^(index\.html|assets\/[a-zA-Z0-9_.-]+)$/.test(file)) { response.writeHead(404).end(); return; }
+    try { response.writeHead(200, { "Content-Type": file.endsWith(".js") ? "text/javascript" : file.endsWith(".css") ? "text/css" : "text/html" }).end(await readFile(new URL(`../dist/${file}`, import.meta.url))); }
+    catch { response.end(); }
+  });
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+  const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  const legacy: Page[] = [];
+  try {
+    await page.context().addCookies([{ name: "fixture", value: "synthetic-session", url: origin }]);
+    for (let index = 0; index < 6; index++) {
+      const tab = await page.context().newPage(); legacy.push(tab); await tab.goto(`${origin}/legacy`);
+    }
+    await expect.poll(() => ({ active, rejected })).toEqual({ active: 2, rejected: 4 });
+    await page.bringToFront();
+    await page.clock.install(); await page.clock.pauseAt(new Date());
+    await page.goto(origin);
+    await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
+    await expect.poll(() => rejected).toBe(5);
+    expect(bootstrapReads).toBe(1);
+    await page.clock.runFor(14000);
+    expect(bootstrapReads).toBe(1); expect(rejected).toBe(5);
+    await page.clock.runFor(1000);
+    await expect.poll(() => bootstrapReads).toBe(2);
+    await expect.poll(() => rejected).toBe(6);
+    for (const tab of legacy) await tab.close();
+    await expect.poll(() => active).toBe(0);
+    await page.clock.runFor(15000);
+    await expect.poll(() => bootstrapReads).toBe(3);
+    await expect.poll(() => active).toBe(1);
+    expect(accepted).toBe(3);
+    await page.getByRole("button", { name: "Refresh connection status" }).click();
+    await expect.poll(() => bootstrapReads).toBe(4);
+    await expect.poll(() => accepted).toBe(4);
+    expect(active).toBe(1); expect(posts).toBe(0);
+    await expect(page.getByRole("alert")).toHaveCount(0);
+  } finally {
+    for (const tab of legacy) if (!tab.isClosed()) await tab.close();
+    await page.goto("about:blank");
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
 });
 
 test("hidden tabs close SSE and foreground resumes with one refreshed snapshot", async ({ page }) => {

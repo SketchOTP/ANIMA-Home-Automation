@@ -22,3 +22,38 @@ Validate authentication/credential persistence and real provider reads, existing
 backend/frontend checks, browser render/navigation/settings and same-origin
 requests. Publish only sanitized evidence. Mark all unexecuted owner workflows
 explicitly; the permanent Goal is not complete from fixtures or UI appearance.
+
+## Owner scope amendment — 2026-09-06
+
+The owner now explicitly authorizes SENTRY-led full ANIMA/HA administration on
+authenticated owner instructions and requests family routine editing,
+preference-aware event delivery, Tapo DL110 identity-event investigation and
+Wansview solar-camera motion notifications without video. See
+`docs/OWNER-SENTRY-ADMIN-ROUTINES-EVENTS-2026-09-06.md` for the approved scope,
+primary-source findings and unimplemented boundaries. Earlier restricted admin
+statements describe historical implementation, not the new product objective.
+Do not seed hypothetical schedules or promote geofences/routines to identity.
+
+Finish the real SenseGuard alert loop before unrelated expansion. A fresh live
+opening revealed a guaranteed-event backlog sweep into SENTRY; preserve the
+negative evidence and correct exact-event selection before restarting the
+helper. New family routine UI/API work is paused while that concrete defect is
+closed. No historical resilience phase is reopened.
+
+## Owner continuation — actual SENTRY voice and MEMORY vault
+
+The owner now authorizes needed SENTRY code changes to complete the existing
+desktop integration, preserving unrelated V0.4 work. SENTRY is voice-only:
+microphone/wake → persistent intelligence → TTS; do not add typed chat.
+ANIMA remains the back-office and tool/provider authority and its configuration
+forms remain. Preserve independent SENTRY native capabilities.
+
+Use existing Obsidian MEMORY vault `541cc65b16b387fb` at registered root
+`/srv/ATLAS/500_MEMORY/MEMORY`. Add Dewey-numbered autonomous evidence-backed
+knowledge, profiles, events and lessons without scripted invented family facts,
+secrets or prohibited content. Preserve provenance, uncertainty and forgetting.
+Do not overwrite existing vault content or install another vault.
+
+Tapo DL110 and Wansview motion-only integration qualification runs in independent
+background agents, as explicitly requested. No lock actuation or camera-video
+collection is part of those qualification tasks.

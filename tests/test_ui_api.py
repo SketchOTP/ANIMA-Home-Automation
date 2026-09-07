@@ -1,20 +1,26 @@
 from __future__ import annotations
 
+import asyncio
 from collections import deque
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
+from starlette.requests import ClientDisconnect, Request
+from starlette.types import Message, Scope
 
 from anima_ha.ui_api import (
     DEFAULT_HOUSEHOLD_ID,
     DEFAULT_PRINCIPAL_ID,
     UI_OAUTH_NONCE_COOKIE,
     HomeAssistantOAuth,
+    InMemorySessionStore,
     JournalConversationIngress,
     UIConfig,
     UIEventBroadcaster,
+    UIEventCapacityError,
     UIService,
     create_app,
     validate_ui_preferences,
@@ -106,6 +112,38 @@ class DeviceCommandStub:
     ) -> dict[str, object]:
         del identity
         return {"status": "SUCCEEDED", "operation": operation, "result": {"preference": payload}}
+
+    def user_mutation(
+        self, identity: object, operation: str, payload: dict[str, object]
+    ) -> dict[str, object]:
+        del identity
+        return {
+            "status": "SUCCEEDED", "operation": f"user.{operation}",
+            "result": {"user": payload},
+        }
+
+
+def test_household_user_routes_are_authenticated_and_bounded() -> None:
+    service = UIService(config=UIConfig(test_auth_enabled=True), commands=DeviceCommandStub())  # type: ignore[arg-type]
+    client = TestClient(create_app(service), follow_redirects=False)
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+    csrf = callback.headers["x-anima-csrf"]
+    assert client.get("/api/v1/users").json() == {"items": []}
+    response = client.post(
+        "/api/v1/users/create",
+        json={
+            "payload": {
+                "name": "New member", "access_level": "LIMITED",
+                "wifi_macs": ["aa:bb:cc:dd:ee:ff"],
+            }
+        },
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "SUCCEEDED"
+    unauthenticated = TestClient(create_app(UIService(config=UIConfig(test_auth_enabled=True))))
+    assert unauthenticated.get("/api/v1/users").status_code == 401
 
 
 def test_health_is_public_but_household_data_requires_session() -> None:
@@ -370,3 +408,118 @@ def test_sse_invalidation_fanout_is_bounded_and_unsubscribable() -> None:
     broadcaster.unsubscribe(queue)
     broadcaster.publish("tasks.changed")
     assert list(queue) == ["home.invalidated"]
+
+
+def test_sse_session_cap_preserves_http_capacity_and_queue_identity() -> None:
+    broadcaster = UIEventBroadcaster()
+    session = uuid4()
+    first = broadcaster.subscribe(session)
+    second = broadcaster.subscribe(session)
+    with pytest.raises(UIEventCapacityError):
+        broadcaster.subscribe(session)
+    other = broadcaster.subscribe(uuid4())
+    broadcaster.unsubscribe(second)
+    replacement = broadcaster.subscribe(session)
+    broadcaster.publish("tasks.changed")
+    assert list(first) == ["tasks.changed"]
+    assert list(second) == []
+    assert broadcaster.drain(replacement) == ["tasks.changed"]
+    assert list(replacement) == []
+    assert list(other) == ["tasks.changed"]
+    broadcaster.unsubscribe(second)  # repeated cleanup cannot release another slot
+    with pytest.raises(UIEventCapacityError):
+        broadcaster.subscribe(session)
+
+
+def test_sse_concurrent_subscription_has_two_winners() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    broadcaster = UIEventBroadcaster()
+    session = uuid4()
+
+    def subscribe() -> bool:
+        try:
+            broadcaster.subscribe(session)
+            return True
+        except UIEventCapacityError:
+            return False
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        assert sum(pool.map(lambda _: subscribe(), range(8))) == 2
+
+
+def test_sse_capacity_response_keeps_authenticated_reads_available() -> None:
+    client, _, service = authenticated_client()
+    assert isinstance(service.sessions, InMemorySessionStore)
+    session = next(iter(service.sessions.records.values()))
+    first = service.events.subscribe(session.session_id)
+    second = service.events.subscribe(session.session_id)
+    try:
+        limited = client.get("/api/v1/events")
+        assert limited.status_code == 429
+        assert limited.headers["retry-after"] == "15"
+        assert limited.json() == {"detail": "LIVE_UPDATE_CONNECTION_LIMIT"}
+        assert client.get("/api/v1/bootstrap").status_code == 200
+        anonymous = TestClient(create_app(service))
+        assert anonymous.get("/api/v1/events").status_code == 401
+    finally:
+        service.events.unsubscribe(first)
+        service.events.unsubscribe(second)
+
+
+@pytest.mark.parametrize("failure_at", ["http.response.start", "http.response.body"])
+@pytest.mark.parametrize("cancelled", [False, True])
+def test_sse_disconnected_response_releases_exact_slot_before_or_after_body(
+    failure_at: str,
+    cancelled: bool,
+) -> None:
+    client, _, service = authenticated_client()
+    assert isinstance(service.sessions, InMemorySessionStore)
+    session = next(iter(service.sessions.records.values()))
+    other = service.events.subscribe(session.session_id)
+    endpoint = next(
+        route.endpoint
+        for route in cast(Any, client.app).routes
+        if getattr(route, "path", None) == "/api/v1/events"
+    )
+    scope: Scope = {
+        "type": "http",
+        "asgi": {"spec_version": "2.4"},
+        "method": "GET",
+        "path": "/api/v1/events",
+        "scheme": "http",
+        "query_string": b"",
+        "headers": [(b"cookie", ("anima_session=" + client.cookies["anima_session"]).encode())],
+        "server": ("testserver", 80),
+    }
+
+    async def receive() -> Message:
+        return {"type": "http.disconnect"}
+
+    async def send(message: Message) -> None:
+        if message["type"] == failure_at:
+            if cancelled:
+                raise asyncio.CancelledError()
+            raise OSError("synthetic disconnected response")
+
+    async def exercise() -> None:
+        for _ in range(2):
+            response = await endpoint(Request(scope))
+            with pytest.raises(asyncio.CancelledError if cancelled else ClientDisconnect):
+                await response(scope, receive, send)
+            # Must work immediately, without GC, timeout, or running the
+            # never-started generator's finally block.
+            replacement = service.events.subscribe(session.session_id)
+            with pytest.raises(UIEventCapacityError):
+                service.events.subscribe(session.session_id)
+            service.events.publish("tasks.changed")
+            assert service.events.drain(other) == ["tasks.changed"]
+            assert service.events.drain(replacement) == ["tasks.changed"]
+            service.events.unsubscribe(replacement)
+            service.events.unsubscribe(replacement)  # idempotent, never remove other
+
+    try:
+        asyncio.run(exercise())
+        assert client.get("/api/v1/bootstrap").status_code == 200
+    finally:
+        service.events.unsubscribe(other)
