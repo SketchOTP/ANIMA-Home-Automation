@@ -127,3 +127,16 @@ test("Users exposes persistent access, Wi-Fi, and private face enrollment contro
   assert.match(source, /Associated Wi-Fi MAC addresses/);
   assert.match(source, /Captured pictures stay in temporary memory only/);
 });
+
+test("Settings exposes free-form versioned SENTRY personality profiles", async () => {
+  const source = await readFile(new URL("../src/SentryPersonalityProfiles.tsx", import.meta.url), "utf8");
+  assert.match(source, /Personality profile/);
+  assert.match(source, /Save new profile/);
+  assert.match(source, /Save changes/);
+  assert.match(source, /Activate/);
+  assert.match(source, /Confirm delete/);
+  assert.match(source, /profile_id/);
+  assert.match(source, /expected_version/);
+  assert.match(source, /presentation guidance only/);
+  assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|dangerouslySetInnerHTML/);
+});

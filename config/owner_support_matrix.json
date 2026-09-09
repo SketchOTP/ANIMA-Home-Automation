@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "scope": "ANIMA bounded owner prototype",
+  "invariants": {
+    "ha_frontend_required": false,
+    "browser_direct_ha": false,
+    "browser_direct_provider": false,
+    "raw_admin_surface": false
+  },
+  "domains": [
+    {
+      "id": "service",
+      "surface": "runtime",
+      "boundary": "SERVICE_HEALTH",
+      "routes": ["GET /healthz"]
+    },
+    {
+      "id": "authentication",
+      "surface": "owner",
+      "boundary": "HA_OAUTH_CONSENT_AND_SERVER_SESSION",
+      "owner_gates": ["HA_OAUTH_CONSENT"],
+      "routes": ["GET /auth/login", "GET /auth/callback", "POST /auth/logout"]
+    },
+    {
+      "id": "household_overview",
+      "surface": "owner",
+      "boundary": "SERVER_SESSION_AND_CORE_READ_MODEL",
+      "routes": [
+        "GET /api/v1/bootstrap",
+        "GET /api/v1/setup/status",
+        "GET /api/v1/connection",
+        "GET /api/v1/home"
+      ]
+    },
+    {
+      "id": "knowledge",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": [
+        "GET /api/v1/knowledge-status",
+        "GET /api/v1/knowledge-search",
+        "GET /api/v1/knowledge-index",
+        "GET /api/v1/knowledge",
+        "GET /api/v1/knowledge/{note_id}",
+        "POST /api/v1/knowledge/{action}"
+      ]
+    },
+    {
+      "id": "initiative_learning",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": [
+        "GET /api/v1/initiative",
+        "GET /api/v1/initiative/suggestions",
+        "POST /api/v1/initiative/{operation}"
+      ]
+    },
+    {
+      "id": "ring",
+      "surface": "owner",
+      "boundary": "BOUNDED_PROVIDER_SETUP",
+      "owner_gates": ["RING_OAUTH_OR_2FA"],
+      "routes": ["GET /api/v1/ring/status", "POST /api/v1/ring/setup/{operation}"]
+    },
+    {
+      "id": "presence",
+      "surface": "owner_and_sentry",
+      "boundary": "GRAPH_TRUTH_PLUGIN_MANAGER_AND_OPA",
+      "owner_gates": ["SOURCE_TO_PERSON_ASSIGNMENT"],
+      "routes": [
+        "GET /api/v1/presence",
+        "GET /api/v1/presence/sources",
+        "GET /api/v1/presence/candidates",
+        "POST /api/v1/presence/commission",
+        "POST /api/v1/presence/bind"
+      ]
+    },
+    {
+      "id": "family_routines",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": [
+        "GET /api/v1/family-routines",
+        "POST /api/v1/family-routines/{operation}"
+      ]
+    },
+    {
+      "id": "vendor_event_ingress",
+      "surface": "machine",
+      "boundary": "RELAY_AUTH_AND_EVENT_JOURNAL",
+      "routes": [
+        "GET /api/v1/vendor-events/status",
+        "POST /api/v1/vendor-events/receive"
+      ]
+    },
+    {
+      "id": "tasks",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_OPA_AND_DURABLE_TASKS",
+      "routes": [
+        "GET /api/v1/tasks",
+        "POST /api/v1/tasks",
+        "POST /api/v1/tasks/{task_id}/{operation}"
+      ]
+    },
+    {
+      "id": "presentation_settings",
+      "surface": "owner",
+      "boundary": "SERVER_SESSION_PRESENTATION_ONLY",
+      "routes": ["GET /api/v1/settings", "PUT /api/v1/settings"]
+    },
+    {
+      "id": "sentry_settings",
+      "surface": "owner_and_sentry",
+      "boundary": "SERVER_SESSION_AND_TYPED_SENTRY_CONTROL",
+      "routes": [
+        "GET /api/v1/sentry/voice-settings",
+        "PUT /api/v1/sentry/voice-settings",
+        "GET /api/v1/sentry/personality-profiles",
+        "POST /api/v1/sentry/personality-profiles/{operation}"
+      ]
+    },
+    {
+      "id": "preferences",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": [
+        "GET /api/v1/preferences",
+        "POST /api/v1/preferences/{operation}"
+      ]
+    },
+    {
+      "id": "users",
+      "surface": "owner_and_sentry",
+      "boundary": "GRAPH_PLUGIN_MANAGER_AND_OPA",
+      "owner_gates": ["CAMERA_FACE_CAPTURE"],
+      "routes": ["GET /api/v1/users", "POST /api/v1/users/{operation}"]
+    },
+    {
+      "id": "scenes",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_OPA_AND_PHASE9_PER_DEVICE",
+      "routes": [
+        "GET /api/v1/scenes",
+        "POST /api/v1/scenes",
+        "POST /api/v1/scenes/{scene_id}/apply"
+      ]
+    },
+    {
+      "id": "automations",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": ["GET /api/v1/automations", "POST /api/v1/automations"]
+    },
+    {
+      "id": "calendar",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_OPA_AND_POSTGRESQL",
+      "routes": [
+        "GET /api/v1/calendar",
+        "POST /api/v1/calendar",
+        "POST /api/v1/calendar/{event_id}/{operation}"
+      ]
+    },
+    {
+      "id": "activity_and_capabilities",
+      "surface": "owner_and_sentry",
+      "boundary": "JOURNAL_AND_TYPED_CATALOGUE",
+      "routes": [
+        "GET /api/v1/activity",
+        "GET /api/v1/capabilities",
+        "GET /api/v1/events"
+      ]
+    },
+    {
+      "id": "integrations",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "owner_gates": ["PROVIDER_LOGIN_OR_PHYSICAL_SETUP_WHERE_REQUIRED"],
+      "routes": [
+        "GET /api/v1/integrations",
+        "POST /api/v1/integrations/{operation}"
+      ]
+    },
+    {
+      "id": "backups",
+      "surface": "owner_and_sentry",
+      "boundary": "BACKUP_COORDINATOR_AND_OPA",
+      "owner_gates": ["EXPLICIT_RESTORE_CONFIRMATION"],
+      "routes": ["GET /api/v1/backups", "POST /api/v1/backups/{operation}"]
+    },
+    {
+      "id": "spaces",
+      "surface": "owner_and_sentry",
+      "boundary": "GRAPH_PLUGIN_MANAGER_AND_OPA",
+      "routes": ["GET /api/v1/places", "POST /api/v1/places/{operation}"]
+    },
+    {
+      "id": "devices",
+      "surface": "owner_and_sentry",
+      "boundary": "GRAPH_TRUTH_PLUGIN_MANAGER_OPA_AND_PHASE9",
+      "owner_gates": ["PHYSICAL_PAIRING_WHERE_REQUIRED"],
+      "routes": ["GET /api/v1/devices", "POST /api/v1/devices/{operation}"]
+    },
+    {
+      "id": "alerts",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_OPA_ATTENTION_AND_JOURNAL",
+      "routes": [
+        "GET /api/v1/alerts/policies",
+        "GET /api/v1/alerts/events",
+        "POST /api/v1/alerts/policies"
+      ]
+    },
+    {
+      "id": "notification_routes",
+      "surface": "owner_and_sentry",
+      "boundary": "PLUGIN_MANAGER_AND_OPA",
+      "routes": [
+        "GET /api/v1/notifications/routes",
+        "POST /api/v1/notifications/routes"
+      ]
+    },
+    {
+      "id": "conversation",
+      "surface": "owner_and_sentry",
+      "boundary": "JOURNAL_ATTENTION_CONTEXT_AND_SENTRY_PROVIDER",
+      "routes": [
+        "POST /api/v1/conversation",
+        "GET /api/v1/conversation/{request_id}"
+      ]
+    },
+    {
+      "id": "direct_controls",
+      "surface": "owner",
+      "boundary": "PLUGIN_MANAGER_OPA_PHASE9_AND_VERIFICATION",
+      "routes": ["POST /api/v1/controls/{control_id}"]
+    },
+    {
+      "id": "approvals",
+      "surface": "owner",
+      "boundary": "SERVER_SESSION_REAUTHORIZATION_AND_PHASE9",
+      "routes": ["POST /api/v1/approvals/{approval_id}"]
+    }
+  ]
+}

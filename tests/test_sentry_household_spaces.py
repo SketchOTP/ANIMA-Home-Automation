@@ -30,7 +30,7 @@ from anima_ha.sentry_boundary import CoreSentryBoundary
 WRITES = ("create_space", "rename_space", "move_space", "remove_space")
 
 
-def test_ha_power_and_notification_boundaries_are_unchanged() -> None:
+def test_ha_configuration_is_internal_while_power_and_notifications_remain_coordinated() -> None:
     manifest = home_assistant_manifest(
         HAInstanceConfig(
             uuid4(),
@@ -43,6 +43,12 @@ def test_ha_power_and_notification_boundaries_are_unchanged() -> None:
         "commission_zigbee_presence_sensor",
         "commission_device",
         "commission_presence_source",
+        "reconnect",
+        "start_zha_setup",
+        "continue_zha_setup",
+        "rename_device",
+        "reassign_device",
+        "retire_device",
     }
     for item in manifest.tools:
         expected = (

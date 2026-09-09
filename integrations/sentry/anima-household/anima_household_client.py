@@ -359,3 +359,7 @@ class AnimaHouseholdClient:
     def voice_settings(self) -> dict[str, Any]:
         """Read ANIMA-owned household voice settings for the SENTRY service."""
         return self.call("/v1/sentry/voice-settings", {})
+
+    def personality_profile(self) -> dict[str, Any]:
+        """Read the active ANIMA-owned presentation profile for SENTRY."""
+        return self.call("/v1/sentry/personality", {})

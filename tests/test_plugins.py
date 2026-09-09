@@ -7,6 +7,12 @@ from uuid import uuid4
 
 import pytest
 
+from anima_ha.automations import AUTOMATIONS_MANIFEST
+from anima_ha.backup import BACKUP_MANIFEST
+from anima_ha.capability_management import CAPABILITY_MANAGEMENT_MANIFEST
+from anima_ha.home_assistant import HAInstanceConfig, home_assistant_manifest
+from anima_ha.household_presence import HOUSEHOLD_PRESENCE_MANIFEST
+from anima_ha.notification_routes import NOTIFICATION_ROUTE_MANIFEST
 from anima_ha.plugins import (
     CORE_VERSION,
     ENTRY_POINT_GROUP,
@@ -21,9 +27,13 @@ from anima_ha.plugins import (
     ProviderExecutionContext,
     RuntimeKind,
     SecretBroker,
+    ToolDescriptor,
     TrustClass,
 )
 from anima_ha.policy import Assurance, IdentityContext, PolicyService
+from anima_ha.preferences import PREFERENCES_MANIFEST
+from anima_ha.sentry_voice_settings import SENTRY_CONTROL_MANIFEST
+from anima_ha.users import HOUSEHOLD_USERS_MANIFEST
 
 
 class AllowEvaluator:
@@ -167,6 +177,57 @@ def test_external_plugin_cannot_self_declare_internal_execution_boundary() -> No
     assert plugin.tools["anima.external.example.mutate"].execution_boundary == (
         ExecutionBoundary.COORDINATED_CONSEQUENTIAL
     )
+
+
+def test_core_control_plane_mutations_use_exact_source_policy_boundary() -> None:
+    ha_manifest = home_assistant_manifest(
+        HAInstanceConfig(
+            instance_id=uuid4(),
+            websocket_url="ws://127.0.0.1:8123/api/websocket",
+            token_secret_name="TEST_HA_TOKEN",
+            ssl=False,
+        )
+    )
+    manifests = (
+        BACKUP_MANIFEST,
+        CAPABILITY_MANAGEMENT_MANIFEST,
+        HOUSEHOLD_PRESENCE_MANIFEST,
+        NOTIFICATION_ROUTE_MANIFEST,
+        PREFERENCES_MANIFEST,
+        HOUSEHOLD_USERS_MANIFEST,
+        AUTOMATIONS_MANIFEST,
+        SENTRY_CONTROL_MANIFEST,
+        ha_manifest,
+    )
+
+    descriptors = {
+        descriptor.tool_id: descriptor
+        for current in manifests
+        for item in current.tools
+        if not item.get("read_only", False)
+        for descriptor in (ToolDescriptor.from_manifest(current, dict(item)),)
+    }
+
+    assert descriptors["anima.provider.home-assistant.set_power"].execution_boundary == (
+        ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    )
+    for tool_id, descriptor in descriptors.items():
+        if tool_id == "anima.provider.home-assistant.set_power":
+            continue
+        assert descriptor.execution_boundary == ExecutionBoundary.POLICY_GATED_INTERNAL, tool_id
+
+
+def test_internal_boundary_requires_the_exact_builtin_source() -> None:
+    declared = next(
+        item
+        for item in PREFERENCES_MANIFEST.tools
+        if item["name"] == "create_preference"
+    )
+    spoofed = replace(PREFERENCES_MANIFEST, source="builtin:unrelated")
+
+    assert ToolDescriptor.from_manifest(
+        spoofed, dict(declared)
+    ).execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL
 
 
 def test_entry_point_discovery_is_separate_from_enablement() -> None:

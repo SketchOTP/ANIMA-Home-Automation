@@ -41,6 +41,7 @@ from anima_ha.sentry_boundary import (
     SentryBoundaryError,
     SentryIdentityEvidenceEnvelope,
 )
+from anima_ha.sentry_personality import SentryPersonalityStore
 from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore
 from anima_ha.ui_runtime import build_postgres_core
 
@@ -287,6 +288,7 @@ class CoreSentryHTTPService:
         live_result_publisher: PostgresSentryLivePublisher | None = None,
         auto_wake_claims: PostgresAutoWakeClaims | None = None,
         voice_settings_store: SentryVoiceSettingsStore | None = None,
+        personality_store: SentryPersonalityStore | None = None,
     ) -> None:
         self.boundary = boundary
         self.token_loader = token_loader
@@ -296,6 +298,7 @@ class CoreSentryHTTPService:
         self.live_result_publisher = live_result_publisher
         self.auto_wake_claims = auto_wake_claims
         self.voice_settings_store = voice_settings_store
+        self.personality_store = personality_store
         self.bindings = SentryBindingCodec("unused-until-authenticated")
 
     def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
@@ -589,6 +592,13 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                     raise ServiceAuthError("service principal is not active")
                 self._write(200, store.get(principal.household_id))
                 return
+            if self.path == "/v1/sentry/personality":
+                service = self._service()
+                personality_store = service.personality_store
+                if principal is None or personality_store is None:
+                    raise ServiceAuthError("service principal is not active")
+                self._write(200, personality_store.active(principal.household_id))
+                return
             if self.path != "/v1/health":
                 self._write(404, {"error": "NOT_FOUND"})
                 return
@@ -606,6 +616,10 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 if principal is None or service.voice_settings_store is None:
                     raise ServiceAuthError("service principal is not active")
                 response = service.voice_settings_store.get(principal.household_id)
+            elif self.path == "/v1/sentry/personality":
+                if principal is None or service.personality_store is None:
+                    raise ServiceAuthError("service principal is not active")
+                response = service.personality_store.active(principal.household_id)
             elif self.path == "/v1/health":
                 response = service.boundary.health().to_payload()
             elif self.path in {
@@ -803,6 +817,7 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         profile_principal_resolver=profile_principal_resolver,
         live_result_publisher=PostgresSentryLivePublisher(database_url),
         voice_settings_store=SentryVoiceSettingsStore(database_url),
+        personality_store=SentryPersonalityStore(database_url),
         auto_wake_claims=(
             PostgresAutoWakeClaims(
                 database_url,

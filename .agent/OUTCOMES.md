@@ -1716,3 +1716,22 @@ decision.
 - PASSED: complete `anima-validate` with 1153 passed/76 skipped, OPA 9/9, real
   PostgreSQL push/priority target with 31 passed, Docker image build, live Core
   health and diff check. Physical 1-3 second audible timing remains NOT RUN.
+
+## OUTCOME-SENTRY-PERSONALITY-PROFILES-027A — owner-authored presentation profiles
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / live owner workflow observed
+- Added household-scoped, versioned PostgreSQL storage and authenticated owner
+  controls for multiple free-form SENTRY personality profiles: create, edit,
+  activate and delete. No preset personalities or browser-side durable storage
+  were introduced.
+- The credential-isolated SENTRY client reads only the active profile. It is
+  framed as presentation data and cannot override ANIMA Truth, identity,
+  policy, notification requirements, tool authorization, mandatory factual
+  alerts or Phase 9 terminal results. Built-in SENTRY remains the fallback.
+- PASSED: complete ANIMA pytest/Ruff/strict-mypy and frontend checks, Docker UI
+  build, complete SENTRY suite 537/537, real PostgreSQL lifecycle/isolation,
+  live browser create/edit/activate/delete and persistence across a real UI
+  restart. Temporary profiles were deleted after qualification.
+- The active 027A physical latency and elapsed household-trial gates are not
+  affected and remain open.

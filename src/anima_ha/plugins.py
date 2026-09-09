@@ -296,28 +296,54 @@ class PluginManifest:
         }
 
 
-_TRUSTED_INTERNAL_TOOL_IDS = frozenset(
-    {
-        "anima.durable-tasks.schedule",
-        "anima.durable-tasks.cancel",
-        "anima.durable-tasks.pause",
-        "anima.durable-tasks.resume",
-        "anima.calendar.create_event",
-        "anima.calendar.update_event",
-        "anima.calendar.cancel_event",
-        "anima.provider.home-assistant.permit_zigbee_join",
-        "anima.provider.home-assistant.commission_device",
-        "anima.provider.home-assistant.commission_presence_source",
-        "anima.provider.home-assistant.commission_zigbee_presence_sensor",
-        "anima.senseguard-alerts.save_spoken_presence_policy",
-        "anima.senseguard-alerts.save_policy",
-        "anima.scenes.create_scene",
-        "anima.scenes.update_scene",
-    }
-)
-
-
-_TRUSTED_SPACE_TOOL_SOURCES = {
+_TRUSTED_INTERNAL_TOOL_SOURCES = {
+    # Every lowering from the default coordinated-consequential boundary is an
+    # exact tool/source pair owned by Core. These operations mutate ANIMA's
+    # durable control plane (or bounded HA configuration) and still pass Phase
+    # 4 policy; they are not physical actions with a Phase 9 verification spec.
+    "anima.durable-tasks.schedule": "builtin:anima_ha.tasks",
+    "anima.durable-tasks.cancel": "builtin:anima_ha.tasks",
+    "anima.durable-tasks.pause": "builtin:anima_ha.tasks",
+    "anima.durable-tasks.resume": "builtin:anima_ha.tasks",
+    "anima.calendar.create_event": "builtin:anima_ha.calendar",
+    "anima.calendar.update_event": "builtin:anima_ha.calendar",
+    "anima.calendar.cancel_event": "builtin:anima_ha.calendar",
+    "anima.system.backup.create_backup": "builtin:anima_ha.backup",
+    "anima.system.backup.restore_backup": "builtin:anima_ha.backup",
+    "anima.capability-management.set_integration_enabled": (
+        "builtin:anima_ha.capability_management"
+    ),
+    "anima.household-presence.bind_source": "builtin:anima_ha.household_presence",
+    "anima.notification-routes.save_route": "builtin:anima_ha.notification_routes",
+    "anima.household-preferences.create_preference": "builtin:anima_ha.preferences",
+    "anima.household-preferences.update_preference": "builtin:anima_ha.preferences",
+    "anima.household-preferences.retract_preference": "builtin:anima_ha.preferences",
+    "anima.household-users.create_user": "builtin:anima_ha.users",
+    "anima.household-users.update_user": "builtin:anima_ha.users",
+    "anima.household-users.authorize_face_profile": "builtin:anima_ha.users",
+    "anima.automations.create_automation": "builtin:anima_ha.automations",
+    "anima.automations.update_automation": "builtin:anima_ha.automations",
+    "anima.sentry-control.enter_sleep_mode": "builtin:anima_ha.sentry_voice_settings",
+    "anima.provider.home-assistant.reconnect": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.start_zha_setup": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.continue_zha_setup": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.permit_zigbee_join": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.commission_device": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.commission_presence_source": (
+        "builtin:anima_ha.home_assistant"
+    ),
+    "anima.provider.home-assistant.commission_zigbee_presence_sensor": (
+        "builtin:anima_ha.home_assistant"
+    ),
+    "anima.provider.home-assistant.rename_device": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.reassign_device": "builtin:anima_ha.home_assistant",
+    "anima.provider.home-assistant.retire_device": "builtin:anima_ha.home_assistant",
+    "anima.senseguard-alerts.save_spoken_presence_policy": (
+        "builtin:anima_ha.senseguard_alerts"
+    ),
+    "anima.senseguard-alerts.save_policy": "builtin:anima_ha.senseguard_alerts",
+    "anima.scenes.create_scene": "builtin:anima_ha.scenes",
+    "anima.scenes.update_scene": "builtin:anima_ha.scenes",
     "anima.household-learning.configure": "builtin:anima_ha.household_learning",
     "anima.household-learning.set_device_notification": "builtin:anima_ha.household_learning",
     "anima.household-learning.propose": "builtin:anima_ha.household_learning",
@@ -359,29 +385,15 @@ def _core_execution_boundary(
 ) -> ExecutionBoundary:
     """Normalize authority in Core; raw plugin metadata cannot lower it."""
     tool_id = f"{manifest.plugin_id}.{name}"
-    if tool_id in _TRUSTED_SPACE_TOOL_SOURCES:
-        # Graph-only builtins still pass PluginManager and PolicyService. Pair
-        # each exact ID with its source; do not enlarge the older cross-product
-        # allowlist or lower HA/provider/notification execution boundaries.
+    if tool_id in _TRUSTED_INTERNAL_TOOL_SOURCES:
+        # Trusted control-plane builtins still pass PluginManager and
+        # PolicyService. Pair each exact ID with its source; unknown tools,
+        # external plugins, HA physical actions, and notification delivery keep
+        # the coordinated-consequential default.
         if (
             manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
             and manifest.trust_class == TrustClass.TRUSTED_NATIVE
-            and manifest.source == _TRUSTED_SPACE_TOOL_SOURCES[tool_id]
-        ):
-            return ExecutionBoundary.POLICY_GATED_INTERNAL
-        return ExecutionBoundary.COORDINATED_CONSEQUENTIAL
-    if tool_id in _TRUSTED_INTERNAL_TOOL_IDS:
-        if (
-            manifest.runtime_kind == RuntimeKind.TRUSTED_NATIVE
-            and manifest.trust_class == TrustClass.TRUSTED_NATIVE
-            and manifest.source
-            in {
-                "builtin:anima_ha.tasks",
-                "builtin:anima_ha.calendar",
-                "builtin:anima_ha.home_assistant",
-                "builtin:anima_ha.senseguard_alerts",
-                "builtin:anima_ha.scenes",
-            }
+            and manifest.source == _TRUSTED_INTERNAL_TOOL_SOURCES[tool_id]
         ):
             return ExecutionBoundary.POLICY_GATED_INTERNAL
         return ExecutionBoundary.COORDINATED_CONSEQUENTIAL

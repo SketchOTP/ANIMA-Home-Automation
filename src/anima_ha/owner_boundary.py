@@ -46,6 +46,7 @@ class OwnerBoundary:
         # Late import avoids eagerly composing another UI from module imports.
         from anima_ha.live_results import PostgresSentryLivePublisher
         from anima_ha.sentry_autowake import PostgresAutoWakeClaims, aware_timestamp
+        from anima_ha.sentry_personality import SentryPersonalityStore
         from anima_ha.sentry_service import (
             CoreSentryHTTPService,
             PostgresSentryPrincipalRegistry,
@@ -121,6 +122,7 @@ class OwnerBoundary:
             live_result_publisher=PostgresSentryLivePublisher(database_url),
             auto_wake_claims=auto_wake_claims,
             voice_settings_store=SentryVoiceSettingsStore(database_url),
+            personality_store=SentryPersonalityStore(database_url),
         )
         self.thread = threading.Thread(
             target=self.server.serve_forever, daemon=True, name="anima-owner-boundary"

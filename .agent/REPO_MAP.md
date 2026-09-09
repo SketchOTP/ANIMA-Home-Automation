@@ -430,3 +430,20 @@ Owner Routines completion (2026-09-07 UTC; supersedes text-interaction candidate
   server-owned role propagation into policy context.
 - `src/anima_ha/ui_runtime.py`: commissioned Graph access-level resolver wired
   into the SENTRY composition root.
+
+SENTRY personality configuration (2026-09-09):
+
+- `src/anima_ha/sentry_personality.py` and
+  `src/anima_ha/db/migrations/0029_sentry_personality_profiles.sql` —
+  household-scoped, optimistic-versioned free-form presentation profiles with
+  a single active profile and built-in fallback.
+- `src/anima_ha/ui_api.py` and `ui/src/SentryPersonalityProfiles.tsx` —
+  authenticated Settings read/mutation surface and accessible create, edit,
+  activate and confirmed-delete workflow.
+- `src/anima_ha/sentry_service.py` and
+  `integrations/sentry/anima-household/anima_household_client.py` —
+  credential-isolated active-profile delivery scoped by the registered SENTRY
+  service principal's household.
+- `/home/sketch/Projects/SENTRY/tools/sentry_codex_agent.py` — consumes the
+  active profile only as quoted presentation guidance after ANIMA
+  provider-start; authority and mandatory-alert invariants remain outside it.

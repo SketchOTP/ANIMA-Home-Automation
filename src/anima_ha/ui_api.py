@@ -49,6 +49,12 @@ from anima_ha.live_results import PostgresSentryLiveResultBus
 from anima_ha.policy import Assurance, EvidenceType, IdentityEvidence, RequestOrigin
 from anima_ha.preferences import PreferenceValidationError, preference_payloads, preferences_page
 from anima_ha.ring_api import install_ring_api
+from anima_ha.sentry_personality import (
+    SentryPersonalityConflict,
+    SentryPersonalityStore,
+    default_personality_payload,
+    validate_personality_profile,
+)
 from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore, validate_voice_settings
 from anima_ha.users import user_payload
 from anima_ha.vendor_event_ingress import (
@@ -677,6 +683,12 @@ class HouseholdReadModel(Protocol):
         self, identity: UIIdentity, value: dict[str, Any]
     ) -> dict[str, Any]: ...
 
+    def sentry_personality_profiles(self, identity: UIIdentity) -> dict[str, Any]: ...
+
+    def mutate_sentry_personality_profile(
+        self, identity: UIIdentity, operation: str, value: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
 
 def _health_view(
     capabilities: list[dict[str, Any]], *, core_available: bool = True
@@ -946,6 +958,13 @@ class DemoHouseholdReadModel:
 
     def __init__(self) -> None:
         self._settings = validate_ui_preferences({})
+        self._personality_profiles: dict[str, Any] = {
+            "items": [],
+            "active_profile_id": None,
+            "fallback_active": True,
+            "fallback_name": default_personality_payload()["name"],
+            "boundary": default_personality_payload()["boundary"],
+        }
         self._tasks = [
             {"task_id": "task-demo", "title": "Review Anima updates", "status": "ACTIVE"}
         ]
@@ -1163,6 +1182,72 @@ class DemoHouseholdReadModel:
         del identity
         return validate_voice_settings(value)
 
+    def sentry_personality_profiles(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        return dict(self._personality_profiles)
+
+    def mutate_sentry_personality_profile(
+        self, identity: UIIdentity, operation: str, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity
+        items = list(self._personality_profiles["items"])
+        if operation == "create":
+            profile = validate_personality_profile(value)
+            now = _now().isoformat()
+            items.append(
+                {
+                    "profile_id": str(uuid4()),
+                    **profile,
+                    "version": str(uuid4()),
+                    "active": not items,
+                    "created_at": now,
+                    "updated_at": now,
+                    "presentation_only": True,
+                }
+            )
+        else:
+            profile_id = str(value.get("profile_id", ""))
+            index = next(
+                (
+                    position
+                    for position, item in enumerate(items)
+                    if item["profile_id"] == profile_id
+                ),
+                None,
+            )
+            if index is None or items[index]["version"] != value.get("expected_version"):
+                raise SentryPersonalityConflict("profile changed or no longer exists")
+            if operation == "update":
+                items[index] = {
+                    **items[index],
+                    **validate_personality_profile(value),
+                    "version": str(uuid4()),
+                    "updated_at": _now().isoformat(),
+                }
+            elif operation == "activate":
+                items = [
+                    {
+                        **item,
+                        "active": item["profile_id"] == profile_id,
+                        "version": str(uuid4())
+                        if item["profile_id"] == profile_id
+                        else item["version"],
+                    }
+                    for item in items
+                ]
+            elif operation == "delete":
+                items.pop(index)
+            else:
+                raise ValueError("unsupported personality operation")
+        active = next((item["profile_id"] for item in items if item["active"]), None)
+        self._personality_profiles = {
+            **self._personality_profiles,
+            "items": items,
+            "active_profile_id": active,
+            "fallback_active": active is None,
+        }
+        return dict(self._personality_profiles)
+
 
 class UnavailableHouseholdReadModel:
     """Explicit degraded view used when production Core dependencies are absent."""
@@ -1306,6 +1391,23 @@ class UnavailableHouseholdReadModel:
         del identity, value
         raise UICommandError("CORE_PREFERENCES_UNAVAILABLE")
 
+    def sentry_personality_profiles(self, identity: UIIdentity) -> dict[str, Any]:
+        del identity
+        profile = default_personality_payload()
+        return {
+            "items": [],
+            "active_profile_id": None,
+            "fallback_active": True,
+            "fallback_name": profile["name"],
+            "boundary": profile["boundary"],
+        }
+
+    def mutate_sentry_personality_profile(
+        self, identity: UIIdentity, operation: str, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        del identity, operation, value
+        raise UICommandError("CORE_PREFERENCES_UNAVAILABLE")
+
 
 class PostgresHouseholdReadModel:
     """Normalized read façade over existing Core persistence tables."""
@@ -1337,6 +1439,7 @@ class PostgresHouseholdReadModel:
         self.automation_store = automation_store
         self.memory_service = memory_service
         self.sentry_voice_settings_store = SentryVoiceSettingsStore(database_url)
+        self.sentry_personality_store = SentryPersonalityStore(database_url)
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -2021,6 +2124,14 @@ class PostgresHouseholdReadModel:
         self, identity: UIIdentity, value: dict[str, Any]
     ) -> dict[str, Any]:
         return self.sentry_voice_settings_store.update(identity.household_id, value)
+
+    def sentry_personality_profiles(self, identity: UIIdentity) -> dict[str, Any]:
+        return self.sentry_personality_store.list(identity.household_id)
+
+    def mutate_sentry_personality_profile(
+        self, identity: UIIdentity, operation: str, value: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self.sentry_personality_store.mutate(identity.household_id, operation, value)
 
 
 class DemoCommandGateway:
@@ -3071,6 +3182,35 @@ def create_app(
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_SENTRY_VOICE_SETTINGS") from exc
+
+    @app.get("/api/v1/sentry/personality-profiles")
+    async def sentry_personality_profiles(request: Request) -> dict[str, Any]:
+        return svc.read_model.sentry_personality_profiles(current_identity(request))
+
+    @app.post("/api/v1/sentry/personality-profiles/{operation}")
+    async def mutate_sentry_personality_profile(
+        operation: str,
+        request: Request,
+        body: MutationRequest,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        try:
+            profiles = svc.read_model.mutate_sentry_personality_profile(
+                svc.identity_from_session(session), operation, body.payload
+            )
+            return {
+                "status": "SUCCEEDED",
+                "operation": f"sentry.personality.{operation}",
+                "profiles": profiles,
+            }
+        except UICommandError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except SentryPersonalityConflict as exc:
+            raise HTTPException(status_code=409, detail="SENTRY_PERSONALITY_CONFLICT") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="INVALID_SENTRY_PERSONALITY") from exc
 
     @app.get("/api/v1/preferences")
     def preferences(

@@ -2,6 +2,31 @@
 
 Last updated: 2026-09-09
 
+## Owner-configurable SENTRY personality profiles — 2026-09-09
+
+ANIMA Settings now owns multiple household-scoped, free-form SENTRY
+personality profiles. The owner can create, edit, activate and delete profiles;
+the first profile becomes active automatically and all changes use durable
+PostgreSQL versions. With no active profile, SENTRY retains its built-in
+presentation style.
+
+The active profile is read through SENTRY's credential-isolated ANIMA client
+and is applied only to conversational wording, tone, pacing and character.
+ANIMA Truth, identity, policy, mandatory factual alerts, tool authorization,
+verified Phase 9 results and honest uncertainty remain authoritative. Profile
+text cannot become operational authority, and mandatory security speech still
+starts outside the contextual model path.
+
+PASSED locally: complete ANIMA pytest, Ruff, strict mypy, OPA-preserving
+regressions, frontend source tests 12/12, TypeScript, Vite production build,
+Docker UI build, owner-support-matrix validation and the complete SENTRY voice
+suite 537/537 in its qualified environment. The live owner UI completed
+create/edit/activate/delete and retained an active profile across a real UI
+container restart with the original browser session. Temporary qualification
+profiles were removed; the deployed system is using Built-in SENTRY until the
+owner saves a profile. The 027A physical Tapo latency and three-day trial gates
+remain open; no permanent-Goal completion is claimed.
+
 ## Push-first mandatory household alerts — 2026-09-09
 
 Eligible SENTRY work now wakes through PostgreSQL `LISTEN/NOTIFY` and an
