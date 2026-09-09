@@ -77,6 +77,7 @@ jobs:
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
           ANIMA_LATE_BINDING_TEST_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima_late_binding_test
+          SEARXNG_SECRET: ci-only-placeholder
         run: |
           set -euo pipefail
           docker compose exec -T db createdb -U anima anima_late_binding_test
