@@ -2,6 +2,26 @@
 
 Disposition: **CONTINUE — bounded owner deployment retained; full Goal incomplete**.
 
+Latest latency closure replaces the former 15-second unattended-event poll with
+an authenticated PostgreSQL-notified wait from ANIMA Core to the awake SENTRY
+voice process. A fresh eligible request is claimed and its sparse context and
+frozen request catalogue are preloaded before durable provider-start. For a
+fresh canonical event covered by an owner `ALWAYS_NOTIFY` rule, warm TTS begins
+with a bounded factual announcement immediately after provider-start while
+low-effort contextual reasoning continues in parallel. Security-priority work
+sorts ahead of background requests. Empty waits do not start the model or move
+the projection into `PROCESSING`.
+
+Playback-owned `tts_start_at` evidence is recorded by the PC audio process or
+the RPi projection, with separate three-second mandatory-audible and twelve-second
+contextual-response objectives. The trial ledger stores timing/status only. The
+live PC voice, Pi projection and ANIMA Core services are deployed and healthy;
+Kokoro is warm. The installed Codex 0.153.4 app-server cannot safely rotate the
+per-request MCP binding/catalogue or guarantee stale child teardown, so a shared
+resident Codex app-server was not adopted; the current per-event process boundary
+preserves fencing and no-replay. Deterministic timing and full regressions pass;
+a fresh physical-event timing sample on this exact source remains unobserved.
+
 Latest extension adds Ring setup, sparse multi-signal evidence, owner initiative
 settings, source-linked learned suggestions and scoped daily/multi-day review
 dispatch. Deployed image edd377d00075 is healthy. See
