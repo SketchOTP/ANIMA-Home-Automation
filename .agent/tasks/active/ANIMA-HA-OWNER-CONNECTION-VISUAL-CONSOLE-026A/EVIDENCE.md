@@ -35,6 +35,13 @@
   skips and OPA 9/9; the primary browser matrix passed 112/112 applicable
   scenarios with 14 viewport skips; isolated routines/context/initiative/
   knowledge fixtures passed 90/90; SENTRY passed 525/525.
+- Hosted publication: ANIMA exact head
+  `c16919271d748d28de76494405d3b37518f4a03c` passed CI `34307221255` and
+  published artifact `10087481883`, digest
+  `sha256:5396f6931d0289401fff0811d577b3385aaa192eb904bcaebb099a150fabf69b`.
+  SENTRY exact head `b2de5913d939b2cfa05ad75bc0fd7984005a579c` passed CI
+  `34306897931`. The ANIMA implementation run `34307062432` is retained as a
+  failed CI-environment attempt and was corrected without rewriting history.
 
 ## Owner UI workflow convergence — 2026-09-07 UTC
 

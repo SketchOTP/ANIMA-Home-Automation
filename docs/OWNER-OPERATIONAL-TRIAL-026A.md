@@ -143,5 +143,10 @@ the content-free ledger plus explicit owner feedback.
 - SENTRY passed its complete 525-test Ubuntu suite after the unattended idle
   status correction. The live service restarted with Kokoro warm, wake state
   `LISTENING`, and ANIMA event state `EMPTY`.
-- Hosted CI and final publication remain pending. The multi-day outcome remains
-  `IN_PROGRESS`; these local checks do not replace elapsed household evidence.
+- ANIMA implementation `f6916d4ad0be4e5b0d1e11559df9cf0f30a292fa` plus the
+  hosted-environment correction `c16919271d748d28de76494405d3b37518f4a03c`
+  passed exact-head CI `34307221255`. Artifact `10087481883` has digest
+  `sha256:5396f6931d0289401fff0811d577b3385aaa192eb904bcaebb099a150fabf69b`.
+  SENTRY head `b2de5913d939b2cfa05ad75bc0fd7984005a579c` passed exact-head CI
+  `34306897931`. The multi-day outcome remains `IN_PROGRESS`; hosted checks do
+  not replace elapsed household evidence.

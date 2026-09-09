@@ -22,13 +22,22 @@
 - `IN_PROGRESS`: the private content-free event ledger started at
   `2026-09-09T02:21:00Z`; heartbeat `anima-household-trial-check` is active for
   daily content-free review. Automatic due-review execution and multi-day
-  missed/unnecessary/channel evidence require elapsed time. Hosted publication
-  is not yet claimed.
-- `PASSED` locally: full ANIMA validation, 112 primary browser scenarios, 90
+  missed/unnecessary/channel evidence require elapsed time.
+- `PASSED` locally and hosted: full ANIMA validation, 112 primary browser
+  scenarios, 90
   isolated owner-product browser scenarios, package and Docker builds, and the
   complete 525-test SENTRY suite. Live SENTRY restarted `LISTENING`, Kokoro
   warm, and event source `EMPTY` rather than the former misleading idle
   `NOT_READY`.
+- ANIMA implementation `f6916d4ad0be4e5b0d1e11559df9cf0f30a292fa` and
+  hosted-environment repair `c16919271d748d28de76494405d3b37518f4a03c` are
+  published. Exact-head CI `34307221255` passed; artifact `10087481883` has
+  digest `sha256:5396f6931d0289401fff0811d577b3385aaa192eb904bcaebb099a150fabf69b`.
+  The earlier exact implementation run `34307062432` failed because one CI step
+  did not carry the required Compose SearXNG placeholder; that failed run is
+  retained and was corrected forward.
+- SENTRY head `b2de5913d939b2cfa05ad75bc0fd7984005a579c` is published on
+  `feature/v0.4-personal-continuity`; exact-head CI `34306897931` passed.
 
 ## 026A Spaces owner guidance correction — 2026-09-08
 

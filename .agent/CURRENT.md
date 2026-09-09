@@ -34,8 +34,15 @@ the minimum three-day household trial remain `IN_PROGRESS`. See
 heartbeat `anima-household-trial-check`. Local qualification passes the complete
 ANIMA validation, 112-scenario primary browser matrix, 90 isolated
 owner-product browser scenarios and SENTRY's 525-test suite. No multi-day
-completion, universal phone mapping, hosted CI or repository publication is
-claimed by this entry.
+completion or universal phone mapping is claimed by the elapsed-time trial.
+The implementation is published at
+`f6916d4ad0be4e5b0d1e11559df9cf0f30a292fa`; the one-line hosted-environment
+repair is `c16919271d748d28de76494405d3b37518f4a03c`. Exact-head ANIMA CI
+`34307221255` passed and published artifact `10087481883` with digest
+`sha256:5396f6931d0289401fff0811d577b3385aaa192eb904bcaebb099a150fabf69b`.
+SENTRY is published at `b2de5913d939b2cfa05ad75bc0fd7984005a579c` with exact-head CI
+`34306897931` passing. The multi-day result and the remaining owner-assisted
+phone assignments are still open.
 
 ## Live SENTRY alert-setting classification correction — 2026-09-08
 
