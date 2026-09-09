@@ -20,6 +20,10 @@ EVENT_SOURCES = {
     "household.ring.motion": "anima.ring",
     "household.ring.doorbell": "anima.ring",
 }
+VENDOR_EVENT_TYPES = frozenset(
+    {"external.android.lock_reported", "external.android.motion_reported"}
+)
+VENDOR_SOURCE_PREFIX = "android-relay-report:"
 CORRELATION_GUIDANCE = (
     "These are nearby observations, not a concluded arrival or authenticated identity. "
     "Compare source time, receipt delay, member/device assignments, independence and conflicts. "
@@ -44,7 +48,16 @@ def project_event(
 ) -> dict[str, Any] | None:
     """Whitelist fields, exact sources and current household membership."""
     kind = row.get("event_type")
-    if kind not in EVENT_SOURCES or row.get("source") != EVENT_SOURCES[kind]:
+    if not isinstance(kind, str):
+        return None
+    source = row.get("source")
+    exact_source = EVENT_SOURCES.get(kind)
+    vendor_source = (
+        kind in VENDOR_EVENT_TYPES
+        and isinstance(source, str)
+        and source.startswith(VENDOR_SOURCE_PREFIX)
+    )
+    if (exact_source is None or source != exact_source) and not vendor_source:
         return None
     metadata, payload = row.get("metadata"), row.get("payload")
     if not isinstance(metadata, dict) or not isinstance(payload, dict):
@@ -52,6 +65,31 @@ def project_event(
     if metadata.get("household_id") != str(household_id):
         return None
     if any(metadata.get(key) or payload.get(key) for key in ("snapshot", "restored", "recovery")):
+        return None
+    if vendor_source and (
+        metadata.get("synthetic") is not False
+        or metadata.get("wake_eligible") is not True
+        or metadata.get("producer_qualified") is not True
+        or metadata.get("schema_qualification") != "ANIMA_OWNED_SCHEMA"
+        or metadata.get("external_content_trust") != "EXTERNAL_UNTRUSTED"
+        or payload.get("authority") != "NONE"
+        or (
+            kind == "external.android.lock_reported"
+            and (
+                payload.get("source_package") != "com.tplink.iot"
+                or payload.get("format") != "anima.android.lock.report.v1"
+                or payload.get("event_kind") not in {"locked", "unlocked"}
+            )
+        )
+        or (
+            kind == "external.android.motion_reported"
+            and (
+                payload.get("source_package") != "net.ajcloud.wansviewplus"
+                or payload.get("format") != "anima.android.motion.report.v1"
+                or payload.get("event_kind") != "motion_reported"
+            )
+        )
+    ):
         return None
     try:
         stamp, received = _time(row["occurred_at"]), _time(row["recorded_at"])
@@ -133,7 +171,8 @@ class HouseholdEventEvidence:
                 "occurred_at,recorded_at,payload,metadata "
                 "FROM anima_event_journal WHERE metadata->>'household_id'=%s "
                 "AND occurred_at >= %s AND occurred_at <= %s AND recorded_at <= %s "
-                "AND event_type=ANY(%s) AND source=ANY(%s) "
+                "AND ((event_type=ANY(%s) AND source=ANY(%s)) "
+                "OR (event_type=ANY(%s) AND source LIKE 'android-relay-report:%%')) "
                 "AND (%s::text[] IS NULL OR event_id=ANY(%s::text[])) "
                 "ORDER BY occurred_at DESC,event_id DESC LIMIT %s",
                 (
@@ -143,6 +182,7 @@ class HouseholdEventEvidence:
                     at,
                     list(EVENT_SOURCES),
                     list(set(EVENT_SOURCES.values())),
+                    list(VENDOR_EVENT_TYPES),
                     list(event_ids) if event_ids is not None else None,
                     list(event_ids) if event_ids is not None else None,
                     limit + 1,

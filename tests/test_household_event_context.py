@@ -47,6 +47,109 @@ def test_ring_projection_keeps_uncertainty_and_omits_untrusted_fields() -> None:
     assert "missing doorbell events do not prove nobody rang" in CORRELATION_GUIDANCE
 
 
+def test_qualified_tapo_event_is_available_as_bounded_household_evidence() -> None:
+    home, resource, event = row()
+    event.update(
+        source="android-relay-report:qualified-relay",
+        event_type="external.android.lock_reported",
+        metadata={
+            "household_id": str(home),
+            "synthetic": False,
+            "wake_eligible": True,
+            "producer_qualified": True,
+            "schema_qualification": "ANIMA_OWNED_SCHEMA",
+            "external_content_trust": "EXTERNAL_UNTRUSTED",
+        },
+        payload={
+            "canonical_resource_id": str(resource),
+            "format": "anima.android.lock.report.v1",
+            "event_kind": "unlocked",
+            "source_package": "com.tplink.iot",
+            "authority": "NONE",
+            "reported_profile_ref": "UNTRUSTED_NAME_NOT_PROJECTED",
+        },
+    )
+
+    projected = project_event(event, home, {resource}, set())
+
+    assert projected is not None
+    assert projected["event_type"] == "external.android.lock_reported"
+    assert projected["canonical_id"] == str(resource)
+    assert "UNTRUSTED_NAME_NOT_PROJECTED" not in json.dumps(projected)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("synthetic", True),
+        ("wake_eligible", False),
+        ("producer_qualified", False),
+        ("schema_qualification", "UNQUALIFIED"),
+        ("external_content_trust", "TRUSTED"),
+    ],
+)
+def test_unqualified_tapo_event_is_not_household_evidence(field: str, value: object) -> None:
+    home, resource, event = row()
+    event.update(
+        source="android-relay-report:qualified-relay",
+        event_type="external.android.lock_reported",
+        metadata={
+            "household_id": str(home),
+            "synthetic": False,
+            "wake_eligible": True,
+            "producer_qualified": True,
+            "schema_qualification": "ANIMA_OWNED_SCHEMA",
+            "external_content_trust": "EXTERNAL_UNTRUSTED",
+        },
+        payload={
+            "canonical_resource_id": str(resource),
+            "format": "anima.android.lock.report.v1",
+            "event_kind": "unlocked",
+            "source_package": "com.tplink.iot",
+            "authority": "NONE",
+        },
+    )
+    event["metadata"][field] = value
+
+    assert project_event(event, home, {resource}, set()) is None
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("authority", "OWNER"),
+        ("source_package", "net.ajcloud.wansviewplus"),
+        ("format", "unqualified"),
+        ("event_kind", "motion_reported"),
+    ],
+)
+def test_tapo_evidence_rejects_unqualified_payload(field: str, value: object) -> None:
+    home, resource, event = row()
+    payload: dict[str, object] = {
+        "canonical_resource_id": str(resource),
+        "format": "anima.android.lock.report.v1",
+        "event_kind": "unlocked",
+        "source_package": "com.tplink.iot",
+        "authority": "NONE",
+    }
+    payload[field] = value
+    event.update(
+        source="android-relay-report:qualified-relay",
+        event_type="external.android.lock_reported",
+        metadata={
+            "household_id": str(home),
+            "synthetic": False,
+            "wake_eligible": True,
+            "producer_qualified": True,
+            "schema_qualification": "ANIMA_OWNED_SCHEMA",
+            "external_content_trust": "EXTERNAL_UNTRUSTED",
+        },
+        payload=payload,
+    )
+
+    assert project_event(event, home, {resource}, set()) is None
+
+
 @pytest.mark.parametrize(
     "change", ["source", "household", "resource", "future", "snapshot", "transcript"]
 )

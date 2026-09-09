@@ -1,6 +1,33 @@
 # Current Project State
 
-Last updated: 2026-09-08
+Last updated: 2026-09-09
+
+## Live Tapo unlock announcement correction — 2026-09-09
+
+A genuine Tapo DL110 unlock reached the qualified Android notification relay,
+the PostgreSQL Event Journal and a durable SENTRY intelligence request, but the
+request ended silent. Two independent causes were reproduced: the Front Door
+Lock rule was still `CONTEXTUAL / ANY`, and household initiative evidence did
+not admit the already-qualified `external.android.lock_reported` event class,
+so the SENTRY turn received `notification.reason=UNAVAILABLE`.
+
+The evidence projection now admits only ANIMA-qualified Tapo lock and Wansview
+motion relay reports with the exact source prefix, package, schema, trust,
+authority and non-synthetic metadata produced by the bounded relay. Untrusted
+notification text and profile labels remain excluded. The owner setting was
+changed through the typed `anima.household-learning.set_device_notification`
+tool and current OPA policy to `Front Door Lock / UNLOCKED / ALWAYS / all day /
+America/New_York`; all other household initiative settings were preserved.
+
+PASSED locally: persisted configuration readback, current OPA decision
+`ALLOW / SECURE_ACTION_AUTHORIZED`, live-store projection of the captured Tapo
+event, focused event/learning/autowake/vendor tests, strict mypy for the changed
+surface, full `anima-validate` (1152 passed, 74 skipped), OPA 9/9 and
+`git diff --check`. The corrected UI image
+`sha256:276a984e2878bb90c9a7595e93d743471e2eee2196c4c61cb46b0b966708be61`
+is deployed healthy on port 18090.
+A fresh physical unlock and resulting audible announcement have not yet been
+observed after this correction, so operational delivery remains unclaimed.
 
 ## Owner operational convergence trial — 2026-09-08
 

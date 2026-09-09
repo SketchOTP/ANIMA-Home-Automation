@@ -385,3 +385,17 @@ Any future history rewrite proposal, remote migration, or change to the reposito
   and verify execution thread identity; do not merely increase browser timeouts.
 - Keep uncertain edits as drafts, refresh authoritative versions, and require
   explicit review. Do not silently retry a possibly successful mutation.
+
+### Qualified Android events and unsolicited delivery — 2026-09-09
+
+- Accepting an Android notification into the Journal is not sufficient for
+  unattended delivery: the household-evidence projection must independently
+  admit that exact qualified event class or initiative fails closed as
+  `UNAVAILABLE`.
+- Preserve the two-stage boundary. Relay admission may retain the provider
+  report for audit, while cognition receives only canonical resource, bounded
+  event kind, timing, provenance and explicit `EXTERNAL_UNTRUSTED / NONE`
+  authority metadata.
+- An owner request to always announce an unlock requires both a matching
+  device/event selector and `mode=ALWAYS`; a generic `CONTEXTUAL / ANY` rule
+  intentionally permits the model to remain silent on ordinary lock activity.

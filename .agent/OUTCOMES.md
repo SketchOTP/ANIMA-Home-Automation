@@ -1672,3 +1672,27 @@ decision.
 - Live image:
   `sha256:3cb54a638824dcf101571c5870404fffb13f3374011dbc6cfdbc528db0aa3be8`.
   No commit, push or hosted CI is claimed.
+
+## OUTCOME-LIVE-TAPO-UNLOCK-ANNOUNCEMENT-026A — qualified event reaches owner policy
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / operational delivery pending
+- A genuine Tapo DL110 unlock was accepted by the qualified Android relay and
+  Journal but its SENTRY request ended silent because the device rule remained
+  `CONTEXTUAL / ANY` and the initiative evidence reader omitted qualified
+  Android lock events.
+- Added exact fail-closed admission for qualified Tapo lock and Wansview motion
+  relay reports. Package, schema, source, trust, authority, synthetic and wake
+  metadata are checked before a bounded event can enter household reasoning;
+  raw notification text and claimed identity remain excluded.
+- Changed only the canonical Front Door Lock notification rule through ANIMA's
+  typed tool and current OPA decision to `UNLOCKED / ALWAYS`, all day in
+  `America/New_York`. Readback returned one target rule among six total device
+  rules and OPA recorded `ALLOW / SECURE_ACTION_AUTHORIZED`.
+- PASSED: focused tests, strict changed-surface mypy, full `anima-validate`
+  (1152 passed, 74 skipped), OPA 9/9, live configuration readback, live captured
+  event projection, healthy container deployment and `git diff --check`.
+- Deployed exact-source image:
+  `sha256:276a984e2878bb90c9a7595e93d743471e2eee2196c4c61cb46b0b966708be61`.
+- A post-fix physical unlock-to-audible-TTS observation has not been run, so E5
+  announcement delivery is not claimed.
