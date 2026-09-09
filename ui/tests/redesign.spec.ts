@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 // Browser contract fixtures: these tests do not claim a live household connection.
 const widgets = ["status", "presence", "weather", "agenda", "tasks", "controls", "conversation", "activity", "household", "reports", "health"];
 const settings = { version: 1, appearance: "night", accent: "ember", density: "comfortable", reduced_motion: true, text_scale: "normal", display_mode: "desktop", visible_widgets: widgets, widget_order: widgets };
-const nav = ["Home", "Devices", "Spaces", "Scenes", "Automations", "Routines", "Alerts", "Notifications", "Anima", "Tasks & Calendar", "Activity", "Capabilities", "Integrations", "Backups", "Preferences", "Settings"];
+const nav = ["Home", "Devices", "Spaces", "Routines", "Scenes", "Automations", "SENTRY", "Alerts", "Tasks & Calendar", "Activity", "Users", "Connections", "Backups", "Preferences", "Settings"];
 const home = {
   household: { name: "UI contract household", status: "CURRENT", summary: "Fixture household" },
   security: { status: "UNKNOWN", label: "Unknown" }, presence: { people: [] }, weather: { status: "UNAVAILABLE", summary: "No weather observation" },
@@ -26,7 +26,7 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
     if (path === "/api/v1/events") { await route.abort(); return; }
     if (request.method() !== "GET") {
       writes.push({ path, body: request.postDataJSON() });
-      await route.fulfill({ json: path === "/api/v1/conversation" ? { response: "Fixture reply", disposition: "RESPONSE" } : { status: "SUCCEEDED", operation: "fixture", detail: "Contract accepted" } }); return;
+      await route.fulfill({ json: path === "/api/v1/conversation" ? { request_id: "request-1", response: "SENTRY received the request.", disposition: "QUEUED_FOR_SENTRY" } : { status: "SUCCEEDED", operation: "fixture", detail: "Contract accepted" } }); return;
     }
     if (path === "/api/v1/connection" && connection === null) { await route.fulfill({ status: 503, json: { detail: "UNAVAILABLE" } }); return; }
     const data: Record<string, unknown> = {
@@ -39,6 +39,8 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
       "/api/v1/places": { items: [{ place_id: "household", name: "Household", kind: "HOUSEHOLD" }, { place_id: "study", name: "Study", kind: "ROOM", parent_id: "household" }] },
       "/api/v1/capabilities": { items: [{ id: "control", label: "Device control", state: "available" }, { id: "weather", label: "Weather", state: "unavailable" }] },
       "/api/v1/automations": { items: [{ automation_id: "rule", name: "Reading routine", trigger_resource_id: "lamp", trigger_state: "on", action_resource_id: "lamp", action_desired_on: false, enabled: true, version: 3, updated_at: "2026-09-06T12:00:00Z" }] },
+      "/api/v1/initiative": { status: "SUCCEEDED", can_edit: true, config_version: null, config: { learning_days: 3, routine_review_days: 3, daily_review_enabled: true, routine_review_enabled: true, proactive_enabled: false, always_notify: [], device_notifications: [] } },
+      "/api/v1/conversation/request-1": { request_id: "request-1", status: "COMPLETED", lifecycle: "COMPLETED", response: "Fixture reply", available: true },
     };
     await route.fulfill({ json: data[path] ?? { items: [], next_cursor: null } });
   });
@@ -46,16 +48,14 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
   await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
   return writes;
 }
-test("assistant shortcuts show voice suggestions without sending", async ({ page }) => {
+test("assistant shortcuts prepare SENTRY chat without sending", async ({ page }) => {
   const writes = await fixture(page);
-  for (const section of nav.filter(name => name !== "Routines")) {
+  for (const section of ["Home", "Devices", "Spaces", "Scenes", "Automations", "Alerts", "SENTRY", "Tasks & Calendar", "Activity", "Connections", "Backups", "Preferences", "Settings"]) {
     await page.getByRole("navigation").getByRole("button", { name: section, exact: true }).click();
     const actions = page.getByLabel(`Assistant quick actions for ${section}`);
     await actions.getByRole("button").first().click();
-    await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
-    await expect(page.getByLabel("Message Anima")).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeFocused();
-    await expect(page.getByText("Suggestion only — nothing has been sent.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "SENTRY owner operations" })).toBeVisible();
+    await expect(page.getByLabel("Tell SENTRY what to do")).not.toHaveValue("");
     expect(writes).toHaveLength(0);
   }
 });
@@ -75,6 +75,40 @@ test("every section fits the viewport with accessible navigation", async ({ page
     await page.screenshot({ path: testInfo.outputPath(`${section.replaceAll(/[^a-z0-9]/gi, "-")}.png`), fullPage: true });
   }
 });
+
+test("owner page explanations match the controls and boundaries actually shown", async ({ page }) => {
+  await fixture(page);
+  const pages: Array<[string, string, string[]]> = [
+    ["Routines", "Routines records schedules and expectations", ["Add family routine", "Manage household users", "Saved family routines", "Household presence"]],
+    ["Automations", "Automations are saved rules", ["Create an automation", "Saved automations"]],
+    ["SENTRY", "Use SENTRY to describe a household request", ["SENTRY owner operations", "Tell SENTRY what to do"]],
+    ["Alerts", "Alerts controls which household events deserve attention", ["Advanced event rule", "Alert inbox", "Notification route"]],
+    ["Tasks & Calendar", "Tasks are durable reminders", ["Tasks", "Create task", "Calendar", "Create event"]],
+    ["Activity", "Activity is a read-only view", ["Recent activity"]],
+    ["Users", "Users manages the people ANIMA knows about", ["Add household user", "Household users"]],
+    ["Connections", "Connections shows ANIMA's registered services", ["Ring notifications", "Vendor app notifications", "Registered integrations", "Capabilities"]],
+    ["Backups", "Backups creates server-owned snapshots", ["ANIMA backups", "Recovery boundary"]],
+    ["Preferences", "Preferences stores household-wide and person-specific guidance", ["Add a preference", "SENTRY initiative", "Memory · Knowledge base"]],
+    ["Settings", "Settings controls how the ANIMA interface looks", ["Household interface", "Save interface settings", "SENTRY voice"]],
+  ];
+  for (const [section, description, controls] of pages) {
+    await page.getByRole("navigation").getByRole("button", { name: section, exact: true }).click();
+    await expect(page.locator(".section-description")).toContainText(description);
+    for (const control of controls) await expect(page.getByText(control, { exact: true }).first()).toBeVisible();
+  }
+});
+
+test("notification-only connections are not offered as On Off automation triggers", async ({ page }) => {
+  await fixture(page);
+  await page.route("**/api/v1/devices", (route) => route.fulfill({ json: { status: "CURRENT", items: [
+    device("lamp", "Reading lamp", true),
+    { ...device("wansview", "Driveway camera alert", true), metadata: { name: "Driveway camera alert", mapping_status: "MAPPED", canonical_target_id: "wansview", source_kind: "notification_resource" }, capabilities: [] },
+  ] } }));
+  await page.reload();
+  await page.getByRole("navigation").getByRole("button", { name: "Automations", exact: true }).click();
+  await expect(page.getByLabel("When this device is").getByRole("option", { name: "Reading lamp" })).toHaveCount(1);
+  await expect(page.getByLabel("When this device is").getByRole("option", { name: "Driveway camera alert" })).toHaveCount(0);
+});
 test("device filters preserve explicit power payloads and observed selection", async ({ page }) => {
   const writes = await fixture(page);
   await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
@@ -91,6 +125,40 @@ test("device filters preserve explicit power payloads and observed selection", a
   await page.getByLabel("Device status").selectOption("all");
   await page.getByLabel("Filter by room").selectOption("study");
   await expect(page.locator(".device-grid .device-row")).toHaveCount(1);
+});
+test("scene workflow explains saved states and toggles the durable enabled state", async ({ page }) => {
+  await fixture(page);
+  let scene = { scene_id: "scene-1", name: "Evening lights", steps: [{ resource_id: "lamp", desired_on: true }], enabled: true, version: 3, updated_at: "2026-09-08T12:00:00Z" };
+  let updatePayload: Record<string, unknown> | null = null;
+  await page.route("**/api/v1/scenes", async (route) => {
+    const request = route.request();
+    if (request.method() === "GET") { await route.fulfill({ json: { items: [scene] } }); return; }
+    updatePayload = request.postDataJSON().payload as Record<string, unknown>;
+    scene = { ...scene, enabled: Boolean(updatePayload.enabled), version: scene.version + 1 };
+    await route.fulfill({ json: { status: "SUCCEEDED", operation: "scene.update", result: { scene } } });
+  });
+  await page.reload();
+  await page.getByRole("navigation").getByRole("button", { name: "Scenes", exact: true }).click();
+  await expect(page.getByLabel("Scenes overview")).toContainText("reusable presets");
+  await expect(page.getByText("Saving the scene does not change any devices.")).toBeVisible();
+  const row = page.getByRole("listitem").filter({ hasText: "Evening lights" });
+  await expect(row.getByRole("button", { name: "Apply scene" })).toBeEnabled();
+  await row.getByRole("button", { name: "Disable" }).click();
+  await expect.poll(() => updatePayload).toEqual({ scene_id: "scene-1", expected_version: 3, name: "Evening lights", steps: [{ resource_id: "lamp", desired_on: true }], enabled: false });
+  await expect(row.getByText("DISABLED", { exact: true })).toBeVisible();
+  await expect(row.getByRole("button", { name: "Apply scene" })).toBeDisabled();
+});
+test("owner can set device alert behavior without leaving the device page", async ({ page }) => {
+  const writes = await fixture(page);
+  await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
+  await page.getByLabel("Alert behavior for Reading lamp").selectOption("TIME_WINDOW");
+  const card = page.locator(".notification-device-card").filter({ hasText: "Reading lamp" });
+  await card.getByLabel("From").fill("00:00");
+  await card.getByLabel("Until").fill("05:00");
+  await card.getByRole("button", { name: "Save alert setting" }).click();
+  await expect.poll(() => writes.filter(item => item.path === "/api/v1/initiative/configure").length).toBe(1);
+  const saved = writes.find(item => item.path === "/api/v1/initiative/configure")?.body as { payload: { device_notifications: { resource_id: string; mode: string }[] } };
+  expect(saved.payload.device_notifications).toContainEqual(expect.objectContaining({ resource_id: "lamp", mode: "TIME_WINDOW" }));
 });
 for (const source of ["projection", "rooms fallback"]) {
   test(`canonical ${source} name replaces stale provider labels in devices manage and alerts`, async ({ page }) => {
@@ -208,7 +276,6 @@ for (const mapping of ["missing", "ambiguous", "unnamed", "household"]) {
     await expect(sync).toBeDisabled();
     await expect(sync).toHaveAccessibleDescription("Cannot sync: canonical device name or room mapping is missing or ambiguous. Refresh household data first.");
     await expect(page.getByText(/Cannot sync: canonical device name or room mapping/)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Add to Anima", exact: true })).toBeEnabled();
     expect(writes).toHaveLength(0);
   });
 }
@@ -248,20 +315,14 @@ test("automation enable control retains complete versioned definition", async ({
   await expect.poll(() => writes.length).toBe(1);
   expect(writes[0]).toEqual({ path: "/api/v1/automations", body: { payload: { automation_id: "rule", expected_version: 3, name: "Reading routine", trigger_resource_id: "lamp", trigger_state: "on", action_resource_id: "lamp", action_desired_on: false, enabled: false } } });
 });
-test("voice panel cannot submit or poll conversations and keeps status truthful", async ({ page }) => {
+test("SENTRY chat submits through the governed queue and polls the live result", async ({ page }) => {
   const writes = await fixture(page);
-  const requests: string[] = [];
-  page.on("request", request => { if (request.url().includes("/conversation")) requests.push(request.url()); });
-  await page.getByRole("navigation").getByRole("button", { name: "Anima", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
-  await expect(page.locator(".conversation")).toContainText("UNAVAILABLE");
-  await expect(page.locator(".conversation input, .conversation textarea")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Send", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Refresh connection status" }).click();
-  await expect(page.locator(".conversation")).toContainText("does not start a microphone");
-  expect(writes).toHaveLength(0); expect(requests).toHaveLength(0);
-  await page.getByRole("button", { name: "View household activity" }).click();
-  await expect(page.getByLabel("Activity overview", { exact: true })).toBeVisible();
+  await page.getByRole("navigation").getByRole("button", { name: "SENTRY", exact: true }).click();
+  await page.getByLabel("Tell SENTRY what to do").fill("Create a safe household task");
+  await page.getByRole("button", { name: "Send to SENTRY", exact: true }).click();
+  await expect(page.getByText("Fixture reply", { exact: true })).toBeVisible();
+  await expect.poll(() => writes.filter(item => item.path === "/api/v1/conversation").length).toBe(1);
+  expect(writes.find(item => item.path === "/api/v1/conversation")?.body).toEqual({ text: "Create a safe household task" });
 });
 
 test("unauthenticated first-use offers owner sign-in without credential fields", async ({ page }) => {
@@ -273,6 +334,23 @@ test("unauthenticated first-use offers owner sign-in without credential fields",
   await expect(page.getByRole("link", { name: "Connect your Home Assistant" })).toHaveAttribute("href", "/auth/login?connect=1");
   await expect(page.getByRole("link", { name: "Continue with existing Home Assistant" })).toHaveAttribute("href", "/auth/login");
   await expect(page.locator("input, textarea")).toHaveCount(0);
+});
+
+test("configured household automatically resumes through existing Home Assistant identity", async ({ page }) => {
+  let loginRequests = 0;
+  await page.route("**/api/v1/**", async (route) => {
+    const setup = new URL(route.request().url()).pathname === "/api/v1/setup/status";
+    await route.fulfill({ status: setup ? 200 : 401, json: setup ? { state: "ONLINE", available: true } : { detail: "AUTHENTICATION_REQUIRED" } });
+  });
+  await page.route("**/auth/login", async (route) => {
+    loginRequests += 1;
+    await route.fulfill({ contentType: "text/html", body: "ANIMA OAuth continuation" });
+  });
+
+  await page.goto("/");
+
+  await expect.poll(() => loginRequests).toBe(1);
+  await expect(page.getByText("ANIMA OAuth continuation", { exact: true })).toBeVisible();
 });
 
 test("mutation outcome is visible while an unrelated snapshot request is stalled", async ({ page }) => {
@@ -350,7 +428,7 @@ test("failed bootstrap prevents successful protected reads from being committed"
   await expect(page.getByRole("alert")).toContainText("Session (/api/v1/bootstrap) unavailable");
   await page.getByRole("navigation").getByRole("button", { name: "Devices", exact: true }).click();
   await expect(page.getByText("Unverified session device", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Reading lamp", { exact: true })).toBeVisible();
+  await expect(page.locator(".device-grid").getByText("Reading lamp", { exact: true })).toBeVisible();
 });
 
 test("calendar save uses the authoritative event and version without waiting for task reads", async ({ page }) => {

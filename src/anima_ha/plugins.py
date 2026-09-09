@@ -307,6 +307,7 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
         "anima.calendar.cancel_event",
         "anima.provider.home-assistant.permit_zigbee_join",
         "anima.provider.home-assistant.commission_device",
+        "anima.provider.home-assistant.commission_presence_source",
         "anima.provider.home-assistant.commission_zigbee_presence_sensor",
         "anima.senseguard-alerts.save_spoken_presence_policy",
         "anima.senseguard-alerts.save_policy",
@@ -318,6 +319,7 @@ _TRUSTED_INTERNAL_TOOL_IDS = frozenset(
 
 _TRUSTED_SPACE_TOOL_SOURCES = {
     "anima.household-learning.configure": "builtin:anima_ha.household_learning",
+    "anima.household-learning.set_device_notification": "builtin:anima_ha.household_learning",
     "anima.household-learning.propose": "builtin:anima_ha.household_learning",
     "anima.household-learning.review": "builtin:anima_ha.household_learning",
     "anima.family-routines.create_routine": "builtin:anima_ha.family_routines",
@@ -395,6 +397,7 @@ _CORE_RESTRICTED_CONTENT_TOOL_IDS = frozenset(
         "anima.external.shopping.search_products",
         "anima.external.shopping.bestbuy.search_products",
         "anima.external.shopping.upcitemdb.search_products",
+        "anima.vendor-events.list_recent_events",
     }
 )
 

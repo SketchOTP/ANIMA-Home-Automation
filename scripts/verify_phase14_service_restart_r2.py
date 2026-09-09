@@ -23,26 +23,28 @@ def compose(*args: str) -> str:
     command = ["docker", "compose"]
     if project:
         command.extend(("-p", project))
-    result = subprocess.run(
-        [*command, *args], check=True, text=True, capture_output=True
-    )
+    result = subprocess.run([*command, *args], check=True, text=True, capture_output=True)
     return result.stdout.strip()
 
 
 def container_metadata(service: str) -> dict[str, str]:
     container_id = compose("ps", "-q", service)
-    inspect = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
-            container_id,
-        ],
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout.strip().split("|", 2)
+    inspect = (
+        subprocess.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
+                container_id,
+            ],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        .stdout.strip()
+        .split("|", 2)
+    )
     return {"container_id": inspect[0], "started_at": inspect[1], "status": inspect[2]}
 
 

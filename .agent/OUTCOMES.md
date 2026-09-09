@@ -1,5 +1,71 @@
 # Outcome Ledger
 
+## 026A owner event-to-TTS and operational-trial start — 2026-09-08
+
+- `PASSED` (`E5_OPERATIONALLY_OBSERVED`, synthetic source): the unattended path
+  used the real Journal, Attention, provider-start fence, persistent SENTRY
+  Codex turn, Core `ALWAYS_NOTIFY` decision and warm TTS delivery. A prior
+  `UNAVAILABLE` attempt remains preserved as negative evidence.
+- `PASSED` (`E4_REGRESSION_PROTECTED`): focused SENTRY resident-event tests
+  pass 51/51 after making `speak` the explicit host-TTS channel and reserving
+  `notify` for a successful governed notification tool.
+- `PASSED` (`E3_TARGET_TESTED`): Tym's HA person source is commissioned; both
+  SenseGuard opening resources are all-day `ALWAYS`; one active cognition
+  policy covers them and the duplicate is disabled; the household TTS
+  preference and existing owner workday routine are durable.
+- `PASSED` (`E5_OPERATIONALLY_OBSERVED`): a real SENTRY model created one
+  governed Obsidian MEMORY note and later corrected it in place with its current
+  digest and preserved provenance.
+- `BLOCKED` (owner-assisted physical identification): 22 opaque router
+  candidates cannot safely be assigned to Candiss, Jaden, Patience or Logan,
+  who are not yet canonical ANIMA users. ANIMA does not infer device ownership.
+- `IN_PROGRESS`: the private content-free event ledger started at
+  `2026-09-09T02:21:00Z`; heartbeat `anima-household-trial-check` is active for
+  daily content-free review. Automatic due-review execution and multi-day
+  missed/unnecessary/channel evidence require elapsed time. Hosted publication
+  is not yet claimed.
+- `PASSED` locally: full ANIMA validation, 112 primary browser scenarios, 90
+  isolated owner-product browser scenarios, package and Docker builds, and the
+  complete 525-test SENTRY suite. Live SENTRY restarted `LISTENING`, Kokoro
+  warm, and event source `EMPTY` rather than the former misleading idle
+  `NOT_READY`.
+
+## 026A Spaces owner guidance correction — 2026-09-08
+
+- `PASSED` (`E3_TARGET_TESTED`): Spaces now explains how rooms and zones give
+  ANIMA/SENTRY household location context and directs owners to Devices for
+  hardware assignment.
+- Eight frontend source-contract tests, TypeScript checking and the production
+  Vite build passed. The rebuilt UI image
+  `sha256:dda59c5062fbd281ddc0c67862da4b1eef96eaf99fef43ff77b291578a19efbb`
+  is deployed healthy on port 18090.
+- No commit, push, hosted CI or authenticated owner-browser visual is claimed.
+
+## 026A owner-facing device classification correction — 2026-09-08
+
+- `PASSED` (`E4_REGRESSION_PROTECTED`): Home Assistant service registry entries
+  and an entity-less Bluetooth host controller are excluded from the ANIMA
+  household Devices projection while Zigbee and actual household devices remain.
+- Forecast, Sun, Google Translate and Backup retain their underlying integration
+  behavior; `hci0` retains internal audit/history data rather than appearing as
+  an owner-manageable device.
+- Ruff, strict mypy and 38 focused tests passed. The rebuilt UI image
+  `sha256:12d33b1b7990c54f594c9c9fa10f8d835d3de504df8d4df89a16c83609464d35`
+  is healthy on port 18090. No commit, push or hosted CI is claimed.
+
+## 026A Waydroid Play network repair — 2026-09-07
+
+- `PASSED` (`E3_TARGET_TESTED`): after a complete container/session restart,
+  Android retained its DHCP lease/default route, resolved `play.google.com`,
+  and received an HTTPS response from the Play Store endpoint.
+- Root cause was mixed firewall backends: Waydroid 1.6.2 installed its rules in
+  legacy iptables while the enforced host policy is nft/UFW. Narrow persistent
+  bridge DHCP/DNS/forwarding rules and Waydroid nft/NAT handling now agree.
+- The 1.6.2 suspend callback was also corrected so configured `none` does not
+  fall through to container freeze.
+- Play Store opened to its unauthenticated activity. Account sign-in, app
+  installation, push receipt and vendor-notification capture remain `NOT RUN`.
+
 ## 026A Ring and learned initiative — 2026-09-07
 
 DEPLOYED BOUNDED INCREMENT, not full initiative acceptance. Ring setup and
@@ -1422,3 +1488,178 @@ decision.
   service checks passed. This is local E1 deployment evidence; it is not a new
   hosted release, native Pi5 qualification, or whole-goal completion. Full
   SENTRY/ANIMA household integration remains separately governed.
+## OUTCOME-OWNER-VENDOR-LIVE-FORMAT-026A — Tapo transport observed; Wansview format qualified
+
+- Date: 2026-09-07
+- Status: PARTIAL / operational qualification in progress
+- Real Tapo lock/unlock notices passed the private package relay, authenticated
+  ANIMA receiver, Journal, exact Attention dispatch, and exactly-once resident
+  SENTRY claim. The SENTRY model returned `unavailable` because the autonomous
+  prompt omitted the request ID required by its prebound MCP read tools; no
+  failed provider-started request was replayed and no TTS success is claimed.
+- Two official Wansview Garage motion notices established the exact bounded
+  vendor form. Strict Garage/Back Yard rules are installed, raw capture is
+  erased/disabled, and the Wansview receiver is now enabled and producer-
+  qualified with its own derived credential. A fresh post-enable Wansview event
+  remains required for E5 receiver/Attention/SENTRY evidence.
+- Focused vendor tests passed `54` with one optional skip. ANIMA UI health,
+  private relay, resident SENTRY voice, and the generic household worker were
+  active after the runtime restart. No image/video, raw vendor content,
+  credentials, or provider-reported lock identity was promoted to authority.
+
+## OUTCOME-OWNER-RING-ALWAYS-NOTIFY-026A — Ring commissioned and required notification configured
+
+- Date: 2026-09-07
+- Status: CONFIGURED / physical delivery `NOT RUN` by owner choice
+- The native HA Ring account and Front Door Doorbell Wired inventory are live;
+  ANIMA commissioned the resource in the owner household and preserves bounded
+  Ring doorbell/motion event capabilities, references, and Truth bindings.
+- The active explicit initiative preference requires notification for
+  `household.ring.doorbell`. General proactive initiative remains disabled and
+  Ring motion is not silently promoted to always-notify.
+- The running Core image contains the Ring router and auto-wake allowlist.
+  Resident SENTRY is listening with a healthy event channel. Focused ANIMA
+  Ring/initiative/auto-wake tests and 126 SENTRY autonomous-event/voice tests
+  passed.
+- The owner declined a physical doorbell press. Ring cloud receipt and actual
+  SENTRY/TTS delivery remain `NOT RUN`; no delivery success was fabricated.
+
+## OUTCOME-OWNER-UI-NOTIFICATION-CONVERGENCE-026A — one owner console and governed SENTRY text
+
+- Date: 2026-09-07
+- Status: IMPLEMENTED / locally E4 regression protected
+- ANIMA now presents 15 owner-oriented pages instead of separate backend-shaped
+  Notifications, Capabilities, Integrations and Anima pages. Alerts owns event
+  rules/delivery; Connections owns providers/capability health; SENTRY owns the
+  natural-language household request surface.
+- Devices includes native HA/Ring devices and commissioned private Android
+  Tapo/Wansview event resources. Every commissioned item has an owner-visible
+  alert choice: default, always, time-window, never, or contextual SENTRY
+  judgment after learning readiness.
+- SENTRY chat queues the existing authenticated request-bound provider and never
+  exposes shell, raw HA, policy, database or provider credentials to the browser.
+- PASSED: Ruff, strict mypy, 1125 backend tests, OPA 9/9, frontend static/type/
+  build, 217 browser cases across primary/initiative/preferences/vendor suites,
+  wheel build, diff check and tracked-content safety scan. Fourteen primary
+  viewport-specific cases were intentionally skipped outside desktop.
+- No physical notification receipt, generic HA administration, external account
+  login, or whole-goal completion is claimed.
+
+## OUTCOME-OWNER-UI-SESSION-PERSISTENCE-026A — persistent local session and automatic continuation
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected
+- Root cause was reproduced: PostgreSQL contained 58 historical UI sessions but
+  zero valid sessions; the latest had expired. The configured session lifetime
+  was eight hours absolute / thirty minutes idle and the browser cookie lacked a
+  persistence attribute.
+- The PC owner console now issues a bounded persistent opaque cookie and uses a
+  90-day absolute / 30-day idle server policy. Existing logout, revocation,
+  identity remapping, CSRF and origin controls remain authoritative.
+- Configured households automatically continue into the existing HA identity
+  flow rather than waiting on a reconnect landing page; first-time setup remains
+  explicit.
+- PASSED: 36 targeted Python authentication/HA setup tests, Ruff, strict mypy,
+  frontend TypeScript/unit/production build, corrected real-endpoint Playwright
+  automatic-resume scenario, live container health, and `git diff --check`.
+- Two earlier Playwright starts were `FAILED` before scenario execution because
+  the harness selected inactive PostgreSQL port 55432; the corrected run used the
+  actual PC endpoint on 55434 and passed. No hosted CI or commit is claimed.
+
+## OUTCOME-OWNER-USERS-FACE-PROFILES-026A — persistent identity management
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected / live boundary observed
+- Corrected old-metadata precedence that prevented changed SENTRY access from
+  replacing the prior Graph value. Wi-Fi MAC hints are normalized, bounded and
+  now rendered as their saved values.
+- Added the authenticated ANIMA-to-SENTRY biometric boundary and an owner UI for
+  guided enrollment, temporary thumbnail review, bad-capture removal, profile
+  replacement and profile deletion. Browser and ANIMA durable stores receive no
+  raw enrollment photos.
+- Committed face profiles remain in SENTRY SQLite; ANIMA's PostgreSQL Graph holds
+  the canonical profile ID, sample count and onboarding state. Both stores and
+  the server-side session set survived actual service/container restarts.
+- PASSED: full ANIMA pytest 1202/1202, focused strict mypy and Ruff, frontend
+  9/9 static tests and production build, 115/115 related SENTRY tests, live
+  Core/OPA/SENTRY start-cancel path, runtime restart/readback, and diff checks.
+- The owner has not yet captured or saved a new live face profile through this
+  UI, so physical camera enrollment remains ready for owner use rather than
+  claimed as completed.
+
+## OUTCOME-OWNER-SPACES-ROOM-ZONE-GUIDANCE-026A — room and zone distinction
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected
+- Expanded the Spaces overview to explain that rooms represent physical enclosed
+  household areas while zones represent more precise or functional areas inside
+  or outside rooms, with concrete examples for each.
+- Preserved the existing create/manage/assign workflow and canonical space model.
+- PASSED: frontend source-contract tests 9/9, TypeScript checking, production
+  Vite build, `git diff --check`, and live bundle-content inspection. Rebuilt
+  image `sha256:f27f17734ddcd718414c5850a67b5f1221cf7361dca01e20e206bcfb3a5eb47f`
+  is deployed and healthy on port 18090.
+
+## OUTCOME-OWNER-SCENES-EXPLANATION-LIFECYCLE-026A — accurate scene workflow
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected
+- Replaced the mood slogan with an exact explanation of the current bounded
+  scene model: up to 16 commissioned power controls, saved On/Off states,
+  no device changes on save, and sequential authorized/verified application.
+- Added a version-protected Enable/Disable control. Disabled scenes cannot be
+  applied, and changing their enabled state does not change household devices.
+- PASSED: frontend source tests 10/10, TypeScript and production Vite build,
+  desktop Playwright scene lifecycle 1/1, focused scene/UI Core tests 38/38,
+  Ruff, and `git diff --check`.
+- The first Playwright launch was BLOCKED before execution because port 18090
+  was occupied by the healthy owner UI. The same scenario passed on isolated
+  port 18094 against the PC PostgreSQL/OPA services; the blocked attempt is not
+  counted as a pass.
+- Rebuilt image
+  `sha256:847076ee155c95fce2d260abae83e32d6798e1c89e3c35d4b3b5c302b9233a79`
+  is deployed and healthy on port 18090; live bundle inspection found the new
+  explanation plus Apply and Enable/Disable controls.
+
+## OUTCOME-OWNER-PAGE-GUIDANCE-ALIGNMENT-026A — exact owner workflow explanations
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected / live bundle observed
+- Replaced the remaining slogan-style introductions on Automations, SENTRY,
+  Alerts, Tasks & Calendar, Activity, Users, Connections, Backups, Preferences
+  and Settings with exact explanations of what each page can do, how the owner
+  uses it, and which authority, persistence or evidence limits still apply.
+- Tightened supporting workflow copy for durable tasks, version-protected
+  calendar edits, bounded Activity, notification-route priority, integration
+  management, capability availability and presentation-only interface settings.
+- Notification-only vendor resources are no longer offered as On/Off automation
+  triggers. The existing bounded observation-to-power rule remains unchanged,
+  and the Settings action now says `Save interface settings` rather than
+  conflating it with household Preferences.
+- PASSED: frontend source tests 11/11, TypeScript/production build, desktop
+  Playwright 33/33, focused automation/UI Core pytest 40/40, Ruff, diff check,
+  live container health and deployed-bundle phrase inspection.
+- Live image:
+  `sha256:3e7d0730a564120fd8f4b9ce6bfb7acad86f0e84a20942b2f3d96671b7b5b3af`.
+  No commit, push, hosted CI or new backend capability is claimed.
+
+## OUTCOME-OWNER-ROUTINES-GUIDANCE-ALIGNMENT-026A — routines, users and presence boundaries
+
+- Date: 2026-09-08
+- Status: IMPLEMENTED / locally E4 regression protected / live bundle observed
+- Replaced the short Routines slogan with an exact description of declared
+  member schedules, their fields and how SENTRY may use them as context without
+  treating them as presence, authentication, automation or scheduled action.
+- Removed the duplicate browser-side household-member creator. Routines now
+  routes identity work to Users while preserving the existing versioned routine
+  create/edit/filter/enable/disable/retract workflow and backend compatibility.
+- Expanded Household presence guidance to describe qualified HA geofence and
+  supported Wi-Fi evidence, freshness/conflicts and the non-authentication
+  boundary.
+- PASSED: frontend source tests 11/11, TypeScript/build, dedicated real
+  PostgreSQL/OPA Routines Playwright 42/42 across desktop/tablet/phone, focused
+  Routines/UI Core pytest with 100 passed and 3 optional skips, Ruff,
+  `git diff --check`, live health and deployed-bundle inspection.
+- Live image:
+  `sha256:3cb54a638824dcf101571c5870404fffb13f3374011dbc6cfdbc528db0aa3be8`.
+  No commit, push or hosted CI is claimed.

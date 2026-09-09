@@ -32,6 +32,8 @@ from fastapi import FastAPI, HTTPException, Request
 from starlette.concurrency import run_in_threadpool
 
 from anima_ha.android_notifications import (
+    TAPO_PACKAGE,
+    WANSVIEW_PACKAGE,
     Disposition,
     RelayRegistration,
     Transport,
@@ -177,6 +179,7 @@ class VendorRelayConfig:
                 }
                 optional = {
                     "transport",
+                    "package_name",
                     "producer_adapter",
                     "producer_version",
                     "producer_qualified",
@@ -196,6 +199,7 @@ class VendorRelayConfig:
                         alias: _uuid(value) for alias, value in item["camera_mappings"].items()
                     },
                     allowed_channels=frozenset(item["allowed_channels"]),
+                    allowed_packages=frozenset({str(item.get("package_name", WANSVIEW_PACKAGE))}),
                     transport=Transport(item.get("transport", Transport.ANDROID_LISTENER)),
                 )
                 sources.append(
@@ -258,7 +262,8 @@ class ExactVendorAttention:
             or event.metadata.get("external_content_trust") != "EXTERNAL_UNTRUSTED"
             or event.delivery_class != DeliveryClass.GUARANTEED
             or not event.source.startswith("android-relay-report:")
-            or event.event_type != "external.android.motion_reported"
+            or event.event_type
+            not in {"external.android.motion_reported", "external.android.lock_reported"}
         ):
             raise VendorIngressError("EVENT_NOT_WAKE_ELIGIBLE")
         household = _uuid(event.metadata.get("household_id"))
@@ -300,7 +305,47 @@ class VendorEventIngress:
         scoped = [
             item for item in self.config.sources if item.registration.household_id == household_id
         ]
-        gates = []
+
+        def vendor_row(vendor: str, package_name: str) -> dict[str, Any]:
+            sources = [
+                item for item in scoped if package_name in item.registration.allowed_packages
+            ]
+            gates: list[str] = []
+            if not sources or not all(item.producer_qualified for item in sources):
+                gates.append("PRODUCER_UNQUALIFIED")
+            if self.synthetic_test_mode:
+                gates.append("LIVE_FORMAT_UNQUALIFIED")
+            if not sources or not all(item.official_app_ready for item in sources):
+                gates.append("WAITING_APP_SETUP")
+            if not sources or not all(item.source_privacy_qualified for item in sources):
+                gates.append("SOURCE_PRIVACY_UNQUALIFIED")
+            if not sources or not all(item.registration.camera_mappings for item in sources):
+                gates.append("CANONICAL_MAPPING_REQUIRED")
+            enabled = self.config.enabled and any(item.enabled for item in sources)
+            if not enabled:
+                gates.append("RELAY_DISABLED")
+            if vendor == "tapo" and not sources:
+                gates.extend(["HA_LOCK_MAPPING_REQUIRED", "SOURCE_SAMPLE_REQUIRED"])
+            with self._lock:
+                receipts = [
+                    self._receipts[item.registration.relay_id]
+                    for item in sources
+                    if item.registration.relay_id in self._receipts
+                ]
+            return {
+                "vendor": vendor,
+                "configured": bool(sources),
+                "enabled": enabled,
+                "state": "WAITING_APP_SETUP" if gates else "RECEIVED" if receipts else "READY",
+                "gates": gates,
+                "last_receipt_at": max(receipts) if receipts else None,
+            }
+
+        vendors = [
+            vendor_row("tapo", TAPO_PACKAGE),
+            vendor_row("wansview", WANSVIEW_PACKAGE),
+        ]
+        gates: list[str] = []
         if not scoped or not all(item.producer_qualified for item in scoped):
             gates.append("PRODUCER_UNQUALIFIED")
         if self.synthetic_test_mode:
@@ -320,31 +365,13 @@ class VendorEventIngress:
                 for item in scoped
                 if item.registration.relay_id in self._receipts
             ]
-        state = "WAITING_APP_SETUP" if gates else "RECEIVED" if receipts else "READY"
         return {
             "configured": bool(scoped),
             "enabled": enabled,
-            "state": state,
+            "state": "WAITING_APP_SETUP" if gates else "RECEIVED" if receipts else "READY",
             "gates": gates,
             "last_receipt_at": max(receipts) if receipts else None,
-            "vendors": [
-                {
-                    "vendor": "wansview",
-                    "configured": bool(scoped),
-                    "enabled": enabled,
-                    "state": state,
-                    "gates": gates,
-                    "last_receipt_at": max(receipts) if receipts else None,
-                },
-                {
-                    "vendor": "tapo",
-                    "configured": False,
-                    "enabled": False,
-                    "state": "WAITING_APP_SETUP",
-                    "gates": ["HA_LOCK_MAPPING_REQUIRED", "SOURCE_SAMPLE_REQUIRED"],
-                    "last_receipt_at": None,
-                },
-            ],
+            "vendors": vendors,
         }
 
     def authenticate_relay(self, authorization: str) -> VendorRelaySource:
@@ -403,7 +430,7 @@ class VendorEventIngress:
         event, receipt = result.event, result.receipt
         if event is None or receipt is None:
             raise HTTPException(422, "NOTIFICATION_NOT_ACCEPTED")
-        resource = _uuid(event.payload.get("camera_resource_id"))
+        resource = _uuid(event.payload.get("resource_id"))
         if not _mapped_resource(self.graph, source.registration.household_id, resource):
             raise HTTPException(409, "CANONICAL_MAPPING_REQUIRED")
         digest = receipt.content_digest

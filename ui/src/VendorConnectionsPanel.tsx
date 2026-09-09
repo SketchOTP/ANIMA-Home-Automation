@@ -87,7 +87,8 @@ function VendorCard({ vendor, row, globalEnabled, loading }: {
   const receipt = row?.last_receipt_at ?? null;
   const title = titles[vendor];
   const nextStep = !row ? "Refresh status to check which setup steps are available."
-    : vendor === "tapo" && row.gates.includes("HA_LOCK_MAPPING_REQUIRED") ? "Have the administrator verify the actual HA lock source and its household mapping. No lock connection is established here."
+    : vendor === "tapo" && row.gates.includes("HA_LOCK_MAPPING_REQUIRED") ? "Have the administrator qualify the private Tapo notification source and map the lock to its canonical ANIMA resource."
+    : vendor === "wansview" && row.gates.includes("PRODUCER_UNQUALIFIED") ? "Temporarily include the current time in the Wansview notification schedule, trigger one genuine motion alert, then restore the preferred schedule after qualification."
     : state === "WAITING_APP_SETUP" ? `Complete the ${vendor === "tapo" ? "lock" : "camera"} setup in its official app first.`
     : !row.configured ? "An administrator needs to configure the private notification relay."
     : !row.enabled || !globalEnabled ? "Intake is disabled. Have the administrator review the setup gates before enabling it."
@@ -120,8 +121,8 @@ function VendorCard({ vendor, row, globalEnabled, loading }: {
       <ol>
         <li><strong>Official app setup.</strong> {vendor === "tapo" ? "Finish DL110 setup in the Tapo app; keep fingerprint, PIN and account details there."
           : "Finish camera setup and motion notifications in the Wansview app. ANIMA does not need video, recordings or snapshots."} App setup is not verified by this panel.</li>
-        <li><strong>{vendor === "tapo" ? "Verified source setup." : "Private relay setup."}</strong> {vendor === "tapo"
-          ? "The administrator verifies an actual supported HA lock source, its canonical household mapping and a genuine source sample. A compatible product name alone is not proof of support."
+        <li><strong>Private relay setup.</strong> {vendor === "tapo"
+          ? "The administrator qualifies a genuine Tapo notification sample and maps the DL110 to its canonical ANIMA resource. The relay observes lock notifications only; it does not expose lock actuation or account administration."
           : "The administrator configures a vendor-only, minimized notification relay on this PC."} Do not paste account credentials or notification contents into the dashboard.</li>
         <li><strong>Observe, then refresh.</strong> After approved setup, compare the next genuine app notification with the receipt shown here. Refresh reads status only; it never generates an event or changes a device.</li>
       </ol>

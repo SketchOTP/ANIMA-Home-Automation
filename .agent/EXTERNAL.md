@@ -1,5 +1,30 @@
 # External Discovery Ledger
 
+## 2026-09-07 — owner-console information architecture
+
+- REFERENCE the official Home Assistant frontend design and architecture
+  guidance for a panel-oriented shell, clear primary workflows, and server-owned
+  one-way data flow.
+- ADAPT rather than copy: ANIMA retains its React/FastAPI components, canonical
+  Graph/Truth semantics, OPA/Phase 9 authority, and same-origin browser boundary.
+- No frontend framework, provider, analytics service, or direct browser-to-HA
+  route was added.
+- Sources: https://developers.home-assistant.io/docs/frontend/design/ and
+  https://developers.home-assistant.io/docs/frontend/architecture/.
+
+## 2026-09-07 — Waydroid IPv4/DNS repair
+
+- REFERENCE current Waydroid issue 2272: the observed `eth0`-without-IPv4,
+  empty lease and route state matches a current unresolved 1.6.x report.
+- EXTEND the installed 1.6.2 network helper rather than reinitialize Android:
+  align it with the host nft firewall and add narrowly scoped UFW bridge rules.
+- REFERENCE current issue 2395 for suspend/route-loss evidence, but the locally
+  installed 1.6.2 callback treats every value except `stop` as `freeze`; it
+  therefore needed an explicit `freeze` branch for `suspend_action = none`.
+- Sources: https://github.com/waydroid/waydroid/issues/2272 and
+  https://github.com/waydroid/waydroid/issues/2395. Recheck after Waydroid or
+  host-firewall updates.
+
 Record material prior-art investigations when Authority triggers external discovery. Do not log every trivial web search.
 
 ## 026A Ring / learning extension — 2026-09-07

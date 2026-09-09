@@ -109,6 +109,11 @@ def test_missing_context_stays_unavailable_not_empty_certainty(tmp_path: Path) -
     assert request.origin == IntelligenceOrigin.DIRECT_SENTRY_INTERACTION
 
 
+def test_reasoning_guidance_names_bounded_knowledge_classifier_roots() -> None:
+    assert "exactly 000, 100, 300, 600, 640, 900, or 920" in REASONING_GUIDANCE
+    assert "reuse the exact note ID and full digest" in REASONING_GUIDANCE
+
+
 def test_failed_personal_lookup_keeps_shared_preferences(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

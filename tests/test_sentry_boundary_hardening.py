@@ -390,6 +390,30 @@ def test_service_claim_requires_provider_origin() -> None:
         service.claim_and_bind(WORKER, "queue-1", "gtk", restricted)
 
 
+def test_general_provider_claim_reserves_autonomous_attention_for_resident_sentry() -> None:
+    principal = SentryServicePrincipal.from_secret(
+        client_id=WORKER,
+        household_id=HOUSEHOLD,
+        provider_id="sentry",
+        token="t" * 48,
+    )
+    captured: dict[str, Any] = {}
+
+    class Boundary:
+        def claim_request(self, worker_id: str, **kwargs: Any) -> None:
+            captured.update(worker_id=worker_id, **kwargs)
+            return None
+
+    service = CoreSentryHTTPService(
+        cast(Any, Boundary()),
+        lambda: "t" * 48,
+        service_principal=principal,
+    )
+    assert service.claim_and_bind(WORKER, "queue-1", "anima-ui", principal) == {"status": "EMPTY"}
+    assert captured["household_id"] == HOUSEHOLD
+    assert captured["excluded_origins"] == frozenset({IntelligenceOrigin.AUTONOMOUS_ATTENTION})
+
+
 def test_direct_request_can_bind_actual_persisted_evidence_reference() -> None:
     recorded: list[Any] = []
     policy = SimpleNamespace(record_evidence=recorded.append)

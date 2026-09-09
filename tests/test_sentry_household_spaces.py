@@ -42,6 +42,7 @@ def test_ha_power_and_notification_boundaries_are_unchanged() -> None:
         "permit_zigbee_join",
         "commission_zigbee_presence_sensor",
         "commission_device",
+        "commission_presence_source",
     }
     for item in manifest.tools:
         expected = (

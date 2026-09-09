@@ -14,6 +14,7 @@ type Outcome = { status: string };
 type Props = {
   mutate: (path: string, payload?: Record<string, unknown>) => Promise<Outcome | null>;
   onAuthFailure: () => void;
+  openUsers: () => void;
 };
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const blank = (): Draft => ({ person_id: "", label: "", days: [], start: "", end: "", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", place_id: null, notes: "", enabled: true });
@@ -42,7 +43,7 @@ function parsePage(value: unknown): Page {
   return value as Page;
 }
 
-export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
+export function FamilyRoutines({ mutate, onAuthFailure, openUsers }: Props) {
   const [page, setPage] = useState<Page | null>(null);
   const [draft, setDraft] = useState<Draft>(blank);
   const [editing, setEditing] = useState<string | null>(null);
@@ -53,7 +54,6 @@ export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
   const [personFilter, setPersonFilter] = useState("");
   const [reviewRequired, setReviewRequired] = useState(false);
   const [removing, setRemoving] = useState<Routine | null>(null);
-  const [memberName, setMemberName] = useState("");
   const editorHeading = useRef<HTMLHeadingElement>(null);
   const removalHeading = useRef<HTMLHeadingElement>(null);
   const mutationLock = useRef(false);
@@ -75,7 +75,7 @@ export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
       const response = await fetch(`/api/v1/family-routines?${query}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal, headers: { Accept: "application/json" } });
       if (current !== generation.current) return;
       if (response.status === 401 || response.status === 403) {
-        setPage(null); setDraft(blank()); setEditing(null); setRemoving(null); setMemberName(""); setNotice(""); setReviewRequired(false);
+        setPage(null); setDraft(blank()); setEditing(null); setRemoving(null); setNotice(""); setReviewRequired(false);
         if (response.status === 401) { expired.current = true; authFailure.current(); }
         else setError("You no longer have access to family routines. Ask the household owner to check access.");
         return;
@@ -110,7 +110,6 @@ export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
       setRemoving(null);
       if (succeeded) {
         if (resetDraft) cancel();
-        if (operation === "add-member") setMemberName("");
         setNotice(success); setRemoving(null);
       } else setReviewRequired(true);
       const refreshed = await reload();
@@ -129,15 +128,15 @@ export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
   };
   return <div className="dashboard family-routines">
     <section className="card"><h2 ref={editorHeading} tabIndex={-1}><Icon name="Calendar" /> {editing ? "Edit family routine" : "Add family routine"}</h2>
-      <p className="muted">Owner-declared expectations, not observed presence or automated actions.</p>
+      <p className="muted">Create an owner-declared schedule or expectation for an existing household member. These records give SENTRY context; they do not prove presence, authenticate anyone, schedule an action, or execute an automation.</p>
+      <button type="button" onClick={openUsers}>Manage household users</button>
       {error && <p role="alert" className="notice error">{error}</p>}
       {error && personFilter && <button type="button" disabled={busy || loading} onClick={() => setPersonFilter("")}>Reset member filter</button>}
       {notice && <p role="status">{notice}</p>}
       {reviewRequired && <div className="notice warning"><p>Your draft is retained. Choose Edit on a current saved routine to review it, or check that a new routine was not already saved before discarding this draft.</p><button type="button" disabled={busy || loading} onClick={cancel}>Discard draft and start new</button></div>}
       {!page && <button type="button" disabled={loading} onClick={() => void reload()}>{loading ? "Loading routines…" : "Retry routines"}</button>}
-      {page && !page.members.length && <p className="empty-state">No canonical household members are available. Commission a member before adding a routine.</p>}
+      {page && !page.members.length && <p className="empty-state">No household members are available. Add a person on Users, then return here to create a routine.</p>}
       {page && !page.can_edit && <p className="muted">Only the authenticated household owner can change routines.</p>}
-      {page?.can_edit && <details className="integration-details"><summary>Add household member</summary><form className="stack" onSubmit={event => { event.preventDefault(); if (memberName.trim()) void change("add-member", { name: memberName.trim() }, "Household member added. Member options refreshed; no login or permissions were created.", false); }}><p className="muted">Create a canonical household member for routines. This does not create a login, grant permissions, or establish observed presence.</p><label>New member name<input required maxLength={120} value={memberName} disabled={busy || loading} onChange={event => setMemberName(event.target.value)} /></label><button type="submit" disabled={busy || loading || !memberName.trim()}>Add member</button></form></details>}
       <form className="stack" onSubmit={event => void save(event)}>
         <fieldset disabled={!page?.can_edit || !page.members.length || busy || loading}><legend>Routine details</legend>
           <label>Household member<select required value={draft.person_id} onChange={event => update("person_id", event.target.value)}><option value="">Select a member</option>{page?.members.map(person => <option key={person.person_id} value={person.person_id}>{person.name}</option>)}</select></label>
@@ -154,7 +153,7 @@ export function FamilyRoutines({ mutate, onAuthFailure }: Props) {
         </fieldset>
       </form>
     </section>
-    <section className="card" aria-busy={loading || busy}><h2>Saved family routines</h2><button type="button" disabled={loading || busy} onClick={() => void reload()}>Refresh routines</button>
+    <section className="card" aria-busy={loading || busy}><h2>Saved family routines</h2><p className="muted">Review routines by member, edit their schedule or description, disable them without deleting history, or remove them from active context. Saved changes are versioned and survive restarts.</p><button type="button" disabled={loading || busy} onClick={() => void reload()}>Refresh routines</button>
       {page && <label>Filter routines by member<select disabled={busy || loading} value={personFilter} onChange={event => { setPersonFilter(event.target.value); setPage(previous => previous ? { ...previous, items: [], next_cursor: null } : null); setRemoving(null); }}><option value="">All household members</option>{page.members.map(person => <option key={person.person_id} value={person.person_id}>{person.name}</option>)}</select></label>}
       {loading && <p role="status">Loading saved routines…</p>}
       {page && !loading && !page.items.length && <p className="empty-state">{personFilter ? "No routines saved for this member." : "No family routines saved. Nothing is inferred or prefilled."}</p>}

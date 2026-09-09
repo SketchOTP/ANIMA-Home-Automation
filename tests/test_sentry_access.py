@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any, cast
 from uuid import UUID
 
 from anima_ha.plugins import (
@@ -35,9 +36,7 @@ def _tool(*, tool_id: str, read_only: bool) -> ToolDescriptor:
         version="1",
         provenance="test",
         execution_boundary=(
-            ExecutionBoundary.READ_ONLY
-            if read_only
-            else ExecutionBoundary.POLICY_GATED_INTERNAL
+            ExecutionBoundary.READ_ONLY if read_only else ExecutionBoundary.POLICY_GATED_INTERNAL
         ),
         content_persistence=ContentPersistence.FULL_DURABLE,
     )
@@ -45,9 +44,7 @@ def _tool(*, tool_id: str, read_only: bool) -> ToolDescriptor:
 
 def test_limited_sentry_access_allows_reads_only_and_own_personal_preferences() -> None:
     read = _tool(tool_id="anima.household-users.list_users", read_only=True)
-    personal = _tool(
-        tool_id="anima.household-preferences.create_preference", read_only=False
-    )
+    personal = _tool(tool_id="anima.household-preferences.create_preference", read_only=False)
     household = _tool(tool_id="anima.household-users.update_user", read_only=False)
 
     assert CoreSentryBoundary._limited_tool_allowed(read, {}, PRINCIPAL)
@@ -62,7 +59,10 @@ def test_limited_sentry_access_allows_reads_only_and_own_personal_preferences() 
 
 
 def test_unconfigured_test_boundary_retains_legacy_policy_path() -> None:
-    assert CoreSentryBoundary._access_level(
-        SimpleNamespace(access_level_resolver=None),
-        type("Request", (), {"principal_id": None})(),
-    ) == "UNRESTRICTED"
+    assert (
+        CoreSentryBoundary._access_level(
+            cast(Any, SimpleNamespace(access_level_resolver=None)),
+            type("Request", (), {"principal_id": None})(),
+        )
+        == "UNRESTRICTED"
+    )

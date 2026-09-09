@@ -48,18 +48,22 @@ def container_metadata() -> dict[str, str]:
     container_id = compose("ps", "-q", "db")
     if not container_id:
         raise RuntimeError("database Compose container is not running")
-    parts = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
-            container_id,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip().split("|", 2)
+    parts = (
+        subprocess.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
+                container_id,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        .stdout.strip()
+        .split("|", 2)
+    )
     if len(parts) != 3:
         raise RuntimeError("database container metadata is incomplete")
     return {"container_id": parts[0], "started_at": parts[1], "status": parts[2]}
@@ -119,9 +123,7 @@ def main() -> int:
     before, after = restart_database()
     current = store.get(pending.request_id)
     assert current is not None and current.lifecycle == IntelligenceLifecycle.PENDING
-    transitions.append(
-        {"state": "PENDING", "before": before, "after": after, "replay": False}
-    )
+    transitions.append({"state": "PENDING", "before": before, "after": after, "replay": False})
 
     claimed_household = uuid4()
     claimed = store.enqueue(request("claimed", claimed_household))
@@ -132,9 +134,7 @@ def main() -> int:
     before, after = restart_database()
     current = store.get(claimed.request_id)
     assert current is not None and current.lifecycle == IntelligenceLifecycle.CLAIMED
-    transitions.append(
-        {"state": "CLAIMED", "before": before, "after": after, "replay": False}
-    )
+    transitions.append({"state": "CLAIMED", "before": before, "after": after, "replay": False})
 
     running_household = uuid4()
     running = store.enqueue(request("provider-running", running_household))

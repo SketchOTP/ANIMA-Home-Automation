@@ -875,7 +875,14 @@ _CONTENT_SCHEMA: dict[str, Any] = {
     "title": {"type": "string", "minLength": 1, "maxLength": 120},
     "body": {"type": "string", "minLength": 1, "maxLength": 4096},
     "note_type": {"type": "string", "enum": list(NOTE_TYPES)},
-    "classifier": {"type": "string", "pattern": r"^\d{3}(?:\.\d{1,3})?$"},
+    "classifier": {
+        "type": "string",
+        "pattern": r"^(?:000|100|300|600|640|900|920)(?:\.\d{1,3})?$",
+        "description": (
+            "Bounded Dewey division: 000, 100, 300, 600, 640, 900, or 920; "
+            "an optional one-to-three digit decimal subdivision is allowed"
+        ),
+    },
     "classification": {"type": "string", "enum": list(CLASSIFICATIONS)},
     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
     "source_refs": {

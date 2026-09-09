@@ -74,6 +74,17 @@ _ELIGIBLE = """
                 AND e.payload->>'household_id'=r.household_id::text
                 AND e.payload->>'time_basis'='HA_EVENT_RECEIVED'
                 AND e.payload->'physical_actor_verified'='false'::jsonb)
+            OR (e.source LIKE 'android-relay-report:%%'
+                AND e.event_type IN (
+                    'external.android.motion_reported','external.android.lock_reported'
+                )
+                AND e.metadata->>'household_id'=r.household_id::text
+                AND e.metadata->>'schema_qualification'='ANIMA_OWNED_SCHEMA'
+                AND e.metadata->>'external_content_trust'='EXTERNAL_UNTRUSTED'
+                AND e.metadata->'synthetic'='false'::jsonb
+                AND e.metadata->'producer_qualified'='true'::jsonb
+                AND e.metadata->'wake_eligible'='true'::jsonb
+                AND e.payload->>'authority'='NONE')
             OR (e.source='anima:durable-task' AND e.event_type='scheduled_reasoning_due'
                 AND EXISTS (
                     SELECT 1 FROM anima_durable_tasks task

@@ -195,8 +195,43 @@ def main() -> int:
             return 0
         worker = HouseholdWorker(client, model, stop=stop)
         print(json.dumps({"status": "WORKER_STARTED", "model": MODEL}), flush=True)
+        consecutive_failures = 0
         while not stop.is_set():
-            result = worker.run_once()
+            try:
+                result = worker.run_once()
+            except CodexUnavailable as exc:
+                if args.once:
+                    raise
+                consecutive_failures += 1
+                print(
+                    json.dumps(
+                        {
+                            "status": "WORKER_RECOVERING",
+                            "reason": str(exc),
+                            "attempt": min(consecutive_failures, 10),
+                        }
+                    ),
+                    flush=True,
+                )
+                stop.wait(min(30.0, max(args.poll_seconds, 2 ** min(consecutive_failures, 4))))
+                continue
+            except (AnimaHouseholdError, OSError):
+                if args.once:
+                    raise
+                consecutive_failures += 1
+                print(
+                    json.dumps(
+                        {
+                            "status": "WORKER_RECOVERING",
+                            "reason": "ANIMA_CLIENT_UNAVAILABLE",
+                            "attempt": min(consecutive_failures, 10),
+                        }
+                    ),
+                    flush=True,
+                )
+                stop.wait(min(30.0, max(args.poll_seconds, 2 ** min(consecutive_failures, 4))))
+                continue
+            consecutive_failures = 0
             if result["status"] != "IDLE":
                 print(json.dumps(result), flush=True)
             if args.once:

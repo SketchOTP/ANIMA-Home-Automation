@@ -15,6 +15,7 @@ from anima_ha.ui_api import (
     DEFAULT_HOUSEHOLD_ID,
     DEFAULT_PRINCIPAL_ID,
     UI_OAUTH_NONCE_COOKIE,
+    UI_SESSION_COOKIE,
     HomeAssistantOAuth,
     InMemorySessionStore,
     JournalConversationIngress,
@@ -118,7 +119,8 @@ class DeviceCommandStub:
     ) -> dict[str, object]:
         del identity
         return {
-            "status": "SUCCEEDED", "operation": f"user.{operation}",
+            "status": "SUCCEEDED",
+            "operation": f"user.{operation}",
             "result": {"user": payload},
         }
 
@@ -134,7 +136,8 @@ def test_household_user_routes_are_authenticated_and_bounded() -> None:
         "/api/v1/users/create",
         json={
             "payload": {
-                "name": "New member", "access_level": "LIMITED",
+                "name": "New member",
+                "access_level": "LIMITED",
                 "wifi_macs": ["aa:bb:cc:dd:ee:ff"],
             }
         },
@@ -142,6 +145,13 @@ def test_household_user_routes_are_authenticated_and_bounded() -> None:
     )
     assert response.status_code == 200
     assert response.json()["status"] == "SUCCEEDED"
+    face = client.post(
+        "/api/v1/users/face-start",
+        json={"payload": {"person_id": str(uuid4())}},
+        headers={"X-Anima-CSRF": csrf, "Origin": "http://testserver"},
+    )
+    assert face.status_code == 200
+    assert face.json()["operation"] == "user.face-start"
     unauthenticated = TestClient(create_app(UIService(config=UIConfig(test_auth_enabled=True))))
     assert unauthenticated.get("/api/v1/users").status_code == 401
 
@@ -151,6 +161,42 @@ def test_health_is_public_but_household_data_requires_session() -> None:
     client = TestClient(app)
     assert client.get("/healthz").json()["status"] == "ok"
     assert client.get("/api/v1/home").status_code == 401
+
+
+def test_ui_session_cookie_persists_for_the_server_absolute_ttl() -> None:
+    config = UIConfig(test_auth_enabled=True, session_absolute_ttl=timedelta(days=90))
+    client = TestClient(create_app(UIService(config=config)), follow_redirects=False)
+
+    login = client.get("/auth/login")
+    callback = client.get(login.headers["location"])
+
+    session_cookie = next(
+        value
+        for value in callback.headers.get_list("set-cookie")
+        if value.startswith(f"{UI_SESSION_COOKIE}=")
+    )
+    assert "HttpOnly" in session_cookie
+    assert "SameSite=strict" in session_cookie
+    assert "Max-Age=7776000" in session_cookie
+
+
+def test_ui_session_ttls_are_bounded_environment_configuration() -> None:
+    config = UIConfig.from_environment(
+        {
+            "ANIMA_UI_SESSION_ABSOLUTE_SECONDS": "7776000",
+            "ANIMA_UI_SESSION_IDLE_SECONDS": "2592000",
+        }
+    )
+    assert config.session_absolute_ttl == timedelta(days=90)
+    assert config.session_idle_ttl == timedelta(days=30)
+
+    with pytest.raises(ValueError, match="cannot exceed"):
+        UIConfig.from_environment(
+            {
+                "ANIMA_UI_SESSION_ABSOLUTE_SECONDS": "3600",
+                "ANIMA_UI_SESSION_IDLE_SECONDS": "7200",
+            }
+        )
 
 
 def test_oauth_uses_browser_url_while_token_exchange_keeps_internal_url() -> None:

@@ -5,9 +5,10 @@ then choose **Routines**. No Home Assistant configuration screen is needed.
 
 ## Add a routine
 
-1. If the person is missing, expand **Add household member**, enter their name,
-   and choose **Add member**. This creates a plain household profile, not a login
-   or permission grant.
+1. If the person is missing, choose **Manage household users**, add or update
+   them on **Users**, then return to **Routines**. Identity, SENTRY access,
+   Wi-Fi hints and face profiles belong on Users rather than being duplicated
+   in the routine editor.
 2. Select the member and enter a short routine label.
 3. Choose individual days or Weekdays, Weekends, or Every day. Days identify the
    local start day. Set start/end times and check the time zone.
@@ -30,10 +31,11 @@ not accepted. No family schedules or names are prefilled by the application.
 ## What these records mean
 
 A routine is an **owner-declared expectation**, not a device observation, proof
-of presence, authentication, or a scheduled action. Existing Core tools can read
-these records. This increment does not connect automatic routine-triggered
-SENTRY reasoning, notifications, or speech. SENTRY remains the voice interface;
-these graphical forms configure the household, not a typed chat.
+of presence, authentication, scheduled action or automation. Existing Core tools
+and SENTRY context can read these records alongside current presence,
+preferences, memory and events; current evidence remains authoritative. SENTRY
+remains the intelligence and voice interface, while these graphical forms
+configure durable household context.
 
 ## Completion evidence — 026A routines, 2026-09-07 UTC
 

@@ -1,8 +1,9 @@
 """Typed household-user management for the ANIMA management plane.
 
 This is a canonical Graph projection, not a Home Assistant admin surface. It
-stores bounded access/presence/profile metadata on a household PERSON node;
-camera enrollment remains a separate SENTRY capture workflow.
+stores bounded access/presence/profile metadata on a household PERSON node.
+The UI gateway separately bridges authorized camera enrollment to SENTRY so
+biometric samples do not enter ANIMA's tool catalogue or durable journal.
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ def user_payload(node: Any) -> dict[str, Any]:
         "role": metadata.get("semantic_role", "member"),
         "access_level": metadata.get("sentry_access", "LIMITED"),
         "sentry_profile_id": metadata.get("sentry_profile_id"),
+        "sentry_profile_sample_count": metadata.get("sentry_profile_sample_count"),
         "sentry_onboarding_state": metadata.get("sentry_onboarding_state", "NOT_STARTED"),
         "wifi_macs": list(metadata.get("wifi_macs", [])),
     }
@@ -59,8 +61,14 @@ class HouseholdUsersNativePlugin:
     ) -> dict[str, Any]:
         del timeout
         allowed = {
-            "person_id", "name", "role", "access_level", "wifi_macs",
-            "sentry_profile_id", "onboarding_state",
+            "person_id",
+            "name",
+            "role",
+            "access_level",
+            "wifi_macs",
+            "sentry_profile_id",
+            "onboarding_state",
+            "action",
         }
         if set(arguments) - allowed:
             raise PluginValidationError("unknown household-user argument")
@@ -92,9 +100,7 @@ class HouseholdUsersNativePlugin:
                 name=str(arguments["name"]) if "name" in arguments else None,
                 semantic_role=str(arguments["role"]) if "role" in arguments else None,
                 access_level=(
-                    str(arguments["access_level"])
-                    if "access_level" in arguments
-                    else None
+                    str(arguments["access_level"]) if "access_level" in arguments else None
                 ),
                 wifi_macs=arguments.get("wifi_macs"),
                 sentry_profile_id=(
@@ -103,12 +109,24 @@ class HouseholdUsersNativePlugin:
                     else None
                 ),
                 onboarding_state=(
-                    str(arguments["onboarding_state"])
-                    if "onboarding_state" in arguments
-                    else None
+                    str(arguments["onboarding_state"]) if "onboarding_state" in arguments else None
                 ),
             )
             return {"status": "SUCCEEDED", "user": user_payload(person)}
+        if name == "authorize_face_profile":
+            try:
+                person_id = UUID(str(arguments["person_id"]))
+            except (KeyError, ValueError) as exc:
+                raise PluginValidationError("person_id must be a UUID") from exc
+            if person_id not in {
+                item.canonical_id for item in self.graph.members_of_household(context.household_id)
+            }:
+                raise PluginValidationError("person is not a member of this household")
+            return {
+                "status": "SUCCEEDED",
+                "person_id": str(person_id),
+                "action": str(arguments.get("action", "")),
+            }
         raise PluginValidationError("unknown household-users tool")
 
 
@@ -144,7 +162,8 @@ HOUSEHOLD_USERS_MANIFEST = PluginManifest(
                     "role": {"type": "string", "enum": ["member", "guest"]},
                     "access_level": {"type": "string", "enum": ["UNRESTRICTED", "LIMITED"]},
                     "wifi_macs": {
-                        "type": "array", "maxItems": 8,
+                        "type": "array",
+                        "maxItems": 8,
                         "items": {"type": "string", "maxLength": 17},
                     },
                 },
@@ -161,8 +180,7 @@ HOUSEHOLD_USERS_MANIFEST = PluginManifest(
         {
             "name": "update_user",
             "description": (
-                "Update bounded household-user permissions, profile state, or "
-                "Wi-Fi associations"
+                "Update bounded household-user permissions, profile state, or Wi-Fi associations"
             ),
             "input_schema": {
                 "type": "object",
@@ -172,7 +190,8 @@ HOUSEHOLD_USERS_MANIFEST = PluginManifest(
                     "role": {"type": "string", "enum": ["owner", "member", "guest"]},
                     "access_level": {"type": "string", "enum": ["UNRESTRICTED", "LIMITED"]},
                     "wifi_macs": {
-                        "type": "array", "maxItems": 8,
+                        "type": "array",
+                        "maxItems": 8,
                         "items": {"type": "string", "maxLength": 17},
                     },
                     "sentry_profile_id": {"type": "string", "maxLength": 128},
@@ -185,6 +204,31 @@ HOUSEHOLD_USERS_MANIFEST = PluginManifest(
                 "additionalProperties": False,
             },
             "output_schema": {"type": "object", "required": ["status", "user"]},
+            "semantic_action": "identity.configure",
+            "risk_class": "SECURITY_SECURE_ACTION",
+            "read_only": False,
+            "idempotency": Idempotency.KEYED.value,
+            "external_content_trust": ExternalContentTrust.LOCAL_TRUSTED.value,
+        },
+        {
+            "name": "authorize_face_profile",
+            "description": "Authorize an ANIMA UI biometric-profile operation for a household user",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "person_id": {"type": "string", "format": "uuid"},
+                    "action": {
+                        "type": "string",
+                        "enum": ["start", "capture", "remove_sample", "commit", "cancel", "delete"],
+                    },
+                },
+                "required": ["person_id", "action"],
+                "additionalProperties": False,
+            },
+            "output_schema": {
+                "type": "object",
+                "required": ["status", "person_id", "action"],
+            },
             "semantic_action": "identity.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,

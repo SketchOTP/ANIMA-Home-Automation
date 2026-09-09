@@ -256,6 +256,7 @@ class FakeConnection:
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
         self.data_calls: list[tuple[str, str, dict[str, Any]]] = []
         self.config_flow_calls: list[tuple[str, str, dict[str, Any] | None]] = []
+        self.enabled_entities: list[str] = []
         self.config_flow_results: list[dict[str, Any]] = [
             {
                 "flow_id": "ha-flow",
@@ -293,6 +294,9 @@ class FakeConnection:
     def get_state(self, entity_id: str) -> dict[str, Any] | None:
         value = self.observed_after_call if self.calls else "off"
         return state(entity_id, value, "2026-08-29T18:00:01+00:00")
+
+    def set_entity_enabled(self, entity_id: str) -> None:
+        self.enabled_entities.append(entity_id)
 
     def ping(self) -> None:
         if not self.connected:
@@ -720,6 +724,7 @@ def test_allowed_gateway_invokes_once_and_disable_stops_adapter(
         "inspect_zigbee_presence_device",
         "commission_zigbee_presence_sensor",
         "commission_device",
+        "commission_presence_source",
         "rename_device",
         "reassign_device",
         "retire_device",
@@ -928,6 +933,56 @@ def test_discovered_device_commissions_from_registry_into_canonical_graph(
     assert len(store.objects) == 3
 
 
+def test_person_presence_commissions_from_opaque_handle_without_provider_id_output(
+    adapter_parts: tuple[HomeAssistantAdapter, FakeGraph, FakeReality, FakeStore],
+) -> None:
+    adapter, _, _, _ = adapter_parts
+    graph = CommissioningGraph(str(adapter.config.instance_id), uuid4(), uuid4())
+    graph.place = CanonicalNode(graph.place_id, NodeKind.ZONE, "Household Presence")
+    adapter.graph = graph  # type: ignore[assignment]
+    person = state("person.tym", "home")
+    discovery = replace(
+        snapshot(states=(person,)),
+        devices=(),
+        entities=(
+            {
+                "entity_id": "person.tym",
+                "name": "Tym",
+                "platform": "person",
+                "disabled_by": None,
+            },
+        ),
+    )
+    connection = FakeConnection(initial=discovery)
+    adapter.start(connection)
+    candidates = adapter.public_presence_candidates()
+    assert candidates == [
+        {
+            "candidate_handle": inventory_handle(
+                adapter.config.instance_id, "entity", "person.tym"
+            ),
+            "name": "Tym",
+            "signal_kind": "HA_PERSON",
+            "setup_status": "AVAILABLE",
+            "enabled": True,
+        }
+    ]
+    result = HomeAssistantPlugin(adapter, lambda token: connection).invoke_for_household(
+        "commission_presence_source",
+        {"candidate_handle": candidates[0]["candidate_handle"], "name": "Tym phone geofence"},
+        5.0,
+        graph.household_id,
+    )
+    assert result["status"] == "SUCCEEDED"
+    assert result["source_kind"] == "HA_PERSON"
+    assert "person.tym" not in json_text(result)
+    assert graph.commissioned is not None
+    validate_commissioning(graph.commissioned)
+    reference = graph.commissioned.provider_references[0]
+    assert reference.external_id == "person.tym"
+    assert graph.commissioned.truth_bindings[0].semantic_attribute == "presence.home"
+
+
 @pytest.mark.parametrize("sparse_current_registry", [False, True])
 @pytest.mark.parametrize("decision", ["ALLOW", "DENY"])
 def test_commission_device_through_trusted_ui_invocation_context(
@@ -1072,6 +1127,8 @@ def test_current_home_assistant_device_registry_fields_are_preserved(
         {
             "id": "child-device",
             "name": "SenseGuard child",
+            "entry_type": "service",
+            "connections": [["bluetooth", "private-address"], ["bluetooth", "other"]],
             "parent_device_id": "parent-device",
             "config_entry_id": "entry-2026",
             "config_subentry_id": "subentry-2026",
@@ -1081,6 +1138,9 @@ def test_current_home_assistant_device_registry_fields_are_preserved(
     assert child.metadata["config_entry_id"] == "entry-2026"
     assert child.metadata["config_subentry_id"] == "subentry-2026"
     assert child.metadata["is_child_device"] is True
+    assert child.metadata["entry_type"] == "service"
+    assert child.metadata["connection_types"] == ["bluetooth"]
+    assert all("private-address" not in str(value) for value in child.metadata.values())
 
 
 def test_verification_failure_is_not_gateway_success(

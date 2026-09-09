@@ -12,11 +12,12 @@ from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 from anima_household_client import AnimaHouseholdClient
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 _READ_ANNOTATIONS = ToolAnnotations.model_validate(
     {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False}
@@ -308,11 +309,17 @@ def anima_list_tools(request_id: str) -> dict[str, Any]:
 
 @server.tool(
     name="anima_invoke",
-    description="Invoke one request-bound semantic household tool",
+    description=(
+        "Invoke one request-bound semantic household tool. Calls are 1-based: "
+        "omit ordinal for the first call, then use 2 through 8 in order."
+    ),
     annotations=_INVOKE_ANNOTATIONS,
 )
 def anima_invoke(
-    request_id: str, tool_id: str, arguments: dict[str, Any], ordinal: int = 1
+    request_id: str,
+    tool_id: str,
+    arguments: dict[str, Any],
+    ordinal: Annotated[int, Field(ge=1, le=8)] = 1,
 ) -> dict[str, Any]:
     if _PREBOUND_PATH is not None:
         with _LOCK:

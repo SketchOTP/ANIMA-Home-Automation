@@ -173,6 +173,44 @@ class HealthCheckTests(unittest.TestCase):
                 self.assertEqual(code, 2)
                 self.assertEqual(output["reason"], "ANIMA_CORE_UNAVAILABLE")
 
+    def test_persistent_worker_recovers_from_transient_core_failure(self):
+        class StopAfterBackoff:
+            def __init__(self):
+                self.stopped = False
+
+            def is_set(self):
+                return self.stopped
+
+            def wait(self, _seconds):
+                self.stopped = True
+                return True
+
+        output = io.StringIO()
+        stop = StopAfterBackoff()
+        with (
+            patch.object(sys, "argv", ["worker", "--poll-seconds", "0.5"]),
+            patch("household_worker.signal.signal"),
+            patch("household_worker.threading.Event", return_value=stop),
+            patch("household_worker.CodexHouseholdModel") as model,
+            patch("household_worker.AnimaHouseholdClient"),
+            patch("household_worker.HouseholdWorker") as worker,
+            redirect_stdout(output),
+        ):
+            model.return_value.check_auth.return_value = True
+            worker.return_value.run_once.side_effect = AnimaHouseholdError("private")
+            code = main()
+        self.assertEqual(code, 0)
+        records = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual(records[0]["status"], "WORKER_STARTED")
+        self.assertEqual(
+            records[1],
+            {
+                "status": "WORKER_RECOVERING",
+                "reason": "ANIMA_CLIENT_UNAVAILABLE",
+                "attempt": 1,
+            },
+        )
+
 
 class WorkerTests(unittest.TestCase):
     def setUp(self):

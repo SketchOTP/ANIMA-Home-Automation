@@ -832,3 +832,36 @@ enabling any producer. Use `sanitize_relay_report` for the real ANIMA protocol,
 not the legacy fixture wrapper. Rebuild after both agreed code slices finish.
 No phone substitution, install, account action, runtime wiring or shared
 governance change was performed by this worker. Full integration remains open.
+
+## Owner runtime update — 2026-09-07
+
+The official Wansview application is installed and owner-authenticated in the
+private Waydroid runtime. Back Yard and Garage cameras are commissioned as
+canonical ANIMA motion-event resources. The private D-Bus relay, minimized Core
+receiver, restricted event read tool and exact-event SENTRY Attention path are
+implemented and tested.
+
+One owner-triggered motion attempt occurred outside the Wansview application's
+configured 00:00-05:00 notification schedule. The app emitted no notification,
+so no vendor-format or end-to-end live pass is claimed. Wansview remains
+disabled at the receiver and capture is restricted to its exact package until a
+scheduled or temporarily enabled real motion notification is observed. Video,
+thumbnails and camera credentials remain out of scope and are not retained.
+
+## Live format update — 2026-09-07
+
+Two later notifications from the owner-authenticated official package
+`net.ajcloud.wansviewplus` established the bounded Garage motion form:
+`Motion alert` with `New motion alert from Garage`. The strict parser now accepts
+only that form for Garage and its corresponding commissioned-name form for Back
+Yard; same-app account/status/empty notices remain rejected. Raw qualification
+records were deleted and further raw capture is disabled.
+
+The package-scoped Wansview receiver is enabled, producer-qualified, and wake-
+eligible. This establishes the real package/format at E1 and the normalized
+parser at E3. A fresh motion after enablement has not yet been observed through
+ANIMA Journal/Attention/SENTRY, so full operational delivery remains pending.
+Garage is the only camera name observed live; Back Yard uses the same exact
+qualified template but remains synthetic/contract-tested. The normal owner
+notification window is 00:00-05:00. No image, thumbnail, stream, vendor account
+credential, or claim that motion proves identity/intent is retained.

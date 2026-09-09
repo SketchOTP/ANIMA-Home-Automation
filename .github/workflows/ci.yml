@@ -403,6 +403,11 @@ jobs:
           ./node_modules/.bin/playwright test -c playwright.h5v.config.ts --reporter=html,line
           cd ..
           uv run --locked python scripts/verify_phase12_h5v_ledger.py | tee /tmp/anima-h5-evidence/phase12-h5v-ledger.json
+      - name: Run owner product browser qualification
+        env:
+          ANIMA_DATABASE_URL: postgresql://anima:anima_dev_only@127.0.0.1:55432/anima
+          ANIMA_OPA_URL: http://127.0.0.1:18181
+        run: uv run --locked python scripts/verify_owner_product_browser.py
       - name: Publish Phase 12 H5 evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4

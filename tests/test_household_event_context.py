@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 
 from anima_ha.household_event_context import CORRELATION_GUIDANCE, project_event
-from anima_ha.household_initiative import notification_disposition
+from anima_ha.household_initiative import device_notification_matches, notification_disposition
 
 NOW = datetime(2026, 9, 7, 18, tzinfo=UTC)
 
@@ -109,3 +109,52 @@ def test_unqualified_source_never_acquires_permission_from_model_config() -> Non
         explicit_alert=True,
     )
     assert result["allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "mode,hour,allowed,required",
+    [
+        ("ALWAYS", 18, True, True),
+        ("NEVER", 18, False, False),
+        ("TIME_WINDOW", 1, True, True),
+        ("TIME_WINDOW", 12, False, False),
+        ("CONTEXTUAL", 18, True, False),
+    ],
+)
+def test_device_notification_rule_is_authoritative_before_household_default(
+    mode: str, hour: int, allowed: bool, required: bool
+) -> None:
+    event_time = datetime(2026, 9, 7, hour, tzinfo=UTC)
+    result = notification_disposition(
+        request_id=uuid4(),
+        event_type="household.ring.doorbell",
+        config={"always_notify": ["household.ring.doorbell"], "proactive_enabled": True},
+        ready=True,
+        device_rule={
+            "resource_id": str(uuid4()),
+            "mode": mode,
+            "start_local": "00:00",
+            "end_local": "05:00",
+            "timezone": "UTC",
+        },
+        event_occurred_at=event_time,
+        now=event_time,
+    )
+    assert result["allowed"] is allowed
+    assert result["required"] is required
+
+
+@pytest.mark.parametrize(
+    "selected,event_type,payload,expected",
+    [
+        ("UNLOCKED", "external.android.lock_reported", {"event_kind": "unlocked"}, True),
+        ("UNLOCKED", "external.android.lock_reported", {"event_kind": "locked"}, False),
+        ("DOORBELL", "household.ring.doorbell", {}, True),
+        ("MOTION", "external.android.motion_reported", {}, True),
+        ("ANY", "senseguard.opened", {}, True),
+    ],
+)
+def test_device_notification_event_selector_is_bounded(
+    selected: str, event_type: str, payload: dict[str, object], expected: bool
+) -> None:
+    assert device_notification_matches({"event_kind": selected}, event_type, payload) is expected

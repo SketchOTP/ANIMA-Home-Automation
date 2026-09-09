@@ -98,9 +98,7 @@ def main() -> int:
             "model_type": "scripted_codex_adapter",
             "provider_type": "none",
             "fixture_type": "in_memory",
-            "commands": [
-                "pytest tests/test_agent.py -k test_resume_preflight_missing_context"
-            ],
+            "commands": ["pytest tests/test_agent.py -k test_resume_preflight_missing_context"],
             "result": {"provider_calls": 0, "pending_approval_preserved": True},
             "limitations": ["in-memory preflight fixture"],
         },

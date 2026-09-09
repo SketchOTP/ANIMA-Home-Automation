@@ -5,12 +5,12 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
 });
 
-test("desktop assistant is a voice-only SENTRY handoff", async ({ page }, testInfo) => {
+test("desktop assistant offers governed SENTRY text control", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
-  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
-  await expect(page.getByLabel("Message Anima")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Send", exact: true })).toHaveCount(0);
+  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "SENTRY", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "SENTRY owner operations" })).toBeVisible();
+  await expect(page.getByLabel("Tell SENTRY what to do")).toBeVisible();
+  await expect(page.getByText(/authenticated owner session supplies authority/i)).toBeVisible();
 });
 
 test("desktop task lifecycle is visible through the Core task path", async ({ page }, testInfo) => {
@@ -62,7 +62,7 @@ test("desktop settings apply persisted presentation preferences", async ({ page 
   await page.getByLabel("Layout profile").selectOption("tablet");
   await page.getByLabel("Text scale").selectOption("large");
   await page.getByRole("checkbox", { name: "presence" }).uncheck();
-  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Save interface settings" }).click();
   await expect(page.getByRole("status").filter({ hasText: "SUCCEEDED" })).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("data-appearance", "light");
   await expect(page.locator("html")).toHaveAttribute("data-display-mode", "tablet");
@@ -81,7 +81,7 @@ test("desktop layout profiles change measured geometry and widget order", async 
   await page.getByLabel("Layout profile").selectOption("wall");
   const presence = page.getByRole("checkbox", { name: "presence" });
   if (!(await presence.isChecked())) await presence.check();
-  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Save interface settings" }).click();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length)).toBe(3);
   await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gap)).toBe("24px");
@@ -92,12 +92,12 @@ test("desktop layout profiles change measured geometry and widget order", async 
   const agendaDown = page.getByRole("button", { name: "Move agenda down" });
   if (await agendaUp.isEnabled()) await agendaUp.click();
   else await agendaDown.click();
-  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Save interface settings" }).click();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   await expect.poll(async () => page.locator(".widget").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-widget")).indexOf("agenda"))).not.toBe(beforeAgendaIndex);
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Layout profile").selectOption("phone");
-  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Save interface settings" }).click();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   await expect.poll(async () => page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns.split(" ").length)).toBe(1);
   expect(await page.locator(".dashboard").evaluate((node) => getComputedStyle(node).gridTemplateColumns)).not.toBe(wallColumns);
@@ -110,7 +110,7 @@ test("desktop home exposes governed household surfaces and truthful health", asy
     const widget = page.getByRole("checkbox", { name });
     if (!(await widget.isChecked())) await widget.check();
   }
-  await page.getByRole("button", { name: "Save preferences" }).click();
+  await page.getByRole("button", { name: "Save interface settings" }).click();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Rooms & devices" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Notifications & recent actions" })).toBeVisible();
@@ -125,11 +125,11 @@ test("desktop home exposes governed household surfaces and truthful health", asy
 
 test("desktop notification route keeps delivery destination server-owned", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "functional acceptance runs on desktop");
-  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Notifications", exact: true }).click();
+  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Alerts", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Notification route" })).toBeVisible();
   await page.getByLabel("Route label").fill("Overnight SenseGuard alerts");
   await page.getByLabel("Minimum alert priority").fill("80");
-  await page.getByRole("button", { name: "Create route" }).click();
+  await page.getByRole("button", { name: /^(Create|Save) route$/ }).click();
   await expect(page.getByRole("status").filter({ hasText: "SUCCEEDED" })).toBeVisible();
   await expect(page.getByText(/server configured/i)).toBeVisible();
   await expect(page.getByText("ntfy", { exact: true })).toBeVisible();
@@ -138,8 +138,8 @@ test("desktop notification route keeps delivery destination server-owned", async
 
 test("responsive navigation and privacy boundary hold at each viewport", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true })).toBeVisible();
-  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Capabilities", exact: true }).click();
-  await expect(page.locator("h1", { hasText: "Capabilities" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Connections", exact: true }).click();
+  await expect(page.locator("h1", { hasText: "Connections" })).toBeVisible();
   await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true }).click();
   expect(await page.evaluate(() => Object.keys(localStorage).length)).toBe(0);
   expect(await page.evaluate(() => Object.keys(sessionStorage).length)).toBe(0);
@@ -165,9 +165,9 @@ test("browser application traffic is same-origin and keyboard focus is visible",
   });
   await page.reload();
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Home", exact: true })).toBeVisible();
-  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true }).focus();
-  await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Anima", exact: true })).toBeFocused();
+  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "SENTRY", exact: true }).focus();
+  await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "SENTRY", exact: true })).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "SENTRY owner operations" })).toBeVisible();
   expect(new Set(origins)).toEqual(new Set([new URL(page.url()).origin]));
 });

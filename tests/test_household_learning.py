@@ -22,6 +22,7 @@ from anima_ha.household_learning import (
     CONFIG_KIND,
     EVENT_TYPES,
     HOUSEHOLD_LEARNING_MANIFEST,
+    DeviceNotificationRule,
     HouseholdLearningError,
     HouseholdLearningNativePlugin,
     HouseholdLearningService,
@@ -36,7 +37,13 @@ from anima_ha.intelligence import (
 )
 from anima_ha.journal import PostgresEventJournal
 from anima_ha.memory import MemoryRecord, MemoryService, MemoryStatus, MemoryType
-from anima_ha.plugins import NativeRuntime, PluginManager, PluginValidationError
+from anima_ha.plugins import (
+    ExecutionBoundary,
+    NativeRuntime,
+    PluginManager,
+    PluginValidationError,
+    ToolDescriptor,
+)
 from anima_ha.policy import (
     AutonomyPolicy,
     OpaPolicyClient,
@@ -174,6 +181,104 @@ def test_defaults_and_status_never_create_memory_or_tasks(fixture: Any) -> None:
 def test_config_bounds(field: str, value: Any) -> None:
     with pytest.raises(HouseholdLearningError):
         InitiativeConfig(**{field: value})
+
+
+def test_device_notification_config_is_bounded_and_legacy_compatible() -> None:
+    resource = str(uuid4())
+    configured = InitiativeConfig(
+        device_notifications=(
+            DeviceNotificationRule(
+                resource_id=resource,
+                mode="TIME_WINDOW",
+                start_local="00:00",
+                end_local="05:00",
+                timezone="America/New_York",
+            ),
+        )
+    )
+    assert configured.to_payload()["device_notifications"][0]["resource_id"] == resource
+    assert configured.to_payload()["device_notifications"][0]["event_kind"] == "ANY"
+    legacy = InitiativeConfig.from_payload(
+        {
+            key: value
+            for key, value in InitiativeConfig().to_payload().items()
+            if key != "device_notifications"
+        }
+    )
+    assert legacy.device_notifications == ()
+    with pytest.raises(HouseholdLearningError):
+        InitiativeConfig.from_payload(
+            {
+                **configured.to_payload(),
+                "device_notifications": [
+                    {
+                        **configured.to_payload()["device_notifications"][0],
+                        "mode": "EXECUTE_ANYTHING",
+                    }
+                ],
+            }
+        )
+
+
+def test_owner_can_update_one_device_event_rule_without_replacing_other_config(
+    fixture: Any,
+) -> None:
+    service, graph, _, _ = fixture
+    household_id, owner_id = graph.household.canonical_id, graph.owner.canonical_id
+    first = service.configure(
+        household_id,
+        owner_id,
+        config(proactive_enabled=True, always_notify=[EVENT_TYPES[0]]),
+    )
+    resource_id = str(uuid4())
+    result = service.set_device_notification(
+        household_id,
+        owner_id,
+        {
+            "resource_id": resource_id,
+            "mode": "ALWAYS",
+            "event_kind": "UNLOCKED",
+            "expected_version": first["config_version"],
+        },
+    )
+    assert result["config"]["proactive_enabled"] is True
+    assert result["config"]["always_notify"] == [EVENT_TYPES[0]]
+    assert result["config"]["device_notifications"] == [
+        {
+            "resource_id": resource_id,
+            "mode": "ALWAYS",
+            "start_local": "00:00",
+            "end_local": "23:59",
+            "timezone": "America/New_York",
+            "event_kind": "UNLOCKED",
+        }
+    ]
+    with pytest.raises(HouseholdLearningError, match="config version changed"):
+        service.set_device_notification(
+            household_id,
+            owner_id,
+            {
+                "resource_id": resource_id,
+                "mode": "NEVER",
+                "event_kind": "ANY",
+                "expected_version": first["config_version"],
+            },
+        )
+
+
+def test_device_notification_write_is_exact_trusted_internal_not_phase9_action() -> None:
+    tool = next(
+        item
+        for item in HOUSEHOLD_LEARNING_MANIFEST.tools
+        if item["name"] == "set_device_notification"
+    )
+    descriptor = ToolDescriptor.from_manifest(HOUSEHOLD_LEARNING_MANIFEST, tool)
+    assert descriptor.execution_boundary == ExecutionBoundary.POLICY_GATED_INTERNAL
+    forged = replace(HOUSEHOLD_LEARNING_MANIFEST, source="local")
+    assert (
+        ToolDescriptor.from_manifest(forged, tool).execution_boundary
+        == ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    )
 
 
 def test_owner_config_versions_and_no_op(fixture: Any) -> None:
@@ -427,7 +532,7 @@ def test_native_schema_blocks_extra_scope_and_owner_mutations(fixture: Any) -> N
             "propose", proposal([event]), 1, replace(ctx, tool_request_id=uuid4())
         )
     assert one["suggestion"]["suggestion_id"] != two["suggestion"]["suggestion_id"]
-    assert len(plugin.list_tools()) == 6
+    assert len(plugin.list_tools()) == 7
     assert not any(
         tool["read_only"]
         for tool in HOUSEHOLD_LEARNING_MANIFEST.tools

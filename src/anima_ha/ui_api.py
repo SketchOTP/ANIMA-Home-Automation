@@ -17,7 +17,7 @@ import os
 import secrets
 import time
 from collections import deque
-from collections.abc import Awaitable, Callable, Iterator
+from collections.abc import Awaitable, Callable, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -265,6 +265,19 @@ def _session_csrf(secret_hash: str) -> str:
     return hmac.new(secret_hash.encode(), b"anima-ui-csrf-v1", hashlib.sha256).hexdigest()
 
 
+def _configured_ttl(source: Mapping[str, str], name: str, default: timedelta) -> timedelta:
+    raw = source.get(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        seconds = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer number of seconds") from exc
+    if seconds < 60:
+        raise ValueError(f"{name} must be at least 60 seconds")
+    return timedelta(seconds=seconds)
+
+
 @dataclass(frozen=True, slots=True)
 class UIConfig:
     """Non-secret UI configuration."""
@@ -291,6 +304,12 @@ class UIConfig:
             raise ValueError("ANIMA_UI_PORT must be an integer") from exc
         if not 1 <= port <= 65_535:
             raise ValueError("ANIMA_UI_PORT must be between 1 and 65535")
+        absolute_ttl = _configured_ttl(
+            source, "ANIMA_UI_SESSION_ABSOLUTE_SECONDS", SESSION_ABSOLUTE_TTL
+        )
+        idle_ttl = _configured_ttl(source, "ANIMA_UI_SESSION_IDLE_SECONDS", SESSION_IDLE_TTL)
+        if idle_ttl > absolute_ttl:
+            raise ValueError("ANIMA_UI_SESSION_IDLE_SECONDS cannot exceed the absolute session TTL")
         return cls(
             environment=source.get("ANIMA_ENV", "development"),
             bind_host=source.get("ANIMA_UI_BIND", "127.0.0.1"),
@@ -302,7 +321,23 @@ class UIConfig:
             ha_redirect_uri=source.get("ANIMA_HA_OAUTH_REDIRECT_URI") or None,
             opa_url=source.get("ANIMA_OPA_URL", "http://127.0.0.1:8181").rstrip("/"),
             test_auth_enabled=source.get("ANIMA_UI_TEST_AUTH", "0") == "1",
+            session_absolute_ttl=absolute_ttl,
+            session_idle_ttl=idle_ttl,
         )
+
+
+def _set_ui_session_cookie(response: Response, cookie: str, config: UIConfig) -> None:
+    """Persist the opaque credential for the bounded server-side session lifetime."""
+
+    response.set_cookie(
+        UI_SESSION_COOKIE,
+        cookie,
+        httponly=True,
+        samesite="strict",
+        secure=False,
+        max_age=max(1, int(config.session_absolute_ttl.total_seconds())),
+        path="/",
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -2883,9 +2918,7 @@ def create_app(
             identity = svc.map_ha_user("test-ha-user")
             cookie, csrf = svc.issue_session(identity, "browser")
             response = RedirectResponse("/")
-            response.set_cookie(
-                UI_SESSION_COOKIE, cookie, httponly=True, samesite="strict", secure=False, path="/"
-            )
+            _set_ui_session_cookie(response, cookie, svc.config)
             response.delete_cookie(UI_OAUTH_NONCE_COOKIE, path="/")
             response.headers["X-Anima-CSRF"] = csrf
             return response
@@ -2913,9 +2946,7 @@ def create_app(
             raise HTTPException(status_code=502, detail=str(exc)) from exc
         cookie, csrf = svc.issue_session(identity, "browser")
         response = RedirectResponse("/")
-        response.set_cookie(
-            UI_SESSION_COOKIE, cookie, httponly=True, samesite="strict", secure=False, path="/"
-        )
+        _set_ui_session_cookie(response, cookie, svc.config)
         response.delete_cookie(UI_OAUTH_NONCE_COOKIE, path="/")
         response.headers["X-Anima-CSRF"] = csrf
         return response
@@ -3122,7 +3153,16 @@ def create_app(
         body: MutationRequest,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
-        if operation not in {"create", "update"}:
+        if operation not in {
+            "create",
+            "update",
+            "face-start",
+            "face-capture",
+            "face-remove-sample",
+            "face-commit",
+            "face-cancel",
+            "face-delete",
+        }:
             raise HTTPException(status_code=404, detail="UNKNOWN_USER_OPERATION")
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)

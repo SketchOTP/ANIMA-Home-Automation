@@ -24,10 +24,16 @@ services:
       ANIMA_DATABASE_URL: postgresql://${ANIMA_DB_USER:-anima}:${ANIMA_DB_PASSWORD:?set ANIMA_DB_PASSWORD in .env}@127.0.0.1:55434/${ANIMA_DB_NAME:-anima}
       ANIMA_UI_BIND: 127.0.0.1
       ANIMA_UI_PORT: ${ANIMA_PC_UI_PORT:-18090}
+      # Trusted-local owner console: remember this browser while preserving
+      # server-side idle expiry, absolute expiry, revocation and identity checks.
+      ANIMA_UI_SESSION_ABSOLUTE_SECONDS: "7776000"
+      ANIMA_UI_SESSION_IDLE_SECONDS: "2592000"
       ANIMA_OPA_URL: http://127.0.0.1:18181
       ANIMA_SEARXNG_URL: http://127.0.0.1:18888
       ANIMA_SEARXNG_HOST: 127.0.0.1
       ANIMA_INTELLIGENCE_PROVIDER: sentry
+      # Fixed owner opt-in epoch. Missing remains disabled; restart never invents one.
+      ANIMA_SENTRY_AUTOWAKE_ENABLED_AT: ${ANIMA_SENTRY_AUTOWAKE_ENABLED_AT:-}
       # Owner-authorized, exact builtin note operations still pass Core/OPA.
       # This does not enable event polling, TTS, or unrelated household writes.
       ANIMA_SENTRY_AGENT_MEMORY: "true"
@@ -37,6 +43,9 @@ services:
       ANIMA_HA_BROWSER_URL: http://localhost:8123
       ANIMA_HA_EXPECTED_VERSION: "2026.9.0"
       ANIMA_OWNER_BOUNDARY_GROUP: "1000"
+      ANIMA_VENDOR_RELAY_CONFIG: /var/lib/anima/provider-boundary/vendor-relay.json
+      ANIMA_SENTRY_IDENTITY_URL: http://127.0.0.1:48174
+      ANIMA_SENTRY_IDENTITY_TOKEN_FILE: /var/lib/anima/provider-boundary/sentry-identity.token
       ANIMA_KNOWLEDGE_ROOT: /var/lib/anima/knowledge
       ANIMA_KNOWLEDGE_OWNER_UID: "1000"
       ANIMA_KNOWLEDGE_GROUP_ID: "1000"
@@ -44,6 +53,7 @@ services:
       - anima_ha_backup_data:/var/lib/anima/backups
       - anima_ha_connection_data:/var/lib/anima/connection
       - /home/sketch/.local/share/anima-owner-boundary:/var/lib/anima/provider-boundary
+      - /home/sketch/.config/sentry/anima-identity.token:/var/lib/anima/provider-boundary/sentry-identity.token:ro
       - /home/sketch/Documents/MEMORY/ANIMA:/var/lib/anima/knowledge
     healthcheck:
       test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.environ['ANIMA_UI_PORT']+'/healthz',timeout=3)"]

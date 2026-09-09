@@ -120,15 +120,16 @@ mode `0600`). Its client credential is
 mode `0600`); only the path and mode were inspected in this audit, never the
 token contents. Worker label: `sentry-household-workstation`.
 
-Use the already commissioned SSH tunnel; do not create another forward over
-the live socket or infer a laptop/container-side socket path from the local
-path. The main agent owns tunnel/service lifecycle. Commands below are operator
-references and are not instructions to start a duplicate running worker.
+The consolidated owner deployment runs ANIMA Core and SENTRY on this Linux PC.
+The worker connects to the local credential-isolated Unix socket at
+`~/.local/share/anima-owner-boundary/core.sock`; it does not use the retired
+Atlas-laptop tunnel. Commands below are operator references and are not
+instructions to start a duplicate running worker.
 
-From the mounted ANIMA checkout on the workstation:
+From the Linux-PC ANIMA checkout:
 
 ```bash
-cd '/run/user/1000/gvfs/sftp:host=atlas-laptop/srv/ATLAS/100_ACTIVE/Projects/ANIMA Home Automation'
+cd '/home/sketch/Projects/ANIMA Home Automation'
 codex login status
 python3 scripts/run_sentry_household_worker.py --auth-smoke
 ```
@@ -143,7 +144,7 @@ files are copied or inspected. There is no Core secret environment to inherit:
 ```bash
 env -i PATH=/usr/lib/chatgpt/resources:/usr/bin:/bin \
   HOME=/home/sketch CODEX_HOME=/home/sketch/.codex LANG=C.UTF-8 \
-  ANIMA_SENTRY_ENDPOINT=/run/user/1000/anima-household-owner.sock \
+  ANIMA_SENTRY_ENDPOINT=/home/sketch/.local/share/anima-owner-boundary/core.sock \
   ANIMA_SENTRY_CLIENT_TOKEN_FILE=/home/sketch/.local/share/anima-household-client/client.token \
   ANIMA_SENTRY_WORKER_ID=sentry-household-workstation \
   python3 scripts/run_sentry_household_worker.py --check
@@ -155,7 +156,7 @@ remove `--check`:
 ```bash
 env -i PATH=/usr/lib/chatgpt/resources:/usr/bin:/bin \
   HOME=/home/sketch CODEX_HOME=/home/sketch/.codex LANG=C.UTF-8 \
-  ANIMA_SENTRY_ENDPOINT=/run/user/1000/anima-household-owner.sock \
+  ANIMA_SENTRY_ENDPOINT=/home/sketch/.local/share/anima-owner-boundary/core.sock \
   ANIMA_SENTRY_CLIENT_TOKEN_FILE=/home/sketch/.local/share/anima-household-client/client.token \
   ANIMA_SENTRY_WORKER_ID=sentry-household-workstation \
   python3 scripts/run_sentry_household_worker.py --poll-seconds 2 --model-timeout 90
@@ -166,13 +167,15 @@ real governed catalogue operations; it is **not** an auth smoke or a dry run.
 Default polling is two seconds; default model deadline is 90 seconds per call.
 Ctrl-C/SIGTERM stops polling and cancels an active Codex subprocess.
 
-The owner deployment now installs the four client/worker modules into
+The owner deployment installs the client/worker modules into
 `/home/sketch/.local/share/anima-household-client/runtime` outside protected
-SENTRY. The workstation uses user services `anima-household-worker.service`,
-`anima-owner-core-tunnel.service` and `anima-owner-network.service`; the laptop
-uses `anima-owner-ha-relay.service`. The helper has `Restart=no`: a failed turn
-requires inspecting its safe diagnostic and Core status before manual restart.
-The transport-only services may reconnect without replaying model/tool work.
+SENTRY. The Linux PC uses `anima-pc.service` and the repository-tracked
+`deploy/systemd/user/anima-household-worker.service`; no owner Core tunnel is
+required. Transient pre-claim Core/client failures use bounded in-process
+backoff, and the unit restarts on an unexpected process failure. This cannot
+replay an ambiguous turn: Core durably records provider-start before the model
+runs and a replacement worker cannot reclaim started work. The Core service may
+restart without replaying model/tool work.
 The workstation system Python's inspected jsonschema version is 4.10.3; the
 repository validation uses its locked dependency environment. Service startup
 qualification and model/operation qualification are separate evidence claims.
@@ -181,14 +184,14 @@ Inspect service state without exposing credentials:
 
 ```bash
 systemctl --user status anima-household-worker.service
-systemctl --user status anima-owner-core-tunnel.service anima-owner-network.service
+systemctl --user status anima-pc.service
 journalctl --user -u anima-household-worker.service -n 20 --no-pager
 ```
 
-If a supervisor is later commissioned, do not use blind restart-on-failure:
-exit `2` requires inspecting the fixed diagnostic and Core request status before
-operator restart. `--check` reads auth status and Core health without claims;
-it does not prove model access. `--auth-smoke` is the explicit model access check.
+`WORKER_RECOVERING` records contain only bounded diagnostics and backoff count.
+`--once` retains fail-fast behavior for qualification. `--check` reads auth
+status and Core health without claims; it does not prove model access.
+`--auth-smoke` is the explicit model access check.
 
 ## Failure, policy and privacy behavior
 
@@ -200,7 +203,7 @@ it does not prove model access. `--auth-smoke` is the explicit model access chec
   shutdown. Core's existing lease is 120 seconds; client HTTP timeout is 10
   seconds. No background thread renews an idle or abandoned request. Tool calls
   are bounded client operations with lease checks between stages.
-- A round has at most three independent calls, with at most eight calls and
+- A round has at most three typed calls, with at most eight calls and
   three rounds cumulatively, all locally validated against the
   exact request catalogue and Core input schemas before the first invocation.
   No remote schema references are resolved. Core still revalidates identity,

@@ -1,6 +1,323 @@
 # Current Project State
 
-Last updated: 2026-09-07
+Last updated: 2026-09-08
+
+## Owner operational convergence trial — 2026-09-08
+
+The unattended SENTRY path is now operationally observed from a clearly marked
+synthetic qualification event through the real PostgreSQL Journal, event-scoped
+Attention, durable request, provider-start fence, actual persistent SENTRY Codex
+turn and warm Kokoro TTS. The first attempt correctly retained an `UNAVAILABLE`
+negative result when the model selected an absent notification tool. After the
+channel-contract repair, a fresh request completed with `decision=speak`, Core
+`ALWAYS_NOTIFY`, `result_status=RESPONSE` and host
+`delivery_status=DELIVERED`. Neither request was replayed.
+
+Tym's existing Home Assistant person source is commissioned into ANIMA. The
+remaining router candidates are intentionally unassigned because current vendor
+labels and partial MAC suffixes do not identify Candiss, Jaden, Patience or
+Logan safely, and those people are not yet canonical ANIMA users. The owner UI
+now has the exact enable/commission/bind workflow; physical one-device-at-a-time
+identification remains required.
+
+The two SenseGuard opening rules are `ALWAYS`; one active all-day
+`SENTRY_COGNITION` policy covers both resources and a duplicate historical rule
+is disabled. A household preference explicitly selects concise active-SENTRY
+TTS without actor inference. Ring, Wansview, Tapo and Tym's workday routine
+retain their previously configured dispositions.
+
+A real SENTRY model created a source-linked Obsidian MEMORY note through ANIMA
+and a later real turn corrected the same note in place using its current digest.
+The daily and multi-day learning tasks are scheduled, but due-run evidence and
+the minimum three-day household trial remain `IN_PROGRESS`. See
+`docs/OWNER-OPERATIONAL-TRIAL-026A.md`. Daily trial review is active as Codex
+heartbeat `anima-household-trial-check`. Local qualification passes the complete
+ANIMA validation, 112-scenario primary browser matrix, 90 isolated
+owner-product browser scenarios and SENTRY's 525-test suite. No multi-day
+completion, universal phone mapping, hosted CI or repository publication is
+claimed by this entry.
+
+## Live SENTRY alert-setting classification correction — 2026-09-08
+
+The owner's first live request to announce door-lock unlocks failed before the
+setting write with `TRUSTED_ACTION_SPEC_UNAVAILABLE`. The new trusted built-in
+configuration operation had defaulted to the Phase 9 consequential-action
+boundary, where it correctly failed closed because configuration persistence is
+not a physical action with an `ActionSafetySpec`.
+
+The exact built-in source pair is now classified as `POLICY_GATED_INTERNAL`.
+An external or forged same-name tool still falls through to the consequential
+boundary. The failed provider-started request remains `UNKNOWN_RESULT` and was
+not replayed; database and worker evidence show no direct-owner request waiting
+to be retried automatically. The owner must submit a new instruction.
+
+PASSED locally: focused household-learning, plugin-classification, SENTRY-space,
+access and boundary tests; strict mypy for the corrected surface; Docker build;
+container health; worker survival/recovery; and `git diff --check`. Image
+`sha256:afe653c8ee1032c650876030eff35a95fac79c48457c342040287086aa6d1c6a`
+is deployed healthy on port 18090. No commit, hosted CI, successful setting
+mutation or physical announcement is claimed yet.
+
+## SENTRY owner-operations chat and precise device-event rules — 2026-09-08
+
+The SENTRY page is now explicitly the authenticated owner's natural-language
+management surface over ANIMA's supported typed catalogue. It can discover
+canonical resources and current versions, then carry a requested operation
+through Core rather than merely describing the setting. Device notification
+rules now support bounded event selectors, including the concrete workflow
+`front-door lock + UNLOCKED + ALWAYS`, without replacing unrelated initiative
+preferences. The same event scope is visible on Devices.
+
+The Linux-PC household worker now self-recovers from transient Core/client
+availability loss with bounded backoff. Provider-start fencing remains the
+no-replay boundary, so automatic service recovery cannot reclaim ambiguous
+model work. The deployed worker reproduced two transient startup failures,
+recovered, processed the remaining queue, and remains active. Deployed image
+`sha256:79580a2bf635a84095d1f00d4a04394b81ada18862f2feda4d1a48b4d90ef66b`
+is healthy on port 18090.
+
+PASSED locally: full Python pytest, strict mypy across 141 source files, full
+Ruff lint, 48 host-worker tests, frontend source tests, TypeScript and Vite
+build, Docker image build, and `git diff --check`. An actual
+bounded Luna planning smoke selected resource/status reads and then the exact
+new `UNLOCKED -> ALWAYS` operation. Hosted CI and an authenticated owner-browser
+submission of that example are not yet claimed. This expands product usability;
+it does not grant raw shell/SQL/HA credentials or bypass identity, policy,
+confirmation, stronger authentication or physical verification.
+
+The aggregate validation wrapper stopped at its formatting gate because three
+unrelated pre-existing dirty owner-worktree files need formatting. This slice's
+seven Python files pass format-check; the unrelated files were preserved.
+
+## Owner-facing Routines explanation and workflow alignment — 2026-09-08
+
+The Routines page now explains the implemented boundary precisely: routines are
+owner-declared schedules and expectations for existing household members, with
+days, local times, timezone, optional room/zone and descriptive context. SENTRY
+may consider them alongside current presence, preferences, memory and events,
+but a routine is not presence proof, authentication, an automation or a
+scheduled action.
+
+Identity management is no longer duplicated on Routines. Missing people are
+created and managed on Users through an explicit `Manage household users`
+handoff. The adjacent Household presence panel now explains how qualified Home
+Assistant phone-geofence and supported Wi-Fi signals are assigned, how
+Home/Away/Not detected/Unknown are interpreted, and why those signals remain
+context rather than authentication or proof of who caused an event.
+
+PASSED: frontend source contracts 11/11, TypeScript and production Vite build,
+dedicated PostgreSQL/OPA Routines Playwright 42/42 across desktop/tablet/phone,
+focused Routines/UI Core pytest 100 tests with 3 optional skips, Ruff and
+`git diff --check`. Image
+`sha256:3cb54a638824dcf101571c5870404fffb13f3374011dbc6cfdbc528db0aa3be8`
+is deployed healthy on port 18090; live bundle inspection found the new
+Routines, Users-handoff and presence guidance and confirmed the removed
+`Add household member` browser control is absent. No commit or hosted CI is
+claimed for this dirty owner-worktree increment.
+
+## Owner page guidance and workflow alignment — 2026-09-08
+
+The Automations, SENTRY, Alerts, Tasks & Calendar, Activity, Users,
+Connections, Backups, Preferences and Settings introductions now explain the
+actual owner workflow, authority boundary and evidence limits of each page.
+Supporting card copy was tightened where a control otherwise remained
+ambiguous: task lifecycle and durable storage, calendar optimistic versioning,
+notification-route priority, bounded recent Activity, integration versus
+capability status, and presentation-only interface settings are now explicit.
+
+The automation trigger picker no longer offers private notification-only
+Tapo/Wansview-style resources as if they published an On/Off state. The current
+automation product remains deliberately bounded to one commissioned On/Off
+observation and one commissioned power action routed through ANIMA
+authorization and physical-state verification. The interface-settings action
+is now labeled `Save interface settings`, distinct from durable household and
+person Preferences.
+
+PASSED: frontend source contracts 11/11, TypeScript and production Vite build,
+desktop Playwright 33/33 across all owner pages, focused automation/UI Core
+tests 40/40, Ruff and `git diff --check`. Image
+`sha256:3e7d0730a564120fd8f4b9ce6bfb7acad86f0e84a20942b2f3d96671b7b5b3af`
+is deployed healthy on port 18090; live bundle inspection found the new page
+guidance, Settings label and notification-only trigger safeguard. No commit or
+hosted CI is claimed for this dirty owner-worktree increment.
+
+## Owner-facing Scenes explanation and lifecycle — 2026-09-08
+
+The Scenes overview now defines the implemented product exactly: a scene is a
+reusable, household-scoped preset of up to 16 commissioned power devices and
+their saved On/Off states. Saving a scene does not change devices. Applying it
+runs each state through ANIMA authorization and physical-state verification;
+execution stops and reports an honest failed/partial outcome when a step does
+not succeed.
+
+The owner can now explicitly enable or disable a saved scene without deleting
+or applying it. A disabled scene cannot be applied and disabling one does not
+alter current device state. Existing create/edit/versioned persistence remains
+unchanged. Frontend tests/build, a desktop browser create-state/lifecycle
+contract journey, 38 focused scene/UI Core tests, Ruff and diff checks pass.
+The deployed image
+`sha256:847076ee155c95fce2d260abae83e32d6798e1c89e3c35d4b3b5c302b9233a79`
+is healthy on port 18090 and bundle inspection confirms the new explanation and
+scene lifecycle controls are live.
+
+## Persistent household-user and face-profile management — 2026-09-08
+
+The Users page now owns the complete bounded owner workflow for household role,
+SENTRY access, Wi-Fi presence hints, and SENTRY face enrollment. A Graph merge
+defect that reselected old `sentry_access` metadata was corrected, MAC input now
+accepts one address per line or comma-separated values, and `identity.configure`
+is classified consistently with its declared secure-action boundary.
+
+ANIMA authorizes face operations through Phase 5/OPA, then uses a fixed-loopback
+authenticated bridge to SENTRY's existing local identity manager. Owners can
+start or replace a profile, capture the guided pose set, inspect temporary
+thumbnails and quality, remove bad captures, save the derived profile, or remove
+it. Raw photos remain process/browser-memory only and are discarded after save;
+the persistent stores retain the SENTRY biometric prototype/sample count and
+ANIMA's canonical profile linkage.
+
+The live owner path reached Core → OPA → SENTRY for start/cancel. ANIMA UI and
+SENTRY state services were restarted; household-user, profile-catalogue and UI
+session digests/counts were unchanged. The deployed image
+`sha256:0475e7a70a2ad2857c3dc83f627ef975590563f32585031e1b8c84bfe12f680c`
+is healthy on port 18090. Full ANIMA pytest (1202 tests), strict mypy, Ruff,
+frontend tests/build, and 115 related SENTRY tests pass on the current dirty
+owner worktree. No commit, hosted CI, or face capture for the owner is claimed.
+
+## Spaces owner guidance correction — 2026-09-08
+
+The Spaces page introduction now explains its actual purpose and workflow:
+owners create and organize rooms/zones there so ANIMA and SENTRY understand
+where household devices and activity belong, then assign hardware from the
+Devices page. It now also defines a room as a physical enclosed area and a zone
+as a more specific or functional area that can sit inside or outside a room.
+The former `A place for every device.` slogan has been removed.
+Frontend source tests, TypeScript checking and the production Vite build pass.
+The deployed owner UI image
+`sha256:f27f17734ddcd718414c5850a67b5f1221cf7361dca01e20e206bcfb3a5eb47f`
+is healthy on port 18090 and contains the corrected copy.
+
+## Owner-facing device classification correction — 2026-09-08
+
+The Devices view now separates household hardware from Home Assistant service
+and host-infrastructure records. Home Assistant registry entries marked as
+services (Forecast, Sun, Google Translate and Backup) are no longer projected
+as devices. The host Bluetooth controller `hci0` is also excluded when it has
+no attached household entities, even if an older commissioning pass left a
+canonical mapping. The underlying integrations, capabilities and historical
+mapping remain intact; Zigbee Hub and actual household/event devices remain
+visible.
+
+Ruff, strict mypy and 38 focused Home Assistant/device-inventory tests pass.
+The corrected owner UI image
+`sha256:12d33b1b7990c54f594c9c9fa10f8d835d3de504df8d4df89a16c83609464d35`
+is deployed and healthy on port 18090. The isolated Codex browser does not
+share the owner's Home Assistant login, so authenticated visual confirmation
+remains an owner refresh rather than a Codex claim.
+
+## Owner-console session persistence correction — 2026-09-08
+
+The repeated `Reconnect your household` landing page was traced to two aligned
+session defects: ANIMA's otherwise durable PostgreSQL session had an eight-hour
+absolute / thirty-minute idle lifetime, and the browser credential was emitted
+without `Max-Age`, so a recreated browser context could discard it immediately.
+The PC-local owner profile now uses a bounded 90-day absolute / 30-day idle
+lifetime, and the opaque HttpOnly/SameSite cookie persists for the matching
+server-side absolute lifetime. Logout, revocation, current identity resolution,
+CSRF and same-origin checks are unchanged.
+
+When HA is already configured and ANIMA has no valid browser session, the owner
+UI now automatically enters the existing HA OAuth continuation instead of
+remaining on a manual reconnect screen. First-time setup remains explicit and
+authentication failures remain visible. Targeted Python authentication tests
+passed 36; Ruff, strict mypy, frontend type/unit/build, and the real-PC-endpoint
+Playwright automatic-resume scenario passed. The live UI image
+`sha256:357551258c2b705c05d8b08d582a2dc35187555a4d5c1dde5e198015ca074218`
+is healthy on port 18090. The isolated Codex browser did not share the owner's HA
+cookie, so an authenticated owner-page visual was not claimed.
+
+## Owner console and per-device notification convergence — 2026-09-07
+
+The PC-local owner console now uses a consolidated 15-page information
+architecture. Former standalone Notifications, Capabilities, Integrations and
+Anima navigation entries are folded into Alerts, Connections and SENTRY. The
+new SENTRY page is an in-memory text surface over the existing authenticated
+conversation/provider boundary; it does not expose Codex CLI, shell, raw Home
+Assistant, database, policy, or provider credentials to the browser.
+
+Devices now projects commissioned private Android event resources as well as
+Home Assistant registry devices. Current owner graph evidence includes Tapo
+Front Door Lock and Wansview Back Yard/Garage camera sensors under the private
+`android_notification` provider, while Ring remains a native Home Assistant
+device. Per-device alert disposition supports household default, always,
+household-local time window, never, and contextual SENTRY judgment after
+learning readiness. Contextual judgment can use the bounded current packet,
+routines, preferences, presence and memory; it cannot create authority or
+physical Truth.
+
+Local validation passes: Python formatting/lint/strict typing and 1125 tests
+(73 optional skips), OPA 9/9, frontend static/type/build, 100 primary browser
+tests (14 viewport-specific skips), initiative/Ring 42, preferences 39, and
+vendor connections 36. Package wheel, diff check and tracked-content safety
+scan pass. The deployed PC UI image is
+`sha256:1079c7b8f8ddb57b26446b79a14a4b4f5f8b653922a9d6e63565a610abe47246`;
+container health and `/healthz` both report healthy/ok on port 18090. No
+physical notification delivery, arbitrary HA administration, or whole-goal
+completion is inferred from these UI/configuration results.
+
+## Live Ring doorbell notification posture — 2026-09-07
+
+The owner's native Home Assistant Ring account is connected and the Front Door
+Doorbell Wired device is commissioned into ANIMA's `Home` household in `Foyer`.
+The live HA inventory exposes `event.front_door_ding` and
+`event.front_door_motion`; ANIMA maps those through the canonical Ring event
+router into guaranteed Attention requests without exposing Ring credentials,
+video, or raw HA administration to SENTRY.
+
+The active, versioned owner initiative preference explicitly contains only
+`household.ring.doorbell` in `always_notify`. A fresh doorbell event therefore
+requires a SENTRY notification attempt even while general proactive initiative
+remains disabled; Ring motion remains contextual/model-reasoned unless the owner
+later changes that preference. SENTRY voice is active in `LISTENING`, wake is
+enabled, VAD is healthy, and the ANIMA autonomous-event channel currently
+reports `EMPTY` rather than an error. The owner declined a physical doorbell
+press at this checkpoint, so live Ring cloud receipt and actual TTS delivery are
+`NOT RUN`, not failed or inferred.
+
+## Live Tapo/Wansview event integration — 2026-09-07
+
+The PC-local private Waydroid relay now has qualified, package-scoped rules for
+the owner's Tapo DL110 and Wansview Cloud applications. Real Tapo lock/unlock
+notifications reached the authenticated ANIMA receiver, Journal, exact
+Attention path, and resident SENTRY claim. That run exposed a SENTRY host prompt
+defect: the model did not receive the non-secret ANIMA request ID needed to open
+its prebound context and returned `unavailable`, not a reasoned silent decision.
+The SENTRY source correction is deployed and target-tested; the already-started
+failed requests were not replayed. An ordinary lock/unlock may still correctly
+produce reasoned silence when current ANIMA preferences/context warrant it.
+
+Two official-package Wansview notifications established the exact bounded form
+`Motion alert` / `New motion alert from Garage`. Strict Garage and Back Yard
+motion rules are installed; non-motion notices remain rejected. Raw calibration
+captures were removed and capture is disabled. Both vendor receiver identities
+are enabled, producer-qualified, and wake-eligible with separate derived
+credentials. A fresh post-enable Wansview motion event through ANIMA/SENTRY is
+still required for operational end-to-end evidence; only Garage was observed in
+the calibration sample and Back Yard remains contract-tested rather than live-
+observed. No image, video, camera credential, Google credential, raw vendor text,
+or fingerprint authority enters ANIMA.
+
+## PC-local Android Play network — 2026-09-07
+
+Waydroid's owner setup runtime now has restart-persistent IPv4, routing and
+framework DNS. The host's active nft/UFW policy was incompatible with the
+Waydroid 1.6.2 helper's preferred legacy-iptables rules; bounded Waydroid bridge
+DHCP/DNS/egress rules and the nft path are now active. A full container/session
+restart retained `192.168.240.112`, resolved `play.google.com`, and reached the
+Play Store HTTPS endpoint. The Play Store package is open for owner sign-in.
+No Google/vendor credentials were handled and no Tapo/Wansview application or
+live notification is claimed yet. Installed package corrections may require
+reapplication after a Waydroid package upgrade.
 
 ## SENTRY voice identity and ANIMA-owned voice settings — 2026-09-07
 

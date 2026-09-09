@@ -126,13 +126,22 @@ from anima_ha.senseguard_alerts import (
     SenseGuardEventRouter,
 )
 from anima_ha.sentry_boundary import CoreSentryBoundary
+from anima_ha.sentry_identity_profiles import (
+    SentryIdentityProfileClient,
+    SentryIdentityProfileError,
+)
 from anima_ha.sentry_voice_settings import (
     SENTRY_CONTROL_MANIFEST,
     SentryControlNativePlugin,
     SentryVoiceSettingsStore,
 )
 from anima_ha.tasks import TASK_MANIFEST, PostgresTaskStore, TaskNativePlugin, TaskService
-from anima_ha.users import HOUSEHOLD_USERS_MANIFEST, HouseholdUsersNativePlugin
+from anima_ha.users import HOUSEHOLD_USERS_MANIFEST, HouseholdUsersNativePlugin, user_payload
+from anima_ha.vendor_events import (
+    VENDOR_EVENTS_MANIFEST,
+    PostgresVendorEventStore,
+    VendorEventsNativePlugin,
+)
 
 
 def _dispatch_senseguard_attention(
@@ -312,6 +321,8 @@ class CoreUICommandGateway:
     home_assistant_adapter: HomeAssistantAdapter | None = None
     scene_store: PostgresSceneStore | None = None
     automation_store: PostgresAutomationStore | None = None
+    household_graph: PostgresHouseholdGraph | None = None
+    sentry_identity_profiles: SentryIdentityProfileClient | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -514,6 +525,26 @@ class CoreUICommandGateway:
             raise UICommandError("UNKNOWN_PRESENCE_OPERATION")
         return self._invoke(identity, HOUSEHOLD_PRESENCE_MANIFEST.plugin_id, name, payload)
 
+    def presence_candidates(self, identity: UIIdentity) -> dict[str, Any]:
+        """Read owner-only setup candidates without exposing provider identifiers."""
+        role = self._policy_context(identity).principal_role
+        if role != "owner":
+            return {"status": "DENIED", "items": []}
+        if self.home_assistant_adapter is None:
+            return {"status": "UNAVAILABLE", "items": []}
+        return {
+            "status": "AVAILABLE",
+            "items": self.home_assistant_adapter.public_presence_candidates(),
+        }
+
+    def commission_presence(self, identity: UIIdentity, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._invoke(
+            identity,
+            "anima.provider.home-assistant",
+            "commission_presence_source",
+            payload,
+        )
+
     def preference_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
@@ -530,9 +561,87 @@ class CoreUICommandGateway:
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
         name = {"create": "create_user", "update": "update_user"}.get(operation)
-        if name is None:
+        if name is not None:
+            return self._invoke(identity, HOUSEHOLD_USERS_MANIFEST.plugin_id, name, payload)
+        face_actions = {
+            "face-start": "start",
+            "face-capture": "capture",
+            "face-remove-sample": "remove_sample",
+            "face-commit": "commit",
+            "face-cancel": "cancel",
+            "face-delete": "delete",
+        }
+        action = face_actions.get(operation)
+        if action is None:
             raise UICommandError("UNKNOWN_USER_OPERATION")
-        return self._invoke(identity, HOUSEHOLD_USERS_MANIFEST.plugin_id, name, payload)
+        if self.household_graph is None or self.sentry_identity_profiles is None:
+            raise UICommandError("SENTRY_FACE_ENROLLMENT_UNAVAILABLE")
+        try:
+            person_id = UUID(str(payload.get("person_id", "")))
+        except ValueError as exc:
+            raise UICommandError("INVALID_USER") from exc
+        people = {
+            item.canonical_id: item
+            for item in self.household_graph.members_of_household(identity.household_id)
+        }
+        person = people.get(person_id)
+        if person is None:
+            raise UICommandError("HOUSEHOLD_USER_NOT_FOUND")
+        authorized = self._invoke(
+            identity,
+            HOUSEHOLD_USERS_MANIFEST.plugin_id,
+            "authorize_face_profile",
+            {"person_id": str(person_id), "action": action},
+        )
+        if authorized.get("status") != "SUCCEEDED":
+            return authorized
+        try:
+            if action == "start":
+                result = self.sentry_identity_profiles.start(str(person_id), person.name)
+            elif action == "capture":
+                result = self.sentry_identity_profiles.capture(
+                    str(person_id), str(payload.get("session_id", "")), str(payload.get("pose", ""))
+                )
+            elif action == "remove_sample":
+                result = self.sentry_identity_profiles.remove_sample(
+                    str(person_id),
+                    str(payload.get("session_id", "")),
+                    str(payload.get("sample_id", "")),
+                )
+            elif action == "commit":
+                result = self.sentry_identity_profiles.commit(
+                    str(person_id), str(payload.get("session_id", ""))
+                )
+                person = self.household_graph.update_person_profile(
+                    identity.household_id,
+                    person_id,
+                    sentry_profile_id=str(result["person_id"]),
+                    sentry_profile_sample_count=int(result["accepted_samples"]),
+                    onboarding_state="ACTIVE",
+                )
+                result["user"] = user_payload(person)
+            elif action == "cancel":
+                result = self.sentry_identity_profiles.cancel(
+                    str(person_id), str(payload.get("session_id", ""))
+                )
+            else:
+                result = self.sentry_identity_profiles.delete(str(person_id))
+                person = self.household_graph.update_person_profile(
+                    identity.household_id,
+                    person_id,
+                    onboarding_state="REVOKED",
+                    clear_sentry_profile=True,
+                )
+                result["user"] = user_payload(person)
+        except (KeyError, TypeError, ValueError, SentryIdentityProfileError) as exc:
+            raise UICommandError(str(exc) or "SENTRY_FACE_ENROLLMENT_FAILED") from exc
+        if self.events and action in {"commit", "delete"}:
+            self.events.publish("household.changed")
+        return {
+            "status": "SUCCEEDED",
+            "operation": f"household-user.face-{action.replace('_', '-')}",
+            "result": result,
+        }
 
     def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
         """Apply a preset through the existing verified single-device action path.
@@ -575,7 +684,6 @@ class CoreUICommandGateway:
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
-        del identity
         plugin = self._tool("anima.provider.home-assistant", "refresh_inventory")
         if self.home_assistant_adapter is None or plugin is None or not plugin.availability:
             return {
@@ -583,18 +691,44 @@ class CoreUICommandGateway:
                 "items": [],
                 "reason": "HOME_ASSISTANT_NOT_COMMISSIONED",
             }
-        items = []
+        items: list[dict[str, Any]] = []
         graph = self.home_assistant_adapter.graph
         truth = getattr(self.home_assistant_adapter.reality, "projection", None)
         if not callable(getattr(truth, "get", None)):
             truth = None
 
-        for item in self.home_assistant_adapter.provider_inventory():
+        provider_inventory = self.home_assistant_adapter.provider_inventory()
+        devices_with_entities = {
+            str(dict(item.get("metadata") or {}).get("device_id"))
+            for item in provider_inventory
+            if item.get("external_object_kind") == "entity"
+            and bool(item.get("present"))
+            and dict(item.get("metadata") or {}).get("device_id")
+        }
+        for item in provider_inventory:
             if item.get("external_object_kind") != "device":
                 continue
             metadata = dict(item.get("metadata") or {})
+            external_id = str(item.get("external_id", ""))
+            # HA's device registry also contains software services such as Sun,
+            # Forecast, Google Translate TTS and Backup.  They remain available
+            # to their integrations but are not owner-facing household devices.
+            if str(metadata.get("entry_type", "")).casefold() == "service":
+                continue
             canonical_target = None
             canonical_value = metadata.get("canonical_target_id")
+            connection_types = {
+                str(value).casefold()
+                for value in metadata.get("connection_types", [])
+                if isinstance(value, str)
+            }
+            # A host Bluetooth controller with no entities is integration
+            # infrastructure even if an older commissioning pass mapped it.
+            # Preserve that mapping internally, but keep it off the household
+            # device page. Real Bluetooth devices expose at least one entity;
+            # other coordinators such as the Zigbee Hub remain visible.
+            if external_id not in devices_with_entities and "bluetooth" in connection_types:
+                continue
             if canonical_value:
                 try:
                     canonical_target = graph.get_node(UUID(str(canonical_value)))
@@ -642,6 +776,66 @@ class CoreUICommandGateway:
                         if key in metadata
                     }
                     | mapped_metadata,
+                    **device_state,
+                    "capabilities": capabilities,
+                }
+            )
+        # Some supported household devices are event-only integrations rather
+        # than HA registry devices (for example the private Tapo and Wansview
+        # notification bridges).  They are still canonical ANIMA resources and
+        # belong in the owner's device catalogue.  Add only commissioned graph
+        # resources that were not already projected from HA; provider details
+        # remain bounded metadata and never expose credentials or raw events.
+        represented = {
+            str(item["metadata"].get("canonical_target_id"))
+            for item in items
+            if item["metadata"].get("canonical_target_id")
+        }
+        list_resources = getattr(graph, "resources_in_place", None)
+        household_id = getattr(identity, "household_id", None)
+        canonical_resources = (
+            list_resources(household_id)
+            if callable(list_resources) and household_id is not None
+            else []
+        )
+        for resource in canonical_resources:
+            resource_id = str(resource.canonical_id)
+            if resource_id in represented:
+                continue
+            references_for = getattr(graph, "provider_references_for", None)
+            references = [
+                item
+                for item in (
+                    references_for(resource.canonical_id) if callable(references_for) else []
+                )
+                if item.provider in {"android_notification", "owner-waydroid"}
+            ]
+            if not references:
+                continue
+            reference = references[0]
+            capabilities, device_state = device_capability_projection(
+                graph, truth, resource.canonical_id
+            )
+            provider_label = {
+                "android_notification": "Private Android relay",
+                "owner-waydroid": "Private Android relay",
+                "home-assistant": "Home Assistant",
+            }.get(reference.provider, reference.provider.replace("-", " ").title())
+            items.append(
+                {
+                    "external_object_kind": "device",
+                    "device_handle": f"canonical:{resource_id}",
+                    "canonical_name": resource.name,
+                    "present": True,
+                    "metadata": {
+                        "name": resource.name,
+                        "manufacturer": resource.metadata.get("manufacturer") or provider_label,
+                        "model": resource.metadata.get("model"),
+                        "mapping_status": "MAPPED",
+                        "canonical_target_id": resource_id,
+                        "integration": reference.provider,
+                        "source_kind": reference.external_object_kind,
+                    },
                     **device_state,
                     "capabilities": capabilities,
                 }
@@ -1032,6 +1226,8 @@ class CoreRuntime:
             home_assistant_adapter=self.home_assistant_adapter,
             scene_store=self.scene_store,
             automation_store=self.automation_store,
+            household_graph=self.graph,
+            sentry_identity_profiles=SentryIdentityProfileClient.from_environment(),
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -1249,6 +1445,11 @@ def build_postgres_core(
     register_and_enable(
         HOUSEHOLD_USERS_MANIFEST,
         NativeRuntime(HouseholdUsersNativePlugin(graph)),
+        persist_choice=False,
+    )
+    register_and_enable(
+        VENDOR_EVENTS_MANIFEST,
+        NativeRuntime(VendorEventsNativePlugin(PostgresVendorEventStore(database_url, graph))),
         persist_choice=False,
     )
     knowledge_root = os.environ.get("ANIMA_KNOWLEDGE_ROOT", "").strip()

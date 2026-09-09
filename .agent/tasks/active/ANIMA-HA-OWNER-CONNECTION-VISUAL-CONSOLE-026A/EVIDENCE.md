@@ -1,5 +1,73 @@
 # 026A — owner connection and visual console evidence
 
+## Unattended SENTRY, presence, memory and trial start — 2026-09-08 UTC
+
+- Actual request `75378ca5-ab63-5d38-9f35-d9d173d2692a` reached
+  `PROVIDER_RUNNING` before the model and terminated `UNAVAILABLE` when the
+  model chose an unavailable governed notification path. No TTS or success was
+  claimed and the request was not replayed.
+- The SENTRY autonomous guidance now identifies host TTS as `decision=speak`
+  and reserves `notify` for a successfully invoked governed notification tool.
+  Focused SENTRY event tests pass 51/51.
+- Fresh request `0dcaff7c-3af4-5a17-8939-4f05b25afcdb` used the real Journal,
+  Attention, ContextPacket, auto-wake claim, persistent Codex thread and warm
+  Kokoro worker. Core recorded `ALWAYS_NOTIFY`; SENTRY returned `speak`; the
+  host ledger records `RESPONSE` and `DELIVERED`.
+- The event was explicitly synthetic operational qualification, not a fabricated
+  physical SenseGuard observation. The real opening policy now has one active
+  all-day SENTRY cognition route for both SenseGuards; the duplicate historical
+  opening rule is disabled.
+- `person.tym` is commissioned and bound to canonical Tym. Twenty-two opaque
+  Nmap/HA candidates remain unassigned because ownership cannot be inferred.
+- A real SENTRY model created one governed Obsidian note and later corrected it
+  in place with its current digest and provenance. Daily and routine review
+  tasks are scheduled but their due executions are not yet observed.
+- The private content-free trial ledger is mode `0600`; initial report shows two
+  unique attempts, one retained negative result, one required TTS delivery and
+  zero duplicate records. The minimum three-day trial remains in progress from
+  `2026-09-09T02:21:00Z`.
+- Heartbeat `anima-household-trial-check` is active for daily content-free
+  inspection and the minimum three-day summary. It is prohibited from changing
+  household policy or inferring phone ownership.
+- The SENTRY event source now distinguishes healthy idle `EMPTY` from actual
+  `NOT_READY` gates and was observed `LISTENING` with Kokoro warm after restart.
+- Local regression evidence: ANIMA validate passed with 1,142 pytest tests/74
+  skips and OPA 9/9; the primary browser matrix passed 112/112 applicable
+  scenarios with 14 viewport skips; isolated routines/context/initiative/
+  knowledge fixtures passed 90/90; SENTRY passed 525/525.
+
+## Owner UI workflow convergence — 2026-09-07 UTC
+
+The owner requested a complete usability pass, one catalogue containing native
+HA/Ring and private Tapo/Wansview resources, per-device SENTRY notification
+choices, and natural-language administration without leaving ANIMA. The
+implemented bounded slice is documented in
+`docs/OWNER-UI-WORKFLOW-AUDIT-026A.md`.
+
+- The navigation is reduced to 15 owner outcomes. Notifications is part of
+  Alerts; integration and capability status are part of Connections; SENTRY is
+  the single assistant surface.
+- The Devices catalogue projects commissioned `android_notification` resources
+  without pretending they are HA registry devices. A regression covers the
+  event-only projection.
+- Versioned initiative configuration now contains per-device `ALWAYS`,
+  `TIME_WINDOW`, `NEVER`, or `CONTEXTUAL` rules. Existing configs missing the
+  field remain valid and inherit household defaults.
+- SENTRY chat uses `/api/v1/conversation` and polls the durable request result.
+  It is browser-memory-only and exposes no raw CLI/provider/HA boundary.
+- Advanced normalized-event rules remain under Alerts and are explicitly
+  distinguished from the everyday per-device choices on Devices.
+
+Validation: full `anima-validate` PASSED (Ruff, strict mypy, 1125 pytest pass,
+73 opt-in skips); OPA 9/9; frontend static 7/7, TypeScript and production Vite;
+primary browser 100 pass/14 viewport-specific skips; initiative/Ring 42/42;
+preferences 39/39; vendor connections 36/36; package wheel; `git diff --check`;
+and tracked public-safety patterns. The rebuilt PC image
+`sha256:1079c7b8f8ddb57b26446b79a14a4b4f5f8b653922a9d6e63565a610abe47246`
+is running healthy on port 18090 and `/healthz` returned `ok`. This is E4 regression evidence for the
+bounded owner-console slice, not proof of notification receipt or unrestricted
+Home Assistant administration.
+
 ## Ring / initiative extension — 2026-09-07
 
 Current report: `docs/RING-LEARNING-OWNER-INCREMENT-026A.md`. Healthy deployed
@@ -152,3 +220,115 @@ disabled without producer configuration. Official Android boot passed, but
 official apps, notification capture and vendor events did not run. SENTRY's
 event lease tests do not qualify an automatic wake/TTS connection. No new hosted
 CI, publication or full-integration acceptance is claimed by this checkpoint.
+
+## 2026-09-08 UTC owner page guidance alignment
+
+- Replaced the remaining slogan-style introductions on Automations, SENTRY,
+  Alerts, Tasks & Calendar, Activity, Users, Connections, Backups, Preferences
+  and Settings with exact descriptions of the implemented owner workflow and
+  its authority, persistence and evidence boundaries.
+- Notification-only connection resources are excluded from the On/Off
+  automation trigger picker. The existing automation runtime remains bounded to
+  normalized On/Off observations and one verified semantic power action.
+- Supporting controls now explicitly distinguish durable task lifecycle,
+  optimistic calendar versioning, bounded recent Activity, route-priority
+  filtering, integration management, capability availability, household
+  preferences and presentation-only interface settings.
+- PASSED locally: frontend source contracts 11/11; TypeScript and production
+  Vite build; desktop Playwright 33/33; focused automation/UI Core pytest 40/40;
+  Ruff; `git diff --check`; live container health and bundle-content inspection.
+- Deployed image:
+  `sha256:3e7d0730a564120fd8f4b9ce6bfb7acad86f0e84a20942b2f3d96671b7b5b3af`.
+  No commit, hosted CI or new backend capability is claimed.
+
+## 2026-09-08 UTC owner Routines guidance and workflow alignment
+
+- Routines now explains its actual durable model: existing household member,
+  days, local time window, timezone, optional room/zone, descriptive context,
+  enable/disable and versioned edits.
+- The page explicitly states that routine records may inform SENTRY alongside
+  presence, preferences, memory and events but are not proof of presence,
+  authentication, an automation or a scheduled action.
+- The duplicate `Add household member` browser form was removed. A bounded
+  `Manage household users` action opens Users, the owner surface for identity,
+  SENTRY access, Wi-Fi hints and face profiles. The backend compatibility tool
+  was not removed.
+- Household presence now explains assignment of qualified HA phone-geofence and
+  supported Wi-Fi signals, freshness/conflict handling and its non-authentication
+  boundary.
+- PASSED locally: frontend source contracts 11/11; TypeScript and production
+  Vite build; dedicated PostgreSQL/OPA Routines Playwright 42/42 across
+  desktop/tablet/phone; focused Routines/UI Core pytest 100 passed with 3
+  optional skips; Ruff; `git diff --check`; live health and deployed-bundle
+  phrase/absence inspection.
+- The first dedicated browser-server start was `FAILED` before test execution
+  because the disposable `anima_family_routines_test` database did not exist.
+  The exact disposable database was created, after which the full 42-scenario
+  matrix passed. The failed launch is not counted as a pass.
+- Deployed image:
+  `sha256:3cb54a638824dcf101571c5870404fffb13f3374011dbc6cfdbc528db0aa3be8`.
+  No commit, hosted CI or authenticated owner-browser screenshot is claimed.
+
+## 2026-09-08 — SENTRY owner-operations chat and precise event rules
+
+- Added the targeted `anima.household-learning.set_device_notification` typed
+  operation. It updates one canonical device/event rule using the current
+  optimistic config version and preserves unrelated household learning and
+  notification settings. Supported event selectors are bounded to any,
+  unlocked, locked, opened, closed, motion and doorbell.
+- Initiative delivery now applies a device rule only when its event selector
+  matches the qualified source event. A nonmatching signal falls back to the
+  household default instead of accidentally inheriting the device rule.
+- The Devices notification UI exposes the same event scope, so an owner can see
+  and edit a chat-created `UNLOCKED -> ALWAYS` rule.
+- The actual `gpt-5.6-luna` bounded planner was run without dispatch. Round one
+  chose canonical resource discovery plus current initiative status; supplied
+  synthetic read results caused round two to choose exactly
+  `set_device_notification(resource_id, ALWAYS, UNLOCKED, expected_version)`.
+- The persistent household worker now backs off and continues after transient
+  Core/client failures. The user service uses `Restart=on-failure`; this is safe
+  because provider-start is durably fenced before model execution and a
+  replacement worker cannot reclaim ambiguous started work.
+- Live deployment: image
+  `sha256:79580a2bf635a84095d1f00d4a04394b81ada18862f2feda4d1a48b4d90ef66b`
+  is healthy on port 18090. The worker encountered two transient startup gaps,
+  recovered in-process, completed the remaining queued direct-owner work, and
+  is active with no pending direct UI request.
+- PASSED: full Python pytest; full strict mypy (141 source files); full Ruff
+  lint; SENTRY worker tests (48); frontend source tests (11), TypeScript, Vite
+  production build; Docker image build; `git diff --check`.
+- The aggregate `anima-validate` wrapper is FAILED only at its first formatting
+  gate because three unrelated pre-existing dirty owner-worktree files are not
+  Ruff-formatted. This slice's seven changed Python files pass format-check;
+  later wrapper stages were run separately and passed. The unrelated files were
+  preserved rather than mechanically rewriting concurrent owner work.
+- NOT RUN: hosted CI, authenticated browser submission from the owner's existing
+  session, and a physical door-unlock announcement. No unrestricted raw host or
+  credential access is claimed or added.
+
+## 2026-09-08 — live alert-setting failure and bounded classification fix
+
+- The first authenticated owner request failed at `TOOL_INVOKE` with HTTP 409
+  `TRUSTED_ACTION_SPEC_UNAVAILABLE`. Request
+  `1903ebff-d2de-5c97-b8bc-9dc948be8486` is durably `UNKNOWN_RESULT` because the
+  SENTRY provider turn had begun, but the failure occurred before
+  `PluginManager` invoked the settings tool. No alert-setting write or physical
+  side effect occurred.
+- Root cause: the new non-read-only operation was absent from Core's exact
+  trusted internal-source allowlist and therefore defaulted to
+  `COORDINATED_CONSEQUENTIAL`; Phase 9 correctly refused it without an action
+  safety specification.
+- Corrected only the exact pair
+  `anima.household-learning.set_device_notification` plus
+  `builtin:anima_ha.household_learning` to `POLICY_GATED_INTERNAL`. A forged or
+  external same-name operation remains consequential and fails closed.
+- The terminal failed request was not replayed. Ten unrelated historical
+  `AUTONOMOUS_ATTENTION` requests remain pending; no direct-owner request is
+  pending. A new authenticated owner request is required to establish the rule.
+- PASSED: focused household-learning/plugin/SENTRY boundary suite; strict mypy
+  on the corrected surface; `git diff --check`; Docker image build; live
+  `/healthz`; container health; and active worker after Core restart.
+- Deployed image:
+  `sha256:afe653c8ee1032c650876030eff35a95fac79c48457c342040287086aa6d1c6a`.
+  NOT RUN: hosted CI, successful authenticated retry, door-lock event, and TTS
+  announcement.

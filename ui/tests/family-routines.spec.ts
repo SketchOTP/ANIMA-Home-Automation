@@ -63,28 +63,20 @@ test("owner creates, reloads, versions, disables, enables and retracts a persist
   await expect(row()).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("routine-retracted-persisted.png"), fullPage: true });
-  await page.getByRole("navigation").getByRole("button", { name: "Anima", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "SENTRY voice control" })).toBeVisible();
-  await expect(page.locator(".conversation textarea, .conversation input")).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath("voice-only.png"), fullPage: true });
+  await page.getByRole("navigation").getByRole("button", { name: "SENTRY", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "SENTRY owner operations" })).toBeVisible();
+  await expect(page.getByLabel("Tell SENTRY what to do")).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("sentry-owner-operations.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
 
-test("owner adds a canonical member then selects the reloaded option without granting authority", async ({ page }, testInfo) => {
+test("routine management sends household identity work to Users instead of duplicating it", async ({ page }) => {
   await openRoutines(page);
-  await page.getByText("Add household member", { exact: true }).click();
-  await expect(page.getByText("This does not create a login, grant permissions, or establish observed presence.", { exact: false })).toBeVisible();
-  const name = `Synthetic added member ${testInfo.project.name} ${Date.now()}`;
-  await page.getByLabel("New member name").fill(name);
-  const request = page.waitForRequest(request => request.url().endsWith("/family-routines/add-member"));
-  await page.getByRole("button", { name: "Add member", exact: true }).click();
-  expect((await request).postDataJSON()).toEqual({ payload: { name } });
-  await expect(page.getByRole("status").filter({ hasText: "Household member added." })).toBeVisible();
-  await page.reload(); await openRoutines(page, false);
-  const members = page.getByRole("combobox", { name: /^Household member/ });
-  await expect(members.locator("option").filter({ hasText: name })).toHaveCount(1);
-  await members.selectOption({ label: name });
-  expect(await members.inputValue()).not.toBe("");
+  await expect(page.getByText("Add household member", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("New member name")).toHaveCount(0);
+  await page.getByRole("button", { name: "Manage household users", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Add household user", exact: true })).toBeVisible();
 });
 
 // All cases below explicitly mock routine responses. They qualify UI boundaries,
@@ -234,17 +226,18 @@ test("mock hung load times out with an actionable retry", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Retry routines", exact: true })).toBeEnabled();
 });
 
-test("mock no-member setup exposes add form while read-only members cannot mutate", async ({ page }) => {
+test("mock no-member setup points to Users while read-only routines cannot mutate", async ({ page }) => {
   let readonly = false;
   await page.route("**/api/v1/family-routines?*", route => route.fulfill({ json: readonly ? { ...mockPage(), can_edit: false } : { ...mockPage([]), members: [] } }));
   await openRoutines(page);
   await expect(page.getByRole("combobox", { name: /^Household member/ })).toBeDisabled();
-  await page.getByText("Add household member", { exact: true }).click();
-  await expect(page.getByLabel("New member name")).toBeEnabled();
+  await expect(page.getByText("Add a person on Users", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Manage household users", exact: true })).toBeVisible();
+  await expect(page.getByLabel("New member name")).toHaveCount(0);
   readonly = true; await page.getByRole("button", { name: "Refresh routines" }).click();
   await expect(page.getByText("Only the authenticated household owner can change routines.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit Mock expectation", exact: true })).toHaveCount(0);
-  await expect(page.getByText("Add household member", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Manage household users", exact: true })).toBeVisible();
 });
 
 test("routine session expiry clears protected forms and records", async ({ page }) => {

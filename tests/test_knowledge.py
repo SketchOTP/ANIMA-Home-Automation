@@ -379,6 +379,13 @@ def test_invalid_fields_fail_before_filesystem_creation(
     assert list(managed.iterdir()) == []
 
 
+def test_manifest_classifier_schema_matches_runtime_allowlist() -> None:
+    create = next(tool for tool in KNOWLEDGE_MANIFEST.tools if tool["name"] == "create_note")
+    assert create["input_schema"]["properties"]["classifier"]["pattern"] == (
+        r"^(?:000|100|300|600|640|900|920)(?:\.\d{1,3})?$"
+    )
+
+
 @pytest.mark.parametrize(
     "bad", ["../../outside", "/tmp/outside", "not-a-uuid", "{00000000-0000-0000-0000-000000000001}"]
 )

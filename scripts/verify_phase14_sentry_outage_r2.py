@@ -195,9 +195,7 @@ def main() -> int:
         ),
     )
     assert (
-        store.claim(
-            "phase14-sentry-no-rerun", provider_id=PROVIDER, household_id=HOUSEHOLD_ID
-        )
+        store.claim("phase14-sentry-no-rerun", provider_id=PROVIDER, household_id=HOUSEHOLD_ID)
         is None
     )
 

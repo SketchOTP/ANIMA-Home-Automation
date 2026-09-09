@@ -22,10 +22,12 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from anima_ha.events import DeliveryClass, EventEnvelope, EvidenceKind
 
 WANSVIEW_PACKAGE = "net.ajcloud.wansviewplus"
+TAPO_PACKAGE = "com.tplink.iot"
 SYNTHETIC_FORMAT = "anima.android.motion.fixture.v1"
 REAL_REPORT_FORMAT = "anima.android.motion.report.v1"
+TAPO_REPORT_FORMAT = "anima.android.lock.report.v1"
 _LABEL = re.compile(r"[A-Za-z0-9_.-]{1,64}\Z")
-_FIELDS = frozenset(
+_MOTION_FIELDS = frozenset(
     {
         "format",
         "delivery_id",
@@ -39,6 +41,19 @@ _FIELDS = frozenset(
         "reported_loss_count",
     }
 )
+_LOCK_FIELDS = frozenset(
+    {
+        "format",
+        "delivery_id",
+        "resource_alias",
+        "kind",
+        "reported_profile_ref",
+        "reported_method",
+        "source_occurred_at",
+        "relay_received_at",
+    }
+)
+_PACKAGES = frozenset({WANSVIEW_PACKAGE, TAPO_PACKAGE})
 
 
 class Disposition(StrEnum):
@@ -81,6 +96,18 @@ def _label(value: object) -> str:
     if not isinstance(value, str) or not _LABEL.fullmatch(value):
         raise NotificationValidationError("invalid bounded label")
     return value
+
+
+def _optional_reported_text(value: object, limit: int) -> str | None:
+    """Bound a provider-reported label without treating it as identity evidence."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise NotificationValidationError("invalid reported text")
+    result = " ".join(value.split())
+    if not result or len(result) > limit or any(ord(character) < 32 for character in result):
+        raise NotificationValidationError("invalid reported text")
+    return result
 
 
 def _uuid(value: object) -> UUID:
@@ -136,8 +163,8 @@ class RelayRegistration:
         if any(not isinstance(v, UUID) or v.int == 0 for v in (self.household_id, self.relay_id)):
             raise NotificationValidationError("invalid registration identity")
         packages = frozenset(self.allowed_packages)
-        if packages - {WANSVIEW_PACKAGE}:
-            raise NotificationValidationError("only official Wansview Cloud package is allowed")
+        if len(packages) > 1 or packages - _PACKAGES:
+            raise NotificationValidationError("at most one supported official package is allowed")
         if type(self.stale_after_seconds) is not int or not 1 <= self.stale_after_seconds <= 86400:
             raise NotificationValidationError("invalid freshness bound")
         if len(self.camera_mappings) > 128 or len(self.allowed_channels) > 32:
@@ -223,7 +250,7 @@ def sanitize_relay_report(
         load_fields=load_fields,
         registration=registration,
         received_at=received_at,
-        report_format=REAL_REPORT_FORMAT,
+        report_format=(TAPO_REPORT_FORMAT if package_name == TAPO_PACKAGE else REAL_REPORT_FORMAT),
         enabled=True,
     )
 
@@ -238,11 +265,7 @@ def _normalize_report(
     enabled: bool,
 ) -> NormalizationResult:
     """Shared minimization; reject package before invoking the field reader."""
-    if (
-        type(package_name) is not str
-        or package_name != WANSVIEW_PACKAGE
-        or package_name not in registration.allowed_packages
-    ):
+    if type(package_name) is not str or package_name not in registration.allowed_packages:
         return NormalizationResult(Disposition.PACKAGE_REJECTED)
     if not enabled:
         return NormalizationResult(Disposition.LIVE_FORMAT_UNQUALIFIED)
@@ -255,48 +278,69 @@ def _normalize_report(
     except Exception:
         # A reader exception might contain raw private text; do not log it.
         return NormalizationResult(Disposition.FIELD_READ_FAILED)
-    if type(fields) is not dict or fields.keys() != _FIELDS:
+    expected_fields = _LOCK_FIELDS if package_name == TAPO_PACKAGE else _MOTION_FIELDS
+    if type(fields) is not dict or fields.keys() != expected_fields:
         return NormalizationResult(Disposition.INVALID_FIELDS)
     if type(fields["format"]) is not str or fields["format"] != report_format:
         return NormalizationResult(Disposition.FORMAT_REJECTED)
     try:
         delivery_id = _uuid(fields["delivery_id"])
-        alias = _label(fields["camera_alias"])
+        alias = _label(
+            fields["resource_alias"] if package_name == TAPO_PACKAGE else fields["camera_alias"]
+        )
         kind = _label(fields["kind"])
-        if registration.transport == Transport.WAYDROID_PRIVATE_DBUS:
-            # Waydroid 1.6.2 Notify does not export these Android properties.
-            if any(
-                fields[key] is not None
-                for key in ("channel_id", "android_posted_at", "is_group_summary")
-            ):
-                raise NotificationValidationError("unavailable transport fields")
+        if package_name == TAPO_PACKAGE:
+            if kind not in {"locked", "unlocked"}:
+                raise NotificationValidationError("unsupported lock report kind")
+            profile = _optional_reported_text(fields["reported_profile_ref"], 80)
+            method = _optional_reported_text(fields["reported_method"], 40)
+            source_at = (
+                None
+                if fields["source_occurred_at"] is None
+                else _timestamp(fields["source_occurred_at"])
+            )
+            relay_at = _timestamp(fields["relay_received_at"])
             channel = None
             posted_at = None
+            summary = False
+            losses = None
         else:
-            channel = _label(fields["channel_id"])
-            posted_at = _timestamp(fields["android_posted_at"])
-        source_at = (
-            None
-            if fields["source_occurred_at"] is None
-            else _timestamp(fields["source_occurred_at"])
-        )
-        relay_at = _timestamp(fields["relay_received_at"])
-        summary = fields["is_group_summary"]
-        losses = fields["reported_loss_count"]
-        if registration.transport == Transport.ANDROID_LISTENER and type(summary) is not bool:
-            raise NotificationValidationError("invalid summary flag")
-        if losses is not None and (type(losses) is not int or not 0 <= losses <= 1_000_000):
-            raise NotificationValidationError("invalid loss count")
+            profile = None
+            method = None
+            if registration.transport == Transport.WAYDROID_PRIVATE_DBUS:
+                # Waydroid 1.6.2 Notify does not export these Android properties.
+                if any(
+                    fields[key] is not None
+                    for key in ("channel_id", "android_posted_at", "is_group_summary")
+                ):
+                    raise NotificationValidationError("unavailable transport fields")
+                channel = None
+                posted_at = None
+            else:
+                channel = _label(fields["channel_id"])
+                posted_at = _timestamp(fields["android_posted_at"])
+            source_at = (
+                None
+                if fields["source_occurred_at"] is None
+                else _timestamp(fields["source_occurred_at"])
+            )
+            relay_at = _timestamp(fields["relay_received_at"])
+            summary = fields["is_group_summary"]
+            losses = fields["reported_loss_count"]
+            if registration.transport == Transport.ANDROID_LISTENER and type(summary) is not bool:
+                raise NotificationValidationError("invalid summary flag")
+            if losses is not None and (type(losses) is not int or not 0 <= losses <= 1_000_000):
+                raise NotificationValidationError("invalid loss count")
     except NotificationValidationError:
         return NormalizationResult(Disposition.INVALID_FIELDS)
-    if (
+    if package_name != TAPO_PACKAGE and (
         registration.transport == Transport.ANDROID_LISTENER
         and channel not in registration.allowed_channels
     ):
         return NormalizationResult(Disposition.CHANNEL_REJECTED)
     if summary:
         return NormalizationResult(Disposition.SUMMARY_IGNORED)
-    if kind != "motion_reported":
+    if package_name != TAPO_PACKAGE and kind != "motion_reported":
         return NormalizationResult(Disposition.NON_MOTION_IGNORED)
     camera = registration.camera_mappings.get(alias)
     if camera is None:
@@ -310,16 +354,26 @@ def _normalize_report(
     # Immutable source facts: ANIMA retry receipt time/freshness are excluded.
     facts = {
         "format": report_format,
-        "camera_resource_id": str(camera),
-        "source_package": WANSVIEW_PACKAGE,
+        "resource_id": str(camera),
+        **({"camera_resource_id": str(camera)} if package_name == WANSVIEW_PACKAGE else {}),
+        "source_package": package_name,
         "transport": registration.transport.value,
         "channel_id": channel,
         "is_group_summary": summary,
-        "event_kind": "motion_reported",
+        "event_kind": kind,
         "source_occurred_at": source_at.isoformat() if source_at else None,
         "android_posted_at": posted_at.isoformat() if posted_at else None,
         "relay_received_at": relay_at.isoformat(),
         "reported_loss_count": losses,
+        **(
+            {
+                "reported_profile_ref": profile,
+                "reported_method": method,
+                "identity_status": "DEVICE_REPORTED_UNVERIFIED" if profile else "UNKNOWN",
+            }
+            if package_name == TAPO_PACKAGE
+            else {}
+        ),
     }
     digest = hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()
     clock_skew = (
@@ -332,11 +386,17 @@ def _normalize_report(
         event_type=(
             "external.android.motion_reported.synthetic"
             if synthetic
+            else "external.android.lock_reported"
+            if package_name == TAPO_PACKAGE
             else "external.android.motion_reported"
         ),
         source=source,
         source_event_id=str(delivery_id),
-        subject_key=f"household/{registration.household_id}/camera/{camera}",
+        subject_key=(
+            f"household/{registration.household_id}/lock/{camera}"
+            if package_name == TAPO_PACKAGE
+            else f"household/{registration.household_id}/camera/{camera}"
+        ),
         # Observation of posting/relay receipt, NEVER promoted to camera time.
         occurred_at=posted_at or relay_at,
         recorded_at=received_at,
@@ -361,7 +421,11 @@ def _normalize_report(
             "relay_loss_status": (
                 "UNKNOWN" if losses is None else "REPORTED_LOSS" if losses else "NO_LOSS_REPORTED"
             ),
-            "identity_status": "UNKNOWN",
+            "identity_status": (
+                "DEVICE_REPORTED_UNVERIFIED"
+                if package_name == TAPO_PACKAGE and profile
+                else "UNKNOWN"
+            ),
             "authority": "NONE",
         },
         metadata={

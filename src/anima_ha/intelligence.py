@@ -187,6 +187,7 @@ class IntelligenceStore(Protocol):
         lease_seconds: int = 120,
         provider_id: str | None = None,
         household_id: UUID | None = None,
+        excluded_origins: frozenset[IntelligenceOrigin] = frozenset(),
     ) -> IntelligenceRequest | None: ...
 
     def claim_specific(
@@ -323,11 +324,14 @@ class PostgresIntelligenceStore:
         lease_seconds: int = 120,
         provider_id: str | None = None,
         household_id: UUID | None = None,
+        excluded_origins: frozenset[IntelligenceOrigin] = frozenset(),
     ) -> IntelligenceRequest | None:
         if not worker_id.strip() or lease_seconds < 1 or lease_seconds > 900:
             raise ValueError("invalid intelligence claim parameters")
         if provider_id is not None and not provider_id.strip():
             raise ValueError("provider_id cannot be blank")
+        if any(not isinstance(origin, IntelligenceOrigin) for origin in excluded_origins):
+            raise ValueError("excluded origins must use IntelligenceOrigin")
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -383,6 +387,9 @@ class PostgresIntelligenceStore:
             if household_id is not None:
                 filters.append("AND household_id=%s")
                 parameters.append(household_id)
+            if excluded_origins:
+                filters.append("AND NOT (origin = ANY(%s))")
+                parameters.append([origin.value for origin in sorted(excluded_origins)])
             provider_clause = " ".join(filters)
             cursor.execute(
                 f"""

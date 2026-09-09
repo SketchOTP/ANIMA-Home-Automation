@@ -25,9 +25,7 @@ def compose(*args: str) -> str:
     command = ["docker", "compose"]
     if project:
         command.extend(("-p", project))
-    result = subprocess.run(
-        [*command, *args], check=True, text=True, capture_output=True
-    )
+    result = subprocess.run([*command, *args], check=True, text=True, capture_output=True)
     return result.stdout.strip()
 
 
@@ -35,18 +33,22 @@ def metadata(service: str) -> dict[str, str]:
     container_id = compose("ps", "-q", service)
     if not container_id:
         raise RuntimeError(f"Compose service {service!r} is not running")
-    parts = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
-            container_id,
-        ],
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout.strip().split("|", 2)
+    parts = (
+        subprocess.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.Id}}|{{.State.StartedAt}}|{{.State.Status}}",
+                container_id,
+            ],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        .stdout.strip()
+        .split("|", 2)
+    )
     if len(parts) != 3:
         raise RuntimeError(f"unable to inspect Compose service {service!r}")
     return {"container_id": parts[0], "started_at": parts[1], "status": parts[2]}

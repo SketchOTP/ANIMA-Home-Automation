@@ -309,6 +309,7 @@ class HAConnection(Protocol):
     def call_service(self, domain: str, service: str, target: dict[str, Any]) -> Any: ...
     def call_service_data(self, domain: str, service: str, data: dict[str, Any]) -> Any: ...
     def get_state(self, entity_id: str) -> dict[str, Any] | None: ...
+    def set_entity_enabled(self, entity_id: str) -> None: ...
     def ping(self) -> None: ...
     def start_config_flow(self, handler: str) -> dict[str, Any]: ...
     def continue_config_flow(self, flow_id: str, user_input: dict[str, Any]) -> dict[str, Any]: ...
@@ -490,6 +491,17 @@ class HassClientConnection:
         return next(
             (state for state in snapshot.states if state.get("entity_id") == entity_id), None
         )
+
+    async def _set_entity_enabled_async(self, entity_id: str) -> None:
+        if self._client is None or not entity_id.startswith(("person.", "device_tracker.")):
+            raise HAAdapterError("presence source is unavailable")
+        await self._client.send_command(
+            "config/entity_registry/update", entity_id=entity_id, disabled_by=None
+        )
+
+    def set_entity_enabled(self, entity_id: str) -> None:
+        """Enable one bounded presence entity; no generic registry command is exposed."""
+        self._submit(self._set_entity_enabled_async(entity_id), self.config.command_timeout)
 
     async def _presence_source_kind_async(self, entity_id: str) -> str | None:
         if self._client is None or not entity_id.startswith("device_tracker."):
@@ -798,6 +810,7 @@ class HomeAssistantAdapter:
             "device": {
                 "name",
                 "name_by_user",
+                "entry_type",
                 "area_id",
                 "via_device_id",
                 "parent_device_id",
@@ -840,6 +853,17 @@ class HomeAssistantAdapter:
             ):
                 metadata["config_entry_id"] = entries[0]
             metadata["is_child_device"] = bool(item.get("parent_device_id"))
+            connections = item.get("connections")
+            if isinstance(connections, list):
+                metadata["connection_types"] = sorted(
+                    {
+                        str(connection[0]).casefold()
+                        for connection in connections
+                        if isinstance(connection, (list, tuple))
+                        and len(connection) >= 1
+                        and str(connection[0]).strip()
+                    }
+                )
         return HAProviderObject(
             kind,
             external_id,
@@ -1219,6 +1243,53 @@ class HomeAssistantAdapter:
             ):
                 return external_id
         return None
+
+    def resolve_presence_handle(self, handle: str) -> str | None:
+        """Resolve an opaque owner-UI tracker handle inside the HA boundary."""
+        for item in self.provider_inventory():
+            if item.get("external_object_kind") != "entity" or not item.get("present"):
+                continue
+            external_id = str(item.get("external_id", ""))
+            if not external_id.startswith(("person.", "device_tracker.")):
+                continue
+            if inventory_handle(self.config.instance_id, "entity", external_id) == handle:
+                return external_id
+        return None
+
+    def public_presence_candidates(self) -> list[dict[str, Any]]:
+        """Owner-facing candidates; provider identifiers remain opaque handles."""
+        result: list[dict[str, Any]] = []
+        for item in self.provider_inventory():
+            if item.get("external_object_kind") != "entity" or not item.get("present"):
+                continue
+            external_id = str(item.get("external_id", ""))
+            metadata = dict(item.get("metadata") or {})
+            platform = str(metadata.get("platform", ""))
+            if not (
+                external_id.startswith("person.")
+                or (external_id.startswith("device_tracker.") and platform == "nmap_tracker")
+            ):
+                continue
+            reference = self.graph.resolve_provider_reference(
+                PROVIDER, self.config.provider_scope, "entity", external_id
+            )
+            label = str(
+                metadata.get("name") or metadata.get("original_name") or "Phone presence source"
+            )
+            result.append(
+                {
+                    "candidate_handle": inventory_handle(
+                        self.config.instance_id, "entity", external_id
+                    ),
+                    "name": label[:120],
+                    "signal_kind": (
+                        "HA_PERSON" if external_id.startswith("person.") else "ROUTER_WIFI"
+                    ),
+                    "setup_status": "COMMISSIONED" if reference else "AVAILABLE",
+                    "enabled": not bool(metadata.get("disabled_by")),
+                }
+            )
+        return sorted(result, key=lambda value: (value["setup_status"], value["name"].casefold()))
 
     def public_device_inventory(self) -> list[dict[str, Any]]:
         """Project discovery metadata without provider identifiers."""
@@ -1867,6 +1938,13 @@ class HomeAssistantPlugin:
                 UUID(str(arguments["place_id"])),
                 device_handle,
             )
+        if name == "commission_presence_source":
+            del timeout
+            return self._commission_presence_source(
+                household_id,
+                str(arguments["candidate_handle"]),
+                str(arguments["name"]),
+            )
         if name == "rename_device":
             resource_id = UUID(str(arguments["resource_id"]))
             resource = self._resource_in_household(household_id, resource_id)
@@ -2089,6 +2167,138 @@ class HomeAssistantPlugin:
             },
         }
 
+    def _commission_presence_source(
+        self, household_id: UUID, candidate_handle: str, name: str
+    ) -> dict[str, Any]:
+        """Commission one opaque HA person/router tracker for explicit owner binding."""
+        display_name = name.strip()
+        if not display_name or len(display_name) > 120:
+            raise PluginValidationError("presence source name must be 1-120 characters")
+        entity_id = self.adapter.resolve_presence_handle(candidate_handle)
+        if entity_id is None:
+            raise PluginValidationError("presence source handle is unavailable")
+        item = next(
+            (
+                value
+                for value in self.adapter.provider_inventory()
+                if value.get("external_object_kind") == "entity"
+                and value.get("present") is True
+                and value.get("external_id") == entity_id
+            ),
+            None,
+        )
+        if item is None:
+            raise PluginValidationError("presence source is unavailable")
+        metadata = dict(item.get("metadata") or {})
+        if not (
+            entity_id.startswith("person.")
+            or (
+                entity_id.startswith("device_tracker.")
+                and str(metadata.get("platform", "")) == "nmap_tracker"
+            )
+        ):
+            raise PluginValidationError("presence source type is not supported")
+        household = self.adapter.graph.get_node(household_id)
+        if household is None or household.kind != NodeKind.HOUSEHOLD:
+            raise PluginValidationError("household is not commissioned")
+        if metadata.get("disabled_by"):
+            connection = self.adapter.connection
+            enable = getattr(connection, "set_entity_enabled", None)
+            if connection is None or not connection.connected or not callable(enable):
+                raise PluginValidationError("presence source cannot be enabled")
+            enable(entity_id)
+            self.adapter.reconcile()
+        presence_place = next(
+            (
+                place
+                for place in self.adapter.graph.places_in_household(household_id)
+                if place.kind == NodeKind.ZONE and place.name == "Household Presence"
+            ),
+            None,
+        )
+        if presence_place is None:
+            create_place = getattr(self.adapter.graph, "create_place", None)
+            if not callable(create_place):
+                raise PluginValidationError("household presence zone is unavailable")
+            presence_place = create_place(
+                household_id, household_id, "Household Presence", NodeKind.ZONE
+            )
+        base = f"anima://home-assistant/{self.adapter.config.provider_scope}/presence/{entity_id}"
+        resource_id = uuid5(NAMESPACE_URL, base)
+        capability_id = uuid5(NAMESPACE_URL, base + "/capability")
+        resource = CanonicalNode(
+            resource_id,
+            NodeKind.SENSOR,
+            display_name,
+            metadata={"provider": PROVIDER, "commissioned_by": "anima.ui", "mobile": True},
+        )
+        capability = CanonicalNode(
+            capability_id,
+            NodeKind.CAPABILITY,
+            f"{display_name} home presence",
+            metadata={
+                "capability_type": "presence.read",
+                "readable": True,
+                "writable": False,
+                "semantic_capability": "presence.home",
+                "semantic_verification": "VERIFIED",
+            },
+        )
+        result = self.adapter.graph.commission(
+            CommissioningDocument(
+                1,
+                (household, presence_place, resource, capability),
+                (
+                    CanonicalRelationship(
+                        uuid5(NAMESPACE_URL, base + "/installed"),
+                        RelationshipType.INSTALLED_IN,
+                        resource_id,
+                        presence_place.canonical_id,
+                    ),
+                    CanonicalRelationship(
+                        uuid5(NAMESPACE_URL, base + "/exposes"),
+                        RelationshipType.EXPOSES,
+                        resource_id,
+                        capability_id,
+                    ),
+                ),
+                provider_references=(
+                    ProviderReference(
+                        uuid5(NAMESPACE_URL, base + "/entity-ref"),
+                        PROVIDER,
+                        self.adapter.config.provider_scope,
+                        "entity",
+                        entity_id,
+                        capability_id,
+                        TargetKind.CAPABILITY,
+                    ),
+                ),
+                truth_bindings=(
+                    TruthBinding(
+                        uuid5(NAMESPACE_URL, base + "/truth"),
+                        capability_id,
+                        TargetKind.CAPABILITY,
+                        f"state/capability/{capability_id}/value",
+                        "presence.home",
+                    ),
+                ),
+            )
+        )
+        self.adapter.reconcile()
+        self.adapter.seed_commissioned_truth(entity_id)
+        return {
+            "status": "SUCCEEDED",
+            "operation": "commission_presence_source",
+            "resource_id": str(resource_id),
+            "candidate_handle": candidate_handle,
+            "source_kind": "HA_PERSON" if entity_id.startswith("person.") else "ROUTER_WIFI",
+            "commission": {
+                "created_nodes": result.created_nodes,
+                "created_relationships": result.created_relationships,
+                "created_provider_references": result.created_provider_references,
+            },
+        }
+
     def invoke(
         self,
         name: str,
@@ -2165,6 +2375,15 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
             "device_handle": id_schema,
             "name": {"type": "string", "minLength": 1, "maxLength": 120},
             "place_id": id_schema,
+        },
+        "additionalProperties": False,
+    }
+    commission_presence_source_schema: dict[str, Any] = {
+        "type": "object",
+        "required": ["candidate_handle", "name"],
+        "properties": {
+            "candidate_handle": id_schema,
+            "name": {"type": "string", "minLength": 1, "maxLength": 120},
         },
         "additionalProperties": False,
     }
@@ -2334,6 +2553,20 @@ def home_assistant_manifest(config: HAInstanceConfig) -> PluginManifest:
                     "Commission one discovered Home Assistant device into the household graph"
                 ),
                 "input_schema": commission_schema,
+                "output_schema": {"type": "object"},
+                "semantic_action": "commission_home_device",
+                "risk_class": "LOW_RISK_HOME_CONTROL",
+                "read_only": False,
+                "idempotency": "IDEMPOTENT",
+                "external_content_trust": "PLUGIN_TRUSTED",
+            },
+            {
+                "name": "commission_presence_source",
+                "description": (
+                    "Commission one owner-selected opaque HA person or Wi-Fi tracker for "
+                    "later assignment to a household member"
+                ),
+                "input_schema": commission_presence_source_schema,
                 "output_schema": {"type": "object"},
                 "semantic_action": "commission_home_device",
                 "risk_class": "LOW_RISK_HOME_CONTROL",

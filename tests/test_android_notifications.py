@@ -12,6 +12,8 @@ import pytest
 from anima_ha.android_notifications import (
     REAL_REPORT_FORMAT,
     SYNTHETIC_FORMAT,
+    TAPO_PACKAGE,
+    TAPO_REPORT_FORMAT,
     WANSVIEW_PACKAGE,
     DeliveryComparison,
     Disposition,
@@ -60,6 +62,39 @@ def normalize(data: object, *, at: datetime = NOW) -> NormalizationResult:
         received_at=at,
         synthetic=True,
     )
+
+
+def test_tapo_lock_report_is_separate_from_motion_and_identity_authority() -> None:
+    lock = RelayRegistration(
+        HOME,
+        RELAY,
+        {"front-door": CAMERA},
+        frozenset(),
+        allowed_packages=frozenset({TAPO_PACKAGE}),
+        transport=Transport.WAYDROID_PRIVATE_DBUS,
+    )
+    result = sanitize_relay_report(
+        package_name=TAPO_PACKAGE,
+        load_fields=lambda: {
+            "format": TAPO_REPORT_FORMAT,
+            "delivery_id": str(UUID(int=5)),
+            "resource_alias": "front-door",
+            "kind": "unlocked",
+            "reported_profile_ref": "Synthetic Resident",
+            "reported_method": "fingerprint",
+            "source_occurred_at": None,
+            "relay_received_at": NOW.isoformat(),
+        },
+        registration=lock,
+        received_at=NOW,
+    )
+    assert result.disposition == Disposition.NORMALIZED_REPORT
+    assert result.event is not None
+    assert result.event.event_type == "external.android.lock_reported"
+    assert result.event.payload["event_kind"] == "unlocked"
+    assert result.event.payload["identity_status"] == "DEVICE_REPORTED_UNVERIFIED"
+    assert result.event.metadata["external_content_trust"] == "EXTERNAL_UNTRUSTED"
+    assert result.event.metadata["wake_eligible"] is False
 
 
 @pytest.mark.parametrize(

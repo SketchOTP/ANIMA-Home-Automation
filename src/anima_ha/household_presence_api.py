@@ -101,6 +101,31 @@ def install_household_presence_api(
                 item["name"] = resource.name if resource else "Phone presence source"
         return result
 
+    @app.get("/api/v1/presence/candidates")
+    def candidates(request: Request) -> dict[str, Any]:
+        identity = current_identity(request)
+        operation = getattr(service.commands, "presence_candidates", None)
+        if not callable(operation):
+            raise HTTPException(503, "HOUSEHOLD_PRESENCE_SETUP_UNAVAILABLE")
+        result: dict[str, Any] = operation(identity)
+        if result.get("status") == "DENIED":
+            raise HTTPException(403, "HOUSEHOLD_PRESENCE_SETUP_DENIED")
+        return result
+
+    @app.post("/api/v1/presence/commission")
+    def commission(
+        request: Request,
+        body: PresenceAssignment,
+        x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
+    ) -> dict[str, Any]:
+        session = current_session(request)
+        require_mutation(request, x_anima_csrf, session)
+        operation = getattr(service.commands, "commission_presence", None)
+        if not callable(operation):
+            raise HTTPException(503, "HOUSEHOLD_PRESENCE_SETUP_UNAVAILABLE")
+        result: dict[str, Any] = operation(service.identity_from_session(session), body.payload)
+        return result
+
     @app.post("/api/v1/presence/bind")
     def bind(
         request: Request,

@@ -166,12 +166,19 @@ class CoreSentryBoundary:
         return SentryBoundaryHealth("anima-core", "available")
 
     def claim_request(
-        self, worker_id: str, *, household_id: UUID | None = None
+        self,
+        worker_id: str,
+        *,
+        household_id: UUID | None = None,
+        excluded_origins: frozenset[IntelligenceOrigin] = frozenset(),
     ) -> IntelligenceRequest | None:
         # A SENTRY worker can claim only requests explicitly addressed to the
         # SENTRY provider; it must never consume another provider's queue.
         return self.intelligence_store.claim(
-            worker_id, provider_id="sentry", household_id=household_id
+            worker_id,
+            provider_id="sentry",
+            household_id=household_id,
+            excluded_origins=excluded_origins,
         )
 
     def claim_specific_request(
@@ -439,9 +446,20 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("INVALID_TOOL_ORDINAL")
         self._assert_active(request)
         tool = self._request_tool(request, tool_id)
-        if self._access_level(request) == "LIMITED" and not self._limited_tool_allowed(
-            tool, arguments, request.principal_id
-        ):
+        agent_memory_tool = tool.tool_id in {
+            "anima.knowledge.create_note",
+            "anima.knowledge.update_note",
+            "anima.knowledge.retract_note",
+            "anima.knowledge.purge_expired",
+        }
+        limited_allowed = self._limited_tool_allowed(tool, arguments, request.principal_id)
+        # Exact agent-maintained knowledge remains non-authoritative even when
+        # the speaker is unidentified. It still passes the dedicated deployment
+        # gate, exact builtin-source check, and current OPA autonomy decision
+        # below. This exception cannot change roles, preferences, devices or HA.
+        if agent_memory_tool and self.agent_memory_enabled:
+            limited_allowed = True
+        if self._access_level(request) == "LIMITED" and not limited_allowed:
             return {
                 "status": "DENIED",
                 "operation": tool.tool_id,
@@ -485,12 +503,7 @@ class CoreSentryBoundary:
             if plugin is None or plugin.manifest.source != "builtin:anima_ha.household_learning":
                 raise SentryBoundaryError("AGENT_LEARNING_SOURCE_INVALID")
             origin = RequestOrigin.AUTONOMOUS_AGENT
-        if tool.tool_id in {
-            "anima.knowledge.create_note",
-            "anima.knowledge.update_note",
-            "anima.knowledge.retract_note",
-            "anima.knowledge.purge_expired",
-        }:
+        if agent_memory_tool:
             if not self.agent_memory_enabled:
                 return {
                     "status": "DENIED",
@@ -518,9 +531,11 @@ class CoreSentryBoundary:
             system_idempotency_key=f"{request.idempotency_key}:tool:{ordinal}",
             origin=origin,
         )
-        role = self.policy_role_resolver(request.principal_id) if (
-            self.policy_role_resolver is not None and request.principal_id is not None
-        ) else None
+        role = (
+            self.policy_role_resolver(request.principal_id)
+            if (self.policy_role_resolver is not None and request.principal_id is not None)
+            else None
+        )
         policy_context = PolicyContext(principal_role=role)
         if tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL:
             if self.action_executor is None:

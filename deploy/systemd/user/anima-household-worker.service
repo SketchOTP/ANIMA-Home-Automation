@@ -1,0 +1,17 @@
+[Unit]
+Description=ANIMA bounded Codex household helper
+Requires=anima-pc.service
+After=anima-pc.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/anima-household-client/runtime
+ExecStart=/usr/bin/env -i PATH=/usr/lib/chatgpt/resources:/usr/bin:/bin HOME=%h CODEX_HOME=%h/.codex LANG=C.UTF-8 ANIMA_SENTRY_ENDPOINT=%h/.local/share/anima-owner-boundary/core.sock ANIMA_SENTRY_CLIENT_TOKEN_FILE=%h/.local/share/anima-household-client/client.token ANIMA_SENTRY_WORKER_ID=sentry-household-workstation /usr/bin/python3 household_worker.py --poll-seconds 2 --model-timeout 90
+# Core fencing makes a started turn non-reclaimable; a replacement worker can
+# therefore recover service availability without replaying ambiguous model work.
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

@@ -57,3 +57,21 @@ Do not overwrite existing vault content or install another vault.
 Tapo DL110 and Wansview motion-only integration qualification runs in independent
 background agents, as explicitly requested. No lock actuation or camera-video
 collection is part of those qualification tasks.
+
+## Owner amendment — 2026-09-08 — embedded SENTRY management chat
+
+The owner authorizes an authenticated ANIMA SENTRY page for natural-language
+household management. It must resolve the requested outcome and use ANIMA's
+complete supported typed management catalogue end to end, including devices,
+alerts, routines, users, tasks, calendar, scenes, automations, preferences,
+backups and integrations. It should ask for a manual step only when the supported
+provider boundary genuinely requires one.
+
+This supersedes the earlier dashboard `no typed chat` presentation choice. It
+does not supersede the permanent authority architecture: SENTRY cannot mint
+identity, policy, confirmation, stronger authentication, provider credentials,
+Truth or physical success, and the browser/model receive no raw shell, SQL,
+filesystem, Home Assistant token or arbitrary provider access. For an
+authenticated owner, all supported owner operations should be directly usable
+without an artificial second permission gate; operation-specific Core policy
+and Phase 9 verification remain authoritative.

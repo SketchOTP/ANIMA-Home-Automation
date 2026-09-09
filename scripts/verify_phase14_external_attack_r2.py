@@ -94,7 +94,9 @@ def client(mode: str, audit: ExternalAuditJournalSink) -> BoundedHttpClient:
     return BoundedHttpClient(
         provider="upcitemdb" if mode in {"partial", "stale"} else "searxng",
         base_url=(
-            "https://api.upcitemdb.com" if mode in {"partial", "stale"} else "https://search.example"
+            "https://api.upcitemdb.com"
+            if mode in {"partial", "stale"}
+            else "https://search.example"
         ),
         allowed_hosts=(
             ("api.upcitemdb.com",) if mode in {"partial", "stale"} else ("search.example",)

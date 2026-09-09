@@ -543,3 +543,41 @@ body, [data-appearance="light"] body, [data-appearance="system"] body { backgrou
 .summary-card, .stat-card, .quick-action, .room, .device-card, .room-card,
 .device-grid .device-row, .connection-banner, .connection-cta, .filter-bar { border-radius: 10px; }
 .brand-mark { border-radius: 10px; }
+
+/* Owner workflow surfaces: event behavior and live SENTRY text control. */
+.device-notifications { grid-column: 1 / -1; }
+.notification-device-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+.notification-device-card { display: grid; align-content: start; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--input); }
+.notification-device-card > div:first-child strong, .notification-device-card > div:first-child small { display: block; }
+.notification-device-card > div:first-child small { margin-top: 4px; color: var(--muted); }
+.notification-device-card label { display: grid; gap: 6px; color: var(--muted); font-size: .76rem; }
+.notification-device-card p { margin: 0; min-height: 3.2em; color: var(--muted); font-size: .77rem; }
+.notification-time-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sentry-chat { display: grid; gap: 18px; min-height: min(720px, calc(100vh - 250px)); padding: clamp(20px, 3vw, 32px); border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.sentry-chat-header { display: flex; gap: 18px; align-items: center; }
+.sentry-chat-header h2 { margin-bottom: 5px; font-size: 1.25rem; }
+.sentry-chat-header p { margin: 0; max-width: 62em; color: var(--muted); font-size: .84rem; }
+.chat-boundary { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); border-radius: 9px; color: var(--muted); background: var(--teal-wash); font-size: .76rem; }
+.chat-boundary .icon { color: var(--teal); flex-shrink: 0; }
+.chat-transcript { display: flex; flex-direction: column; gap: 14px; min-height: 260px; max-height: 55vh; overflow-y: auto; padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: #000; }
+.chat-empty { display: grid; place-items: center; gap: 8px; margin: auto; max-width: 34em; text-align: center; color: var(--muted); }
+.chat-empty .icon { color: var(--teal); }
+.chat-empty p { margin: 0; }
+.chat-message { width: min(82%, 760px); padding: 13px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.chat-user { align-self: flex-end; border-color: color-mix(in srgb, var(--teal) 45%, var(--line)); background: var(--teal-wash); }
+.chat-sentry { align-self: flex-start; }
+.chat-message strong { color: var(--teal); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+.chat-message p { margin: 5px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-message small { display: block; margin-top: 8px; color: var(--muted); }
+.chat-composer { display: grid; gap: 8px; }
+.chat-composer > label { color: var(--muted); font-size: .76rem; }
+.chat-composer textarea { min-height: 105px; }
+.chat-composer > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.chat-composer small { color: var(--muted); }
+@media (max-width: 620px) {
+  .sentry-chat-header { align-items: flex-start; }
+  .sentry-chat-header .assistant-orb { width: 48px; height: 48px; }
+  .chat-message { width: 94%; }
+  .chat-composer > div { align-items: stretch; flex-direction: column; }
+  .chat-composer button { width: 100%; }
+}

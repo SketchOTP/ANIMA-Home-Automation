@@ -14,26 +14,24 @@ import os
 import subprocess
 import sys
 import time
-from datetime import UTC, datetime
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
-import psycopg
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.verify_phase6_home_assistant import (
+from scripts.verify_phase6_home_assistant import (  # noqa: E402
     INSTANCE_ID,
     DockerHomeAssistant,
     commission_phase6_graph,
     onboard,
 )
-from scripts.verify_phase12_h5u_confirmation import tool
+from scripts.verify_phase12_h5u_confirmation import tool  # noqa: E402
 
-from anima_ha.action import (
+from anima_ha.action import (  # noqa: E402
     ActionExecutionCoordinator,
     ActionRequest,
     ActionStatus,
@@ -44,10 +42,10 @@ from anima_ha.action import (
     VerificationOutcome,
     VerificationResult,
 )
-from anima_ha.db.migrate import migrate
-from anima_ha.fixtures import sample_household_document
-from anima_ha.graph import PostgresHouseholdGraph
-from anima_ha.home_assistant import (
+from anima_ha.db.migrate import migrate  # noqa: E402
+from anima_ha.fixtures import sample_household_document  # noqa: E402
+from anima_ha.graph import PostgresHouseholdGraph  # noqa: E402
+from anima_ha.home_assistant import (  # noqa: E402
     HAInstanceConfig,
     HassClientConnection,
     HomeAssistantAdapter,
@@ -55,8 +53,8 @@ from anima_ha.home_assistant import (
     PostgresHAStore,
     home_assistant_manifest,
 )
-from anima_ha.journal import PostgresRealityStore
-from anima_ha.plugins import (
+from anima_ha.journal import PostgresRealityStore  # noqa: E402
+from anima_ha.plugins import (  # noqa: E402
     ExternalContentTrust,
     InvocationOutcome,
     InvocationResult,
@@ -65,7 +63,7 @@ from anima_ha.plugins import (
     PostgresPluginStore,
     SecretBroker,
 )
-from anima_ha.policy import (
+from anima_ha.policy import (  # noqa: E402
     Assurance,
     IdentityContext,
     OpaPolicyClient,
@@ -93,21 +91,30 @@ def metadata(service: str) -> dict[str, str]:
     container_id = compose("ps", "-q", service)
     if not container_id:
         raise AssertionError(f"missing running Compose service {service}")
-    values = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{.Id}}|{{.State.Pid}}|{{.State.StartedAt}}|{{.State.Status}}",
-            container_id,
-        ],
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout.strip().split("|", 3)
+    values = (
+        subprocess.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.Id}}|{{.State.Pid}}|{{.State.StartedAt}}|{{.State.Status}}",
+                container_id,
+            ],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        .stdout.strip()
+        .split("|", 3)
+    )
     if len(values) != 4:
         raise AssertionError(f"invalid metadata for {service}")
-    return {"container_id": values[0], "pid": values[1], "started_at": values[2], "status": values[3]}
+    return {
+        "container_id": values[0],
+        "pid": values[1],
+        "started_at": values[2],
+        "status": values[3],
+    }
 
 
 def wait_http(url: str) -> None:
@@ -125,21 +132,30 @@ def wait_http(url: str) -> None:
 
 
 def fixture_metadata(fixture: DockerHomeAssistant) -> dict[str, str]:
-    values = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{.Id}}|{{.State.Pid}}|{{.State.StartedAt}}|{{.State.Status}}",
-            fixture.name,
-        ],
-        check=True,
-        text=True,
-        capture_output=True,
-    ).stdout.strip().split("|", 3)
+    values = (
+        subprocess.run(
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.Id}}|{{.State.Pid}}|{{.State.StartedAt}}|{{.State.Status}}",
+                fixture.name,
+            ],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        .stdout.strip()
+        .split("|", 3)
+    )
     if len(values) != 4:
         raise AssertionError("invalid isolated Home Assistant metadata")
-    return {"container_id": values[0], "pid": values[1], "started_at": values[2], "status": values[3]}
+    return {
+        "container_id": values[0],
+        "pid": values[1],
+        "started_at": values[2],
+        "status": values[3],
+    }
 
 
 class CountingGateway:
@@ -213,7 +229,11 @@ def rejection(results: list[dict[str, Any]]) -> None:
         pending_approvals=pending,
     )
     principal = uuid4()
-    request = action_request(PolicyService(ConfirmationOnly(), audit_store=PostgresPolicyStore(DATABASE_URL)), principal, "reject")
+    request = action_request(
+        PolicyService(ConfirmationOnly(), audit_store=PostgresPolicyStore(DATABASE_URL)),
+        principal,
+        "reject",
+    )
     waiting = coordinator.execute(request)
     assert waiting.record.status == ActionStatus.REQUIRE_CONFIRMATION
     assert waiting.record.result and waiting.record.result.get("approval_id")
@@ -420,11 +440,15 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
         reality = PostgresRealityStore(DATABASE_URL)
         graph = PostgresHouseholdGraph(DATABASE_URL)
         store = PostgresHAStore(DATABASE_URL)
-        probe = HassClientConnection(config, token, event_callback=lambda event: None, disconnect_callback=lambda error: None)
+        probe = HassClientConnection(
+            config, token, event_callback=lambda event: None, disconnect_callback=lambda error: None
+        )
         discovery = probe.start()
         probe.activate()
         probe.stop()
-        resource_id, capability_id, _, _, _ = commission_phase6_graph(graph, discovery, config.provider_scope)
+        resource_id, capability_id, _, _, _ = commission_phase6_graph(
+            graph, discovery, config.provider_scope
+        )
         initial_connection = HassClientConnection(
             config,
             token,
@@ -466,7 +490,11 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
             secret_broker=SecretBroker({"ANIMA_HA_TOKEN": token}),
         )
         manifest = home_assistant_manifest(config)
-        manager.register(manifest, NativeRuntime(plugin), configuration={"instance_id": str(INSTANCE_ID), "websocket_url": websocket_url})
+        manager.register(
+            manifest,
+            NativeRuntime(plugin),
+            configuration={"instance_id": str(INSTANCE_ID), "websocket_url": websocket_url},
+        )
         assert manager.enable(manifest.plugin_id).enabled
         set_power = next(item for item in manager.list_tools() if item.name == "set_power")
         document = sample_household_document()
@@ -476,35 +504,68 @@ def ha_restart(results: list[dict[str, Any]]) -> None:
 
         def refresh(resources: tuple[UUID, ...]) -> TruthSnapshot:
             state = adapter.read_state(resources[0], capability_id)
-            return TruthSnapshot({str(state["truth_key"]): {"state": "KNOWN", "value": state["state"], "version": str(state["observed_at"])}})
+            return TruthSnapshot(
+                {
+                    str(state["truth_key"]): {
+                        "state": "KNOWN",
+                        "value": state["state"],
+                        "version": str(state["observed_at"]),
+                    }
+                }
+            )
 
-        def verify(request: ActionRequest, invocation: Any, snapshot: TruthSnapshot) -> VerificationResult:
+        def verify(
+            request: ActionRequest, invocation: Any, snapshot: TruthSnapshot
+        ) -> VerificationResult:
             del invocation
             expected = "on" if request.arguments["desired_on"] else "off"
             observed = next(iter(snapshot.values.values()))["value"]
             return VerificationResult(
-                VerificationOutcome.VERIFIED if observed == expected else VerificationOutcome.FAILED,
+                VerificationOutcome.VERIFIED
+                if observed == expected
+                else VerificationOutcome.FAILED,
                 observed=dict(next(iter(snapshot.values.values()))),
                 detail=f"expected={expected}; observed={observed}",
             )
 
         assert adapter.read_state(resource_id, capability_id)["state"] == "off"
         action = ActionRequest.create(
-            action_id=uuid4(), action_intent_id=uuid4(), idempotency_key=f"phase14-ha-restart-{uuid4()}",
-            household_id=household_id, tool=set_power,
-            arguments={"resource_id": str(resource_id), "capability_id": str(capability_id), "desired_on": True},
-            identity=identity, policy_service=PolicyService(OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL)),
-            policy_context=PolicyContext(principal_role="owner"), refresher=refresh, verifier=verify,
+            action_id=uuid4(),
+            action_intent_id=uuid4(),
+            idempotency_key=f"phase14-ha-restart-{uuid4()}",
+            household_id=household_id,
+            tool=set_power,
+            arguments={
+                "resource_id": str(resource_id),
+                "capability_id": str(capability_id),
+                "desired_on": True,
+            },
+            identity=identity,
+            policy_service=PolicyService(
+                OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL)
+            ),
+            policy_context=PolicyContext(principal_role="owner"),
+            refresher=refresh,
+            verifier=verify,
         )
-        coordinator = ActionExecutionCoordinator(manager, PostgresActionStore(DATABASE_URL), PostgresResourceLocker(DATABASE_URL))
+        coordinator = ActionExecutionCoordinator(
+            manager, PostgresActionStore(DATABASE_URL), PostgresResourceLocker(DATABASE_URL)
+        )
         first = coordinator.execute(action)
         assert connections[0].restart_metadata is not None
-        assert first.record.status in {ActionStatus.SUCCEEDED, ActionStatus.UNKNOWN_RESULT, ActionStatus.VERIFICATION_FAILED}
+        assert first.record.status in {
+            ActionStatus.SUCCEEDED,
+            ActionStatus.UNKNOWN_RESULT,
+            ActionStatus.VERIFICATION_FAILED,
+        }
         dispatches = sum(connection.service_calls for connection in connections)
         assert dispatches == 1
         assert adapter.reconnect(lambda: factory(token)) is True
         replay = coordinator.execute(action)
-        assert replay.duplicate is True and sum(connection.service_calls for connection in connections) == 1
+        assert (
+            replay.duplicate is True
+            and sum(connection.service_calls for connection in connections) == 1
+        )
         results.append(
             {
                 "scenario_id": "HA_RESTART_INFLIGHT",
@@ -538,7 +599,21 @@ def main() -> int:
     opa_restart(results)
     ha_restart(results)
     assert all(item["status"] == "PASSED" for item in results)
-    print(json.dumps({"scenario_id": "PHASE14_FINAL_CLOSURE_BUNDLE", "status": "PASS", "evidence_level": "REAL_STORE_PROCESS", "tested_sha": os.environ.get("GITHUB_SHA", "local"), "results": results, "checked_at": datetime.now(UTC).isoformat(), "native_pi5": "EXTERNAL_RESOURCE_GATE_NATIVE_PI5", "phase15": False}, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "scenario_id": "PHASE14_FINAL_CLOSURE_BUNDLE",
+                "status": "PASS",
+                "evidence_level": "REAL_STORE_PROCESS",
+                "tested_sha": os.environ.get("GITHUB_SHA", "local"),
+                "results": results,
+                "checked_at": datetime.now(UTC).isoformat(),
+                "native_pi5": "EXTERNAL_RESOURCE_GATE_NATIVE_PI5",
+                "phase15": False,
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 

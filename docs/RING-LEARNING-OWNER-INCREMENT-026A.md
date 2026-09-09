@@ -1,5 +1,37 @@
 # CODEX RESULT — 026A Ring and evidence-guided SENTRY initiative
 
+## Live commissioning and owner notification policy — 2026-09-07
+
+Home Assistant now has an accepted Ring account setup and ANIMA has commissioned
+the live Front Door `Doorbell Wired` resource into the owner's `Home` household
+and `Foyer` space. Current HA inventory contains the Ring doorbell and motion
+event entities, including `event.front_door_ding` and
+`event.front_door_motion`. Canonical provider references and Truth bindings are
+active for both event capabilities.
+
+The active owner initiative configuration is versioned in governed Memory and
+sets:
+
+```text
+always_notify = [household.ring.doorbell]
+proactive_enabled = false
+```
+
+This makes a fresh, qualified Ring doorbell press a required SENTRY notification
+event even during the learning period and while general proactive initiative is
+off. Ring motion remains available as contextual evidence and may be reasoned
+about, but is not an unconditional notification type. The Ring router emits a
+guaranteed canonical Attention event, the auto-wake boundary explicitly accepts
+that exact source/type, and the resident SENTRY delivery path rechecks the
+server-owned initiative disposition before TTS or a notification tool.
+
+The owner chose not to perform a physical Ring press at this checkpoint. Live
+Ring cloud event receipt, SENTRY model output, and speaker delivery are therefore
+`NOT RUN`; setup/readiness is not presented as delivery proof. Focused ANIMA
+Ring/initiative/auto-wake tests passed (with environment-gated cases skipped),
+and 126 focused SENTRY autonomous-event/voice tests passed. SENTRY was observed
+active in `LISTENING` with wake and VAD healthy and no pending event (`EMPTY`).
+
 ## Follow-on live product wiring — 2026-09-07
 
 The Linux-PC resident path now has the owner-authorized unattended SENTRY

@@ -52,9 +52,7 @@ def make_scenario(
     )
 
 
-def provider_executor(
-    scenario: FailureScenario, faults: TestFaultInjector
-) -> ScenarioResult:
+def provider_executor(scenario: FailureScenario, faults: TestFaultInjector) -> ScenarioResult:
     transitions = ["PENDING", "CLAIMED"]
     try:
         faults.check(FaultPoint.PROVIDER_START)
@@ -116,9 +114,7 @@ def run_contracts() -> ScenarioLedger:
     )
     runner = ReplayRunner(provider_executor)
     started_result = runner.run(started, faults=(FaultPoint.PROVIDER_MODEL,))
-    comparison = runner.compare(
-        started, started_result, faults=(FaultPoint.PROVIDER_MODEL,)
-    )
+    comparison = runner.compare(started, started_result, faults=(FaultPoint.PROVIDER_MODEL,))
     if not comparison.matched:
         raise RuntimeError("provider replay comparison unexpectedly diverged")
     ledger.append(started_result)

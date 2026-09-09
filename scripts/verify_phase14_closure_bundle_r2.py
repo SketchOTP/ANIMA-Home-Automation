@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -30,16 +30,16 @@ from anima_ha.action import (
     TruthSnapshot,
 )
 from anima_ha.db.migrate import migrate
+from anima_ha.plugins import ExternalContentTrust, InvocationOutcome, InvocationResult
 from anima_ha.policy import (
-    Assurance,
     ActionIntent,
+    Assurance,
     IdentityContext,
     OpaPolicyClient,
     PolicyContext,
     PolicyService,
     PostgresPolicyStore,
 )
-from anima_ha.plugins import ExternalContentTrust, InvocationOutcome, InvocationResult
 from anima_ha.tasks import (
     PostgresTaskStore,
     ScheduleKind,
@@ -272,9 +272,7 @@ def verify_manual_change_before_authorization(results: list[dict[str, Any]]) -> 
 
 def verify_strong_auth_separation(results: list[dict[str, Any]]) -> None:
     principal = uuid4()
-    policy = PolicyService(
-        OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL)
-    )
+    policy = PolicyService(OpaPolicyClient(OPA_URL), audit_store=PostgresPolicyStore(DATABASE_URL))
     intent = ActionIntent.create(
         household_id=HOUSEHOLD_ID,
         principal_id=principal,
@@ -305,9 +303,7 @@ def verify_strong_auth_separation(results: list[dict[str, Any]]) -> None:
                 {
                     "decision": decision.decision.value,
                     "required_assurance": (
-                        decision.required_assurance.value
-                        if decision.required_assurance
-                        else None
+                        decision.required_assurance.value if decision.required_assurance else None
                     ),
                 },
                 {"confirmation_rows": 0, "provider_dispatches": 0},

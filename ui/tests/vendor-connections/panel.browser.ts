@@ -29,7 +29,7 @@ test("waiting app setup stays disabled, checklist is actionable without sending"
     await expect(target.locator(".vendor-receipt")).toContainText("No receipt recorded");
     await target.getByText(`Setup checklist for ${name}`, { exact: true }).click();
     await expect(target).toContainText("Official app setup.");
-    await expect(target).toContainText(name === "Tapo DL110" ? "Verified source setup." : "Private relay setup.");
+    await expect(target).toContainText("Private relay setup.");
     await expect(target.getByRole("list", { name: `${name} backend setup gates` })).toContainText(name === "Tapo DL110" ? "Verified Home Assistant lock mapping" : "Live notification format needs qualification");
     await expect(target).toContainText("Observe, then refresh.");
     await expect(target.locator("input, textarea, select, img, video, iframe")).toHaveCount(0);

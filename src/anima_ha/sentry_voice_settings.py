@@ -21,13 +21,23 @@ from anima_ha.plugins import (
     TrustClass,
 )
 
-VOICE_IDS = frozenset({
-    "af_bella", "af_sarah", "am_adam", "am_michael",
-    "bf_emma", "bf_isabella", "bm_george", "bm_lewis",
-})
+VOICE_IDS = frozenset(
+    {
+        "af_bella",
+        "af_sarah",
+        "am_adam",
+        "am_michael",
+        "bf_emma",
+        "bf_isabella",
+        "bm_george",
+        "bm_lewis",
+    }
+)
 DEFAULT_VOICE = "bm_george"
 DEFAULT_SPEED = 0.9
 DEFAULT_SLEEP_ENABLED = False
+SENTRY_INSTANCE_IDS = frozenset({"living_room", "office"})
+DEFAULT_ACTIVE_INSTANCE_ID = "living_room"
 
 
 def validate_voice_settings(value: dict[str, Any] | None) -> dict[str, Any]:
@@ -35,6 +45,7 @@ def validate_voice_settings(value: dict[str, Any] | None) -> dict[str, Any]:
     voice = value.get("voice_id", DEFAULT_VOICE)
     speed = value.get("speech_speed", DEFAULT_SPEED)
     sleep_enabled = value.get("sleep_enabled", DEFAULT_SLEEP_ENABLED)
+    active_instance_id = value.get("active_instance_id", DEFAULT_ACTIVE_INSTANCE_ID)
     if not isinstance(voice, str) or voice not in VOICE_IDS:
         raise ValueError("unsupported SENTRY voice")
     if (
@@ -45,10 +56,13 @@ def validate_voice_settings(value: dict[str, Any] | None) -> dict[str, Any]:
         raise ValueError("SENTRY speech speed must be between 0.75 and 1.30")
     if not isinstance(sleep_enabled, bool):
         raise ValueError("SENTRY sleep_enabled must be boolean")
+    if not isinstance(active_instance_id, str) or active_instance_id not in SENTRY_INSTANCE_IDS:
+        raise ValueError("unsupported active SENTRY instance")
     return {
         "voice_id": voice,
         "speech_speed": round(float(speed), 2),
         "sleep_enabled": sleep_enabled,
+        "active_instance_id": active_instance_id,
     }
 
 
@@ -59,11 +73,12 @@ class SentryVoiceSettingsStore:
         self.database_url = database_url
 
     def get(self, household_id: UUID) -> dict[str, Any]:
-        with psycopg.connect(
-            self.database_url, row_factory=dict_row
-        ) as connection, connection.cursor() as cursor:
+        with (
+            psycopg.connect(self.database_url, row_factory=dict_row) as connection,
+            connection.cursor() as cursor,
+        ):
             cursor.execute(
-                "SELECT voice_id, speech_speed, sleep_enabled "
+                "SELECT voice_id, speech_speed, sleep_enabled, active_instance_id "
                 "FROM anima_sentry_voice_settings WHERE household_id=%s",
                 (household_id,),
             )
@@ -76,18 +91,20 @@ class SentryVoiceSettingsStore:
             cursor.execute(
                 """
                 INSERT INTO anima_sentry_voice_settings (
-                    household_id, voice_id, speech_speed, sleep_enabled
+                    household_id, voice_id, speech_speed, sleep_enabled, active_instance_id
                 )
-                VALUES (%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s)
                 ON CONFLICT (household_id) DO UPDATE SET
                     voice_id=EXCLUDED.voice_id, speech_speed=EXCLUDED.speech_speed,
-                    sleep_enabled=EXCLUDED.sleep_enabled, updated_at=now()
+                    sleep_enabled=EXCLUDED.sleep_enabled,
+                    active_instance_id=EXCLUDED.active_instance_id, updated_at=now()
                 """,
                 (
                     household_id,
                     settings["voice_id"],
                     settings["speech_speed"],
                     settings["sleep_enabled"],
+                    settings["active_instance_id"],
                 ),
             )
             connection.commit()
@@ -177,6 +194,7 @@ class SentryControlNativePlugin:
                 "voice_id": current["voice_id"],
                 "speech_speed": current["speech_speed"],
                 "sleep_enabled": True,
+                "active_instance_id": current["active_instance_id"],
             },
         )
         return {"status": "SUCCEEDED", "sleep_enabled": True, "wake_available": False}

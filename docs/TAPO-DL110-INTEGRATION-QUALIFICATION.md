@@ -498,9 +498,10 @@ the impending API subscription and broad OAuth grant. No API token is requested.
 | Current vendor export/notification paths and API price transition checked | PASSED — bounded research; no official export found |
 | Android notification client fields/privacy limitations inspected | PASSED — stock transport does not meet complete relay contract |
 | Document scope and whitespace review | PASSED |
-| Real DL110 lock/unlock and named fingerprint/profile delivery | NOT RUN — operator payload/resource gate |
+| Real DL110 lock/unlock notification format | PASSED — official app package; private mode-0600 capture; exact Front Door locked/unlocked phrases observed; raw calibration removed |
+| Named fingerprint/profile authority | PARTIAL — a bounded provider-reported profile label was present on unlock and is retained only as `DEVICE_REPORTED_UNVERIFIED`; no authentication or fingerprint-method claim |
 | Companion phone/HA delivery, privacy exclusion, loss/restart qualification | NOT RUN |
-| ANIMA/SENTRY target tests and runtime qualification for this lock | NOT RUN — no integration implementation |
+| ANIMA/SENTRY target tests and runtime qualification for this lock | PARTIAL — real lock/unlock notifications reached relay/Core/Journal/Attention and were claimed exactly once by resident SENTRY. The first host turn returned `unavailable` because its non-secret request ID was absent from the autonomous prompt; that source defect is corrected and target-tested, but no post-fix physical reasoning/TTS result is claimed. Ordinary lock activity may legitimately resolve to reasoned silence. |
 | Commits, push, shared governance/Notion updates, production/account changes | NOT APPLICABLE — expressly excluded |
 
 External-discovery disposition: WRAP SmartThings conditionally; COMPOSE a

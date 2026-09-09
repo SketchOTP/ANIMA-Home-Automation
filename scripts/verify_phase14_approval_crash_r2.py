@@ -100,9 +100,7 @@ class ConfirmationByValidity:
 
 
 def policy() -> PolicyService:
-    return PolicyService(
-        ConfirmationByValidity(), audit_store=PostgresPolicyStore(DATABASE_URL)
-    )
+    return PolicyService(ConfirmationByValidity(), audit_store=PostgresPolicyStore(DATABASE_URL))
 
 
 def build_request(principal: UUID, label: str) -> ActionRequest:
@@ -177,8 +175,12 @@ def main() -> int:
             str(principal),
         ],
         cwd=ROOT,
-        env={**os.environ, "ANIMA_DATABASE_URL": DATABASE_URL, "ANIMA_OPA_URL": OPA_URL,
-             "ANIMA_CRASH_MARKER": str(marker)},
+        env={
+            **os.environ,
+            "ANIMA_DATABASE_URL": DATABASE_URL,
+            "ANIMA_OPA_URL": OPA_URL,
+            "ANIMA_CRASH_MARKER": str(marker),
+        },
         capture_output=True,
         text=True,
     )
@@ -192,9 +194,7 @@ def main() -> int:
     if in_flight is None or in_flight.status != ActionStatus.EXECUTING:
         raise AssertionError("action was not durable as executing before process loss")
     recovered = [
-        item
-        for item in action_store.recover_incomplete()
-        if item.action_id == action.action_id
+        item for item in action_store.recover_incomplete() if item.action_id == action.action_id
     ]
     if not recovered or recovered[0].status != ActionStatus.UNKNOWN_RESULT:
         raise AssertionError("ambiguous approved action was not recovered as unknown")

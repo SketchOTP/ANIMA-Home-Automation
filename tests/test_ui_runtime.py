@@ -129,7 +129,29 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
                 "external_id": "ha-device",
                 "present": True,
                 "metadata": {"canonical_target_id": str(resource_id), "name": "Hall light"},
-            }
+            },
+            {
+                "external_object_kind": "device",
+                "external_id": "sun-service",
+                "present": True,
+                "metadata": {"entry_type": "service", "name": "Sun"},
+            },
+            {
+                "external_object_kind": "device",
+                "external_id": "host-bluetooth",
+                "present": True,
+                "metadata": {
+                    "canonical_target_id": str(resource_id),
+                    "connection_types": ["bluetooth"],
+                    "name": "hci0",
+                },
+            },
+            {
+                "external_object_kind": "device",
+                "external_id": "zigbee-coordinator",
+                "present": True,
+                "metadata": {"connection_types": ["zigbee"], "name": "Zigbee Hub"},
+            },
         ],
     )
     manager = SimpleNamespace(
@@ -150,6 +172,10 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
     result = gateway.device_inventory(cast(Any, object()))
 
     item = result["items"][0]
+    assert [entry["metadata"]["name"] for entry in result["items"]] == [
+        "Hall light",
+        "Zigbee Hub",
+    ]
     assert item["device_handle"] == inventory_handle(
         adapter.config.instance_id, "device", "ha-device"
     )
@@ -167,6 +193,85 @@ def test_device_inventory_projects_canonical_capabilities_and_truth() -> None:
             "observed_at": observed_at.isoformat(),
         }
     ]
+
+
+def test_device_inventory_includes_commissioned_event_only_resources() -> None:
+    household_id = uuid4()
+    resource_id = uuid4()
+    resource = SimpleNamespace(
+        canonical_id=resource_id,
+        name="Tapo Front Door",
+        kind=NodeKind.RESOURCE,
+        metadata={"manufacturer": "TP-Link", "model": "DL110"},
+    )
+    reference = SimpleNamespace(
+        provider="android_notification",
+        external_object_kind="notification_resource",
+    )
+
+    class Graph:
+        def get_node(self, value: UUID) -> object | None:
+            return resource if value == resource_id else None
+
+        def resources_in_place(self, value: UUID) -> list[object]:
+            assert value == household_id
+            return [resource]
+
+        def provider_references_for(self, value: UUID) -> list[object]:
+            assert value == resource_id
+            return [reference]
+
+        def resource_capabilities(self, value: UUID) -> list[object]:
+            assert value == resource_id
+            return []
+
+    adapter = SimpleNamespace(
+        config=SimpleNamespace(instance_id=uuid4()),
+        graph=Graph(),
+        reality=SimpleNamespace(projection=SimpleNamespace(get=lambda *_args, **_kwargs: None)),
+        provider_inventory=lambda: [],
+    )
+    manager = SimpleNamespace(
+        list_tools=lambda: [
+            SimpleNamespace(
+                plugin_id="anima.provider.home-assistant",
+                name="refresh_inventory",
+                availability=True,
+            )
+        ]
+    )
+    gateway = CoreUICommandGateway(
+        cast(Any, manager),
+        PolicyService(AllowEvaluator()),
+        home_assistant_adapter=adapter,  # type: ignore[arg-type]
+    )
+
+    result = gateway.device_inventory(cast(Any, SimpleNamespace(household_id=household_id)))
+
+    assert result == {
+        "status": "AVAILABLE",
+        "items": [
+            {
+                "external_object_kind": "device",
+                "device_handle": f"canonical:{resource_id}",
+                "canonical_name": "Tapo Front Door",
+                "present": True,
+                "metadata": {
+                    "name": "Tapo Front Door",
+                    "manufacturer": "TP-Link",
+                    "model": "DL110",
+                    "mapping_status": "MAPPED",
+                    "canonical_target_id": str(resource_id),
+                    "integration": "android_notification",
+                    "source_kind": "notification_resource",
+                },
+                "truth_status": "UNKNOWN",
+                "state": "UNKNOWN",
+                "observed_at": None,
+                "capabilities": [],
+            }
+        ],
+    }
 
 
 def test_core_pipeline_runs_real_agent_from_journal_trigger() -> None:

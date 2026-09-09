@@ -160,6 +160,35 @@ def test_real_opa_allows_exact_builtin_create_update_without_forging_user_author
         ).fetchone() == (0,)
 
 
+def test_unidentified_limited_speaker_can_only_use_exact_agent_memory_path(
+    tmp_path: Path,
+    database_url: str,
+) -> None:
+    boundary, request, _ = configured(tmp_path, database_url, enabled=True)
+    boundary.access_level_resolver = lambda _principal: "LIMITED"
+    assert request.principal_id is None
+    created = boundary.invoke_tool(request, "anima.knowledge.create_note", fields())
+    assert created["status"] == "SUCCEEDED"
+    denied = boundary.invoke_tool(
+        request,
+        "anima.family-routines.create_routine",
+        {
+            "person_id": str(uuid4()),
+            "label": "Must remain denied",
+            "days": [0],
+            "start": "01:00",
+            "end": "02:00",
+            "timezone": "UTC",
+        },
+        ordinal=2,
+    )
+    assert denied == {
+        "status": "DENIED",
+        "operation": "anima.family-routines.create_routine",
+        "reason": "USER_ACCESS_LIMITED",
+    }
+
+
 def test_existing_opa_autonomy_disabled_case_denies_even_when_deployment_gate_enabled(
     tmp_path: Path,
     database_url: str,

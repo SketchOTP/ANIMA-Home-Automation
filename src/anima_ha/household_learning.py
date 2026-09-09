@@ -14,7 +14,7 @@ import math
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid5
@@ -57,6 +57,8 @@ EVENT_TYPES = (
     "household.ring.motion",
     "household.ring.doorbell",
 )
+DEVICE_NOTIFICATION_MODES = ("ALWAYS", "TIME_WINDOW", "NEVER", "CONTEXTUAL")
+DEVICE_EVENT_KINDS = ("ANY", "UNLOCKED", "LOCKED", "OPENED", "CLOSED", "MOTION", "DOORBELL")
 _REQUEST_SCOPE: ContextVar[tuple[UUID, UUID, frozenset[str]] | None] = ContextVar(
     "household_learning_request", default=None
 )
@@ -117,6 +119,45 @@ def learning_request_scope(
 
 
 @dataclass(frozen=True, slots=True)
+class DeviceNotificationRule:
+    """Owner-selected notification behavior for one canonical household resource."""
+
+    resource_id: str
+    mode: str = "CONTEXTUAL"
+    start_local: str = "00:00"
+    end_local: str = "23:59"
+    timezone: str = "America/New_York"
+    event_kind: str = "ANY"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "resource_id", str(_uuid(self.resource_id)))
+        if self.mode not in DEVICE_NOTIFICATION_MODES:
+            raise HouseholdLearningError("unsupported device notification mode")
+        if self.event_kind not in DEVICE_EVENT_KINDS:
+            raise HouseholdLearningError("unsupported device notification event kind")
+        for value in (self.start_local, self.end_local):
+            try:
+                datetime.strptime(value, "%H:%M")
+            except (TypeError, ValueError):
+                raise HouseholdLearningError("device notification time must be HH:MM") from None
+        try:
+            ZoneInfo(self.timezone)
+        except (KeyError, TypeError, ValueError):
+            raise HouseholdLearningError("device notification timezone is invalid") from None
+
+    @classmethod
+    def from_payload(cls, value: Any) -> DeviceNotificationRule:
+        required = set(cls.__dataclass_fields__) - {"event_kind"}
+        if (
+            not isinstance(value, dict)
+            or set(value) - set(cls.__dataclass_fields__)
+            or not required <= set(value)
+        ):
+            raise HouseholdLearningError("full device notification rule required")
+        return cls(**value)
+
+
+@dataclass(frozen=True, slots=True)
 class InitiativeConfig:
     learning_days: int = 3
     routine_review_days: int = 3
@@ -124,6 +165,7 @@ class InitiativeConfig:
     routine_review_enabled: bool = True
     proactive_enabled: bool = False
     always_notify: tuple[str, ...] = ()
+    device_notifications: tuple[DeviceNotificationRule, ...] = ()
 
     def __post_init__(self) -> None:
         for name, minimum in (("learning_days", 3), ("routine_review_days", 2)):
@@ -141,15 +183,37 @@ class InitiativeConfig:
         ):
             raise HouseholdLearningError("always_notify must be unique registered event types")
         object.__setattr__(self, "always_notify", tuple(sorted(self.always_notify)))
+        if (
+            not isinstance(self.device_notifications, (tuple, list))
+            or len(self.device_notifications) > 128
+        ):
+            raise HouseholdLearningError("device notification rules exceed bound")
+        rules = tuple(
+            item
+            if isinstance(item, DeviceNotificationRule)
+            else DeviceNotificationRule.from_payload(item)
+            for item in self.device_notifications
+        )
+        if len({item.resource_id for item in rules}) != len(rules):
+            raise HouseholdLearningError("device notification resources must be unique")
+        object.__setattr__(
+            self, "device_notifications", tuple(sorted(rules, key=lambda item: item.resource_id))
+        )
 
     def to_payload(self) -> dict[str, Any]:
-        return {**asdict(self), "always_notify": list(self.always_notify)}
+        return {
+            **asdict(self),
+            "always_notify": list(self.always_notify),
+            "device_notifications": [asdict(item) for item in self.device_notifications],
+        }
 
     @classmethod
     def from_payload(cls, value: dict[str, Any]) -> InitiativeConfig:
-        if not isinstance(value, dict) or set(value) != set(cls.__dataclass_fields__):
+        if not isinstance(value, dict) or set(value) - {"device_notifications"} != (
+            set(cls.__dataclass_fields__) - {"device_notifications"}
+        ):
             raise HouseholdLearningError("full exact initiative config required")
-        return cls(**value)
+        return cls(**({"device_notifications": [], **value}))
 
 
 class HouseholdLearningService:
@@ -279,6 +343,39 @@ class HouseholdLearningService:
         except UniqueViolation:
             raise HouseholdLearningError("config version changed; reload") from None
         return self.status(household_id)
+
+    def set_device_notification(
+        self, household_id: UUID, principal_id: UUID, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Change one bounded device/event rule without replacing unrelated owner settings."""
+
+        self._owner(household_id, principal_id)
+        current, original = self._config(household_id)
+        expected = str(original.memory_id) if original else None
+        if payload.get("expected_version") != expected:
+            raise HouseholdLearningError("config version changed; reload")
+        resource_id = str(_uuid(payload.get("resource_id")))
+        mode = str(payload.get("mode", ""))
+        remaining = [
+            item for item in current.device_notifications if item.resource_id != resource_id
+        ]
+        if mode != "DEFAULT":
+            remaining.append(
+                DeviceNotificationRule(
+                    resource_id=resource_id,
+                    mode=mode,
+                    start_local=str(payload.get("start_local", "00:00")),
+                    end_local=str(payload.get("end_local", "23:59")),
+                    timezone=str(payload.get("timezone", self.zone.key)),
+                    event_kind=str(payload.get("event_kind", "ANY")),
+                )
+            )
+        updated = replace(current, device_notifications=tuple(remaining))
+        return self.configure(
+            household_id,
+            principal_id,
+            {**updated.to_payload(), "expected_version": expected},
+        )
 
     def evidence(self, household_id: UUID, limit: int = 50) -> dict[str, Any]:
         _household(self.graph, household_id)
@@ -683,18 +780,39 @@ _CONFIG_SCHEMA = {
         "uniqueItems": True,
         "maxItems": len(EVENT_TYPES),
     },
+    "device_notifications": {
+        "type": "array",
+        "maxItems": 128,
+        "items": {
+            "type": "object",
+            "properties": {
+                "resource_id": {"type": "string", "format": "uuid"},
+                "mode": {"type": "string", "enum": list(DEVICE_NOTIFICATION_MODES)},
+                "start_local": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+                "end_local": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+                "timezone": {"type": "string", "minLength": 1, "maxLength": 64},
+                "event_kind": {"type": "string", "enum": list(DEVICE_EVENT_KINDS)},
+            },
+            "required": ["resource_id", "mode", "start_local", "end_local", "timezone"],
+            "additionalProperties": False,
+        },
+    },
     "expected_version": {"type": ["string", "null"], "format": "uuid"},
 }
 
 
 def _tool(
-    name: str, properties: dict[str, Any], required: list[str], *, read: bool = True
+    name: str,
+    properties: dict[str, Any],
+    required: list[str],
+    *,
+    read: bool = True,
+    description: str | None = None,
 ) -> dict[str, Any]:
     return {
         "name": name,
-        "description": (
-            f"Bounded household learning {name}; suggestions are not executable or verified truth"
-        ),
+        "description": description
+        or f"Bounded household learning {name}; suggestions are not executable or verified truth",
         "input_schema": {
             "type": "object",
             "properties": properties,
@@ -712,7 +830,7 @@ def _tool(
 
 HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
     plugin_id="anima.household-learning",
-    plugin_version="1.0.0",
+    plugin_version="1.2.0",
     manifest_version=MANIFEST_VERSION,
     requires_core=CORE_VERSION,
     name="Household learning",
@@ -724,6 +842,28 @@ HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
     tools=(
         _tool("get_status", {}, []),
         _tool("configure", _CONFIG_SCHEMA, list(_CONFIG_SCHEMA), read=False),
+        _tool(
+            "set_device_notification",
+            {
+                "resource_id": {"type": "string", "format": "uuid"},
+                "mode": {
+                    "type": "string",
+                    "enum": ["DEFAULT", *DEVICE_NOTIFICATION_MODES],
+                },
+                "event_kind": {"type": "string", "enum": list(DEVICE_EVENT_KINDS)},
+                "start_local": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+                "end_local": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
+                "timezone": {"type": "string", "minLength": 1, "maxLength": 64},
+                "expected_version": {"type": ["string", "null"], "format": "uuid"},
+            },
+            ["resource_id", "mode", "event_kind", "expected_version"],
+            read=False,
+            description=(
+                "Set or remove one owner notification rule for a canonical device and bounded "
+                "event kind without replacing unrelated household settings. Read get_status "
+                "first and pass its exact config_version."
+            ),
+        ),
         _tool("evidence", {"limit": {"type": "integer", "minimum": 1, "maximum": 50}}, []),
         _tool(
             "suggestions",
@@ -793,13 +933,18 @@ class HouseholdLearningNativePlugin:
             return self.service.status(context.household_id)
         if name in {"evidence", "suggestions"}:
             return getattr(self.service, name)(context.household_id, **arguments)
-        if name in {"configure", "review"} and (
+        if name in {"configure", "set_device_notification", "review"} and (
             context.origin != RequestOrigin.DIRECT_USER or context.principal_id is None
         ):
             raise HouseholdLearningError("direct commissioned owner request required")
         if name == "configure":
             assert context.principal_id is not None
             return self.service.configure(context.household_id, context.principal_id, arguments)
+        if name == "set_device_notification":
+            assert context.principal_id is not None
+            return self.service.set_device_notification(
+                context.household_id, context.principal_id, arguments
+            )
         if name == "propose":
             scope = _REQUEST_SCOPE.get()
             if scope is None or scope[1] != context.household_id:

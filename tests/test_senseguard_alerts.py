@@ -270,6 +270,7 @@ def test_spoken_presence_policy_is_fixed_to_presence_detection_and_sentry() -> N
         for tool in manager.list_tools()
         if tool.tool_id == "anima.senseguard-alerts.save_spoken_presence_policy"
     )
+    assert descriptor.execution_boundary is not None
     assert descriptor.execution_boundary.value == "POLICY_GATED_INTERNAL"
 
 

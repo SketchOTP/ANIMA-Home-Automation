@@ -270,6 +270,7 @@ class ActionRiskClassifier:
         "arm",
         "secure",
         "capabilities.configure",
+        "identity.configure",
         "backup.create",
         "backup.restore",
     }

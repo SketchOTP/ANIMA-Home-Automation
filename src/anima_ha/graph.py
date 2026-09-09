@@ -848,17 +848,37 @@ class PostgresHouseholdGraph:
     def _person_metadata(
         metadata: dict[str, Any] | None = None,
         *,
-        semantic_role: str = "member",
-        access_level: str = "LIMITED",
+        semantic_role: str | None = None,
+        access_level: str | None = None,
         wifi_macs: list[str] | None = None,
         sentry_profile_id: str | None = None,
-        onboarding_state: str = "NOT_STARTED",
+        sentry_profile_sample_count: int | None = None,
+        onboarding_state: str | None = None,
+        clear_sentry_profile: bool = False,
     ) -> dict[str, Any]:
         """Validate the small ANIMA-owned person-management projection."""
         value = dict(metadata or {})
-        role = str(value.get("semantic_role", semantic_role)).strip().lower()
-        access = str(value.get("sentry_access", access_level)).strip().upper()
-        state = str(value.get("sentry_onboarding_state", onboarding_state)).strip().upper()
+        role = (
+            str(
+                semantic_role if semantic_role is not None else value.get("semantic_role", "member")
+            )
+            .strip()
+            .lower()
+        )
+        access = (
+            str(access_level if access_level is not None else value.get("sentry_access", "LIMITED"))
+            .strip()
+            .upper()
+        )
+        state = (
+            str(
+                onboarding_state
+                if onboarding_state is not None
+                else value.get("sentry_onboarding_state", "NOT_STARTED")
+            )
+            .strip()
+            .upper()
+        )
         if role not in {"owner", "member", "guest"}:
             raise GraphValidationError("person role is not supported")
         if access not in {"UNRESTRICTED", "LIMITED"}:
@@ -877,10 +897,31 @@ class PostgresHouseholdGraph:
                 raise GraphValidationError("Wi-Fi address is not a valid MAC address")
             if mac not in normalized_macs:
                 normalized_macs.append(mac)
-        profile = sentry_profile_id if sentry_profile_id is not None else value.get("sentry_profile_id")
+        profile = (
+            None
+            if clear_sentry_profile
+            else (
+                sentry_profile_id
+                if sentry_profile_id is not None
+                else value.get("sentry_profile_id")
+            )
+        )
         if profile is not None:
-            if not isinstance(profile, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", profile):
+            if not isinstance(profile, str) or not re.fullmatch(
+                r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}", profile
+            ):
                 raise GraphValidationError("SENTRY profile identifier is invalid")
+        sample_count = (
+            sentry_profile_sample_count
+            if sentry_profile_sample_count is not None
+            else value.get("sentry_profile_sample_count")
+        )
+        if sample_count is not None and (
+            isinstance(sample_count, bool)
+            or not isinstance(sample_count, int)
+            or not 1 <= sample_count <= 16
+        ):
+            raise GraphValidationError("SENTRY profile sample count is invalid")
         value.update(
             {
                 "semantic_role": role,
@@ -891,8 +932,11 @@ class PostgresHouseholdGraph:
         )
         if profile is not None:
             value["sentry_profile_id"] = profile
+            if sample_count is not None:
+                value["sentry_profile_sample_count"] = sample_count
         else:
             value.pop("sentry_profile_id", None)
+            value.pop("sentry_profile_sample_count", None)
         return value
 
     def create_person(
@@ -977,7 +1021,9 @@ class PostgresHouseholdGraph:
         access_level: str | None = None,
         wifi_macs: list[str] | None = None,
         sentry_profile_id: str | None = None,
+        sentry_profile_sample_count: int | None = None,
         onboarding_state: str | None = None,
+        clear_sentry_profile: bool = False,
     ) -> CanonicalNode:
         """Update bounded person metadata after proving household membership."""
         person = self.get_node(person_id)
@@ -990,11 +1036,13 @@ class PostgresHouseholdGraph:
             raise GraphValidationError("person name must contain 1 to 120 characters")
         metadata = self._person_metadata(
             person.metadata,
-            semantic_role=semantic_role or str(person.metadata.get("semantic_role", "member")),
-            access_level=access_level or str(person.metadata.get("sentry_access", "LIMITED")),
-            wifi_macs=wifi_macs if wifi_macs is not None else list(person.metadata.get("wifi_macs", [])),
-            sentry_profile_id=(sentry_profile_id if sentry_profile_id is not None else person.metadata.get("sentry_profile_id")),
-            onboarding_state=onboarding_state or str(person.metadata.get("sentry_onboarding_state", "NOT_STARTED")),
+            semantic_role=semantic_role,
+            access_level=access_level,
+            wifi_macs=wifi_macs,
+            sentry_profile_id=sentry_profile_id,
+            sentry_profile_sample_count=sentry_profile_sample_count,
+            onboarding_state=onboarding_state,
+            clear_sentry_profile=clear_sentry_profile,
         )
         with self._connect() as connection:
             try:

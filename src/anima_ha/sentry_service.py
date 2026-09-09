@@ -30,6 +30,7 @@ import psycopg
 from anima_ha.db.migrate import migrate
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
+    IntelligenceOrigin,
     IntelligenceResult,
     IntelligenceResultStatus,
 )
@@ -374,7 +375,12 @@ class CoreSentryHTTPService:
         if principal is not None and "SENTRY_PROVIDER" not in principal.allowed_origins:
             raise ServiceAuthError("SENTRY provider work is not allowed")
         request = self.boundary.claim_request(
-            effective_worker, household_id=principal.household_id if principal else None
+            effective_worker,
+            household_id=principal.household_id if principal else None,
+            # Resident SENTRY owns exact fresh autonomous claims because that
+            # path alone can apply initiative policy and deliver TTS. The
+            # general browser/provider worker must never steal those events.
+            excluded_origins=frozenset({IntelligenceOrigin.AUTONOMOUS_ATTENTION}),
         )
         if request is None:
             return {"status": "EMPTY"}

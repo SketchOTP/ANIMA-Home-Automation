@@ -485,9 +485,7 @@ class SenseGuardAlertNativePlugin:
             end_local=_clock(arguments["end_local"]),
             priority=int(arguments.get("priority", 90)),
             guaranteed_attention=(
-                True
-                if spoken_presence
-                else bool(arguments.get("guaranteed_attention", True))
+                True if spoken_presence else bool(arguments.get("guaranteed_attention", True))
             ),
             delivery_mode=(
                 "SENTRY_COGNITION"

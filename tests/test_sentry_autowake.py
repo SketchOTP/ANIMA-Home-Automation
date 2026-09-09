@@ -183,6 +183,25 @@ class Harness:
                     "door_actor_verified": False,
                 },
             )
+        if kind == "vendor":
+            event = replace(
+                event,
+                source=f"android-relay-report:{self.home}:{uuid4()}",
+                event_type="external.android.lock_reported",
+                payload={
+                    "resource_id": str(uuid4()),
+                    "event_kind": "unlocked",
+                    "authority": "NONE",
+                },
+                metadata={
+                    "household_id": str(self.home),
+                    "schema_qualification": "ANIMA_OWNED_SCHEMA",
+                    "external_content_trust": "EXTERNAL_UNTRUSTED",
+                    "synthetic": False,
+                    "producer_qualified": True,
+                    "wake_eligible": True,
+                },
+            )
         event = replace(event, **changes)
         position = PostgresEventJournal(self.url).append(event).journal_position
         profile = AttentionProfile(f"synthetic-autowake-{uuid4()}", ())
@@ -214,7 +233,7 @@ def harness(database_url: str, tmp_path: Path) -> Iterator[Harness]:
         value.close()
 
 
-@pytest.mark.parametrize("kind", ["senseguard", "presence"])
+@pytest.mark.parametrize("kind", ["senseguard", "presence", "vendor"])
 def test_authenticated_exact_claim_actual_journal_attention_and_no_replay(
     harness: Harness,
     kind: str,

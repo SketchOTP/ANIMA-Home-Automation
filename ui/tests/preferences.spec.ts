@@ -85,7 +85,7 @@ test("real settings persist purple appearance and retain accessibility layout an
   await page.getByRole("navigation").getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Accent", exact: true }).selectOption("purple");
   await page.getByRole("combobox", { name: "Appearance", exact: true }).selectOption("night");
-  await page.getByRole("button", { name: "Save preferences", exact: true }).click();
+  await page.getByRole("button", { name: "Save interface settings", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-accent", "purple");
   await page.reload();
   const after = (await (await page.request.get("/api/v1/settings")).json()).settings;

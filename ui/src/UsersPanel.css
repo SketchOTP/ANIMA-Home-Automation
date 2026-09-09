@@ -11,4 +11,16 @@
 .users-panel .user-facts span { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--line); border-radius: 7px; }
 .users-panel .user-facts small { color: var(--muted); }
 .users-panel h2:focus { outline: 2px solid var(--teal); outline-offset: 4px; }
+.users-panel textarea { resize: vertical; min-height: 78px; }
+.users-panel .face-enrollment { display: grid; gap: 16px; padding: 16px; border: 1px solid color-mix(in srgb, var(--teal) 55%, var(--line)); border-radius: 12px; background: var(--surface-2); }
+.users-panel .face-enrollment h3 { margin: 0 0 6px; }
+.users-panel .face-enrollment p { margin: 0; }
+.users-panel .face-samples { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.users-panel .face-samples figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.users-panel .face-preview { aspect-ratio: 4 / 3; overflow: hidden; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); }
+.users-panel .face-preview img { width: 100%; height: 100%; object-fit: cover; }
+.users-panel .face-preview svg { width: 42px; height: 42px; color: var(--muted); }
+.users-panel .face-samples figcaption { display: grid; gap: 4px; }
+.users-panel .face-samples figcaption button { width: 100%; }
+.users-panel .privacy-note { padding-top: 10px; border-top: 1px solid var(--line); }
 @media (max-width: 640px) { .users-panel .user-facts { grid-template-columns: 1fr; } .users-panel .user-heading { align-items: flex-start; flex-wrap: wrap; } .users-panel .user-heading .status { margin-left: 50px; } }
