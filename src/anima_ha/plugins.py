@@ -329,18 +329,14 @@ _TRUSTED_INTERNAL_TOOL_SOURCES = {
     "anima.provider.home-assistant.continue_zha_setup": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.permit_zigbee_join": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.commission_device": "builtin:anima_ha.home_assistant",
-    "anima.provider.home-assistant.commission_presence_source": (
-        "builtin:anima_ha.home_assistant"
-    ),
+    "anima.provider.home-assistant.commission_presence_source": ("builtin:anima_ha.home_assistant"),
     "anima.provider.home-assistant.commission_zigbee_presence_sensor": (
         "builtin:anima_ha.home_assistant"
     ),
     "anima.provider.home-assistant.rename_device": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.reassign_device": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.retire_device": "builtin:anima_ha.home_assistant",
-    "anima.senseguard-alerts.save_spoken_presence_policy": (
-        "builtin:anima_ha.senseguard_alerts"
-    ),
+    "anima.senseguard-alerts.save_spoken_presence_policy": ("builtin:anima_ha.senseguard_alerts"),
     "anima.senseguard-alerts.save_policy": "builtin:anima_ha.senseguard_alerts",
     "anima.scenes.create_scene": "builtin:anima_ha.scenes",
     "anima.scenes.update_scene": "builtin:anima_ha.scenes",

@@ -219,15 +219,14 @@ def test_core_control_plane_mutations_use_exact_source_policy_boundary() -> None
 
 def test_internal_boundary_requires_the_exact_builtin_source() -> None:
     declared = next(
-        item
-        for item in PREFERENCES_MANIFEST.tools
-        if item["name"] == "create_preference"
+        item for item in PREFERENCES_MANIFEST.tools if item["name"] == "create_preference"
     )
     spoofed = replace(PREFERENCES_MANIFEST, source="builtin:unrelated")
 
-    assert ToolDescriptor.from_manifest(
-        spoofed, dict(declared)
-    ).execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    assert (
+        ToolDescriptor.from_manifest(spoofed, dict(declared)).execution_boundary
+        == ExecutionBoundary.COORDINATED_CONSEQUENTIAL
+    )
 
 
 def test_entry_point_discovery_is_separate_from_enablement() -> None:
