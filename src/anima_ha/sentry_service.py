@@ -400,7 +400,12 @@ class CoreSentryHTTPService:
         return {"status": "CLAIMED", **self.request_payload(request, binding)}
 
     def provider_auto_wake(
-        self, body: dict[str, Any], principal: SentryServicePrincipal | None, *, exact: bool
+        self,
+        body: dict[str, Any],
+        principal: SentryServicePrincipal | None,
+        *,
+        exact: bool,
+        wait: bool = False,
     ) -> dict[str, Any]:
         if principal is None or "SENTRY_PROVIDER" not in principal.allowed_origins:
             raise ServiceAuthError("auto-wake requires a scoped provider principal")
@@ -408,7 +413,7 @@ class CoreSentryHTTPService:
         allowed |= (
             {"request_id", "worker_id", "sentry_request_id", "source_surface"}
             if exact
-            else {"limit"}
+            else ({"limit", "wait_seconds"} if wait else {"limit"})
         )
         if set(body) - allowed:
             raise ValueError("unexpected auto-wake fields")
@@ -417,9 +422,21 @@ class CoreSentryHTTPService:
             return {"status": "EMPTY"} if exact else {"status": "EMPTY", "items": []}
         window = claims.window(body)
         if not exact:
-            items = claims.eligible(
-                principal.household_id, principal.provider_id, window, limit=body.get("limit", 1)
-            )
+            if wait:
+                items = claims.wait(
+                    principal.household_id,
+                    principal.provider_id,
+                    window,
+                    limit=body.get("limit", 1),
+                    wait_seconds=body.get("wait_seconds", 25),
+                )
+            else:
+                items = claims.eligible(
+                    principal.household_id,
+                    principal.provider_id,
+                    window,
+                    limit=body.get("limit", 1),
+                )
             return {"status": "AVAILABLE" if items else "EMPTY", "items": items}
         if body.get("source_surface") != "anima_attention":
             raise ValueError("auto-wake source_surface must be anima_attention")
@@ -591,10 +608,17 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 response = service.voice_settings_store.get(principal.household_id)
             elif self.path == "/v1/health":
                 response = service.boundary.health().to_payload()
-            elif self.path in {"/v1/provider/requests/eligible", "/v1/provider/claims/exact"}:
+            elif self.path in {
+                "/v1/provider/requests/eligible",
+                "/v1/provider/requests/wait",
+                "/v1/provider/claims/exact",
+            }:
                 try:
                     response = service.provider_auto_wake(
-                        body, principal, exact=self.path == "/v1/provider/claims/exact"
+                        body,
+                        principal,
+                        exact=self.path == "/v1/provider/claims/exact",
+                        wait=self.path == "/v1/provider/requests/wait",
                     )
                 except psycopg.Error:
                     # A failed/ambiguous claim is not EMPTY and must not be replayed.

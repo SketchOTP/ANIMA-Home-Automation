@@ -229,7 +229,13 @@ class AnimaHouseholdClient:
             raise AnimaHouseholdError("ANIMA socket path must be absolute")
         self.token = _token(self.token_file)
 
-    def call(self, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def call(
+        self,
+        path: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         response_limit = _response_limit(path)
         body = json.dumps(payload or {}, sort_keys=True, separators=(",", ":")).encode()
         if len(body) > 64 * 1024:
@@ -243,12 +249,13 @@ class AnimaHouseholdClient:
             "Accept": "application/json",
         }
         parsed = urlsplit(self.endpoint)
+        request_timeout = self.timeout if timeout is None else timeout
         if parsed.scheme in {"http", "https"}:
             url = self.endpoint.rstrip("/") + path
             request = Request(url, data=body, headers=headers, method="POST")
             try:
                 with build_opener(ProxyHandler({}), _NoRedirect()).open(
-                    request, timeout=self.timeout
+                    request, timeout=request_timeout
                 ) as response:
                     status = response.status
                     raw = response.read(response_limit + 1)
@@ -265,7 +272,7 @@ class AnimaHouseholdClient:
             except Exception as exc:
                 raise _transport_error(exc) from None
         else:
-            connection = _UnixConnection(self.endpoint, self.timeout)
+            connection = _UnixConnection(self.endpoint, request_timeout)
             try:
                 connection.request("POST", path, body=body, headers=headers)
                 response = connection.getresponse()
@@ -278,6 +285,13 @@ class AnimaHouseholdClient:
             finally:
                 connection.close()
         return _decode_response(raw, status, limit=response_limit)
+
+    def wait_eligible(self, payload: dict[str, Any], *, wait_seconds: int = 25) -> dict[str, Any]:
+        return self.call(
+            "/v1/provider/requests/wait",
+            {**payload, "wait_seconds": wait_seconds},
+            timeout=wait_seconds + 3,
+        )
 
     def open_interaction(self, sentry_request_id: str, source_surface: str) -> dict[str, Any]:
         return self.call(

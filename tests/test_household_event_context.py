@@ -2,13 +2,22 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
 
-from anima_ha.household_event_context import CORRELATION_GUIDANCE, project_event
-from anima_ha.household_initiative import device_notification_matches, notification_disposition
+from anima_ha.household_event_context import (
+    CORRELATION_GUIDANCE,
+    HouseholdEventEvidence,
+    project_event,
+)
+from anima_ha.household_initiative import (
+    HouseholdInitiativeContext,
+    device_notification_matches,
+    notification_disposition,
+)
 
 NOW = datetime(2026, 9, 7, 18, tzinfo=UTC)
 
@@ -261,3 +270,31 @@ def test_device_notification_event_selector_is_bounded(
     selected: str, event_type: str, payload: dict[str, object], expected: bool
 ) -> None:
     assert device_notification_matches({"event_kind": selected}, event_type, payload) is expected
+
+
+def test_canonical_immediate_announcement_is_factual_and_graph_named() -> None:
+    resource_id = uuid4()
+
+    class Graph:
+        @staticmethod
+        def get_node(identifier: object) -> object | None:
+            return SimpleNamespace(name="Front Door Lock") if identifier == resource_id else None
+
+    initiative = HouseholdInitiativeContext(
+        "postgresql://unused",
+        None,
+        cast(HouseholdEventEvidence, SimpleNamespace(graph=Graph())),
+    )
+    announcement = initiative._canonical_announcement(
+        {
+            "event_id": str(uuid4()),
+            "event_type": "external.android.lock_reported",
+            "occurred_at": NOW,
+            "payload": {"event_kind": "unlocked"},
+        },
+        str(resource_id),
+    )
+    assert announcement is not None
+    assert announcement["text"] == "Front Door Lock was unlocked."
+    assert announcement["authority"] == "ANIMA_CANONICAL_EVENT"
+    assert "who" not in announcement and "actor" not in announcement

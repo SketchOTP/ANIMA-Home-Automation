@@ -10,6 +10,7 @@ import json
 import os
 import secrets
 import socket
+import time
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -43,6 +44,7 @@ from anima_ha.sentry_service import (
 
 ELIGIBLE = "/v1/provider/requests/eligible"
 EXACT = "/v1/provider/claims/exact"
+WAIT = "/v1/provider/requests/wait"
 
 
 @pytest.fixture(scope="module")
@@ -263,6 +265,45 @@ def test_authenticated_exact_claim_actual_journal_attention_and_no_replay(
             "AND from_lifecycle IS NOT NULL ORDER BY transition_id",
             (request_id,),
         ).fetchall() == [("CLAIMED",), ("DELIVERED_TO_PROVIDER",)]
+
+
+def test_authenticated_wait_wakes_on_new_durable_request(harness: Harness) -> None:
+    h = harness
+    started = time.monotonic()
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        waiting = executor.submit(
+            h.post,
+            WAIT,
+            h.body(limit=1, wait_seconds=5),
+        )
+        time.sleep(0.2)
+        request_id = h.enqueue()
+        code, response = waiting.result(timeout=7)
+    assert code == 200 and response["status"] == "AVAILABLE"
+    assert response["items"][0]["request_id"] == str(request_id)
+    assert time.monotonic() - started < 3
+    assert h.store.get(request_id).lifecycle.value == "PENDING"  # type: ignore[union-attr]
+
+
+def test_security_priority_orders_before_background_work(harness: Harness) -> None:
+    h = harness
+    background = h.enqueue()
+    security = h.enqueue()
+    with psycopg.connect(h.url) as connection:
+        connection.execute(
+            "UPDATE anima_intelligence_requests SET request_metadata=%s::jsonb WHERE request_id=%s",
+            (json.dumps({"priority": 10}), background),
+        )
+        connection.execute(
+            "UPDATE anima_intelligence_requests SET request_metadata=%s::jsonb WHERE request_id=%s",
+            (json.dumps({"priority": 100}), security),
+        )
+    code, response = h.post(ELIGIBLE, h.body(limit=2))
+    assert code == 200
+    assert [item["request_id"] for item in response["items"]] == [
+        str(security),
+        str(background),
+    ]
 
 
 @pytest.mark.parametrize(

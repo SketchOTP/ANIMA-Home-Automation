@@ -9,13 +9,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from time import monotonic
 from typing import Any
 from uuid import UUID
 
 import psycopg
 from psycopg.rows import dict_row
 
-from anima_ha.intelligence import IntelligenceRequest, _request_from_row
+from anima_ha.intelligence import (
+    SENTRY_REQUEST_READY_CHANNEL,
+    IntelligenceRequest,
+    _request_from_row,
+)
 
 
 def aware_timestamp(value: str) -> datetime:
@@ -141,24 +146,26 @@ class PostgresAutoWakeClaims:
             window.max_age_seconds,
         )
 
-    def eligible(
-        self, household_id: UUID, provider_id: str, window: AutoWakeWindow, *, limit: int
+    def _eligible(
+        self,
+        connection: psycopg.Connection[Any],
+        household_id: UUID,
+        provider_id: str,
+        window: AutoWakeWindow,
+        *,
+        limit: int,
     ) -> list[dict[str, Any]]:
         if type(limit) is not int or not 1 <= limit <= 10:
             raise ValueError("limit must be an integer from 1 to 10")
-        with psycopg.connect(
-            self.database_url,
-            row_factory=dict_row,
-            connect_timeout=5,
-            options="-c statement_timeout=5000",
-        ) as connection:
-            rows = connection.execute(
-                "SELECT r.request_id,r.household_id,r.provider_id,r.origin,r.created_at "
-                "FROM anima_intelligence_requests r WHERE "
-                + _ELIGIBLE
-                + " ORDER BY r.created_at,r.request_id LIMIT %s",
-                (*self._parameters(household_id, provider_id, window), limit),
-            ).fetchall()
+        rows = connection.execute(
+            "SELECT r.request_id,r.household_id,r.provider_id,r.origin,r.created_at "
+            "FROM anima_intelligence_requests r WHERE "
+            + _ELIGIBLE
+            + " ORDER BY CASE WHEN (r.request_metadata->>'priority') ~ '^-?[0-9]+$' "
+            "THEN (r.request_metadata->>'priority')::integer ELSE 0 END DESC,"
+            "r.created_at,r.request_id LIMIT %s",
+            (*self._parameters(household_id, provider_id, window), limit),
+        ).fetchall()
         return [
             {
                 key: value.isoformat() if isinstance(value, datetime) else str(value)
@@ -166,6 +173,54 @@ class PostgresAutoWakeClaims:
             }
             for row in rows
         ]
+
+    def eligible(
+        self, household_id: UUID, provider_id: str, window: AutoWakeWindow, *, limit: int
+    ) -> list[dict[str, Any]]:
+        with psycopg.connect(
+            self.database_url,
+            row_factory=dict_row,
+            connect_timeout=5,
+            options="-c statement_timeout=5000",
+        ) as connection:
+            return self._eligible(connection, household_id, provider_id, window, limit=limit)
+
+    def wait(
+        self,
+        household_id: UUID,
+        provider_id: str,
+        window: AutoWakeWindow,
+        *,
+        limit: int,
+        wait_seconds: int,
+    ) -> list[dict[str, Any]]:
+        """Wait for durable eligible work without polling the model or database."""
+        if type(wait_seconds) is not int or not 1 <= wait_seconds <= 30:
+            raise ValueError("wait_seconds must be an integer from 1 to 30")
+        with psycopg.connect(
+            self.database_url,
+            autocommit=True,
+            row_factory=dict_row,
+            connect_timeout=5,
+            options="-c statement_timeout=35000",
+        ) as connection:
+            connection.execute(f"LISTEN {SENTRY_REQUEST_READY_CHANNEL}")
+            # LISTEN first, then query, so a commit cannot be lost between the
+            # initial read and entering the wait.
+            items = self._eligible(connection, household_id, provider_id, window, limit=limit)
+            if items:
+                return items
+            deadline = monotonic() + wait_seconds
+            while True:
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    return []
+                notified = next(connection.notifies(timeout=remaining, stop_after=1), None)
+                if notified is None:
+                    return []
+                items = self._eligible(connection, household_id, provider_id, window, limit=limit)
+                if items:
+                    return items
 
     def claim(
         self,

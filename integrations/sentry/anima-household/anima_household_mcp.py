@@ -57,7 +57,7 @@ _STATUS_RANK = {
 }
 
 
-def _private_json(path: Path) -> dict[str, Any]:
+def _private_json(path: Path, *, maximum_bytes: int = 65536) -> dict[str, Any]:
     try:
         with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)) as stream:
             info = os.fstat(stream.fileno())
@@ -65,12 +65,12 @@ def _private_json(path: Path) -> dict[str, Any]:
                 not stat.S_ISREG(info.st_mode)
                 or stat.S_IMODE(info.st_mode) != 0o600
                 or info.st_uid != os.geteuid()
-                or info.st_size > 65536
+                or info.st_size > maximum_bytes
             ):
                 raise ValueError
-            raw = stream.read(65537)
+            raw = stream.read(maximum_bytes + 1)
         value = json.loads(raw)
-        if len(raw) > 65536 or not isinstance(value, dict):
+        if len(raw.encode()) > maximum_bytes or not isinstance(value, dict):
             raise ValueError
         return value
     except (OSError, ValueError, UnicodeError):
@@ -227,13 +227,33 @@ def _client() -> AnimaHouseholdClient:
     return _CLIENT
 
 
+def _preloaded(name: str, *, maximum_bytes: int = 512 * 1024) -> dict[str, Any] | None:
+    if _PREBOUND_PATH is None:
+        return None
+    bound = _prebound()
+    target = Path(_PREBOUND_PATH).with_name(f"{name}.json")
+    # Direct voice bindings intentionally use live Core reads. Only the
+    # autonomous host prepares request-frozen preload siblings.
+    if not os.path.lexists(target):
+        return None
+    value = _private_json(target, maximum_bytes=maximum_bytes)
+    if (
+        set(value) != {"version", "request_id", "value"}
+        or value.get("version") != 1
+        or value.get("request_id") != bound["request_id"]
+        or not isinstance(value.get("value"), dict)
+    ):
+        raise RuntimeError("ANIMA_PREBOUND_PRELOAD_INVALID")
+    return deepcopy(value["value"])
+
+
 @server.tool(
     name="anima_health",
     description="Return ANIMA household service health",
     annotations=_READ_ANNOTATIONS,
 )
 def anima_health() -> dict[str, Any]:
-    value = _client().call("/v1/health")
+    value = _preloaded("health") or _client().call("/v1/health")
     if _PREBOUND_PATH is not None:
         value = {**_safe_result(value), "request_id": _prebound()["request_id"]}
     return value
@@ -287,7 +307,9 @@ def _bound(request_id: str) -> str:
     annotations=_READ_ANNOTATIONS,
 )
 def anima_get_context(request_id: str) -> dict[str, Any]:
-    return _safe_result(_client().context(request_id, _bound(request_id)))
+    _bound(request_id)
+    value = _preloaded("context") or _client().context(request_id, _bound(request_id))
+    return _safe_result(value)
 
 
 @server.tool(
@@ -301,7 +323,8 @@ def anima_list_tools(request_id: str) -> dict[str, Any]:
         with _LOCK:
             binding = _bound(request_id)
             if _CATALOGUE is None:
-                _CATALOGUE = deepcopy(_filtered_catalogue(_client().tools(request_id, binding)))
+                value = _preloaded("tools") or _client().tools(request_id, binding)
+                _CATALOGUE = deepcopy(_filtered_catalogue(value))
             return deepcopy(_CATALOGUE)
     value = _client().tools(request_id, _bound(request_id))
     return value

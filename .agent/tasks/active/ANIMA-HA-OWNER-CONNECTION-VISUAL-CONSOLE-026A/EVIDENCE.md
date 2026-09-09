@@ -228,6 +228,29 @@ official apps, notification capture and vendor events did not run. SENTRY's
 event lease tests do not qualify an automatic wake/TTS connection. No new hosted
 CI, publication or full-integration acceptance is claimed by this checkpoint.
 
+## 2026-09-09 UTC push-first mandatory-alert latency closure
+
+- Implemented an authenticated long wait backed by PostgreSQL `LISTEN/NOTIFY`.
+  Enqueue sends an empty wake only after a new durable request row exists;
+  subscribe-then-query prevents the listener race. Empty waits do not claim,
+  call provider-start or invoke a model.
+- Request ordering uses the frozen integer Attention priority before creation
+  order. A real disposable PostgreSQL test proved priority 100 is returned
+  before priority 10 and a waiting authenticated Unix HTTP request woke in
+  under three seconds after enqueue.
+- Core creates an actor-free canonical factual announcement only for fresh,
+  qualified events whose owner disposition is `ALWAYS_NOTIFY`. It uses the
+  canonical Graph name and a bounded event-kind phrase; untrusted notification
+  prose remains excluded.
+- SENTRY begins warm TTS after the durable provider-start fence while its
+  low-effort contextual turn runs in parallel. Health, sparse context and the
+  frozen request catalogue are mode-0600 preloads, eliminating Core discovery
+  round trips without widening the tool set.
+- `scripts/validate.sh`: PASSED, 1153 tests passed/76 optional skipped, strict
+  mypy and Ruff passed, OPA 9/9. Real PostgreSQL autowake target: PASSED, 31.
+  Docker UI/Core build and local deployment health: PASSED. Physical event to
+  audible playback objective: NOT RUN on this exact source.
+
 ## 2026-09-08 UTC owner page guidance alignment
 
 - Replaced the remaining slogan-style introductions on Automations, SENTRY,

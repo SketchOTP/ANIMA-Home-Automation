@@ -113,6 +113,16 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     metadata = private / "metadata.json"
     metadata.write_text(json.dumps({"version": 1, "status": "READY", "calls": 0}))
     metadata.chmod(0o600)
+    for name, value in (
+        ("health", {"state": "available"}),
+        ("context", {"context": "synthetic"}),
+        ("tools", {"tools": [deepcopy(SAFE)]}),
+    ):
+        preload = private / f"{name}.json"
+        preload.write_text(
+            json.dumps({"version": 1, "request_id": payload["request_id"], "value": value})
+        )
+        preload.chmod(0o600)
     module = load(monkeypatch, path)
     client = Client()
     module._CLIENT = client
@@ -133,7 +143,7 @@ def test_prebound_registers_only_request_bound_tools_and_no_secret_arguments(bou
     assert payload["binding"] not in serialized and payload["token_file"] not in serialized
     assert all("binding" not in tool.input_schema.get("properties", {}) for tool in tools)
     module.anima_get_context(payload["request_id"])
-    assert client.calls[-1] == ("context", payload["request_id"], payload["binding"])
+    assert client.calls == []
     health = module.anima_health()
     assert health == {"state": "available", "request_id": payload["request_id"]}
     assert payload["binding"] not in json.dumps(health)
@@ -249,7 +259,7 @@ def test_client_configuration_is_host_owned(bound: Any, monkeypatch: pytest.Monk
         return client
 
     monkeypatch.setattr(module, "AnimaHouseholdClient", construct)
-    module.anima_health()
+    module.anima_status(payload["request_id"])
     assert seen == [{"endpoint": payload["endpoint"], "token_file": payload["token_file"]}]
 
 
@@ -272,11 +282,20 @@ def test_cached_client_cannot_bypass_host_revocation(bound: Any, case: str) -> N
 
 @pytest.mark.parametrize("tool_id", PRODUCTS + ("future.restricted",))
 def test_restricted_products_filtered_and_blocked_before_invoke(bound: Any, tool_id: str) -> None:
-    module, client, _, payload, metadata = bound
+    module, client, path, payload, metadata = bound
     descriptor = {"tool_id": tool_id, "availability": True, "description": "NEVER_EGRESS"}
     if tool_id == "future.restricted":
         descriptor["content_persistence"] = "EPHEMERAL_RESTRICTED"
-    client.catalogue.append(descriptor)
+    preload = path.with_name("tools.json")
+    preload.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "request_id": payload["request_id"],
+                "value": {"tools": [deepcopy(SAFE), descriptor]},
+            }
+        )
+    )
     catalogue = module.anima_list_tools(payload["request_id"])
     assert catalogue["tools"] == [SAFE]
     assert "NEVER_EGRESS" not in json.dumps(catalogue)
@@ -444,21 +463,23 @@ def test_catalogue_is_frozen_for_turn_and_cannot_gain_tools(bound: Any) -> None:
     first["tools"].append({"tool_id": "caller.injected", "availability": True})
     assert module.anima_list_tools(payload["request_id"])["tools"] == [SAFE]
     assert module.anima_invoke(payload["request_id"], "newly.added", {})["status"] == "UNAVAILABLE"
-    assert sum(call[0] == "tools" for call in client.calls) == 1
+    assert sum(call[0] == "tools" for call in client.calls) == 0
     assert not any(call[0] == "invoke" for call in client.calls)
 
 
-def test_restricted_read_marks_host_unavailable_without_leaking_content(
-    bound: Any, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    module, client, _, payload, metadata = bound
-    monkeypatch.setattr(
-        client,
-        "context",
-        lambda *args: {
-            "content_persistence": "EPHEMERAL_RESTRICTED",
-            "products": ["NEVER_PERSIST"],
-        },
+def test_restricted_read_marks_host_unavailable_without_leaking_content(bound: Any) -> None:
+    module, client, path, payload, metadata = bound
+    path.with_name("context.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "request_id": payload["request_id"],
+                "value": {
+                    "content_persistence": "EPHEMERAL_RESTRICTED",
+                    "products": ["NEVER_PERSIST"],
+                },
+            }
+        )
     )
     result = module.anima_get_context(payload["request_id"])
     assert result == {"status": "UNAVAILABLE", "reason": "PERSISTENT_THREAD_RESTRICTED_CONTENT"}

@@ -126,7 +126,7 @@ class HouseholdInitiativeContext:
                 options="-c statement_timeout=5000",
             ) as connection:
                 source = connection.execute(
-                    "SELECT event_type,source,metadata,payload,occurred_at "
+                    "SELECT event_id,event_type,source,metadata,payload,occurred_at "
                     "FROM anima_event_journal "
                     "WHERE event_id=%s AND metadata->>'household_id'=%s",
                     (request.causation_id, str(request.household_id)),
@@ -196,6 +196,64 @@ class HouseholdInitiativeContext:
                 review=review,
                 now=at,
             )
+            if (
+                result["notification"]["allowed"] is True
+                and result["notification"]["required"] is True
+                and result["notification"]["reason"] == "ALWAYS_NOTIFY"
+                and valid_source
+                and fresh
+            ):
+                announcement = self._canonical_announcement(source, resource_id)
+                if announcement is not None:
+                    result["notification"]["announcement"] = announcement
             return result
         except Exception:
             return {"status": "UNAVAILABLE", "notification": closed, "authority": "NONE"}
+
+    def _canonical_announcement(
+        self, source: dict[str, Any], resource_id: str
+    ) -> dict[str, Any] | None:
+        """Build a factual Core-authored first alert from trusted graph identity."""
+        if not resource_id:
+            return None
+        try:
+            resource = self.evidence.graph.get_node(UUID(resource_id))
+        except (AttributeError, TypeError, ValueError):
+            return None
+        name = str(getattr(resource, "name", "")).strip()
+        if not name or len(name) > 160:
+            return None
+        event_type = str(source["event_type"])
+        payload = source["payload"]
+        event_kind = (
+            str(
+                payload.get("event_kind")
+                or payload.get("reported_lock_state")
+                or payload.get("transition")
+                or event_type.rsplit(".", 1)[-1]
+            )
+            .strip()
+            .lower()
+        )
+        phrases = {
+            "unlocked": f"{name} was unlocked.",
+            "opened": f"{name} was opened.",
+            "motion": f"Motion was detected by {name}.",
+            "motion_reported": f"Motion was detected by {name}.",
+            "doorbell": f"{name} was pressed.",
+            "reconnected": f"{name} reconnected to home Wi-Fi.",
+            "disconnected": f"{name} disconnected from home Wi-Fi.",
+        }
+        text = phrases.get(event_kind)
+        if text is None:
+            return None
+        return {
+            "schema_version": 1,
+            "text": text,
+            "event_id": str(source.get("event_id", "")),
+            "event_type": event_type,
+            "occurred_at": source["occurred_at"].isoformat(),
+            "canonical_resource_id": resource_id,
+            "canonical_resource_name": name,
+            "authority": "ANIMA_CANONICAL_EVENT",
+        }

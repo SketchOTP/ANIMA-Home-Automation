@@ -1696,3 +1696,23 @@ decision.
   `sha256:276a984e2878bb90c9a7595e93d743471e2eee2196c4c61cb46b0b966708be61`.
 - A post-fix physical unlock-to-audible-TTS observation has not been run, so E5
   announcement delivery is not claimed.
+
+## OUTCOME-PUSH-FIRST-MANDATORY-ALERTS-026A — immediate factual path and push wake
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / physical timing pending
+- Durable intelligence enqueue now emits an empty PostgreSQL notification only
+  for a newly inserted request. The authenticated SENTRY wait route listens,
+  rechecks after subscribing to avoid a race, and returns only server-filtered
+  eligible work. Security priority is deterministic and no model is polled.
+- Core supplies a strict canonical announcement only for fresh, qualified
+  `ALWAYS_NOTIFY` evidence. SENTRY starts the existing warm TTS path after the
+  provider-start fence and concurrently runs low-effort contextual reasoning.
+  The model cannot grant delivery or override the factual first alert.
+- Request health, sparse context and frozen tool catalogue are preloaded into
+  private request-bound files; the MCP surface validates the request identity
+  before serving them. Direct voice bindings without preloads retain live Core
+  reads.
+- PASSED: complete `anima-validate` with 1153 passed/76 skipped, OPA 9/9, real
+  PostgreSQL push/priority target with 31 passed, Docker image build, live Core
+  health and diff check. Physical 1-3 second audible timing remains NOT RUN.

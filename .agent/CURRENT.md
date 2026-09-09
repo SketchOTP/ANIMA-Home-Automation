@@ -2,6 +2,33 @@
 
 Last updated: 2026-09-09
 
+## Push-first mandatory household alerts — 2026-09-09
+
+Eligible SENTRY work now wakes through PostgreSQL `LISTEN/NOTIFY` and an
+authenticated bounded wait route instead of the resident voice loop checking
+the queue every 15 seconds. The notification payload is empty; request,
+household and provider selection remain server-side. Exact new requests are
+ordered by their frozen Attention priority, so guaranteed security events are
+offered before background reasoning. Empty waits do not claim work, start a
+provider or invoke Codex.
+
+For a current owner rule that resolves to `ALWAYS_NOTIFY`, Core now derives one
+bounded factual announcement from the canonical Graph resource and qualified
+event fields. It does not infer actor, intent or household risk. SENTRY may
+speak that sentence immediately after durable provider-start while low-effort
+context analysis runs in parallel; OPA, request fencing, result authority,
+verification and no-replay behavior are unchanged. Health, sparse context and
+the frozen catalogue are host-preloaded into mode-0600 per-request files, so
+the model's required MCP discovery calls add no Core round trips.
+
+PASSED locally: complete `anima-validate` (1153 passed, 76 skipped), OPA 9/9,
+real PostgreSQL authenticated push wake/priority tests (31 passed), prebound MCP
+tests, Docker build, deployment health and `git diff --check`. The deployed
+voice process has an established authenticated wait connection to Core and does
+not call the model while the wait is empty. A fresh physical unlock timing
+sample against this exact implementation is pending, so the 1-3 second audible
+objective is not yet claimed operationally.
+
 ## Live Tapo unlock announcement correction — 2026-09-09
 
 A genuine Tapo DL110 unlock reached the qualified Android notification relay,

@@ -27,6 +27,7 @@ INTELLIGENCE_NAMESPACE = UUID("0bd7a7d8-7300-4f96-a770-5e6f4ed7ef1a")
 INTELLIGENCE_SCHEMA_VERSION = 1
 MAX_RESPONSE_BYTES = 16_384
 MAX_METADATA_BYTES = 8_192
+SENTRY_REQUEST_READY_CHANNEL = "anima_sentry_request_ready"
 
 
 class IntelligenceProviderMode(StrEnum):
@@ -307,6 +308,7 @@ class PostgresIntelligenceStore:
                     json.dumps(list(request.catalogue), sort_keys=True),
                 ),
             )
+            inserted = cursor.rowcount == 1
             cursor.execute(
                 "SELECT * FROM anima_intelligence_requests WHERE idempotency_key=%s",
                 (request.idempotency_key,),
@@ -314,6 +316,11 @@ class PostgresIntelligenceStore:
             row = cursor.fetchone()
             if row is None:
                 raise RuntimeError("intelligence request disappeared after enqueue")
+            if inserted:
+                # Wake the authenticated SENTRY long-poll after the durable row
+                # exists in this transaction.  The payload is intentionally
+                # empty: household/request identity remains server-side.
+                cursor.execute("SELECT pg_notify(%s, '')", (SENTRY_REQUEST_READY_CHANNEL,))
             connection.commit()
         return _request_from_row(row)
 
