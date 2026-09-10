@@ -66,6 +66,51 @@ class SentryEventPath(StrEnum):
     NO_SENTRY_REASONING = "NO_SENTRY_REASONING"
 
 
+def compatible_sentry_path(
+    path: SentryEventPath | str | None,
+    *,
+    alert_mode: str | None = None,
+    required: bool = False,
+    default: SentryEventPath = SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING,
+) -> SentryEventPath:
+    """Return the only route compatible with the server-owned alert obligation.
+
+    Alert behavior and cognition cost are separate owner controls, but they
+    cannot contradict one another.  This helper is deliberately deterministic
+    so old persisted combinations are made safe on read while new writes store
+    the resulting effective route.  It never changes whether an event is
+    authoritative, allowed, or verified.
+    """
+
+    invalid = False
+    if path is None:
+        candidate = default
+    else:
+        try:
+            candidate = SentryEventPath(path)
+        except (TypeError, ValueError):
+            invalid = True
+            candidate = default
+    mode = str(alert_mode).upper() if alert_mode is not None else None
+    if mode == "NEVER":
+        return SentryEventPath.NO_SENTRY_REASONING
+    if mode in {"ALWAYS", "TIME_WINDOW"}:
+        if candidate in {
+            SentryEventPath.NO_SENTRY_REASONING,
+            SentryEventPath.AGGREGATED_REASONING,
+        }:
+            return SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY
+        return SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY if invalid and required else candidate
+    if mode == "CONTEXTUAL":
+        return SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
+    if required and candidate in {
+        SentryEventPath.NO_SENTRY_REASONING,
+        SentryEventPath.AGGREGATED_REASONING,
+    }:
+        return SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY
+    return SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY if invalid and required else candidate
+
+
 class TriggerStatus(StrEnum):
     PENDING = "PENDING"
     CONTEXT_READY = "CONTEXT_READY"

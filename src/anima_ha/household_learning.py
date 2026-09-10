@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 
 from psycopg.errors import UniqueViolation
 
-from anima_ha.attention import SentryEventPath
+from anima_ha.attention import SentryEventPath, compatible_sentry_path
 from anima_ha.household_patterns import candidate_digest, extract_pattern_candidates
 from anima_ha.memory import (
     MemoryProvenance,
@@ -162,13 +162,18 @@ class DeviceNotificationRule:
             raise HouseholdLearningError("unsupported device notification event kind")
         if self.sentry_path is not None:
             try:
-                object.__setattr__(self, "sentry_path", SentryEventPath(self.sentry_path))
-            except ValueError:
+                path = SentryEventPath(self.sentry_path)
+            except (TypeError, ValueError):
                 raise HouseholdLearningError("unsupported SENTRY event path") from None
-            if self.sentry_path == SentryEventPath.AGGREGATED_REASONING:
+            if path == SentryEventPath.AGGREGATED_REASONING:
                 raise HouseholdLearningError(
                     "aggregation is selected by the Attention profile, not a device rule"
                 )
+            object.__setattr__(
+                self,
+                "sentry_path",
+                compatible_sentry_path(path, alert_mode=self.mode),
+            )
         for value in (self.start_local, self.end_local):
             try:
                 datetime.strptime(value, "%H:%M")
@@ -188,6 +193,17 @@ class DeviceNotificationRule:
             or not required <= set(value)
         ):
             raise HouseholdLearningError("full device notification rule required")
+        if value.get("sentry_path") == SentryEventPath.AGGREGATED_REASONING.value:
+            # This value was never a valid device override, but older data may
+            # contain it.  Reconcile it to the safe route for the alert mode
+            # instead of making the whole household configuration unreadable.
+            value = {
+                **value,
+                "sentry_path": compatible_sentry_path(
+                    SentryEventPath.AGGREGATED_REASONING,
+                    alert_mode=str(value.get("mode", "")),
+                ).value,
+            }
         return cls(**value)
 
     def to_payload(self) -> dict[str, Any]:

@@ -40,6 +40,10 @@ const number = (value: unknown): value is number => typeof value === "number" &&
 const date = (value: unknown): value is string => text(value) && /(?:Z|[+-]\d\d:\d\d)$/.test(value) && Number.isFinite(Date.parse(value));
 const nullableDate = (value: unknown) => value === null || date(value);
 const inRange = (value: unknown, min: number, max: number) => number(value) && Number.isInteger(value) && value >= min && value <= max;
+const validSentryPath = (mode: unknown, path: unknown) => path === undefined
+  || (mode === "NEVER" && path === "NO_SENTRY_REASONING")
+  || (mode === "CONTEXTUAL" && path === "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING")
+  || ((mode === "ALWAYS" || mode === "TIME_WINDOW") && ["IMMEDIATE_ANNOUNCEMENT_ONLY", "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"].includes(String(path)));
 function parseSnapshot(value: unknown): Snapshot {
   if (!object(value) || value.status !== "SUCCEEDED" || value.authority !== "NONE" || !object(value.config) || !object(value.readiness) || !object(value.scheduling)) throw new Error("INVALID_RESPONSE");
   const config = value.config, ready = value.readiness, scheduling = value.scheduling;
@@ -47,7 +51,7 @@ function parseSnapshot(value: unknown): Snapshot {
     || ![config.daily_review_enabled, config.routine_review_enabled, config.proactive_enabled, value.can_edit, value.proactive_eligible, ready.ready, ready.truncated].every(item => typeof item === "boolean")
     || !Array.isArray(config.always_notify) || !config.always_notify.every(type => notificationTypes.some(([id]) => id === type)) || new Set(config.always_notify).size !== config.always_notify.length
     || (config.device_notifications !== undefined && (!Array.isArray(config.device_notifications) || config.device_notifications.length > 128
-    || !config.device_notifications.every(rule => object(rule) && text(rule.resource_id) && ["ALWAYS", "TIME_WINDOW", "NEVER", "CONTEXTUAL"].includes(String(rule.mode)) && /^\d\d:\d\d$/.test(String(rule.start_local)) && /^\d\d:\d\d$/.test(String(rule.end_local)) && text(rule.timezone) && (rule.event_kind === undefined || ["ANY", "UNLOCKED", "LOCKED", "OPENED", "CLOSED", "MOTION", "DOORBELL"].includes(String(rule.event_kind))) && (rule.sentry_path === undefined || ["IMMEDIATE_ANNOUNCEMENT_ONLY", "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING", "NO_SENTRY_REASONING"].includes(String(rule.sentry_path))))))
+    || !config.device_notifications.every(rule => object(rule) && text(rule.resource_id) && ["ALWAYS", "TIME_WINDOW", "NEVER", "CONTEXTUAL"].includes(String(rule.mode)) && /^\d\d:\d\d$/.test(String(rule.start_local)) && /^\d\d:\d\d$/.test(String(rule.end_local)) && text(rule.timezone) && (rule.event_kind === undefined || ["ANY", "UNLOCKED", "LOCKED", "OPENED", "CLOSED", "MOTION", "DOORBELL"].includes(String(rule.event_kind))) && (rule.sentry_path === undefined || ["IMMEDIATE_ANNOUNCEMENT_ONLY", "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING", "NO_SENTRY_REASONING"].includes(String(rule.sentry_path))) && validSentryPath(rule.mode, rule.sentry_path))))
     || !(value.config_version === null || text(value.config_version)) || !text(value.timezone)
     || !inRange(ready.observed_local_days, 0, Number.MAX_SAFE_INTEGER) || !inRange(ready.required_days, 3, 14)
     || !nullableDate(ready.first_observed_at) || !nullableDate(ready.last_observed_at) || !number(ready.elapsed_seconds) || !number(ready.required_elapsed_seconds) || ready.required_elapsed_seconds === 0

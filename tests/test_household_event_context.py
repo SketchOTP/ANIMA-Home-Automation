@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import pytest
 
+from anima_ha.attention import SentryEventPath
 from anima_ha.household_event_context import (
     CORRELATION_GUIDANCE,
     HouseholdEventEvidence,
@@ -258,6 +259,99 @@ def test_device_notification_rule_is_authoritative_before_household_default(
         "NO_SENTRY_REASONING" if mode == "NEVER" else "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"
     )
     assert result["required"] is required
+
+
+@pytest.mark.parametrize(
+    "mode,path,required,expected",
+    [
+        (
+            "ALWAYS",
+            SentryEventPath.NO_SENTRY_REASONING,
+            True,
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+        ),
+        (
+            "TIME_WINDOW",
+            SentryEventPath.NO_SENTRY_REASONING,
+            True,
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+        ),
+        (
+            "CONTEXTUAL",
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+            False,
+            SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING,
+        ),
+        (
+            "NEVER",
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+            False,
+            SentryEventPath.NO_SENTRY_REASONING,
+        ),
+    ],
+)
+def test_alert_obligation_and_sentry_path_cannot_contradict(
+    mode: str,
+    path: SentryEventPath,
+    required: bool,
+    expected: SentryEventPath,
+) -> None:
+    result = notification_disposition(
+        request_id=uuid4(),
+        event_type="household.ring.doorbell",
+        config={},
+        ready=True,
+        device_rule={
+            "resource_id": str(uuid4()),
+            "mode": mode,
+            "start_local": "00:00",
+            "end_local": "23:59",
+            "timezone": "UTC",
+            "sentry_path": path.value,
+        },
+        event_occurred_at=NOW,
+        now=NOW,
+    )
+    assert result["required"] is required
+    assert result["sentry_event_path"] == expected.value
+
+
+def test_required_alert_recovers_from_malformed_or_suppressed_request_route() -> None:
+    malformed = notification_disposition(
+        request_id=uuid4(),
+        event_type="household.ring.doorbell",
+        config={},
+        ready=False,
+        explicit_alert=True,
+        sentry_event_path="not-a-route",
+        now=NOW,
+    )
+    suppressed = notification_disposition(
+        request_id=uuid4(),
+        event_type="household.ring.doorbell",
+        config={},
+        ready=False,
+        explicit_alert=True,
+        sentry_event_path=SentryEventPath.NO_SENTRY_REASONING,
+        now=NOW,
+    )
+    assert malformed["required"] is True
+    assert suppressed["required"] is True
+    assert malformed["sentry_event_path"] == SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value
+    assert suppressed["sentry_event_path"] == SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value
+
+
+def test_optional_aggregate_route_remains_attention_owned() -> None:
+    result = notification_disposition(
+        request_id=uuid4(),
+        event_type="household.motion",
+        config={"proactive_enabled": True},
+        ready=True,
+        sentry_event_path=SentryEventPath.AGGREGATED_REASONING,
+        now=NOW,
+    )
+    assert result["required"] is False
+    assert result["sentry_event_path"] == SentryEventPath.AGGREGATED_REASONING.value
 
 
 @pytest.mark.parametrize(

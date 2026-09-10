@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import psycopg
 from psycopg.rows import dict_row
 
-from anima_ha.attention import SentryEventPath
+from anima_ha.attention import SentryEventPath, compatible_sentry_path
 from anima_ha.household_event_context import HouseholdEventEvidence
 from anima_ha.intelligence import IntelligenceOrigin, IntelligenceRequest
 
@@ -89,19 +89,14 @@ def notification_disposition(
         allowed, reason = False, "PROACTIVE_DISABLED"
     else:
         allowed, reason = True, "LEARNED_PROACTIVE"
-    try:
-        path = SentryEventPath(str(sentry_event_path)) if sentry_event_path else None
-    except ValueError:
-        path = None
-    if device_rule and device_rule.get("mode") == "NEVER":
-        path = SentryEventPath.NO_SENTRY_REASONING
-    elif path is None and device_rule:
-        try:
-            configured = device_rule.get("sentry_path")
-            path = SentryEventPath(str(configured)) if configured else None
-        except ValueError:
-            path = None
-    path = path or SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
+    configured_path = sentry_event_path
+    if configured_path is None and device_rule:
+        configured_path = device_rule.get("sentry_path")
+    path = compatible_sentry_path(
+        configured_path,
+        alert_mode=str(device_rule.get("mode")) if device_rule else None,
+        required=required,
+    )
     return {
         "allowed": allowed,
         "required": required,

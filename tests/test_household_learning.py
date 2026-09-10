@@ -439,6 +439,49 @@ def test_device_notification_config_is_bounded_and_legacy_compatible() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "mode,path,expected",
+    [
+        (
+            "ALWAYS",
+            SentryEventPath.NO_SENTRY_REASONING.value,
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value,
+        ),
+        (
+            "CONTEXTUAL",
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value,
+            SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING.value,
+        ),
+        (
+            "NEVER",
+            SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value,
+            SentryEventPath.NO_SENTRY_REASONING.value,
+        ),
+    ],
+)
+def test_legacy_invalid_device_route_is_normalized_to_safe_effective_behavior(
+    mode: str, path: str, expected: str
+) -> None:
+    resource = str(uuid4())
+    config = InitiativeConfig.from_payload(
+        {
+            **InitiativeConfig().to_payload(),
+            "device_notifications": [
+                {
+                    "resource_id": resource,
+                    "mode": mode,
+                    "start_local": "00:00",
+                    "end_local": "23:59",
+                    "timezone": "UTC",
+                    "event_kind": "ANY",
+                    "sentry_path": path,
+                }
+            ],
+        }
+    )
+    assert config.device_notifications[0].to_payload()["sentry_path"] == expected
+
+
 def test_owner_can_update_one_device_event_rule_without_replacing_other_config(
     fixture: Any,
 ) -> None:

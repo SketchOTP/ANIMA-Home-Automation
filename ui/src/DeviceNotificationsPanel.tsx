@@ -39,6 +39,18 @@ const paths: { value: SentryPath; label: string; help: string }[] = [
   { value: "NO_SENTRY_REASONING", label: "No SENTRY reasoning", help: "Keep the event as ANIMA evidence without waking SENTRY's reasoning provider." },
 ];
 const emptyRule = (resource_id: string): Rule => ({ resource_id, mode: "CONTEXTUAL", start_local: "00:00", end_local: "05:00", timezone: "America/New_York", event_kind: "ANY" });
+const validPaths = (mode: Mode): { value: SentryPath; label: string; help: string }[] => {
+  if (mode === "NEVER") return paths.filter(path => path.value === "NO_SENTRY_REASONING");
+  if (mode === "CONTEXTUAL") return paths.filter(path => path.value === "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING");
+  return paths.filter(path => path.value !== "NO_SENTRY_REASONING");
+};
+const effectivePath = (mode: Mode, path?: SentryPath): SentryPath => {
+  if (mode === "NEVER") return "NO_SENTRY_REASONING";
+  if (mode === "CONTEXTUAL") return "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING";
+  return path === "IMMEDIATE_ANNOUNCEMENT_ONLY" || path === "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"
+    ? path
+    : "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING";
+};
 
 export function DeviceNotificationsPanel({ devices, mutate, onAuthFailure }: Props) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -97,11 +109,15 @@ export function DeviceNotificationsPanel({ devices, mutate, onAuthFailure }: Pro
         <div><strong>{device.canonical_name ?? device.metadata.name ?? "Household device"}</strong><small>{device.metadata.manufacturer ?? device.metadata.integration ?? "ANIMA"}</small></div>
         <label>Alert behavior<select aria-label={`Alert behavior for ${device.canonical_name ?? device.metadata.name}`} value={selected} disabled={!canEdit || busy === id} onChange={event => {
           const mode = event.target.value as "DEFAULT" | Mode;
-          setDrafts(current => ({ ...current, [id]: mode === "DEFAULT" ? null : { ...(current[id] ?? emptyRule(id)), mode } }));
+          setDrafts(current => {
+            if (mode === "DEFAULT") return { ...current, [id]: null };
+            const rule = current[id] ?? emptyRule(id);
+            return { ...current, [id]: { ...rule, mode, sentry_path: effectivePath(mode, rule.sentry_path) } };
+          });
         }}>{modes.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
         <p>{definition.help}</p>
         {draft && <label>Event scope<select aria-label={`Event scope for ${device.canonical_name ?? device.metadata.name}`} value={draft.event_kind ?? "ANY"} disabled={!canEdit || busy === id} onChange={event => setDrafts(current => ({ ...current, [id]: { ...draft, event_kind: event.target.value as NonNullable<Rule["event_kind"]> } }))}>{eventKinds.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>Choose the specific signal this rule applies to. Other signals continue to use the household default.</small></label>}
-        {draft && <label>SENTRY processing path<select aria-label={`SENTRY processing path for ${device.canonical_name ?? device.metadata.name}`} value={draft.sentry_path ?? "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"} disabled={!canEdit || busy === id} onChange={event => setDrafts(current => ({ ...current, [id]: { ...draft, sentry_path: event.target.value as SentryPath } }))}>{paths.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>{paths.find(item => item.value === (draft.sentry_path ?? "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"))?.help}</small></label>}
+        {draft && <label>SENTRY processing path<select aria-label={`SENTRY processing path for ${device.canonical_name ?? device.metadata.name}`} value={effectivePath(draft.mode, draft.sentry_path)} disabled={!canEdit || busy === id} onChange={event => setDrafts(current => ({ ...current, [id]: { ...draft, sentry_path: event.target.value as SentryPath } }))}>{validPaths(draft.mode).map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>{paths.find(item => item.value === effectivePath(draft.mode, draft.sentry_path))?.help} {draft.mode === "NEVER" ? "Never alert always disables SENTRY reasoning." : draft.mode === "CONTEXTUAL" ? "Let SENTRY decide requires contextual reasoning." : "Required alerts always retain an immediate-capable path."}</small></label>}
         {draft?.mode === "TIME_WINDOW" && <div className="notification-time-grid"><label>From<input type="time" value={draft.start_local} onChange={event => setDrafts(current => ({ ...current, [id]: { ...draft, start_local: event.target.value } }))} /></label><label>Until<input type="time" value={draft.end_local} onChange={event => setDrafts(current => ({ ...current, [id]: { ...draft, end_local: event.target.value } }))} /></label></div>}
         <button type="button" className="primary" disabled={!canEdit || busy === id} onClick={() => void save(id)}>{busy === id ? "Saving…" : "Save alert setting"}</button>
       </article>;
