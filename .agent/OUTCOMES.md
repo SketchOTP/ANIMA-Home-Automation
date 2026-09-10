@@ -1,5 +1,29 @@
 # Outcome Ledger
 
+## OUTCOME-027A-R5D — alert-route compatibility and exact deployment
+
+- Date: 2026-09-10 UTC
+- Status: IMPLEMENTED / exact-head hosted-qualified; physical and reboot gates
+  remain open.
+- ANIMA now enforces the compatibility matrix between owner alert obligation
+  and SENTRY cognition route at persistence and Core disposition time. Required
+  `ALWAYS`/active `TIME_WINDOW` alerts retain an immediate-capable route,
+  `CONTEXTUAL` retains reasoning, `NEVER` forces no SENTRY reasoning, and
+  Attention-owned aggregation cannot be selected as a device override.
+  Malformed/legacy combinations normalize safely; required alerts cannot
+  silently become `NO_ACTION`.
+- UI choices are filtered to the selected alert obligation. Focused and full
+  ANIMA validation, Ruff, strict mypy, UI tests, TypeScript, Vite build and
+  diff checks passed. The live owner store contained no invalid active pair.
+- ANIMA commit `20917337580520221a362a5b18b89d65cb2b5093` is exact-head
+  hosted-qualified by CI `34530665233`. The live image is
+  `sha256:7cca65dbcc2bc6bf09ed564bea6b00899fef5a08cb5fe955343644dc1d1e91d9`;
+  health and selected deployed source hashes passed.
+- Android readiness remains `READY` before a full host reboot. Full reboot,
+  fresh genuine Tapo/Wansview vendor receipts, owner wake qualification and
+  exact-build Tapo playback timing are not run and remain explicit gates. No
+  SENTRY source, Graft tooling state or Phase 15 behavior changed.
+
 ## OUTCOME-027A-R4-PERSONALITY-BOUNDARY — residual safety correction
 
 - Date: 2026-09-10 UTC

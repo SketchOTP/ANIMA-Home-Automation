@@ -2,6 +2,42 @@
 
 Last updated: 2026-09-10
 
+## 027A R5D alert-route compatibility correction — 2026-09-10
+
+The four SENTRY event-routing paths remain implemented, but ANIMA now
+enforces their compatibility with the owner alert obligation before a rule or
+request is used. `ALWAYS` and active `TIME_WINDOW` rules cannot resolve to
+`NO_SENTRY_REASONING` or an aggregate path; `CONTEXTUAL` cannot resolve to an
+immediate-only/no-reasoning path; `NEVER` deterministically resolves to
+`NO_SENTRY_REASONING`; and aggregation remains an Attention-owned behavior.
+Malformed and legacy persisted combinations are normalized to the safest
+effective route without rewriting historical records. The UI exposes only the
+valid choices for the selected alert obligation, while Core remains
+authoritative.
+
+Product commit `20917337580520221a362a5b18b89d65cb2b5093` is pushed to
+`origin/main`; exact-head hosted CI `34530665233` passed. The accepted ANIMA
+image is live as `sha256:7cca65dbcc2bc6bf09ed564bea6b00899fef5a08cb5fe955343644dc1d1e91d9`;
+the running `anima-pc-ui-1` container is healthy and changed source-file
+hashes match the checkout. No SENTRY source changed because it already
+consumes the Core-authored effective disposition; its accepted branch remains
+`dcc37bac24adf4ae110ea1e13aa7c97e1de3fa63`.
+
+The live owner store contains one active household configuration with six
+valid rules (four `ALWAYS` and two `TIME_WINDOW`, all using the server default
+route); no invalid active pair required migration. PostgreSQL/OPA and the
+provider recovery state were preserved. Before replacement there were no
+in-flight claimed/provider-running requests; 43 historical
+`UNKNOWN_RESULT`/`RECOVERY_REQUIRED` records were preserved and not replayed.
+
+The persistent Android bridge remains settled `READY` with Waydroid container,
+Android session, network/DNS/clock, FCM marker, private notification bridge,
+relay heartbeat, Tapo and Wansview packages observed. Full Linux reboot,
+fresh physical Tapo/Wansview vendor receipts, three post-correction spoken
+wake positives/required negatives, and exact-build Tapo playback latency are
+not run in this checkpoint. They remain owner/operational or vendor evidence
+gates; no synthetic event is counted. Phase 15 remains unauthorized.
+
 ## 027A R5C persistent Android notification appliance — 2026-09-10
 
 The owner-local Waydroid notification path is now supervised as a persistent

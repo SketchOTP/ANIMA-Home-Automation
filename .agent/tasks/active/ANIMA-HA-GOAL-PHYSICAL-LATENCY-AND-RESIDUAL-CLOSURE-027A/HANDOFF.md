@@ -196,3 +196,57 @@ prompt recovery.
 - The protected SENTRY tree was not modified. No Notion connector was
   available for readback in this session, so Notion status is `NOT RUN` rather
   than inferred. Phase 15 remains unauthorized.
+
+## R5D alert-route compatibility and deployment — 2026-09-10
+
+### Result
+
+`IMPLEMENTED / EXACT-HEAD HOSTED-QUALIFIED; PHYSICAL AND REBOOT GATES OPEN`
+
+ANIMA commit `20917337580520221a362a5b18b89d65cb2b5093` is the exact published
+head and hosted CI `34530665233` passed. The correction preserves the four
+routes while making alert obligation authoritative over incompatible cognition
+configuration. The Core normalizer and UI agree on the effective matrix:
+
+- `ALWAYS` and active `TIME_WINDOW`: immediate-only or announcement-plus-
+  contextual-reasoning;
+- `CONTEXTUAL`: announcement-plus-contextual-reasoning only;
+- `NEVER`: no SENTRY reasoning;
+- aggregate reasoning: Attention-owned, not a device-level manual override.
+
+Required alerts cannot become `NO_ACTION`; `NEVER` cannot regain speech through
+stale route data; malformed/legacy pairs fail safe; and the UI does not expose
+contradictory choices. Focused and complete ANIMA/Python/UI qualification
+passed. No active invalid owner configuration was found.
+
+### Deployment and runtime
+
+The ANIMA image was rebuilt from the exact head as
+`sha256:7cca65dbcc2bc6bf09ed564bea6b00899fef5a08cb5fe955343644dc1d1e91d9`.
+`anima-pc-ui-1` is healthy; selected changed-file hashes match the accepted
+checkout and `/healthz` passes. PostgreSQL, OPA and household state were
+preserved. No in-flight provider execution was found before replacement, and
+historical `UNKNOWN_RESULT`/`RECOVERY_REQUIRED` state was retained without
+replay. SENTRY source was not modified and remains at accepted branch head
+`dcc37bac24adf4ae110ea1e13aa7c97e1de3fa63`.
+
+The Android notification substrate remains settled `READY` before any host
+reboot: Waydroid container/session, network/DNS/clock, FCM marker, private
+notification bridge, relay heartbeat, Tapo and Wansview package/process
+presence were observed. This does not count as full-host reboot or genuine
+vendor receipt.
+
+### Gates not claimed
+
+- Full Linux host reboot: `NOT RUN / OWNER-OPERATIONAL GATE`.
+- Fresh genuine Tapo vendor receipt and exact-build playback latency:
+  `NOT RUN / OWNER + VENDOR GATE`.
+- Fresh genuine Wansview motion receipt: `NOT RUN / OWNER + VENDOR GATE`.
+- Three post-correction spoken `Sentry` positives and required `century`
+  negatives: `OWNER-ACTION GATE`.
+- Notion update/readback: `NOT RUN` because no connector was available.
+- Household trial remains continuous from `2026-09-09T02:21:00Z`, with review
+  no earlier than `2026-09-12T02:21:00Z`.
+
+Phase 15 was not started, and `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE` is not
+claimed.

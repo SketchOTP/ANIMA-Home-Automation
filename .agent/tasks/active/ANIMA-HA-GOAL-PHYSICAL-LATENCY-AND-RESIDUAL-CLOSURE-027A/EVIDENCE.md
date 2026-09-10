@@ -273,6 +273,90 @@ Status: `IN_PROGRESS`
 - `NOT RUN`: Notion update/readback, because no Notion connector was available
   in this session. This is reported explicitly rather than inferred.
 
+## R5D alert-route compatibility and deployment — 2026-09-10
+
+### Retrieval and publication
+
+- Retrieval confidence: `ADEQUATE` for the local ANIMA checkout, deployment,
+  route implementation and persisted owner configuration. The ambient SSHFS
+  mirror is an older dirty checkout and was not modified.
+- ANIMA source and `origin/main`: `20917337580520221a362a5b18b89d65cb2b5093`.
+- Exact-head hosted CI: `34530665233` — `PASSED`.
+- SENTRY source was not changed; accepted branch remains
+  `dcc37bac24adf4ae110ea1e13aa7c97e1de3fa63` with prior accepted exact CI
+  `34524787155`.
+- Repository-local Graft changes remain outside product staging. No global
+  Graft configuration was changed.
+
+### Route contract evidence
+
+The server-side `compatible_sentry_path()` normalizer is used by Core
+notification disposition and by device-rule persistence/legacy payload
+loading. The effective matrix is:
+
+| Alert obligation | Allowed effective route |
+| --- | --- |
+| `ALWAYS` | `IMMEDIATE_ANNOUNCEMENT_ONLY` or `ANNOUNCEMENT_AND_CONTEXTUAL_REASONING` |
+| active `TIME_WINDOW` | `IMMEDIATE_ANNOUNCEMENT_ONLY` or `ANNOUNCEMENT_AND_CONTEXTUAL_REASONING` |
+| `CONTEXTUAL` | `ANNOUNCEMENT_AND_CONTEXTUAL_REASONING` |
+| `NEVER` | `NO_SENTRY_REASONING` |
+| Attention aggregate | `AGGREGATED_REASONING`, Attention-owned |
+
+Required alerts cannot become `NO_ACTION` through an invalid route. `NEVER`
+cannot reactivate speech/reasoning through stale route metadata. A malformed
+required route fails safe to immediate announcement; malformed optional route
+uses the configured safe default. Device-level aggregate override remains
+rejected for new configuration and legacy aggregate payloads are normalized
+to the safe route for their alert mode. The UI route selector is derived from
+the selected alert obligation and does not offer incompatible choices.
+
+Focused route matrix, legacy normalization, attention and household-learning
+tests passed. The full ANIMA suite, Ruff, strict mypy, formatting, Python
+compilation, UI tests, TypeScript check, Vite build and `git diff --check`
+passed. No active invalid persisted combinations were found: the live store
+has one active configuration and six valid rules (four `ALWAYS`, two
+`TIME_WINDOW`, all on the default compatible route).
+
+### Deployment correspondence and preservation
+
+- Built from the accepted source without a source commit beyond the route
+  correction and recreated only the ANIMA UI container.
+- Running container: `anima-pc-ui-1`, ID prefix
+  `9bb6813ebfb0020f894cb92956f8d94cf389f58249e108b79511a9be6b61fb80`.
+- Image: `sha256:7cca65dbcc2bc6bf09ed564bea6b00899fef5a08cb5fe955343644dc1d1e91d9`.
+- `/healthz`: `PASSED`; container health: `healthy`.
+- Changed source hashes for `attention.py`, `household_initiative.py`,
+  `household_learning.py` and `ui_api.py` match host checkout copies.
+- PostgreSQL, OPA, Searxng and Home Assistant were not recreated. The active
+  personality profile, household state, learning state and provider recovery
+  records remain present. Pre-redeployment state had no in-flight claims or
+  provider-running requests; 43 historical ambiguous results were preserved.
+
+### R5C readiness carried forward
+
+The settled metadata-only readiness document reported `READY`: Android
+container/session/boot, network/DNS/clock, FCM marker, private notification
+bridge, relay heartbeat and both vendor packages were observed. This is
+readiness evidence only; vendor account and in-app setting state remain
+`NOT_EXPOSED`, and no genuine post-deployment vendor event was inferred.
+
+### R5D remaining evidence gates
+
+- `NOT RUN / OWNER-OPERATIONAL GATE`: full Linux host reboot. It was not
+  performed during this deployment checkpoint because the active development
+  host and owner sessions were not silently interrupted.
+- `NOT RUN / OWNER + VENDOR GATE`: fresh physical Tapo DL110 vendor receipt;
+  exact-build event-to-playback latency therefore has no qualifying event.
+- `NOT RUN / OWNER + VENDOR GATE`: fresh physical Wansview motion receipt.
+- `OWNER-ACTION GATE`: three post-correction spoken `Sentry` positives plus
+  bare `century`, a century-led phrase and `twentieth century` negatives.
+- `NOT RUN`: exact-build Tapo playback-owned `tts_start_at` measurement; no
+  source event, request, provider-start or speech count is substituted.
+- `NOT RUN`: Notion update/readback; no Notion connector was available in this
+  session. This is not inferred as success.
+- Household trial continuity is preserved from `2026-09-09T02:21:00Z`; the
+  earliest eligible review remains `2026-09-12T02:21:00Z`.
+
 ## R5C persistent Android notification appliance — 2026-09-10
 
 ### Architecture and readiness
