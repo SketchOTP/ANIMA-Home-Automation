@@ -23,6 +23,11 @@ from jsonschema import Draft202012Validator
 MODEL = "gpt-5.6-luna"
 MAX_BYTES = 2_000_000
 MAX_PROMPT_BYTES = 256_000
+# Login status is a cheap local check, but it must not run once per idle queue
+# poll.  Cache only a successful result; failures are retried under the
+# worker's existing bounded backoff.  A real model auth failure invalidates
+# this cache immediately.
+AUTH_STATUS_TTL_SECONDS = 60.0
 FINAL_SCHEMA = {
     "type": "object",
     "properties": {
@@ -213,13 +218,21 @@ class CodexHouseholdModel:
         self.deadline: float | None = None
         self.diagnostic_stage = "MODEL_INIT"
         self.last_decision_record: dict[str, Any] | None = None
+        self._auth_cache_expires_at: float | None = None
 
     def set_deadline(self, deadline: float | None) -> None:
         self.deadline = deadline
 
+    def invalidate_auth_cache(self) -> None:
+        """Forget a cached login result after a provider auth failure."""
+        self._auth_cache_expires_at = None
+
     def check_auth(self) -> bool:
         if self.executable is None:
             raise CodexUnavailable("CODEX_EXECUTABLE_UNAVAILABLE")
+        now = time.monotonic()
+        if self._auth_cache_expires_at is not None and now < self._auth_cache_expires_at:
+            return True
         try:
             result = subprocess.run(
                 [self.executable, "login", "status"],
@@ -231,7 +244,16 @@ class CodexHouseholdModel:
             )
         except (OSError, subprocess.TimeoutExpired):
             raise CodexUnavailable("CODEX_AUTH_UNAVAILABLE") from None
-        return result.returncode == 0 and "Logged in using ChatGPT" in result.stdout + result.stderr
+        authenticated = result.returncode == 0 and "Logged in using ChatGPT" in (
+            result.stdout + result.stderr
+        )
+        if authenticated:
+            self._auth_cache_expires_at = time.monotonic() + AUTH_STATUS_TTL_SECONDS
+        else:
+            # Never cache a negative result: the worker's bounded recovery
+            # loop should be able to observe a later successful login.
+            self.invalidate_auth_cache()
+        return authenticated
 
     def argv(self, workspace: Path, schema_path: str) -> list[str]:
         if self.executable is None:

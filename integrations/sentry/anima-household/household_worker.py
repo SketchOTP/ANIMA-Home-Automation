@@ -100,6 +100,10 @@ class HouseholdWorker:
                 "stage": error.diagnostic_stage,
                 "exception_type": error.exception_type,
             }
+            if code == "CODEX_AUTH_UNAVAILABLE":
+                invalidate = getattr(self.model, "invalidate_auth_cache", None)
+                if callable(invalidate):
+                    invalidate()
             if isinstance(exc, AnimaHouseholdError):
                 diagnostic.update(exc.safe_diagnostics())
             # Emit before the one-shot terminal submission, which may fail.

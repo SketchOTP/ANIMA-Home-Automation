@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from anima_household_client import AnimaHouseholdClient, AnimaHouseholdError
 from codex_model import (
+    AUTH_STATUS_TTL_SECONDS,
     FINAL_SCHEMA,
     CodexHouseholdModel,
     CodexUnavailable,
@@ -322,6 +323,48 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaisesRegex(CodexUnavailable, "CODEX_AUTH_UNAVAILABLE"):
             self.worker.run_once()
         self.assertEqual(self.client.events, [])
+
+    def test_codex_login_status_is_cached_during_idle_polls(self):
+        model = CodexHouseholdModel()
+        result = MagicMock(returncode=0, stdout="Logged in using ChatGPT", stderr="")
+        with (
+            patch.object(model, "executable", "/usr/bin/codex"),
+            patch("codex_model.subprocess.run", return_value=result) as login_status,
+        ):
+            self.assertTrue(model.check_auth())
+            self.assertTrue(model.check_auth())
+        login_status.assert_called_once()
+
+    def test_auth_cache_expires_and_negative_results_are_not_cached(self):
+        model = CodexHouseholdModel()
+        results = [
+            MagicMock(returncode=0, stdout="Logged in using ChatGPT", stderr=""),
+            MagicMock(returncode=1, stdout="", stderr=""),
+            MagicMock(returncode=0, stdout="Logged in using ChatGPT", stderr=""),
+        ]
+        expired = 100.0 + AUTH_STATUS_TTL_SECONDS + 1
+        clock = iter((100.0, 100.0, 100.0, expired, expired, expired))
+        with (
+            patch.object(model, "executable", "/usr/bin/codex"),
+            patch("codex_model.time.monotonic", side_effect=clock),
+            patch("codex_model.subprocess.run", side_effect=results) as login_status,
+        ):
+            self.assertTrue(model.check_auth())
+            self.assertTrue(model.check_auth())
+            self.assertFalse(model.check_auth())
+            self.assertTrue(model.check_auth())
+        self.assertEqual(login_status.call_count, 3)
+
+    def test_model_auth_failure_invalidates_cached_login_status(self):
+        model = ModelFixture(self.client)
+        invalidated = MagicMock()
+        model.invalidate_auth_cache = invalidated
+        model.final = lambda *args: (_ for _ in ()).throw(
+            CodexUnavailable("CODEX_AUTH_UNAVAILABLE")
+        )
+        with redirect_stdout(io.StringIO()), self.assertRaises(CodexUnavailable):
+            HouseholdWorker(self.client, model).run_once()
+        invalidated.assert_called_once_with()
 
     def test_provider_start_precedes_model_and_result_is_content_free(self):
         result = self.worker.run_once()
