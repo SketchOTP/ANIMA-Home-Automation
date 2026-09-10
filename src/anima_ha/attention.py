@@ -53,6 +53,19 @@ class RuleAction(StrEnum):
     IGNORE = "IGNORE"
 
 
+class SentryEventPath(StrEnum):
+    """How an eligible event crosses the SENTRY boundary.
+
+    This controls cognition cost only.  It never changes Truth, policy,
+    authorization, verification, or the durable event record.
+    """
+
+    IMMEDIATE_ANNOUNCEMENT_ONLY = "IMMEDIATE_ANNOUNCEMENT_ONLY"
+    ANNOUNCEMENT_AND_CONTEXTUAL_REASONING = "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"
+    AGGREGATED_REASONING = "AGGREGATED_REASONING"
+    NO_SENTRY_REASONING = "NO_SENTRY_REASONING"
+
+
 class TriggerStatus(StrEnum):
     PENDING = "PENDING"
     CONTEXT_READY = "CONTEXT_READY"
@@ -73,9 +86,12 @@ class AttentionRule:
     rate_limit_window_seconds: int = 0
     aggregation_window_seconds: int = 0
     priority: int = 50
+    sentry_path: SentryEventPath | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "action", RuleAction(self.action))
+        if self.sentry_path is not None:
+            object.__setattr__(self, "sentry_path", SentryEventPath(self.sentry_path))
         object.__setattr__(
             self, "importance", tuple(EventImportance(value) for value in self.importance)
         )
@@ -87,8 +103,27 @@ class AttentionRule:
             raise AttentionValidationError("rate limit requires a positive window")
         if self.action == RuleAction.AGGREGATE and self.aggregation_window_seconds < 1:
             raise AttentionValidationError("aggregation requires a positive window")
+        if self.action == RuleAction.AGGREGATE and self.sentry_path not in {
+            None,
+            SentryEventPath.AGGREGATED_REASONING,
+        }:
+            raise AttentionValidationError("aggregate rules require aggregated reasoning")
+        if self.action == RuleAction.IGNORE and self.sentry_path not in {
+            None,
+            SentryEventPath.NO_SENTRY_REASONING,
+        }:
+            raise AttentionValidationError("ignored rules cannot select a SENTRY path")
         if not 0 <= self.priority <= 100:
             raise AttentionValidationError("priority must be between 0 and 100")
+
+    def path(self, default: SentryEventPath) -> SentryEventPath:
+        if self.sentry_path is not None:
+            return self.sentry_path
+        if self.action == RuleAction.AGGREGATE:
+            return SentryEventPath.AGGREGATED_REASONING
+        if self.action == RuleAction.IGNORE:
+            return SentryEventPath.NO_SENTRY_REASONING
+        return default
 
     def matches(self, event: dict[str, Any]) -> bool:
         payload = _mapping(event.get("payload"))
@@ -108,7 +143,7 @@ class AttentionRule:
         )
 
     def to_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "rule_id": self.rule_id,
             "action": self.action.value,
             "event_types": list(self.event_types),
@@ -122,6 +157,9 @@ class AttentionRule:
             "aggregation_window_seconds": self.aggregation_window_seconds,
             "priority": self.priority,
         }
+        if self.sentry_path is not None:
+            payload["sentry_path"] = self.sentry_path.value
+        return payload
 
     @classmethod
     def from_payload(cls, value: dict[str, Any]) -> AttentionRule:
@@ -138,6 +176,11 @@ class AttentionRule:
             rate_limit_window_seconds=int(value.get("rate_limit_window_seconds", 0)),
             aggregation_window_seconds=int(value.get("aggregation_window_seconds", 0)),
             priority=int(value.get("priority", 50)),
+            sentry_path=(
+                SentryEventPath(str(value["sentry_path"]))
+                if value.get("sentry_path") is not None
+                else None
+            ),
         )
 
 
@@ -153,10 +196,14 @@ class AttentionProfile:
         "system.health.critical",
         "scheduled_reasoning_due",
     )
+    default_sentry_path: SentryEventPath = (
+        SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
+    )
 
     def __post_init__(self) -> None:
         if self.schema_version != ATTENTION_PROFILE_SCHEMA_VERSION:
             raise AttentionValidationError("unsupported attention profile schema version")
+        object.__setattr__(self, "default_sentry_path", SentryEventPath(self.default_sentry_path))
         if not self.profile_version.strip():
             raise AttentionValidationError("profile_version is required")
         identifiers = [rule.rule_id for rule in self.rules]
@@ -164,12 +211,17 @@ class AttentionProfile:
             raise AttentionValidationError("attention rule IDs must be unique")
 
     def to_payload(self) -> dict[str, Any]:
-        return {
+        payload = {
             "schema_version": self.schema_version,
             "profile_version": self.profile_version,
             "guaranteed_event_types": list(self.guaranteed_event_types),
             "rules": [rule.to_payload() for rule in self.rules],
         }
+        # Omitting the default keeps existing profile digests stable while
+        # allowing new profiles to opt into a different route.
+        if self.default_sentry_path != SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING:
+            payload["default_sentry_path"] = self.default_sentry_path.value
+        return payload
 
     @property
     def digest(self) -> str:
@@ -184,6 +236,14 @@ class AttentionProfile:
                 str(item) for item in value.get("guaranteed_event_types", [])
             ),
             rules=tuple(AttentionRule.from_payload(dict(item)) for item in value.get("rules", [])),
+            default_sentry_path=SentryEventPath(
+                str(
+                    value.get(
+                        "default_sentry_path",
+                        SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING.value,
+                    )
+                )
+            ),
         )
 
 
@@ -361,6 +421,17 @@ def _is_duplicate_or_unchanged(event: dict[str, Any]) -> bool:
 
 def _matched_rule(profile: AttentionProfile, event: dict[str, Any]) -> AttentionRule | None:
     return next((rule for rule in profile.rules if rule.matches(event)), None)
+
+
+def _event_path(profile: AttentionProfile, event: dict[str, Any]) -> SentryEventPath:
+    """Resolve a route without allowing it to alter eligibility semantics."""
+    rule = _matched_rule(profile, event)
+    # Guaranteed events still bypass IGNORE/AGGREGATE actions.  A matching
+    # trigger rule may choose announcement-only or no-model processing, but a
+    # non-trigger rule cannot downgrade a guaranteed event.
+    if rule is not None and rule.action == RuleAction.TRIGGER:
+        return rule.path(profile.default_sentry_path)
+    return profile.default_sentry_path
 
 
 class PostgresAttentionService:
@@ -562,6 +633,7 @@ class PostgresAttentionService:
         reason: str,
         priority: int,
         idempotency_key: str,
+        path: SentryEventPath | None = None,
     ) -> ReasoningTrigger:
         return ReasoningTrigger(
             _uuid(f"trigger:{idempotency_key}"),
@@ -574,7 +646,10 @@ class PostgresAttentionService:
             self._event_time(event),
             profile.profile_version,
             str(event["correlation_id"]) if event.get("correlation_id") else None,
-            metadata={"household_id": self._household_scope(event)},
+            metadata={
+                "household_id": self._household_scope(event),
+                "sentry_event_path": (path or _event_path(profile, event)).value,
+            },
         )
 
     def _cooldown_active(
@@ -727,7 +802,11 @@ class PostgresAttentionService:
             reason_code=SuppressionReason.AGGREGATED.value,
             idempotency_key=f"source:{profile.profile_version}:{event['event_id']}",
             aggregation_key=key,
-            metadata={"rule_id": rule.rule_id, "window_start": start.isoformat()},
+            metadata={
+                "rule_id": rule.rule_id,
+                "window_start": start.isoformat(),
+                "sentry_event_path": SentryEventPath.AGGREGATED_REASONING.value,
+            },
         )
 
     def _flush_due(
@@ -782,6 +861,7 @@ class PostgresAttentionService:
                     "first_seen": row["first_seen"].isoformat(),
                     "last_seen": row["last_seen"].isoformat(),
                     "aggregation_key": str(row["aggregation_key"]),
+                    "sentry_event_path": SentryEventPath.AGGREGATED_REASONING.value,
                 },
             )
             self._persist_decision(
@@ -793,7 +873,11 @@ class PostgresAttentionService:
                 idempotency_key=close_key,
                 aggregation_key=str(row["aggregation_key"]),
                 trigger=trigger,
-                metadata={"rule_id": str(row["rule_id"]), "source_count": len(source_ids)},
+                metadata={
+                    "rule_id": str(row["rule_id"]),
+                    "source_count": len(source_ids),
+                    "sentry_event_path": SentryEventPath.AGGREGATED_REASONING.value,
+                },
             )
             cursor.execute(
                 """
@@ -814,7 +898,10 @@ class PostgresAttentionService:
     ) -> int:
         source_key = f"source:{profile.profile_version}:{event['event_id']}"
         if _is_guaranteed(profile, event):
-            trigger = self._trigger_for_event(profile, event, "GUARANTEED_CLASS", 100, source_key)
+            path = _event_path(profile, event)
+            trigger = self._trigger_for_event(
+                profile, event, "GUARANTEED_CLASS", 100, source_key, path
+            )
             self._persist_decision(
                 cursor,
                 event=event,
@@ -823,7 +910,7 @@ class PostgresAttentionService:
                 reason_code="GUARANTEED_CLASS",
                 idempotency_key=source_key,
                 trigger=trigger,
-                metadata={"guaranteed": True},
+                metadata={"guaranteed": True, "sentry_event_path": path.value},
             )
             self._insert_metric(cursor, profile.profile_version, "guaranteed_triggers")
             return 1
@@ -841,7 +928,12 @@ class PostgresAttentionService:
         if rule is None:
             if _is_high_importance(event):
                 trigger = self._trigger_for_event(
-                    profile, event, "UNCLASSIFIED_HIGH_IMPORTANCE", 90, source_key
+                    profile,
+                    event,
+                    "UNCLASSIFIED_HIGH_IMPORTANCE",
+                    90,
+                    source_key,
+                    profile.default_sentry_path,
                 )
                 self._persist_decision(
                     cursor,
@@ -851,6 +943,7 @@ class PostgresAttentionService:
                     reason_code="UNCLASSIFIED_HIGH_IMPORTANCE",
                     idempotency_key=source_key,
                     trigger=trigger,
+                    metadata={"sentry_event_path": profile.default_sentry_path.value},
                 )
                 return 1
             self._persist_decision(
@@ -899,7 +992,12 @@ class PostgresAttentionService:
             )
             return 0
         trigger = self._trigger_for_event(
-            profile, event, f"RULE:{rule.rule_id}", rule.priority, source_key
+            profile,
+            event,
+            f"RULE:{rule.rule_id}",
+            rule.priority,
+            source_key,
+            rule.path(profile.default_sentry_path),
         )
         self._persist_decision(
             cursor,
@@ -909,7 +1007,10 @@ class PostgresAttentionService:
             reason_code=f"RULE:{rule.rule_id}",
             idempotency_key=source_key,
             trigger=trigger,
-            metadata={"rule_id": rule.rule_id},
+            metadata={
+                "rule_id": rule.rule_id,
+                "sentry_event_path": rule.path(profile.default_sentry_path).value,
+            },
         )
         self._mark_trigger_state(cursor, profile, rule, event)
         return 1
@@ -1139,7 +1240,11 @@ class AttentionReplay:
                     item.rule.priority,
                     item.end,
                     profile.profile_version,
-                    metadata={"count": len(source_ids), "aggregation_key": item.key},
+                    metadata={
+                        "count": len(source_ids),
+                        "aggregation_key": item.key,
+                        "sentry_event_path": SentryEventPath.AGGREGATED_REASONING.value,
+                    },
                 )
                 triggers.append(trigger)
                 decisions.append(
@@ -1157,6 +1262,7 @@ class AttentionReplay:
             close(at)
             source_key = f"source:{profile.profile_version}:{event['event_id']}"
             if _is_guaranteed(profile, event):
+                path = _event_path(profile, event)
                 trigger = ReasoningTrigger(
                     _uuid(f"trigger:{source_key}"),
                     "EVENT",
@@ -1167,6 +1273,7 @@ class AttentionReplay:
                     100,
                     at,
                     profile.profile_version,
+                    metadata={"sentry_event_path": path.value},
                 )
                 triggers.append(trigger)
                 decisions.append(
@@ -1199,6 +1306,7 @@ class AttentionReplay:
                         90,
                         at,
                         profile.profile_version,
+                        metadata={"sentry_event_path": profile.default_sentry_path.value},
                     )
                     triggers.append(trigger)
                     decisions.append(
@@ -1282,6 +1390,9 @@ class AttentionReplay:
                 rule.priority,
                 at,
                 profile.profile_version,
+                metadata={
+                    "sentry_event_path": rule.path(profile.default_sentry_path).value,
+                },
             )
             triggers.append(trigger)
             decisions.append(

@@ -2968,6 +2968,11 @@ def create_app(
                         runtime.context,
                         runtime.intelligence_store,
                         runtime.plugins.list_tools,
+                        getattr(
+                            getattr(runtime, "initiative_context", None),
+                            "resolve_event_path",
+                            None,
+                        ),
                     )
                 vendor_ingress = VendorEventIngress(
                     relay_config,

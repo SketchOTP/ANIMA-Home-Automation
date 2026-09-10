@@ -43,6 +43,11 @@ def main() -> int:
         context=core.context,
         store=core.intelligence_store,
         profile=default_attention_profile("phase13.sentry.v1"),
+        event_path_resolver=(
+            core.initiative_context.resolve_event_path
+            if core.initiative_context is not None
+            else None
+        ),
     )
     while True:
         bridge.run_once(

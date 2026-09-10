@@ -11,6 +11,7 @@ from anima_ha.attention import (
     AttentionRule,
     ReasoningTrigger,
     RuleAction,
+    SentryEventPath,
     default_attention_profile,
 )
 from anima_ha.context import ContextBroker, ContextBudget, PostgresContextSource
@@ -123,6 +124,64 @@ def test_cooldown_rate_duplicate_and_unknown_high_importance_are_deterministic()
         "DUPLICATE",
         "UNCLASSIFIED_HIGH_IMPORTANCE",
     ]
+
+
+def test_event_paths_are_explicit_and_replay_visible() -> None:
+    profile = AttentionProfile(
+        "test.event-paths",
+        (
+            AttentionRule(
+                "announce",
+                RuleAction.TRIGGER,
+                event_types=("security.alarm",),
+                sentry_path=SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+            ),
+            AttentionRule(
+                "aggregate",
+                RuleAction.AGGREGATE,
+                event_types=("household.motion",),
+                aggregation_window_seconds=60,
+            ),
+            AttentionRule(
+                "no-model",
+                RuleAction.TRIGGER,
+                event_types=("household.presence.connection_changed",),
+                sentry_path=SentryEventPath.NO_SENTRY_REASONING,
+            ),
+        ),
+    )
+    result = AttentionReplay().evaluate(
+        profile,
+        [
+            event(1, event_type="security.alarm", guaranteed=True),
+            event(2, event_type="household.motion", seconds=1),
+            event(3, event_type="household.presence.connection_changed", seconds=2),
+        ],
+        flush_at=BASE + timedelta(minutes=2),
+    )
+    paths = {
+        source_id: trigger.metadata["sentry_event_path"]
+        for trigger in result.triggers
+        for source_id in trigger.source_event_ids
+    }
+    assert paths["event-1"] == SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value
+    assert paths["event-2"] == SentryEventPath.AGGREGATED_REASONING.value
+    assert paths["event-3"] == SentryEventPath.NO_SENTRY_REASONING.value
+
+    restored = AttentionProfile.from_payload(profile.to_payload())
+    assert restored == profile
+
+
+def test_legacy_attention_payload_defaults_to_contextual_reasoning() -> None:
+    profile = AttentionProfile.from_payload(
+        {
+            "schema_version": 1,
+            "profile_version": "legacy",
+            "guaranteed_event_types": ["user.request"],
+            "rules": [],
+        }
+    )
+    assert profile.default_sentry_path == SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
 
 
 def test_high_volume_semantics_and_replay_are_exact() -> None:

@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import psycopg
 from psycopg.rows import dict_row
 
+from anima_ha.attention import SentryEventPath
 from anima_ha.household_event_context import HouseholdEventEvidence
 from anima_ha.intelligence import IntelligenceOrigin, IntelligenceRequest
 
@@ -48,6 +49,7 @@ def notification_disposition(
     device_rule: dict[str, Any] | None = None,
     event_occurred_at: datetime | None = None,
     review: bool = False,
+    sentry_event_path: str | SentryEventPath | None = None,
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """Permission to consider delivery is not proof of delivery or identity."""
@@ -87,12 +89,26 @@ def notification_disposition(
         allowed, reason = False, "PROACTIVE_DISABLED"
     else:
         allowed, reason = True, "LEARNED_PROACTIVE"
+    try:
+        path = SentryEventPath(str(sentry_event_path)) if sentry_event_path else None
+    except ValueError:
+        path = None
+    if device_rule and device_rule.get("mode") == "NEVER":
+        path = SentryEventPath.NO_SENTRY_REASONING
+    elif path is None and device_rule:
+        try:
+            configured = device_rule.get("sentry_path")
+            path = SentryEventPath(str(configured)) if configured else None
+        except ValueError:
+            path = None
+    path = path or SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
     return {
         "allowed": allowed,
         "required": required,
         "reason": reason,
         "request_id": str(request_id),
         "evaluated_at": at.isoformat(),
+        "sentry_event_path": path.value,
         "delivery": "SELECT_CONFIGURED_CHANNEL_USING_PREFERENCES; NOT_A_DELIVERY_RECEIPT",
     }
 
@@ -100,6 +116,66 @@ def notification_disposition(
 class HouseholdInitiativeContext:
     def __init__(self, database_url: str, learning: Any, evidence: HouseholdEventEvidence) -> None:
         self.database_url, self.learning, self.evidence = database_url, learning, evidence
+
+    def resolve_event_path(self, household_id: UUID, trigger: Any) -> SentryEventPath | None:
+        """Resolve the owner-selected cognition route before request creation.
+
+        The Attention profile supplies the safe default and aggregate/ignore
+        semantics.  A matching device rule may refine a normal trigger, but it
+        can never turn an aggregate trigger into an immediate one or override
+        a route that already disables SENTRY reasoning.
+        """
+        try:
+            raw = trigger.metadata.get(
+                "sentry_event_path",
+                SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING.value,
+            )
+            path = SentryEventPath(str(raw))
+            if path in {
+                SentryEventPath.AGGREGATED_REASONING,
+                SentryEventPath.NO_SENTRY_REASONING,
+            }:
+                return path
+            source_event_id = trigger.source_event_ids[0]
+            with psycopg.connect(
+                self.database_url,
+                row_factory=dict_row,
+                connect_timeout=5,
+                options="-c statement_timeout=5000",
+            ) as connection:
+                source = connection.execute(
+                    "SELECT event_type,payload FROM anima_event_journal "
+                    "WHERE event_id=%s AND metadata->>'household_id'=%s",
+                    (source_event_id, str(household_id)),
+                ).fetchone()
+            if source is None:
+                return path
+            resource_id = str(
+                source["payload"].get("canonical_resource_id")
+                or source["payload"].get("resource_id")
+                or ""
+            )
+            status = self.learning.status(household_id)
+            rule = next(
+                (
+                    item
+                    for item in status.get("config", {}).get("device_notifications", [])
+                    if item.get("resource_id") == resource_id
+                    and device_notification_matches(item, source["event_type"], source["payload"])
+                ),
+                None,
+            )
+            if rule is None:
+                return path
+            if rule.get("mode") == "NEVER":
+                return SentryEventPath.NO_SENTRY_REASONING
+            configured = rule.get("sentry_path")
+            return SentryEventPath(str(configured)) if configured else path
+        except (AttributeError, KeyError, TypeError, ValueError, psycopg.Error):
+            # Route lookup is an optimization layer.  A failure must retain
+            # the profile's safe contextual default and never invent a
+            # suppression or bypass.
+            return None
 
     def __call__(self, request: IntelligenceRequest) -> dict[str, Any]:
         at = datetime.now(UTC)
@@ -120,7 +196,10 @@ class HouseholdInitiativeContext:
                 IntelligenceOrigin.AUTONOMOUS_ATTENTION,
                 IntelligenceOrigin.DURABLE_TASK,
             }:
-                result["notification"] = {**closed, "reason": "DIRECT_REQUEST_NOT_UNSOLICITED"}
+                result["notification"] = {
+                    **closed,
+                    "reason": "DIRECT_REQUEST_NOT_UNSOLICITED",
+                }
                 return result
             with psycopg.connect(
                 self.database_url,
@@ -197,6 +276,7 @@ class HouseholdInitiativeContext:
                 device_rule=device_rule,
                 event_occurred_at=source["occurred_at"],
                 review=review,
+                sentry_event_path=request.request_metadata.get("sentry_event_path"),
                 now=at,
             )
             if (

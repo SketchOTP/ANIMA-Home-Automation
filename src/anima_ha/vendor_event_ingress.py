@@ -246,9 +246,15 @@ class ExactVendorAttention:
     """Only the accepted journal ID, never a broad guaranteed-event backlog."""
 
     def __init__(
-        self, attention: Any, context: Any, store: Any, tools: Callable[[], list[Any]]
+        self,
+        attention: Any,
+        context: Any,
+        store: Any,
+        tools: Callable[[], list[Any]],
+        event_path_resolver: Callable[[UUID, Any], str | None] | None = None,
     ) -> None:
         self.attention, self.context, self.store, self.tools = attention, context, store, tools
+        self.event_path_resolver = event_path_resolver
 
     def __call__(self, event: EventEnvelope, position: int) -> list[Any]:
         if (
@@ -275,6 +281,7 @@ class ExactVendorAttention:
             context=self.context,
             store=self.store,
             profile=profile,
+            event_path_resolver=self.event_path_resolver,
         ).run_once(
             household_id=household,
             tools=self.tools(),

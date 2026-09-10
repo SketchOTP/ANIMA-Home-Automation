@@ -16,6 +16,7 @@ from psycopg.errors import UniqueViolation
 from test_family_routines import Graph, Memory
 from test_preferences import context
 
+from anima_ha.attention import SentryEventPath
 from anima_ha.context import PostgresContextSource
 from anima_ha.events import EventEnvelope
 from anima_ha.household_event_context import HouseholdEventEvidence
@@ -404,6 +405,18 @@ def test_device_notification_config_is_bounded_and_legacy_compatible() -> None:
     )
     assert configured.to_payload()["device_notifications"][0]["resource_id"] == resource
     assert configured.to_payload()["device_notifications"][0]["event_kind"] == "ANY"
+    configured_path = InitiativeConfig(
+        device_notifications=(
+            DeviceNotificationRule(
+                resource_id=resource,
+                mode="ALWAYS",
+                sentry_path=SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+            ),
+        )
+    )
+    assert configured_path.to_payload()["device_notifications"][0]["sentry_path"] == (
+        "IMMEDIATE_ANNOUNCEMENT_ONLY"
+    )
     legacy = InitiativeConfig.from_payload(
         {
             key: value

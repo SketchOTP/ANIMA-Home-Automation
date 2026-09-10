@@ -8,7 +8,7 @@ const notificationTypes = [
   ["household.ring.motion", "Ring motion", "Reported motion events, not video or person identification"],
   ["household.ring.doorbell", "Ring doorbell", "Reported doorbell events"],
 ] as const;
-type DeviceNotificationRule = { resource_id: string; mode: "ALWAYS" | "TIME_WINDOW" | "NEVER" | "CONTEXTUAL"; start_local: string; end_local: string; timezone: string; event_kind?: "ANY" | "UNLOCKED" | "LOCKED" | "OPENED" | "CLOSED" | "MOTION" | "DOORBELL" };
+type DeviceNotificationRule = { resource_id: string; mode: "ALWAYS" | "TIME_WINDOW" | "NEVER" | "CONTEXTUAL"; start_local: string; end_local: string; timezone: string; event_kind?: "ANY" | "UNLOCKED" | "LOCKED" | "OPENED" | "CLOSED" | "MOTION" | "DOORBELL"; sentry_path?: "IMMEDIATE_ANNOUNCEMENT_ONLY" | "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING" | "NO_SENTRY_REASONING" };
 type Config = { learning_days: number; routine_review_days: number; daily_review_enabled: boolean; routine_review_enabled: boolean; proactive_enabled: boolean; always_notify: string[]; device_notifications: DeviceNotificationRule[] };
 type Snapshot = {
   config: Config; config_version: string | null; timezone: string; can_edit: boolean;
@@ -47,7 +47,7 @@ function parseSnapshot(value: unknown): Snapshot {
     || ![config.daily_review_enabled, config.routine_review_enabled, config.proactive_enabled, value.can_edit, value.proactive_eligible, ready.ready, ready.truncated].every(item => typeof item === "boolean")
     || !Array.isArray(config.always_notify) || !config.always_notify.every(type => notificationTypes.some(([id]) => id === type)) || new Set(config.always_notify).size !== config.always_notify.length
     || (config.device_notifications !== undefined && (!Array.isArray(config.device_notifications) || config.device_notifications.length > 128
-    || !config.device_notifications.every(rule => object(rule) && text(rule.resource_id) && ["ALWAYS", "TIME_WINDOW", "NEVER", "CONTEXTUAL"].includes(String(rule.mode)) && /^\d\d:\d\d$/.test(String(rule.start_local)) && /^\d\d:\d\d$/.test(String(rule.end_local)) && text(rule.timezone) && (rule.event_kind === undefined || ["ANY", "UNLOCKED", "LOCKED", "OPENED", "CLOSED", "MOTION", "DOORBELL"].includes(String(rule.event_kind))))))
+    || !config.device_notifications.every(rule => object(rule) && text(rule.resource_id) && ["ALWAYS", "TIME_WINDOW", "NEVER", "CONTEXTUAL"].includes(String(rule.mode)) && /^\d\d:\d\d$/.test(String(rule.start_local)) && /^\d\d:\d\d$/.test(String(rule.end_local)) && text(rule.timezone) && (rule.event_kind === undefined || ["ANY", "UNLOCKED", "LOCKED", "OPENED", "CLOSED", "MOTION", "DOORBELL"].includes(String(rule.event_kind))) && (rule.sentry_path === undefined || ["IMMEDIATE_ANNOUNCEMENT_ONLY", "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING", "NO_SENTRY_REASONING"].includes(String(rule.sentry_path))))))
     || !(value.config_version === null || text(value.config_version)) || !text(value.timezone)
     || !inRange(ready.observed_local_days, 0, Number.MAX_SAFE_INTEGER) || !inRange(ready.required_days, 3, 14)
     || !nullableDate(ready.first_observed_at) || !nullableDate(ready.last_observed_at) || !number(ready.elapsed_seconds) || !number(ready.required_elapsed_seconds) || ready.required_elapsed_seconds === 0

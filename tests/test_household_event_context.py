@@ -210,6 +210,7 @@ def test_notification_ceiling(
     assert value["allowed"] == (expected in {"ALWAYS_NOTIFY", "LEARNED_PROACTIVE"})
     assert value["required"] == (expected == "ALWAYS_NOTIFY")
     assert value["request_id"] == str(request_id)
+    assert value["sentry_event_path"] == "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"
 
 
 def test_unqualified_source_never_acquires_permission_from_model_config() -> None:
@@ -253,6 +254,9 @@ def test_device_notification_rule_is_authoritative_before_household_default(
         now=event_time,
     )
     assert result["allowed"] is allowed
+    assert result["sentry_event_path"] == (
+        "NO_SENTRY_REASONING" if mode == "NEVER" else "ANNOUNCEMENT_AND_CONTEXTUAL_REASONING"
+    )
     assert result["required"] is required
 
 

@@ -16,6 +16,7 @@ from anima_ha.attention import (
     AttentionProfile,
     PostgresAttentionService,
     ReasoningTrigger,
+    SentryEventPath,
     TriggerStatus,
 )
 from anima_ha.context import ContextBroker
@@ -129,6 +130,38 @@ def test_unfiltered_bridge_keeps_global_processing_contract() -> None:
     )
     assert len(bridge.run_once(household_id=household_id, tools=[])) == 2
     assert calls == [{"consumer_name": "sentry-attention", "limit": 100}]
+
+
+def test_bridge_freezes_server_authored_event_path_into_request_metadata() -> None:
+    household_id = uuid4()
+    target = replace(
+        trigger("path-bound", household_id),
+        metadata={
+            "household_id": str(household_id),
+            "sentry_event_path": SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING.value,
+        },
+    )
+    store = Store()
+    bridge = SentryAttentionBridge(
+        attention=SimpleNamespace(list_triggers=lambda version: [target]),
+        context=Context(),
+        store=store,  # type: ignore[arg-type]
+        profile=AttentionProfile("phase13.senseguard.v1", ()),
+        event_path_resolver=lambda *_: SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY,
+    )
+
+    requests = bridge.run_once(
+        household_id=household_id,
+        tools=[],
+        source_event_id="path-bound",
+        limit=1,
+    )
+
+    assert len(requests) == 1
+    assert requests[0].request_metadata["sentry_event_path"] == (
+        SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value
+    )
+    assert store.items[requests[0].request_id].request_metadata == requests[0].request_metadata
 
 
 @pytest.mark.parametrize("case", ["foreign", "source", "trigger", "missing"])

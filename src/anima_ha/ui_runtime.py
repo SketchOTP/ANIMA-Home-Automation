@@ -153,6 +153,7 @@ def _dispatch_senseguard_attention(
     context: Any,
     store: Any,
     tools: list[Any],
+    event_path_resolver: Any | None = None,
 ) -> list[IntelligenceRequest]:
     """Dispatch one already-journaled policy alert, including delayed recovery."""
     if (
@@ -170,6 +171,7 @@ def _dispatch_senseguard_attention(
         context=context,
         store=store,
         profile=profile,
+        event_path_resolver=event_path_resolver,
     ).run_once(
         household_id=household_id,
         tools=tools,
@@ -1700,9 +1702,10 @@ def build_postgres_core(
         if owner_connection is not None:
             household_value = str(owner_connection["household_id"])
     runtime.learning_service = learning_service
-    runtime.initiative_context = HouseholdInitiativeContext(
+    initiative_context = HouseholdInitiativeContext(
         database_url, learning_service, household_evidence
     )
+    runtime.initiative_context = initiative_context
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
 
@@ -1754,6 +1757,7 @@ def build_postgres_core(
                 context=context,
                 store=intelligence_store,
                 tools=plugins.list_tools(),
+                event_path_resolver=initiative_context.resolve_event_path,
             )
 
         def resource_name(resource_id: UUID) -> str | None:
@@ -1810,7 +1814,11 @@ def build_postgres_core(
             consumer = f"household-presence:{household_id}:{event.event_id}"
             attention.prime_consumer_before(profile, consumer, position - 1)
             SentryAttentionBridge(
-                attention=attention, context=context, store=intelligence_store, profile=profile
+                attention=attention,
+                context=context,
+                store=intelligence_store,
+                profile=profile,
+                event_path_resolver=initiative_context.resolve_event_path,
             ).run_once(
                 household_id=household_id,
                 tools=plugins.list_tools(),
@@ -1839,7 +1847,11 @@ def build_postgres_core(
             consumer = f"household-ring:{household_id}:{event.event_id}"
             attention.prime_consumer_before(profile, consumer, position - 1)
             SentryAttentionBridge(
-                attention=attention, context=context, store=intelligence_store, profile=profile
+                attention=attention,
+                context=context,
+                store=intelligence_store,
+                profile=profile,
+                event_path_resolver=initiative_context.resolve_event_path,
             ).run_once(
                 household_id=household_id,
                 tools=plugins.list_tools(),

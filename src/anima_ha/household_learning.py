@@ -23,6 +23,7 @@ from zoneinfo import ZoneInfo
 
 from psycopg.errors import UniqueViolation
 
+from anima_ha.attention import SentryEventPath
 from anima_ha.household_patterns import candidate_digest, extract_pattern_candidates
 from anima_ha.memory import (
     MemoryProvenance,
@@ -151,6 +152,7 @@ class DeviceNotificationRule:
     end_local: str = "23:59"
     timezone: str = "America/New_York"
     event_kind: str = "ANY"
+    sentry_path: SentryEventPath | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "resource_id", str(_uuid(self.resource_id)))
@@ -158,6 +160,15 @@ class DeviceNotificationRule:
             raise HouseholdLearningError("unsupported device notification mode")
         if self.event_kind not in DEVICE_EVENT_KINDS:
             raise HouseholdLearningError("unsupported device notification event kind")
+        if self.sentry_path is not None:
+            try:
+                object.__setattr__(self, "sentry_path", SentryEventPath(self.sentry_path))
+            except ValueError:
+                raise HouseholdLearningError("unsupported SENTRY event path") from None
+            if self.sentry_path == SentryEventPath.AGGREGATED_REASONING:
+                raise HouseholdLearningError(
+                    "aggregation is selected by the Attention profile, not a device rule"
+                )
         for value in (self.start_local, self.end_local):
             try:
                 datetime.strptime(value, "%H:%M")
@@ -170,7 +181,7 @@ class DeviceNotificationRule:
 
     @classmethod
     def from_payload(cls, value: Any) -> DeviceNotificationRule:
-        required = set(cls.__dataclass_fields__) - {"event_kind"}
+        required = set(cls.__dataclass_fields__) - {"event_kind", "sentry_path"}
         if (
             not isinstance(value, dict)
             or set(value) - set(cls.__dataclass_fields__)
@@ -178,6 +189,19 @@ class DeviceNotificationRule:
         ):
             raise HouseholdLearningError("full device notification rule required")
         return cls(**value)
+
+    def to_payload(self) -> dict[str, Any]:
+        payload = {
+            "resource_id": self.resource_id,
+            "mode": self.mode,
+            "start_local": self.start_local,
+            "end_local": self.end_local,
+            "timezone": self.timezone,
+            "event_kind": self.event_kind,
+        }
+        if self.sentry_path is not None:
+            payload["sentry_path"] = self.sentry_path.value
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -227,7 +251,7 @@ class InitiativeConfig:
         return {
             **asdict(self),
             "always_notify": list(self.always_notify),
-            "device_notifications": [asdict(item) for item in self.device_notifications],
+            "device_notifications": [item.to_payload() for item in self.device_notifications],
         }
 
     @classmethod
@@ -393,6 +417,11 @@ class HouseholdLearningService:
                     end_local=str(payload.get("end_local", "23:59")),
                     timezone=str(payload.get("timezone", self.zone.key)),
                     event_kind=str(payload.get("event_kind", "ANY")),
+                    sentry_path=(
+                        SentryEventPath(str(payload["sentry_path"]))
+                        if payload.get("sentry_path") is not None
+                        else None
+                    ),
                 )
             )
         updated = replace(current, device_notifications=tuple(remaining))
@@ -1295,6 +1324,14 @@ _CONFIG_SCHEMA = {
                 "end_local": {"type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$"},
                 "timezone": {"type": "string", "minLength": 1, "maxLength": 64},
                 "event_kind": {"type": "string", "enum": list(DEVICE_EVENT_KINDS)},
+                "sentry_path": {
+                    "type": "string",
+                    "enum": [
+                        SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY.value,
+                        SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING.value,
+                        SentryEventPath.NO_SENTRY_REASONING.value,
+                    ],
+                },
             },
             "required": ["resource_id", "mode", "start_local", "end_local", "timezone"],
             "additionalProperties": False,

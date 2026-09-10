@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -20,6 +21,7 @@ from uuid import UUID, uuid4, uuid5
 import psycopg
 from psycopg.rows import dict_row
 
+from anima_ha.attention import SentryEventPath
 from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance
 from anima_ha.plugins import ToolDescriptor
 
@@ -807,6 +809,7 @@ class SentryAttentionBridge:
         provider_id: str = "sentry",
         provider_version: str = "1",
         origin: IntelligenceOrigin = IntelligenceOrigin.AUTONOMOUS_ATTENTION,
+        event_path_resolver: Callable[[UUID, Any], str | SentryEventPath | None] | None = None,
     ) -> None:
         self.attention = attention
         self.context = context
@@ -814,6 +817,7 @@ class SentryAttentionBridge:
         self.profile = profile
         self.provider_id = provider_id
         self.provider_version = provider_version
+        self.event_path_resolver = event_path_resolver
         if origin not in {
             IntelligenceOrigin.AUTONOMOUS_ATTENTION,
             IntelligenceOrigin.DURABLE_TASK,
@@ -859,6 +863,22 @@ class SentryAttentionBridge:
                 continue
             if trigger.status.value not in {"PENDING", "CONTEXT_READY"}:
                 continue
+            route = trigger.metadata.get(
+                "sentry_event_path", self.profile.default_sentry_path.value
+            )
+            try:
+                route = SentryEventPath(str(route))
+            except ValueError:
+                route = self.profile.default_sentry_path
+            if self.event_path_resolver is not None:
+                try:
+                    resolved = self.event_path_resolver(household_id, trigger)
+                    if resolved is not None:
+                        route = SentryEventPath(str(resolved))
+                except (TypeError, ValueError):
+                    # A malformed optional owner route must not prevent the
+                    # canonical profile route from being queued.
+                    pass
             packet = self.context.load(trigger.trigger_id)
             if packet is None:
                 packet = self.context.assemble(
@@ -893,7 +913,11 @@ class SentryAttentionBridge:
                 principal_id=principal_id,
                 correlation_id=trigger.correlation_id,
                 causation_id=trigger.source_event_ids[0] if trigger.source_event_ids else None,
-                metadata={"trigger_type": trigger.trigger_type, "priority": trigger.priority},
+                metadata={
+                    "trigger_type": trigger.trigger_type,
+                    "priority": trigger.priority,
+                    "sentry_event_path": route.value,
+                },
             )
             requests.append(self.store.enqueue(request))
         return requests
