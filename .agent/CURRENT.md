@@ -21,8 +21,9 @@ operational-invariance/presentation tests pass. The implementation checkpoint
 `20fb54f37ac2775e3c0498f2a206193462d99572` passed exact-head CI
 `34431369009`; the SENTRY checkpoint
 `8e459ad1c62b46ea3c51003f8df984fd14480004` passed exact-head CI
-`34431379452`. A final documentation-descendant hosted check will be recorded
-after the governed packet update.
+`34431379452`. The governed packet update is exact-head green in ANIMA CI
+`34432402451` on evidence head
+`5c8c226050e81f85eb8285afc43f125272a2212e`.
 
 The metadata-only wake observation completed for the ten-minute unattended
 office interval. It showed the instance continuously `LISTENING` with
