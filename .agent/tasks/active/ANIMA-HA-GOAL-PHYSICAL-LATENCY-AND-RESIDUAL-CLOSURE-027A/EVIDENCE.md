@@ -187,3 +187,167 @@ Status: `IN_PROGRESS`
 - `PASSED`: SENTRY head
   `8e459ad1c62b46ea3c51003f8df984fd14480004` has exact-head CI `34431379452`
   `PASSED` (deterministic and security-focused jobs).
+
+## R5A deployment reconciliation and live qualification — 2026-09-10
+
+- `PASSED` (`E4` deployment evidence): the stale ANIMA UI container was
+  replaced from accepted ANIMA source `9658f2b0686b0e6e949df62b8810d71efdb812b3`.
+  The rebuilt image digest is
+  `sha256:2f81a673b91845f6b2ad5ce74e7be7c60b14920eec6ec5c4206b3f8b89da3122`;
+  the deployed source-tree fingerprint is
+  `5df385b0bdff83bbbec5b8008991c1daf7e5d4b69c9a3c6ebf36c9098cdd062d`.
+  The running container is `anima-pc-ui-1` (ID prefix `ccd77a7ea040`) and
+  `/healthz` is healthy. PostgreSQL and OPA were preserved in place.
+- `PASSED` (`E5` operational observation): durable state remained present after
+  redeployment, including 1 active personality profile, 21 Memory records, 15
+  durable tasks, 5 calendar records, 63 Truth resources, and 3,873 Truth
+  observations. No active approval/action or provider-running work was present
+  at the final pre-redeploy check, and no duplicate dispatch was observed.
+- `PASSED` (`E5` operational observation): the live R4 profile checks succeeded.
+  A temporary profile saved inactive, Built-in SENTRY deactivated custom
+  profiles without deleting them, the existing custom profile was restored, and
+  the temporary record was removed.
+- `PASSED` (`E4`): the live SENTRY wake correction is published at
+  `5ac4bd56cdd367770a9fd36f8abe7956bc7bf5bf` with exact hosted CI
+  `34466535061` `PASSED`. A post-fix wake-only observation recorded one
+  corroborated positive with no model dispatch, and the confusing phrase
+  `twentieth century` recorded no wake/chime/command/model activity. The
+  earlier two wake attempts occurred before the correction and are not valid
+  positive qualification evidence; three post-fix positives are therefore not
+  claimed.
+- `OWNER-ACTION / EXTERNAL-RESOURCE GATE`: no fresh Tapo
+  `external.android.lock_reported` event was received after the live
+  qualification arm. The latest qualifying journal record remains event
+  `0466c014-cc86-5936-84d3-5cbbb06685dc` at journal position `13576` from
+  `2026-09-09T19:14:40.562235Z`; the relay counters and content-free trial
+  ledger did not advance for this attempt. The exact-build latency chain is
+  consequently `NOT RUN`, with current-event/request/claim/provider-start/TTS
+  counts `0/0/0/0`. No synthetic or app-generated event was substituted.
+- The household trial remains active from `2026-09-09T02:21:00Z`; its earliest
+  eligible review remains `2026-09-12T02:21:00Z`. This redeployment did not
+  reset the trial clock.
+
+## R5B exact wake correction and Tapo ingress diagnosis — 2026-09-10
+
+- `PASSED` (`E3` actual-model qualification): the installed Vosk model was
+  exercised in memory with separate restricted and full-vocabulary recognizers.
+  The restricted grammar is now `sentry`, `century`, `[unk]`; only an exact
+  restricted `sentry` token can authorize wake. Actual probes for `Sentry`,
+  bare `century`, `century fox`, `century twenty one`, and `twentieth century`
+  produced the expected restricted/full decoder classes. The evaluator produced
+  one wake for `Sentry` and zero wakes for every `century`-led negative. No audio,
+  transcript, or raw decoder text was written.
+- `PASSED` (`E4` publication): SENTRY wake correction commit
+  `feb9c567de2abd4913f14794aecf611d9ae3a354` was pushed to
+  `feature/v0.4-personal-continuity`; exact hosted CI `34477770364` passed both
+  security-focused and deterministic jobs. Local focused tests passed 83/83 and
+  the full suite passed 548/548. Ruff was `NOT RUN` because the qualified SENTRY
+  environment has no `ruff` module; compileall and diff checks passed.
+- `OWNER-ACTION GATE`: a metadata-only live qualification window was armed for
+  the three spoken `Sentry` positives and the bare/phrase/`twentieth century`
+  negatives. It expired without owner speech (`wake_count=0`), so no live owner
+  positive or negative is claimed. The prior single post-fix positive remains
+  historical evidence only; it does not satisfy the three-positive gate.
+- `PASSED` (`E5` operational boundary): after a controlled Waydroid
+  container/session restart, Android received its expected static `eth0` policy
+  routes and a hostname ping passed. The Tapo package remained installed
+  (`com.tplink.iot`, `3.20.154`), not force-stopped, with Android 13 notification
+  permission granted and enabled notification channels. The app was launched to
+  its main activity; no credentials or vendor payloads were recorded.
+- `EXTERNAL/VENDOR NOTIFICATION GATE` / `OWNER-ACTION GATE`: the owner’s latest
+  physical lock/unlock attempt still produced no new Tapo notification. The
+  relay remained healthy (`DELIVERED`, received 76, accepted 72, rejected 4,
+  failed 0); the latest qualifying journal event remains
+  `0466c014-cc86-5936-84d3-5cbbb06685dc` at position `13576`. Therefore the
+  exact-build physical latency chain is `NOT RUN`; no event/request/claim,
+  provider-start, TTS or playback timestamp is counted.
+- Network diagnosis: the failure was initially a missing Android policy route,
+  not an ANIMA Journal/relay rejection. A transient route repair restored the
+  gateway, DNS and external reachability; a clean restart restored the expected
+  static routes after boot settled. Android notification-listener permission is
+  not claimed for ANIMA because the qualified path is Waydroid’s private D-Bus
+  notification bridge. Tapo internal door-event delivery remains unverified until
+  a fresh vendor notification arrives.
+- The household trial remains active from `2026-09-09T02:21:00Z`; earliest
+  eligible review remains `2026-09-12T02:21:00Z`. Phase 15 remains unauthorized.
+- `NOT RUN`: Notion update/readback, because no Notion connector was available
+  in this session. This is reported explicitly rather than inferred.
+
+## R5C persistent Android notification appliance — 2026-09-10
+
+### Architecture and readiness
+
+- The owner-local Android notification substrate is now supervised as a
+  persistent subsystem:
+  `Linux boot → enabled waydroid-container → Android user session → network /
+  DNS / clock → Google Play Services/FCM marker → Tapo/Wansview packages →
+  private notification bridge → relay → ANIMA ingress`.
+- `waydroid-container.service` is enabled and active through the existing
+  `sudo -n` installation path. `loginctl show-user sketch` reports
+  `State=active`, `Linger=yes`, and two sessions. The owner user units
+  `anima-android-bus`, `anima-android-compositor`,
+  `anima-android-session`, `anima-vendor-notification-relay` and
+  `anima-android-notification-supervisor` are enabled and active.
+- The supervisor writes `/run/user/1000/anima-android-notification-readiness.json`
+  with owner-only mode `0600`. It contains only bounded states, reasons,
+  timestamps, package booleans and relay counters; no notification text,
+  credentials, FCM tokens or household payload.
+- Current settled readiness at `2026-09-10T14:08:46.927532Z` was `READY`:
+  Android boot/session/container, network, DNS, clock, FCM marker, private
+  notification bridge, relay heartbeat and both vendor package states were
+  ready. Both packages were installed, notification permission/channels were
+  present, and process presence was observed. Account and vendor in-app setting
+  state remains explicitly `NOT_EXPOSED`.
+
+### Live restart qualifications
+
+- `ANDROID_SESSION_RESTART`: `PASSED` (`E5_OBSERVED`). The user session was
+  stopped without a manual start; it returned active and the final readiness
+  document returned `READY` with FCM, relay, listener and both vendors ready.
+- `WAYDROID_CONTAINER_RESTART`: `PASSED` (`E5_OBSERVED`). The container was
+  restarted; the Android session and dependent readiness chain returned to
+  `READY` without manual session or vendor-app launch.
+- `RELAY_PROCESS_RESTART`: `PASSED` (`E5_OBSERVED`). Stopping the relay also
+  stopped its declared Android-session dependency; the enabled supervisor
+  restored the chain and readiness returned to `READY`.
+- `TAPO_PROCESS_RECOVERY`: `PASSED` (`E5_OBSERVED`). A live Tapo process was
+  terminated by package-qualified PID selection. The supervisor first wrote
+  `DEGRADED / NOT_READY / PROCESS_NOT_OBSERVED` at
+  `2026-09-10T14:07:53.655623Z`, then independently relaunched the app and
+  reached `READY` at `2026-09-10T14:08:10.927362Z`.
+- `WANSVIEW_PROCESS_RECOVERY`: `PASSED` (`E5_OBSERVED`). The live Wansview
+  heartbeat process was terminated by package-qualified PID selection. The
+  supervisor first wrote `DEGRADED / NOT_READY / PROCESS_NOT_OBSERVED` at
+  `2026-09-10T14:08:28.614094Z`, then independently recovered the app and
+  reached `READY` at `2026-09-10T14:08:46.927532Z`.
+- The supervisor's readiness fix makes missing process presence part of vendor
+  readiness, so a pre-relaunch snapshot cannot claim `READY`. Startup-failure
+  relaunches remain cooldown-bounded; an observed healthy-to-dead transition
+  bypasses that cooldown for prompt recovery.
+
+### Validation and remaining gates
+
+- `PASSED`: focused supervisor/relay tests (`9 passed`), changed-file Ruff,
+  strict mypy, Python compilation, complete `.venv/bin/anima-validate`
+  (`1171 passed, 76 skipped`), pinned OPA `9/9`, and `git diff --check`.
+- `NOT RUN`: the checked-in `scripts/validate.sh` wrapper because `uv` is not
+  on this host PATH. Its underlying venv validation and pinned OPA checks pass.
+  Frontend/build checks were not rerun because R5C changed only host runtime
+  scripts/tests; prior accepted frontend evidence remains historical.
+- `NOT RUN / OWNER-OPERATIONAL GATE`: a full Linux-host reboot. It was not
+  performed silently; no app/session restart is being mislabeled as a host
+  reboot. Native Pi5 qualification is outside this host's R5C run.
+- `NOT RUN / EXTERNAL-VENDOR AND OWNER GATE`: no fresh genuine Tapo vendor
+  notification and no genuine Wansview motion notification were received.
+  Tapo app/account/in-app setting checks are not exposed through the bounded
+  host diagnostics, and no receipt is inferred from package readiness.
+- `OWNER-ACTION GATE`: three post-correction spoken `Sentry` positives plus
+  bare `century`, a century-led phrase and `twentieth century` negatives remain
+  unperformed. No ambient transcript or audio was stored.
+- `NOT RUN`: exact-build Tapo event-to-playback latency; there is no fresh
+  source event, Journal entry, request, provider-start or playback-owned
+  `tts_start_at` to measure. The existing three-day trial remains active from
+  `2026-09-09T02:21:00Z` and cannot be reviewed before
+  `2026-09-12T02:21:00Z`.
+- `NOT RUN`: Notion update/readback, because no Notion connector was available
+  in this session. This is reported explicitly rather than inferred.

@@ -1882,3 +1882,64 @@ decision.
   household mutation. Full repository validation passed with 1161 tests / 77
   skips, Ruff, strict mypy and OPA 9/9; worker, frontend, build and focused
   browser checks also passed. No commit, push or hosted CI is claimed.
+
+## OUTCOME-027A-R5B — exact wake correction and Tapo ingress diagnosis
+
+- Date: 2026-09-10
+- Status: SENTRY correction published / owner and vendor gates remain open
+- The restricted Vosk grammar now includes `sentry`, `century`, and `[unk]`,
+  while only an exact restricted `sentry` token can authorize wake. Actual
+  installed-model probes produced one wake for Sentry and zero for bare or
+  century-led negatives. SENTRY commit `feb9c567de2abd4913f14794aecf611d9ae3a354`
+  passed exact hosted CI `34477770364`; local focused and full suites passed
+  83/83 and 548/548. The live owner qualification window expired without
+  speech, so three positive wakes and the final negative set remain unrun.
+- A controlled Waydroid restart preserved the Tapo app installation and, after
+  boot settled, restored the Android policy route/DNS path; the app launched to
+  its main activity with notification permission/channels enabled. The relay
+  remained healthy, but the owner’s latest physical lock/unlock produced no new
+  vendor notification. Exact-build Tapo latency is `NOT RUN`, with no synthetic
+  event substituted. The household trial remains open through
+  `2026-09-12T02:21:00Z`; Phase 15 remains unauthorized.
+
+## OUTCOME-027A-R5C — persistent Android notification appliance
+
+- Date: 2026-09-10
+- Status: IMPLEMENTED / live restart qualification observed / owner and vendor
+  receipt gates remain open
+- Added the owner-scoped `waydroid_notification_supervisor.py` and integrated
+  it with the existing Waydroid vendor runtime installer. The system
+  `waydroid-container.service` is enabled through the existing non-interactive
+  privileged path; user-systemd lingering and enabled owner units keep the
+  Android bus, compositor, session, vendor relay and supervisor alive without
+  requiring an Android window to remain open.
+- The supervisor exposes one metadata-only mode-0600 readiness document. It
+  checks container/session/boot, network/DNS, clock, Google Play Services and
+  cloud-messaging service marker, private notification bridge, relay heartbeat,
+  notification permission/channels and process presence for both
+  `com.tplink.iot` and `net.ajcloud.wansviewplus`. Vendor account and in-app
+  setting state remains `NOT_EXPOSED` rather than being inferred from process
+  state.
+- PASSED live: Android-session restart restored the full stack; Waydroid
+  container restart restored the full stack; relay stop restored its declared
+  session/relay chain; Tapo process termination and Wansview heartbeat-process
+  termination each produced an intermediate `PROCESS_NOT_OBSERVED` state and
+  then automatic recovery to `READY` without manual app launch.
+- A readiness correctness fix ensures a missing vendor process cannot be
+  reported as `READY` during the same pre-relaunch snapshot. A healthy-to-dead
+  process transition bypasses the startup-failure cooldown so self-healing is
+  immediate while repeated failed launches remain bounded.
+- PASSED: focused supervisor/relay tests (`9 passed`), changed-file Ruff,
+  strict mypy, Python compilation, complete `.venv/bin/anima-validate`
+  (`1171 passed, 76 skipped`), pinned OPA policy tests (`9/9`) and
+  `git diff --check`.
+- NOT RUN: full Linux-host reboot, genuine fresh Tapo vendor notification,
+  genuine Wansview motion notification, exact-build Tapo event-to-playback
+  timing, and owner spoken wake qualification. The host reboot is an
+  operational owner gate; vendor receipt is an external/vendor gate. No
+  synthetic event was substituted.
+- The protected SENTRY source tree was not changed. Repository-local Graft
+  files remain separate tooling state and are not included in product staging.
+- No Notion connector was available for readback in this run; Notion status is
+  therefore `NOT RUN`, not inferred from repository state. Phase 15 remains
+  unauthorized.

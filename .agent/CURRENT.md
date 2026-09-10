@@ -2,6 +2,73 @@
 
 Last updated: 2026-09-10
 
+## 027A R5C persistent Android notification appliance — 2026-09-10
+
+The owner-local Waydroid notification path is now supervised as a persistent
+subsystem rather than treated as a manually prepared test environment. The
+privileged `waydroid-container.service` is enabled and active; user-systemd
+lingering is enabled for `sketch`; the Android bus/compositor/session, vendor
+relay and metadata-only readiness supervisor are enabled and active.
+
+The supervisor reports a single content-free `READY`, `DEGRADED` or
+`NOT_READY` assessment across container, Android session, boot completion,
+network/DNS, clock, Google Play Services/FCM marker, private notification
+bridge, relay heartbeat and the commissioned Tapo/Wansview packages. Readiness
+files are owner-only mode `0600`. Vendor account and in-app setting state is
+honestly `NOT_EXPOSED`; package installation, notification permission/channels
+and live process presence are checked.
+
+Live qualifications passed for automatic Android-session restart, Waydroid
+container restart, relay/session-chain recovery, and independent Tapo and
+Wansview app-process recovery. The last two post-correction app failures each
+showed an intermediate `PROCESS_NOT_OBSERVED` state before the supervisor
+recovered the process and returned the stack to `READY`; no manual vendor-app
+launch was used. A full Linux-host reboot is not run because it is an
+owner/operational gate. No fresh Tapo or Wansview vendor notification was
+received, so the exact-build Tapo latency and real Wansview receipt gates
+remain open. Three owner wake positives and required `century` negatives also
+remain open. Phase 15 remains unauthorized.
+
+The implementation is in the working tree pending publication. Focused
+supervisor/relay tests, changed-file Ruff/mypy/compile checks, the complete
+ANIMA validator (`1171 passed, 76 skipped`) and pinned OPA (`9/9`) pass. The
+repository-local Graft files remain outside product staging.
+
+## 027A R5B exact wake correction and Tapo ingress diagnosis — 2026-09-10
+
+The SENTRY pre-wake boundary now requires the restricted Vosk decoder to emit
+exact `sentry`; actual installed-model probes reject literal `century` and
+century-led phrases. SENTRY commit `feb9c567de2abd4913f14794aecf611d9ae3a354`
+has exact hosted CI `34477770364` PASS and local 548/548 full tests. The owner
+live wake session was armed but expired without speech, so final owner wake
+qualification remains open. A controlled Waydroid restart preserved Tapo state
+and restored Android routing/DNS after boot; notification permission/channels
+are enabled, but the latest physical lock/unlock produced no new vendor event.
+Exact-build Tapo latency is NOT RUN. Trial remains active from
+`2026-09-09T02:21:00Z`, earliest review `2026-09-12T02:21:00Z`; Phase 15 is not
+authorized.
+
+## 027A R5A deployment reconciliation and live physical gates — 2026-09-10
+
+R4 software closure remains accepted. The stale ANIMA UI runtime was rebuilt
+from accepted source `9658f2b0686b0e6e949df62b8810d71efdb812b3` and deployed as
+image `sha256:2f81a673b91845f6b2ad5ce74e7be7c60b14920eec6ec5c4206b3f8b89da3122`.
+The running source fingerprint is
+`5df385b0bdff83bbbec5b8008991c1daf7e5d4b69c9a3c6ebf36c9098cdd062d`; durable
+PostgreSQL/OPA-backed household state and the active profile survived.
+
+The bounded live SENTRY wake correction is at
+`5ac4bd56cdd367770a9fd36f8abe7956bc7bf5bf`, exact hosted CI `34466535061`
+`PASSED`. One post-fix wake-only positive and the negative `twentieth century`
+observation passed metadata-only checks. Earlier two attempts were before the
+correction; three post-fix positives are not claimed.
+
+The post-deployment Tapo observer received no fresh physical/vendor lock event;
+the latest journal event remains the prior record at position `13576`. Exact
+build event-to-playback latency is `NOT RUN`, with no synthetic or app-generated
+substitute. The three-day trial remains active from `2026-09-09T02:21:00Z` and
+cannot be reviewed before `2026-09-12T02:21:00Z`. Phase 15 remains unauthorized.
+
 ## 027A R4 residual closure — personality boundary and profile lifecycle
 
 The owner-authored SENTRY personality profile is now structurally separated

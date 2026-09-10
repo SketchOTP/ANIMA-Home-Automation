@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Install the owner-local, private Waydroid notification runtime.
 
-This installer writes only user-scoped units and private configuration. It does
-not handle vendor credentials, modify Android app data, or start the privileged
-Waydroid container. The system container must already be active.
+This installer writes private configuration and owner-scoped user units. It
+does not handle vendor credentials or modify Android app data. The one
+privileged operation is enabling the already-installed Waydroid container unit
+so the notification appliance has a boot owner; no vendor or Android data is
+created by that operation.
 """
 
 # Systemd unit directives are intentionally kept as single lines.
@@ -22,9 +24,11 @@ CONFIG_ROOT = Path.home() / ".config" / "anima"
 UNIT_ROOT = Path.home() / ".config" / "systemd" / "user"
 RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
 RELAY = PROJECT / "scripts" / "waydroid_vendor_relay.py"
+SUPERVISOR = PROJECT / "scripts" / "waydroid_notification_supervisor.py"
 CONFIG = CONFIG_ROOT / "waydroid-vendor-relay.json"
 TOKEN = CONFIG_ROOT / "waydroid-vendor-relay.token"
 STATUS = RUNTIME / "anima-vendor-relay-status.json"
+READINESS = RUNTIME / "anima-android-notification-readiness.json"
 CAPTURE = RUNTIME / "anima-vendor-qualification.jsonl"
 
 
@@ -53,11 +57,20 @@ def write_unit(name: str, content: str) -> None:
 
 
 def main() -> int:
+    enabled = subprocess.run(
+        ["sudo", "-n", "systemctl", "enable", "waydroid-container.service"], check=False
+    )
+    if enabled.returncode:
+        raise SystemExit("could not enable waydroid-container.service without prompting")
     active = subprocess.run(
-        ["systemctl", "is-active", "--quiet", "waydroid-container.service"], check=False
+        ["sudo", "-n", "systemctl", "is-active", "--quiet", "waydroid-container.service"], check=False
     )
     if active.returncode:
-        raise SystemExit("waydroid-container.service must already be active")
+        started = subprocess.run(
+            ["sudo", "-n", "systemctl", "start", "waydroid-container.service"], check=False
+        )
+        if started.returncode:
+            raise SystemExit("waydroid-container.service could not be started")
     if not TOKEN.exists():
         atomic_private(TOKEN, secrets.token_urlsafe(48) + "\n")
     else:
@@ -83,6 +96,7 @@ def main() -> int:
     os.chmod(CONFIG, 0o600)
     quoted_project = str(PROJECT).replace("%", "%%")
     quoted_config = str(CONFIG).replace("%", "%%")
+    quoted_readiness = str(READINESS).replace("%", "%%")
     write_unit(
         "anima-android-bus.service",
         """[Unit]
@@ -160,6 +174,30 @@ UMask=0077
 WantedBy=default.target
 """,
     )
+    write_unit(
+        "anima-android-notification-supervisor.service",
+        f"""[Unit]
+Description=ANIMA persistent Android notification readiness supervisor
+After=anima-android-session.service anima-vendor-notification-relay.service
+Wants=anima-android-session.service anima-vendor-notification-relay.service
+
+[Service]
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+Environment=DISPLAY=:1
+Environment=WAYLAND_DISPLAY=anima-android-wayland
+Environment=PULSE_RUNTIME_PATH=%t/anima-android-no-audio
+ExecStart=/usr/bin/python3 \"{quoted_project}/scripts/waydroid_notification_supervisor.py\" --status \"{quoted_readiness}\" --relay-status \"{str(STATUS).replace('%', '%%')}\"
+Restart=on-failure
+RestartSec=5
+UMask=0077
+PrivateUsers=false
+PrivateMounts=false
+
+[Install]
+WantedBy=default.target
+""",
+    )
     RUNTIME.joinpath("anima-android-no-audio").mkdir(mode=0o700, exist_ok=True)
     native = RUNTIME / "anima-android-no-audio" / "native"
     if not native.exists():
@@ -170,6 +208,7 @@ WantedBy=default.target
             "--user",
             "stop",
             "anima-android-session.service",
+            "anima-android-notification-supervisor.service",
             "anima-vendor-notification-relay.service",
             "anima-android-bus.service",
             "anima-android-compositor.service",
@@ -187,6 +226,7 @@ WantedBy=default.target
             "anima-vendor-notification-relay.service",
             "anima-android-compositor.service",
             "anima-android-session.service",
+            "anima-android-notification-supervisor.service",
         ],
         check=True,
     )

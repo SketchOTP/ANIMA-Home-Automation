@@ -74,3 +74,125 @@ published. The downloaded evidence-tree aggregate digest is
 SENTRY correction commit `8e459ad1c62b46ea3c51003f8df984fd14480004` has exact
 hosted CI `34431379452` `PASSED`. R4 remains pending Architect acceptance only
 for the owner-action gates listed above.
+
+## R5A deployment and live qualification — 2026-09-10
+
+R5A deployment reconciliation completed without ANIMA product-source changes.
+The accepted ANIMA source `9658f2b0686b0e6e949df62b8810d71efdb812b3` was rebuilt
+and deployed as image
+`sha256:2f81a673b91845f6b2ad5ce74e7be7c60b14920eec6ec5c4206b3f8b89da3122`.
+The running `anima-pc-ui-1` container (ID prefix `ccd77a7ea040`) contains source
+fingerprint `5df385b0bdff83bbbec5b8008991c1daf7e5d4b69c9a3c6ebf36c9098cdd062d`.
+PostgreSQL and OPA were not recreated. Durable household state and the active
+personality profile survived; live profile lifecycle checks passed.
+
+The live SENTRY bounded wake correction is published at
+`5ac4bd56cdd367770a9fd36f8abe7956bc7bf5bf` with exact hosted CI
+`34466535061` `PASSED`. One post-fix wake-only positive was observed with no
+model dispatch, and the confusing `twentieth century` phrase produced no wake,
+chime, command capture or model dispatch. The earlier two live attempts were
+pre-correction and are not counted; the required three post-fix positives are
+not yet complete.
+
+The Tapo observer was armed after the exact deployment, but no new physical
+vendor event reached the relay or ANIMA journal. The latest lock event remains
+the prior bounded record at journal position `13576`. Therefore no current
+event identity, source timestamp, request, provider-start or playback-owned
+`tts_start_at` exists for this qualification. Exact-build Tapo latency is
+`NOT RUN`, not a pass or a latency failure, and no synthetic/app event was used.
+
+Status remains `IN_PROGRESS`: wake qualification is incomplete, the fresh Tapo
+event is an owner/external-resource gate, and the three-day trial remains open
+until no earlier than `2026-09-12T02:21:00Z`. Phase 15 has not started.
+
+## R5B exact wake correction and Tapo ingress diagnosis — 2026-09-10
+
+The SENTRY pre-wake boundary now requires the restricted Vosk decoder to emit
+exact `sentry`; actual installed-model probes reject literal `century` and
+century-led phrases. SENTRY commit `feb9c567de2abd4913f14794aecf611d9ae3a354`
+is pushed and exact hosted CI `34477770364` passed; local focused/full results
+were 83/83 and 548/548. The owner live wake session was armed but expired
+without owner speech, so three live positives and the final negative set are
+`OWNER-ACTION GATE`, not passed.
+
+A clean Waydroid restart preserved the Tapo installation and restored Android
+policy routes/DNS after boot settled. Tapo notification permission and channels
+remain enabled and the app reached its main activity. The latest owner physical
+lock/unlock attempt still generated no new vendor notification; relay status
+remained healthy and the Journal did not advance. Exact-build Tapo
+event-to-playback latency is therefore `NOT RUN`, with no substituted event.
+
+R5B remains open for the owner wake qualification and a fresh Tapo vendor event;
+the household trial remains active through its earliest eligible review at
+`2026-09-12T02:21:00Z`. No ANIMA product source changed in this run, no Notion
+update/readback was performed by an available connector, and Phase 15 was not
+started.
+
+## R5C persistent Android notification appliance — 2026-09-10
+
+### Verdict
+
+`PARTIAL — persistent restart supervision implemented and live-qualified; fresh
+vendor receipts, owner wake qualification and full-host reboot remain open`
+
+### Persistent subsystem
+
+The existing Waydroid route is now treated as a permanent owner-local
+notification appliance. `waydroid-container.service` is enabled and active;
+`sketch` has user-systemd lingering; the Android bus, compositor, session,
+vendor relay and Android notification supervisor are enabled and active. The
+supervisor keeps the Android UI hidden/background-capable and writes a private
+mode-0600, content-free readiness document covering container, session, boot,
+network/DNS, clock, FCM marker, notification bridge, relay heartbeat and both
+vendor packages.
+
+Current settled readiness was `READY` at
+`2026-09-10T14:08:46.927532Z`. Tapo (`com.tplink.iot`) and Wansview
+(`net.ajcloud.wansviewplus`) were installed with notification permission and
+channels present and process presence observed. Account authentication and
+vendor in-app notification settings are deliberately reported as
+`NOT_EXPOSED`; package/process health is not treated as proof of vendor push
+delivery.
+
+### Live recovery evidence
+
+- Android user-session restart: `PASSED`, automatic return to `READY`.
+- Waydroid container restart: `PASSED`, automatic session/FCM/relay/vendor
+  return to `READY`.
+- Relay stop: `PASSED`, its declared session dependency and the relay chain
+  recovered automatically with no manual start.
+- Tapo process termination: `PASSED`, `PROCESS_NOT_OBSERVED` at
+  `2026-09-10T14:07:53.655623Z`, automatic recovery to `READY` at
+  `2026-09-10T14:08:10.927362Z`.
+- Wansview heartbeat-process termination: `PASSED`, `PROCESS_NOT_OBSERVED` at
+  `2026-09-10T14:08:28.614094Z`, automatic recovery to `READY` at
+  `2026-09-10T14:08:46.927532Z`.
+
+The readiness correction prevents a missing vendor process from being labeled
+`READY` in the same pre-relaunch snapshot. Startup failures remain bounded by
+cooldown; a previously healthy process that dies bypasses that cooldown for
+prompt recovery.
+
+### Validation and remaining gates
+
+- `PASSED`: focused supervisor/relay tests (`9 passed`), changed-file Ruff,
+  strict mypy, Python compilation, `.venv/bin/anima-validate` (`1171 passed,
+  76 skipped`), pinned OPA (`9/9`) and `git diff --check`.
+- `NOT RUN`: checked-in `scripts/validate.sh` wrapper because `uv` is absent
+  from this host PATH. Its underlying venv checks passed. Frontend/build checks
+  were not rerun because only host runtime scripts/tests changed.
+- `NOT RUN / OWNER-OPERATIONAL GATE`: full Linux-host reboot. No app/session
+  restart is being mislabeled as a host reboot.
+- `NOT RUN / EXTERNAL-VENDOR GATE`: no fresh genuine Tapo vendor notification
+  or Wansview motion notification was received. Exact-build Tapo
+  event-to-playback timing therefore remains `NOT RUN`; no synthetic event was
+  substituted.
+- `OWNER-ACTION GATE`: three post-correction spoken `Sentry` positives and the
+  bare/phrase/`twentieth century` negatives remain unperformed. No ambient
+  transcript or audio was stored.
+- The three-day household trial remains active from
+  `2026-09-09T02:21:00Z` and cannot be reviewed before
+  `2026-09-12T02:21:00Z`.
+- The protected SENTRY tree was not modified. No Notion connector was
+  available for readback in this session, so Notion status is `NOT RUN` rather
+  than inferred. Phase 15 remains unauthorized.

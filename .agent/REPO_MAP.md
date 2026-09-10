@@ -449,3 +449,18 @@ SENTRY personality configuration (2026-09-09):
 - `/home/sketch/Projects/SENTRY/tools/sentry_codex_agent.py` — consumes the
   active profile only as quoted presentation guidance after ANIMA
   provider-start; authority and mandatory-alert invariants remain outside it.
+
+Waydroid vendor notification persistence (2026-09-10):
+
+- `scripts/waydroid_notification_supervisor.py` — owner-scoped metadata-only
+  readiness and bounded recovery for the Waydroid container/session, Android
+  network/FCM markers, notification bridge, relay and Tapo/Wansview processes.
+- `scripts/install_waydroid_vendor_runtime.py` — enables the existing system
+  container unit and installs/enables the owner user units, including the
+  notification supervisor; it does not create vendor credentials or Android
+  application data.
+- `scripts/waydroid_vendor_relay.py` — preserves the existing normalized relay
+  boundary and publishes only package-scoped receipt counters/heartbeat
+  metadata.
+- `tests/test_waydroid_notification_supervisor.py` — private-readability,
+  readiness, Android diagnostic fallback and healthy-to-dead relaunch coverage.

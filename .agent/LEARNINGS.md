@@ -431,3 +431,20 @@ Any future history rewrite proposal, remote migration, or change to the reposito
   transitions, but cannot replace owner-performed spoken wake attempts. Physical
   and elapsed-time gates remain explicit rather than being inferred from code or
   passive telemetry.
+
+### 027A R5C persistent Android notification substrate — 2026-09-10
+
+- Waydroid container liveness is not Android notification readiness. The
+  container, user session, boot completion, network/DNS, clock, Google services,
+  private notification bridge, relay heartbeat and vendor process/configuration
+  checks must converge before the subsystem reports `READY`.
+- Android `pidof` can return success with no PID on this build. A bounded
+  ActivityManager process-table fallback is needed, and missing process presence
+  must keep a vendor `NOT_READY` even when a safe relaunch is being attempted.
+- A generic app-start cooldown must not suppress recovery after a process that
+  was observed healthy dies. Track the healthy-to-dead transition separately;
+  retain cooldown only for repeated launches that never become healthy.
+- Package installation, notification permission/channel state and process
+  presence do not prove vendor account or in-app notification settings, nor do
+  they prove a real vendor push. Those states remain explicit `NOT_EXPOSED`
+  until an inspectable or physical receipt boundary qualifies them.

@@ -678,3 +678,19 @@ Append new directives at the bottom; never rewrite an accepted historical direct
   server-only.
 - No new resilience family, provider, broker, database, SENTRY source change,
   or Phase 15 behavior is authorized by this increment.
+
+## ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A-R5C - active
+
+- The Architect amended 027A to make Waydroid a permanent restart-survivable
+  notification appliance for Tapo and Wansview. The authorized scope is the
+  existing container/session/vendor-app/private-notification-bridge/relay
+  route, with bounded owner-scoped supervision and content-free readiness.
+- Requirements include automatic container and Android-session recovery, FCM
+  and notification-bridge readiness, vendor package/process recovery, relay
+  reconnection and no stale-notification replay, plus explicit owner/vendor
+  physical qualifications. New native vendor APIs, reverse engineering and
+  Phase 15 are excluded.
+- R5C implementation is in the working tree pending publication. Live
+  session/container/relay-chain and both vendor-process restart slices pass;
+  full-host reboot, genuine Tapo/Wansview receipt, owner wake tests and exact
+  Tapo playback latency remain open gates.

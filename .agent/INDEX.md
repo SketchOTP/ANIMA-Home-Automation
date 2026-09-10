@@ -11,9 +11,10 @@
 ## Current pointers
 
 > Superseding current-state pointer: the older 026A management-plane pointer
-> below is retained as history context. Current work is governed by 027A R4.
+> below is retained as history context. Current work is governed by 027A R5C.
 
-- Current stage: GOAL-WIDE PRODUCT COMPLETION — 027A R4 RESIDUAL CLOSURE
+- Current stage: GOAL-WIDE PRODUCT COMPLETION — 027A R5C ANDROID NOTIFICATION
+  PERSISTENCE / PHYSICAL CLOSURE
 - Active directive: ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A
 - Active task packet: `.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/`
 - Last accepted outcome: R3 continuous household learning,

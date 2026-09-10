@@ -284,6 +284,8 @@ class Relay:
         self.accepted = 0
         self.rejected = 0
         self.failed = 0
+        self.received_by_package: dict[str, int] = {}
+        self.accepted_by_package: dict[str, int] = {}
 
     def _status(self, state: str, package_name: str | None = None) -> None:
         _atomic_json(
@@ -297,6 +299,8 @@ class Relay:
                 "accepted": self.accepted,
                 "rejected": self.rejected,
                 "failed": self.failed,
+                "received_by_package": dict(sorted(self.received_by_package.items())),
+                "accepted_by_package": dict(sorted(self.accepted_by_package.items())),
                 "qualification_captures": self.capture_count,
             },
         )
@@ -332,6 +336,7 @@ class Relay:
         if package_name not in ALLOWED_PACKAGES:
             return
         self.received += 1
+        self.received_by_package[package_name] = self.received_by_package.get(package_name, 0) + 1
         self._capture(package_name, summary, body)
         report = match_report(
             package_name, summary, body, self.config.rules, received_at=datetime.now(UTC)
@@ -356,6 +361,9 @@ class Relay:
                     )
                 response.read(4096)
             self.accepted += 1
+            self.accepted_by_package[package_name] = (
+                self.accepted_by_package.get(package_name, 0) + 1
+            )
             self._status("DELIVERED", package_name)
         except (OSError, urllib.error.URLError, urllib.error.HTTPError):
             self.failed += 1
@@ -431,6 +439,7 @@ def serve(config: Config) -> None:
 
     service = NotificationService()
     relay._status("READY")
+    GLib.timeout_add_seconds(30, lambda: (relay._status("READY"), True)[1])
     GLib.MainLoop().run()
     del service
 

@@ -91,3 +91,24 @@ override Truth, identity, OPA or canonical event history.
 
 Preserve all pre-existing local 027A work and do not open another active packet.
 The physical exact-build latency and elapsed household-trial gates remain open.
+
+## R5C amendment — persistent Android notification appliance
+
+Architect directive:
+`ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A-R5C`.
+
+The existing Waydroid/Tapo/Wansview notification route is a permanent
+owner-local subsystem. It must recover without manual app/window babysitting
+through the enabled system Waydroid container, lingering owner user session,
+Android userspace services, vendor apps, private notification bridge and ANIMA
+relay. Readiness must be one content-free `READY`, `DEGRADED` or `NOT_READY`
+assessment with bounded reasons for each layer. No vendor API replacement,
+new emulator, raw notification payload, token or credential is authorized.
+
+The supervisor must require process presence before reporting a vendor ready,
+keep startup-failure relaunches cooldown-bounded, and immediately retry an
+observed healthy-to-dead process transition. The product acceptance boundary
+also requires session/container/listener/relay restart qualification, a full
+host reboot qualification or explicit owner operational gate, genuine Tapo and
+Wansview receipt evidence where physically available, final owner wake tests,
+and exact-build Tapo playback latency. Phase 15 remains unauthorized.
