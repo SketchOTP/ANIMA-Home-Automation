@@ -67,5 +67,10 @@ goal requires demonstrable voice software rather than final face hardware.
 The exact residual matrix is in
 `docs/GOAL-027A-R4-RESIDUAL-CLOSURE.md`. Exact-build Tapo latency and the
 minimum three-day trial remain open; do not mark the permanent goal complete or
-start Phase 15. R4 is ready for publication after final local validation and
-exact-head hosted qualification.
+start Phase 15. R4 product and evidence commit `20fb54f37ac2775e3c0498f2a206193462d99572`
+has exact-head hosted CI `34431369009` `PASSED`; artifact `10134892070` was
+published. The downloaded evidence-tree aggregate digest is
+`sha256:b4fc65f1cacbad7e0450a586976255e7e4c884cfa507965ec8a16199ea6cdba0`.
+SENTRY correction commit `8e459ad1c62b46ea3c51003f8df984fd14480004` has exact
+hosted CI `34431379452` `PASSED`. R4 remains pending Architect acceptance only
+for the owner-action gates listed above.

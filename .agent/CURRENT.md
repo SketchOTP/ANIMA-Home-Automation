@@ -17,8 +17,12 @@ New personality profiles are persisted inactive. The owner explicitly chooses a
 custom profile or Built-in SENTRY; switching to the built-in style deactivates
 the custom profile without deleting it, and saved versions remain available for
 later explicit activation. Local API/PostgreSQL lifecycle tests and SENTRY
-operational-invariance/presentation tests pass; hosted qualification is pending
-the consolidated R4 publication.
+operational-invariance/presentation tests pass. The implementation checkpoint
+`20fb54f37ac2775e3c0498f2a206193462d99572` passed exact-head CI
+`34431369009`; the SENTRY checkpoint
+`8e459ad1c62b46ea3c51003f8df984fd14480004` passed exact-head CI
+`34431379452`. A final documentation-descendant hosted check will be recorded
+after the governed packet update.
 
 The metadata-only wake observation completed for the ten-minute unattended
 office interval. It showed the instance continuously `LISTENING` with

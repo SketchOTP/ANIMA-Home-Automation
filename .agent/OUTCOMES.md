@@ -3,8 +3,8 @@
 ## OUTCOME-027A-R4-PERSONALITY-BOUNDARY — residual safety correction
 
 - Date: 2026-09-10 UTC
-- Status: IMPLEMENTED / locally qualified; exact-head hosted qualification and
-  owner physical gates remain pending.
+- Status: IMPLEMENTED / exact-head hosted-qualified; owner physical gates and
+  Architect acceptance remain pending.
 - ANIMA profile creation now persists new custom profiles inactive. Built-in
   SENTRY is an explicit reversible fallback, and activation remains atomic,
   household-scoped and version-checked.
@@ -16,7 +16,14 @@
   consequential paths bypass it.
 - PASSED locally: focused ANIMA personality API/PostgreSQL tests, focused SENTRY
   operational/presentation tests, complete qualified SENTRY suite (`545
-  passed`), and final ANIMA validation after the optimistic-version test repair.
+  passed`), and final ANIMA validation (`1169 passed / 76 skipped`) after the
+  optimistic-version test repair.
+- PASSED hosted: ANIMA exact-head CI `34431369009` on
+  `20fb54f37ac2775e3c0498f2a206193462d99572`; artifact `10134892070`.
+  The downloaded evidence-tree aggregate digest is
+  `sha256:b4fc65f1cacbad7e0450a586976255e7e4c884cfa507965ec8a16199ea6cdba0`.
+  SENTRY exact-head CI `34431379452` passed on
+  `8e459ad1c62b46ea3c51003f8df984fd14480004`.
 - Live wake observation is metadata-only and remains an owner qualification
   gate until ten minutes and three deliberate exact spoken wakes are completed.
   Corrected face enrollment is a nonblocking owner UX follow-up. Exact-build

@@ -46,8 +46,9 @@ Status: `IN_PROGRESS`
   profile contract; SENTRY prompt regressions prove the text remains
   presentation-only and cannot replace ANIMA authority or mandatory factual
   alert behavior.
-- Complete ANIMA and SENTRY regression suites passed locally. Hosted exact-head
-  evidence remains pending publication of this consolidated owner checkpoint.
+- Complete ANIMA and SENTRY regression suites passed locally. The published
+  consolidated owner checkpoint is exact-head hosted green; see the R4
+  publication section below.
 
 ## R3 continuous household learning
 
@@ -171,3 +172,18 @@ Status: `IN_PROGRESS`
 - Remaining gates are a fresh exact-build physical Tapo unlock latency sample,
   the three-day household trial no earlier than `2026-09-12T02:21:00Z`, and
   owner spoken wake/face follow-ups. Permanent-goal completion is not claimed.
+
+### R4 published qualification
+
+- `PASSED`: ANIMA head
+  `20fb54f37ac2775e3c0498f2a206193462d99572` has exact-head CI `34431369009`
+  `PASSED`. The run completed deterministic, PostgreSQL/OPA, Phase 13/14,
+  ARM64, container, browser, safety and artifact gates.
+- GitHub artifact `10134892070`, named
+  `phase12-h5-evidence-20fb54f37ac2775e3c0498f2a206193462d99572`, was
+  published. The GitHub artifact API exposes no native digest; the downloaded
+  evidence-tree aggregate digest is
+  `sha256:b4fc65f1cacbad7e0450a586976255e7e4c884cfa507965ec8a16199ea6cdba0`.
+- `PASSED`: SENTRY head
+  `8e459ad1c62b46ea3c51003f8df984fd14480004` has exact-head CI `34431379452`
+  `PASSED` (deterministic and security-focused jobs).

@@ -58,8 +58,8 @@ household isolation.
 | Sensitive and consequential paths bypass style | `PASSED` | eligibility and existing action/event regressions, E4 |
 | New profiles save inactive | `PASSED` | ANIMA API/PostgreSQL tests, E3 |
 | Built-in fallback is explicit and reversible | `PASSED` | ANIMA API/PostgreSQL tests, E3 |
-| Full ANIMA regression after correction | `PENDING` | rerun required after final local patch |
-| Full SENTRY regression | `PASSED` | qualified environment, 545 tests |
+| Full ANIMA regression after correction | `PASSED` | 1169 passed / 76 skipped; exact CI 34431369009 |
+| Full SENTRY regression | `PASSED` | qualified environment, 545 tests; exact CI 34431379452 |
 | Wake correction, ambient observation | `PASSED` | ten-minute metadata-only office observation; zero unintended transitions |
 | Three deliberate exact wake attempts | `OWNER-ACTION GATE` | no physical speech evidence yet |
 | Corrected eight-capture face enrollment | `OWNER-ACTION GATE` | nonblocking UX follow-up |
@@ -97,6 +97,17 @@ E5 evidence.
 | Phase 13 SENTRY-ready boundary | `COMPLETE` | Architect accepted |
 | Phase 14 resilience/recovery | `COMPLETE` | Architect accepted; do not reopen absent regression |
 | Native whole-home hardware deployment | `DEFERRED OUTSIDE PROTOTYPE` | outside adopted prototype boundary |
+
+## Published qualification
+
+- ANIMA head: `20fb54f37ac2775e3c0498f2a206193462d99572`.
+- ANIMA exact-head CI: `34431369009` — `PASS`.
+- ANIMA GitHub artifact: `10134892070`,
+  `phase12-h5-evidence-20fb54f37ac2775e3c0498f2a206193462d99572`.
+- Downloaded evidence-tree aggregate digest:
+  `sha256:b4fc65f1cacbad7e0450a586976255e7e4c884cfa507965ec8a16199ea6cdba0`.
+- SENTRY head: `8e459ad1c62b46ea3c51003f8df984fd14480004`.
+- SENTRY exact-head CI: `34431379452` — `PASS`.
 
 No permanent-goal completion is claimed by this document.
 
