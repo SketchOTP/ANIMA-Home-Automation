@@ -12,7 +12,7 @@ type Note = {
 };
 type NotePage = { items: Note[]; next_cursor: string | null; truncated?: boolean };
 type Member = { person_id: string; name: string };
-type MemoryStatus = { agent_memory_enabled?: boolean; available?: boolean; writer_status?: string };
+type MemoryStatus = { agent_memory_enabled?: boolean; available?: boolean; writer_status?: string; decision_journal?: string };
 type Draft = {
   title: string; body: string; note_type: string; classifier: string; classification: string;
   confidence: string; observed_at: string; enabled: boolean; retention_days: string;
@@ -175,18 +175,20 @@ export function KnowledgePanel({ mutate, onAuthFailure }: {
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft(current => ({ ...current, [key]: value }));
   return <section className="card knowledge-panel" aria-label="Memory knowledge base">
     <div className="card-heading"><h2><Icon name="Preferences" />Memory · Knowledge base</h2></div>
-    <p className="muted">Long-term notes in the existing MEMORY vault. User-stated, discovered, observed and inferred claims—not permissions, verified truth, or automations.</p>
+    <p className="muted">Long-term notes in the existing MEMORY vault. This includes owner-curated knowledge, SENTRY's useful learned notes, and an internal decision journal for eligible turns. Decision entries show conclusions, evidence categories, tool outcomes and uncertainty—not hidden chain-of-thought, raw prompts or transcripts.</p>
     <p className="knowledge-status" role="status">{memoryStatus
-      ? `Agent memory ${memoryStatus.agent_memory_enabled ? "eligible by configuration" : "disabled by configuration"}. Storage ${memoryStatus.available === true ? "available" : memoryStatus.available === false ? "unavailable" : "availability unknown"}. Automatic writer ${memoryStatus.writer_status === "NOT_QUALIFIED" ? "not qualified" : "qualification not established here"}.`
+      ? `Agent memory ${memoryStatus.agent_memory_enabled ? "eligible by configuration" : "disabled by configuration"}. Storage ${memoryStatus.available === true ? "available" : memoryStatus.available === false ? "unavailable" : "availability unknown"}. Decision journal ${memoryStatus.decision_journal === "ENABLED_FOR_ELIGIBLE_TURNS" ? "enabled for eligible SENTRY turns" : "not enabled"}.`
       : "Agent memory status unavailable; automatic capture is not established."}</p>
     <div className="button-row"><button type="button" disabled={loading || busy} onClick={() => void load()}>Refresh memory</button>
+      <button type="button" disabled={loading || busy} onClick={() => { setQuery(""); setPersonFilter(""); setTypeFilter("decision"); setSearch("note_type=decision"); if (search === "note_type=decision") void load(); }}>Show SENTRY decisions</button>
+      <button type="button" disabled={loading || busy} onClick={() => { setQuery(""); setPersonFilter(""); setTypeFilter("learned_routine"); setSearch("note_type=learned_routine"); if (search === "note_type=learned_routine") void load(); }}>Show learned routines</button>
       <button type="button" disabled={!loaded || busy || Boolean(error)} onClick={() => { setEditing(null); setDraft(blank()); setFormOpen(true); setSelected(null); setNotice(""); }}>New note</button></div>
     <form className="form-grid" onSubmit={event => { event.preventDefault(); const params = new URLSearchParams();
       if (query.trim()) params.set("query", query.trim()); if (personFilter) params.set("person_id", personFilter); if (typeFilter) params.set("note_type", typeFilter);
       const next = params.toString(); setSearch(next); if (search === next) void load(); }}>
       <label>Search memory<input maxLength={120} value={query} onChange={event => setQuery(event.target.value)} /></label>
       <label>Filter memory by member<select value={personFilter} onChange={event => setPersonFilter(event.target.value)}><option value="">All members</option>{members.map(member => <option key={member.person_id} value={member.person_id}>{member.name}</option>)}</select></label>
-      <label>Filter note type<select value={typeFilter} onChange={event => setTypeFilter(event.target.value)}><option value="">All note types</option>{["event", "profile", "preference", "routine", "lesson"].map(type => <option key={type}>{type}</option>)}</select></label>
+      <label>Filter note type<select value={typeFilter} onChange={event => setTypeFilter(event.target.value)}><option value="">All note types</option>{["event", "profile", "preference", "routine", "lesson", "decision", "household_model", "observed_pattern", "hypothesis", "learned_routine", "rejected_hypothesis"].map(type => <option key={type}>{type.replaceAll("_", " ")}</option>)}</select></label>
       <button disabled={busy} type="submit">Search notes</button>
     </form>
     {error && <p className="notice error" role="alert">{error}{loaded && " Previously loaded notes may be out of date."}</p>}
@@ -202,7 +204,8 @@ export function KnowledgePanel({ mutate, onAuthFailure }: {
       <dt>Related people</dt><dd>{selected.person_refs?.length ? selected.person_refs.map(id => members.find(member => member.person_id === id)?.name ?? `Unresolved profile ${id}`).join(", ") : "No profile references"}</dd></dl>
       <p className="muted">Source references are attributed claims, not verified evidence or authority.</p>
       <ul>{selected.source_refs?.map((source, index) => <li key={index}>{source.kind}: {source.source_id} — {source.meaning}</li>)}</ul>
-      <div className="button-row">{selected.status === "ACTIVE" && <><button disabled={busy} onClick={() => edit(selected)}>Edit note</button><button disabled={busy} onClick={() => {
+      {["decision", "household_model", "observed_pattern", "hypothesis", "learned_routine", "rejected_hypothesis"].includes(selected.note_type ?? "") && <p className="muted">This is a system-authored, evidence-linked record. It can be retracted, but not rewritten as though SENTRY reached a different conclusion.</p>}
+      <div className="button-row">{selected.status === "ACTIVE" && <>{!["decision", "household_model", "observed_pattern", "hypothesis", "learned_routine", "rejected_hypothesis"].includes(selected.note_type ?? "") && <button disabled={busy} onClick={() => edit(selected)}>Edit note</button>}<button disabled={busy} onClick={() => {
         if (window.confirm("Retract this note? Its current prose and source explanations will be removed. Backups and past transcripts will not be erased.")) void write("retract", { note_id: selected.note_id, expected_digest: selected.digest });
       }}>Retract note</button></>}<button onClick={() => setSelected(null)}>Close note</button></div>
     </section>}

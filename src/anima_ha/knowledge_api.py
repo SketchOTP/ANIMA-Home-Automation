@@ -60,15 +60,22 @@ def install_knowledge_api(
         available = any(
             tool.tool_id == "anima.knowledge.search_notes" and tool.availability for tool in tools
         )
+        agent_memory_enabled = os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true"
         return {
             "available": available,
-            "agent_memory_enabled": os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower()
-            == "true",
+            "agent_memory_enabled": agent_memory_enabled,
             "storage": "OBSIDIAN_MANAGED_MARKDOWN",
             "scope": "HOUSEHOLD",
             "authority": "NONE",
-            "automatic_capture": "MODEL_SELECTED_NOT_TRANSCRIPT_ARCHIVE",
-            "writer_status": "NOT_QUALIFIED",
+            "automatic_capture": "DECISION_SUMMARIES_AND_MODEL_SELECTED_NOTES",
+            "decision_journal": (
+                "ENABLED_FOR_ELIGIBLE_TURNS"
+                if available and agent_memory_enabled
+                else "NOT_ENABLED"
+            ),
+            "writer_status": "CONFIGURED"
+            if available and agent_memory_enabled
+            else "NOT_CONFIGURED",
         }
 
     @app.get("/api/v1/knowledge-search")

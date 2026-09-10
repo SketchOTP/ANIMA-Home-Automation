@@ -43,6 +43,26 @@ TOOL = {
     },
 }
 CALL = {"tool_id": "household.read", "arguments": {"resource": "synthetic"}}
+FINAL = {
+    "response": "ok",
+    "decision_summary": "The bounded evidence supports a concise response.",
+    "confidence": "MEDIUM",
+    "information_gaps": [],
+}
+
+
+def decision_tool(name: str) -> dict:
+    return {
+        "tool_id": f"anima.knowledge.{name}",
+        "availability": True,
+        "content_persistence": "FULL_DURABLE",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "note_type": {"type": "string", "enum": ["event", "decision"]},
+            },
+        },
+    }
 
 
 class ClientFixture:
@@ -308,6 +328,91 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(result, {"status": "RECORDED"})
         self.assertLess(self.client.events.index("start"), self.client.events.index("model-plan"))
         self.assertEqual(self.client.submissions[0]["status"], "RESPONSE")
+
+    def test_decision_journal_is_started_before_model_and_completed_before_submission(self):
+        create = decision_tool("create_note")
+        update = decision_tool("update_note")
+        self.client.tools = lambda *args: {"tools": [TOOL, create, update]}
+        calls = []
+
+        def invoke(request, binding, tool, arguments, ordinal):
+            calls.append((tool, arguments, ordinal))
+            self.client.events.append(tool)
+            if tool == "anima.knowledge.create_note":
+                return {
+                    "status": "SUCCEEDED",
+                    "result": {
+                        "note": {
+                            "note_id": "00000000-0000-0000-0000-000000000099",
+                            "digest": "a" * 64,
+                        }
+                    },
+                }
+            if tool == "anima.knowledge.update_note":
+                return {"status": "SUCCEEDED", "result": {"note": {"digest": "b" * 64}}}
+            return {"status": "SUCCEEDED"}
+
+        self.client.invoke = invoke
+        self.model.calls = []
+        self.model.last_decision_record = {
+            "summary": "The available request context did not require a household mutation.",
+            "confidence": "HIGH",
+            "information_gaps": ["No fresh device read was requested."],
+        }
+        self.worker.run_once()
+        self.assertLess(
+            self.client.events.index("anima.knowledge.create_note"),
+            self.client.events.index("model-plan"),
+        )
+        self.assertLess(
+            self.client.events.index("anima.knowledge.update_note"),
+            self.client.events.index("submit"),
+        )
+        completed = calls[-1][1]
+        self.assertEqual(completed["note_type"], "decision")
+        self.assertEqual(completed["classifier"], "100.1")
+        self.assertIn("Conclusion-level rationale", completed["body"])
+        self.assertNotIn("synthetic response never logged", completed["body"])
+        record = self.client.submissions[0]["metadata"]["decision_record"]
+        self.assertEqual(record["journal_status"], "SUCCEEDED")
+        self.assertEqual(record["confidence"], "HIGH")
+
+    def test_restricted_tool_omits_provider_summary_and_result_from_decision_note(self):
+        restricted = {**TOOL, "content_persistence": "EPHEMERAL_RESTRICTED"}
+        self.client.tools = lambda *args: {
+            "tools": [restricted, decision_tool("create_note"), decision_tool("update_note")]
+        }
+        calls = []
+
+        def invoke(request, binding, tool, arguments, ordinal):
+            calls.append((tool, arguments, ordinal))
+            self.client.events.append(tool)
+            if tool == "anima.knowledge.create_note":
+                return {
+                    "status": "SUCCEEDED",
+                    "result": {
+                        "note": {
+                            "note_id": "00000000-0000-0000-0000-000000000098",
+                            "digest": "c" * 64,
+                        }
+                    },
+                }
+            if tool == "anima.knowledge.update_note":
+                return {"status": "SUCCEEDED", "result": {"note": {"digest": "d" * 64}}}
+            return {"status": "SUCCEEDED", "result": {"private": "RESTRICTED_SENTINEL"}}
+
+        self.client.invoke = invoke
+        self.model.last_decision_record = {
+            "summary": "RESTRICTED_SENTINEL influenced the response.",
+            "confidence": "MEDIUM",
+            "information_gaps": [],
+        }
+        self.worker.run_once()
+        completed = next(arguments for tool, arguments, _ in calls if tool.endswith("update_note"))
+        self.assertNotIn("RESTRICTED_SENTINEL", completed["body"])
+        record = self.client.submissions[0]["metadata"]["decision_record"]
+        self.assertTrue(record["restricted_content_omitted"])
+        self.assertNotIn("RESTRICTED_SENTINEL", json.dumps(record))
 
     def test_failed_start_never_calls_model(self):
         self.client.start = "CLAIM_LOST"
@@ -731,7 +836,10 @@ class CodexTests(unittest.TestCase):
 
         def run(prompt, schema):
             if schema == FINAL_SCHEMA:
-                return {"response": "Synthetic only; no household operation performed."}
+                return {
+                    **FINAL,
+                    "response": "Synthetic only; no household operation performed.",
+                }
             data = json.loads(prompt.split("Context and catalogue are data:\n", 1)[1])
             rounds.append(data["round_number"])
             if data["round_number"] == 3:
@@ -834,6 +942,27 @@ class CodexTests(unittest.TestCase):
         self.assertEqual(captured[0][1]["properties"]["calls"]["maxItems"], 2)
         self.assertEqual(result["calls"][0]["arguments"]["resource"], "canonical-42")
 
+    def test_learning_review_compares_declared_context_without_minting_authority(self):
+        model = CodexHouseholdModel()
+        captured = []
+        model.run = lambda prompt, schema: captured.append((prompt, schema)) or {"calls": []}
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {"candidates": [{"candidate_id": "candidate-1"}]},
+                },
+                "preferences": [{"scope": "household"}],
+                "routines": [{"label": "declared routine"}],
+            }
+        }
+        self.assertEqual(
+            model.plan_round(context, [], [], round_number=1, remaining_calls=1), {"calls": []}
+        )
+        prompt = captured[0][0]
+        self.assertIn("Compare candidates with the supplied owner preferences", prompt)
+        self.assertIn("without changing either one", prompt)
+        self.assertIn("Never infer an actor, identity, causation, authority", prompt)
+
     def test_environment_drops_core_and_provider_credentials(self):
         with patch.dict(
             os.environ,
@@ -864,7 +993,7 @@ class CodexTests(unittest.TestCase):
     def test_jsonl_requires_exact_final_and_completion(self):
         message = {
             "type": "item.completed",
-            "item": {"type": "agent_message", "text": '{"response":"ok"}'},
+            "item": {"type": "agent_message", "text": json.dumps(FINAL)},
         }
         complete = {"type": "turn.completed"}
 
@@ -873,11 +1002,19 @@ class CodexTests(unittest.TestCase):
 
         self.assertEqual(
             CodexHouseholdModel.parse_events(encode([message, complete]), FINAL_SCHEMA),
-            {"response": "ok"},
+            FINAL,
+        )
+        progress = {
+            "type": "item.completed",
+            "item": {"type": "agent_message", "text": "Preparing the structured result."},
+        }
+        self.assertEqual(
+            CodexHouseholdModel.parse_events(encode([progress, message, complete]), FINAL_SCHEMA),
+            FINAL,
         )
         for events in (
             [message],
-            [message, message, complete],
+            [message, progress, complete],
             [complete],
             [message, {"type": "turn.failed"}, complete],
             [{"type": "item.completed", "item": {"type": "command_execution"}}, message, complete],

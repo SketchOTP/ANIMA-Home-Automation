@@ -48,3 +48,48 @@ Status: `IN_PROGRESS`
   alert behavior.
 - Complete ANIMA and SENTRY regression suites passed locally. Hosted exact-head
   evidence remains pending publication of this consolidated owner checkpoint.
+
+## R3 continuous household learning
+
+- Implementation and boundary: deterministic source-linked pattern candidates,
+  exact review packets, provider-start-fenced structured SENTRY outcomes,
+  versioned Memory correction/supersession, Obsidian hierarchy, incremental
+  durable review tasks, owner inspection and later sparse-context retrieval.
+- Live source inventory at final local qualification: 121 raw eligible event
+  rows across four qualified device-event classes and four local dates; all
+  source identities were unique. There were zero qualified presence
+  transitions, so no arrival/departure or household-member attribution was
+  inferred.
+- Explicit live catch-up: six candidates, one
+  `LEARNED_ROUTINE_SUGGESTION`, five `TENTATIVE_HYPOTHESIS`, zero declared
+  routines/automations/permissions/identity assertions/actions. Request and
+  packet are represented by sanitized SHA-256 digests only:
+  `79ef1ce30af8d23f4dacf2052877f86a613cc410eb6a56b3e46a8faea788dd19`
+  and `652364fcc97ae37704223aa1b044895e163838bd9e627d6626b7a4375c4e1b3d`.
+- Continuous tasks: one daily 86,400-second review and one multi-day
+  259,200-second review are active. Catch-up remains explicitly separate from
+  scheduled due-run evidence.
+- Later-use live trace: an ordinary UI-originated SENTRY request retrieved one
+  relevant learned-routine suggestion and two tentative hypotheses alongside
+  explicit owner context. The request is represented only by digest
+  `98087e4961509f5d0ee09b2033f6d1a93e6c6aefc573901956a439d331b2aa6f`.
+  Internal review packet/config/completion records were absent; SENTRY preserved
+  uncertainty and did not infer actor, cause, policy or routine certainty.
+- Obsidian: learning outcomes use managed `300.1`–`300.5` note types and
+  digest-checked correction. Fourteen total managed notes were observed after
+  catch-up and later decision logging; all observed note modes were `0660`.
+- PASSED locally: full ANIMA validation `1169 passed / 76 skipped`, Ruff,
+  strict mypy (147 source files), focused migrated-PostgreSQL learning tests,
+  main Playwright `115 passed / 14 intentional smaller-viewport skips`, focused
+  responsive browser `42 passed`, frontend `14 passed`, TypeScript/Vite, and
+  complete qualified SENTRY `542 passed`.
+- The aggregate `scripts/validate.sh` wrapper initially failed because `uv` was
+  absent from the shell PATH; direct `.venv/bin/anima-validate` ran the same
+  governed Python validation successfully. A first SENTRY run under the host
+  interpreter failed because it lacked the qualified media/ML libraries; it was
+  rerun successfully under `/home/sketch/.venvs/sentry-ubuntu/bin/python`.
+- `.venv/bin/python -m build` was unavailable because the optional `build`
+  module is not installed in that environment. The repository-pinned
+  `.venv/bin/uv build --sdist --wheel` completed both artifacts successfully.
+- Full architecture/evidence boundary: `docs/GOAL-027A-HOUSEHOLD-LEARNING-R3.md`.
+- Hosted exact-head evidence remains pending publication.

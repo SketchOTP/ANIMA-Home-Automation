@@ -806,6 +806,7 @@ class SentryAttentionBridge:
         profile: Any,
         provider_id: str = "sentry",
         provider_version: str = "1",
+        origin: IntelligenceOrigin = IntelligenceOrigin.AUTONOMOUS_ATTENTION,
     ) -> None:
         self.attention = attention
         self.context = context
@@ -813,6 +814,12 @@ class SentryAttentionBridge:
         self.profile = profile
         self.provider_id = provider_id
         self.provider_version = provider_version
+        if origin not in {
+            IntelligenceOrigin.AUTONOMOUS_ATTENTION,
+            IntelligenceOrigin.DURABLE_TASK,
+        }:
+            raise ValueError("Attention bridge origin must be autonomous or durable task")
+        self.origin = origin
 
     def run_once(
         self,
@@ -877,7 +884,7 @@ class SentryAttentionBridge:
             request = IntelligenceRequestFactory.for_trigger(
                 trigger.trigger_id,
                 household_id=household_id,
-                origin=IntelligenceOrigin.AUTONOMOUS_ATTENTION,
+                origin=self.origin,
                 context_packet_id=UUID(str(packet["context_packet_id"])),
                 context_digest=str(packet.get("digest", _digest(packet))),
                 tools=tools,

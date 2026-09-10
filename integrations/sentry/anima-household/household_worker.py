@@ -106,6 +106,7 @@ class HouseholdWorker:
             # No exception message/args, request data, output, or traceback.
             print(json.dumps(diagnostic), flush=True)
             auth_only = code == "CODEX_AUTH_UNAVAILABLE" and not turn.tool_invocation_started
+            turn.finalize_failure_journal(code)
             # One bounded submission only. A lost lease or failed delivery is
             # left to Core expiry; never replay provider calls or tool invocations.
             try:

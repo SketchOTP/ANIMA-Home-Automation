@@ -16,6 +16,7 @@ from psycopg.errors import UniqueViolation
 from test_family_routines import Graph, Memory
 from test_preferences import context
 
+from anima_ha.context import PostgresContextSource
 from anima_ha.events import EventEnvelope
 from anima_ha.household_event_context import HouseholdEventEvidence
 from anima_ha.household_learning import (
@@ -36,7 +37,14 @@ from anima_ha.intelligence import (
     PostgresIntelligenceStore,
 )
 from anima_ha.journal import PostgresEventJournal
-from anima_ha.memory import MemoryRecord, MemoryService, MemoryStatus, MemoryType
+from anima_ha.memory import (
+    MemoryProvenance,
+    MemoryRecord,
+    MemoryService,
+    MemoryStatus,
+    MemoryType,
+    ProvenanceKind,
+)
 from anima_ha.plugins import (
     ExecutionBoundary,
     NativeRuntime,
@@ -150,6 +158,204 @@ def proposal(ids: list[str], **changes: Any) -> dict[str, Any]:
         "event_ids": ids,
         **changes,
     }
+
+
+def structured_proposal(candidate: dict[str, Any], **changes: Any) -> dict[str, Any]:
+    return proposal(
+        candidate["source_event_ids"],
+        **{
+            "candidate_id": candidate["candidate_id"],
+            "conclusion": "TENTATIVE_HYPOTHESIS",
+            "rationale_summary": (
+                "Repeated qualified observations support a tentative pattern only."
+            ),
+            "evidence_categories": ["qualified event recurrence", "local-time consistency"],
+            "missing_information": ["No qualified actor evidence."],
+            "rejected_alternatives": ["Temporal correlation does not establish causation."],
+            **changes,
+        },
+    )
+
+
+def test_real_candidate_review_completes_and_later_review_corrects_in_place(
+    fixture: Any,
+) -> None:
+    service, graph, memory, evidence = fixture
+    ids = [evidence.add(days) for days in (3.2, 2.2, 1.2, 0.2)]
+    request = uuid4()
+    packet = service.create_review_packet(
+        graph.household.canonical_id,
+        request,
+        review_kind="INITIAL_CATCH_UP",
+        source_event_id=str(uuid4()),
+    )
+    assert (
+        service.create_review_packet(
+            graph.household.canonical_id,
+            request,
+            review_kind="INITIAL_CATCH_UP",
+            source_event_id=str(uuid4()),
+        )
+        == packet
+    )
+    assert packet["evidence_event_count"] == 4 and packet["candidates"]
+    candidate = packet["candidates"][0]
+    with learning_request_scope(
+        request,
+        graph.household.canonical_id,
+        ids,
+        packet["candidates"],
+    ):
+        first = service.propose(
+            graph.household.canonical_id,
+            None,
+            structured_proposal(candidate),
+            request,
+            invocation_id=uuid4(),
+        )
+    assert first["suggestion"]["candidate_id"] == candidate["candidate_id"]
+    assert first["suggestion"]["maturity_evidence"]["observation_count"] == 4
+    assert (
+        len(
+            service._records(
+                graph.household.canonical_id, "household_learning_review_completion", limit=10
+            )
+        )
+        == 1
+    )
+
+    later_id = evidence.add(0.05)
+    next_request = uuid4()
+    next_packet = service.create_review_packet(
+        graph.household.canonical_id,
+        next_request,
+        review_kind="ROUTINE",
+        source_event_id=str(uuid4()),
+    )
+    next_candidate = next(
+        item
+        for item in next_packet["candidates"]
+        if item["candidate_id"] == candidate["candidate_id"]
+    )
+    with learning_request_scope(
+        next_request,
+        graph.household.canonical_id,
+        [*ids, later_id],
+        next_packet["candidates"],
+    ):
+        corrected = service.propose(
+            graph.household.canonical_id,
+            None,
+            structured_proposal(
+                next_candidate,
+                conclusion="LEARNED_ROUTINE_SUGGESTION",
+                content="A repeated event window is mature enough for owner review.",
+            ),
+            next_request,
+            invocation_id=uuid4(),
+        )
+    assert corrected["suggestion"]["conclusion"] == "LEARNED_ROUTINE_SUGGESTION"
+    active = service._records(
+        graph.household.canonical_id, "household_learning_suggestion", limit=10
+    )
+    assert len(active) == 1
+    assert sum(row.status == MemoryStatus.SUPERSEDED for row in memory.records.values()) >= 1
+
+
+def test_insufficient_history_completes_without_fabricating_candidate(fixture: Any) -> None:
+    service, graph, _, evidence = fixture
+    evidence.add(0)
+    packet = service.create_review_packet(
+        graph.household.canonical_id,
+        uuid4(),
+        review_kind="INITIAL_CATCH_UP",
+        source_event_id=str(uuid4()),
+    )
+    assert packet["evidence_event_count"] == 1
+    assert packet["candidates"] == []
+    completion = service.status(graph.household.canonical_id)["learning"]["last_review"]
+    assert completion is not None
+    assert completion["candidate_count"] == completion["outcome_count"] == 0
+
+
+def test_insufficient_candidate_is_retained_honestly(fixture: Any) -> None:
+    service, graph, _, evidence = fixture
+    ids = [evidence.add(1), evidence.add(0)]
+    request = uuid4()
+    packet = service.create_review_packet(
+        graph.household.canonical_id,
+        request,
+        review_kind="INITIAL_CATCH_UP",
+        source_event_id=str(uuid4()),
+    )
+    candidate = packet["candidates"][0]
+    with learning_request_scope(
+        request,
+        graph.household.canonical_id,
+        ids,
+        packet["candidates"],
+    ):
+        saved = service.propose(
+            graph.household.canonical_id,
+            None,
+            structured_proposal(
+                candidate,
+                conclusion="INSUFFICIENT_EVIDENCE",
+                content="The bounded evidence does not support a household routine.",
+            ),
+            request,
+            invocation_id=uuid4(),
+        )
+    assert saved["suggestion"]["conclusion"] == "INSUFFICIENT_EVIDENCE"
+    assert saved["suggestion"]["authority"] == "NONE"
+
+
+def test_daily_review_uses_source_identity_for_late_out_of_order_evidence(
+    fixture: Any,
+) -> None:
+    service, graph, _, evidence = fixture
+    ids = [evidence.add(days) for days in (3.2, 2.2, 1.2)]
+    first_request = uuid4()
+    first = service.create_review_packet(
+        graph.household.canonical_id,
+        first_request,
+        review_kind="INITIAL_CATCH_UP",
+        source_event_id=str(uuid4()),
+    )
+    candidate = first["candidates"][0]
+    with learning_request_scope(
+        first_request,
+        graph.household.canonical_id,
+        ids,
+        first["candidates"],
+    ):
+        service.propose(
+            graph.household.canonical_id,
+            None,
+            structured_proposal(candidate),
+            first_request,
+            invocation_id=uuid4(),
+        )
+
+    no_change = service.create_review_packet(
+        graph.household.canonical_id,
+        uuid4(),
+        review_kind="DAILY",
+        source_event_id=str(uuid4()),
+    )
+    assert no_change["candidates"] == []
+
+    # Received later, but its occurrence belongs inside an older evidence day.
+    late_id = evidence.add(2.7)
+    evidence.rows[-1]["recorded_at"] = NOW.isoformat()
+    later = service.create_review_packet(
+        graph.household.canonical_id,
+        uuid4(),
+        review_kind="DAILY",
+        source_event_id=str(uuid4()),
+    )
+    assert later["candidates"]
+    assert any(late_id in item["source_event_ids"] for item in later["candidates"])
 
 
 def test_defaults_and_status_never_create_memory_or_tasks(fixture: Any) -> None:
@@ -868,3 +1074,46 @@ def test_core_frozen_request_real_opa_proposal_to_real_pg_without_owner_authorit
             "SELECT count(*) FROM anima_memory_records WHERE household_id=%s",
             (hh,),
         ).fetchone() == (1,)
+
+
+def test_context_uses_supported_learning_and_excludes_rejected_or_dismissed() -> None:
+    url = os.environ.get("ANIMA_FAMILY_ROUTINES_TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("requires isolated routines PostgreSQL")
+    graph, memory = Graph(), MemoryService(url)
+    hh = graph.household.canonical_id
+    keyword = f"learning-{uuid4()}"
+
+    def add(
+        conclusion: str,
+        review_status: str,
+        record_kind: str = "household_learning_suggestion",
+    ) -> UUID:
+        row = MemoryRecord.create(
+            memory_id=uuid4(),
+            household_id=hh,
+            memory_type=MemoryType.INFERRED_PATTERN,
+            content=f"{keyword} bounded synthetic context",
+            provenance=MemoryProvenance(
+                ProvenanceKind.INFERRED_FROM_HISTORY,
+                "anima:test:learning-context",
+            ),
+            created_at=NOW,
+            confidence=0.4,
+            metadata={
+                "record_kind": record_kind,
+                "conclusion": conclusion,
+                "review_status": review_status,
+            },
+        )
+        memory.create(row)
+        return row.memory_id
+
+    supported = add("TENTATIVE_HYPOTHESIS", "PENDING")
+    add("REJECTED", "PENDING")
+    add("TENTATIVE_HYPOTHESIS", "DISMISSED")
+    add("TENTATIVE_HYPOTHESIS", "PENDING", "household_learning_review_packet")
+    add("TENTATIVE_HYPOTHESIS", "PENDING", "household_learning_review_completion")
+    add("TENTATIVE_HYPOTHESIS", "PENDING", "household_initiative_config")
+    rows = PostgresContextSource(url).memories(hh, [], keyword, now=NOW, limit=10)
+    assert [row["memory_id"] for row in rows] == [supported]

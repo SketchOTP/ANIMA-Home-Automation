@@ -91,6 +91,23 @@ def create(
     return plugin, result, managed / str(context.household_id) / f"{result['note_id']}.md"
 
 
+def test_decision_note_type_forms_an_internal_audit_section(
+    managed: Path, context: InvocationContext, payload: dict[str, Any]
+) -> None:
+    plugin, note, _ = create(
+        managed,
+        context,
+        {
+            **payload,
+            "note_type": "decision",
+            "classifier": "100.1",
+            "body": "Conclusion-level rationale only; no raw chain-of-thought.",
+        },
+    )
+    result = invoke(plugin, context, "search_notes", {"note_type": "decision", "limit": 20})
+    assert [item["note_id"] for item in result["items"]] == [note["note_id"]]
+
+
 def test_manifest_and_trusted_only_contract(managed: Path) -> None:
     plugin = KnowledgeNativePlugin(KnowledgeConfig(managed))
     plugin.start({})

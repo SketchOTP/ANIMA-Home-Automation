@@ -126,6 +126,10 @@ def project_event(
     }
     if kind == "household.presence.connection_changed":
         projected["transition"] = payload["transition"]
+    elif vendor_source:
+        # Only the schema-qualified enum crosses the learning boundary. Raw
+        # vendor notification prose remains excluded.
+        projected["event_kind"] = str(payload["event_kind"]).upper()
     try:
         projected["source_event_id"] = str(
             UUID(str(row.get("source_event_id") or row.get("causation_id")))

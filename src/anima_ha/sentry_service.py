@@ -47,6 +47,110 @@ from anima_ha.ui_runtime import build_postgres_core
 
 MAX_BODY = 64 * 1024
 BINDING_TTL = timedelta(minutes=5)
+_DECISION_CONTEXTS = {
+    "sparse_request_context",
+    "identity_evidence",
+    "household_and_person_preferences",
+    "declared_routines",
+    "memory_lookup_available",
+    "fresh_presence_lookup_available",
+    "notification_disposition",
+    "bounded_truth_evidence",
+}
+
+
+def _decision_result_metadata(value: Any, request_id: UUID) -> dict[str, Any]:
+    """Validate provider-authored audit summaries without granting them authority."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict) or set(value) != {"decision_record"}:
+        raise ValueError("INVALID_RESULT_METADATA")
+    record = value["decision_record"]
+    required = {
+        "version",
+        "provider",
+        "request_id",
+        "origin",
+        "provider_started_at",
+        "decision_completed_at",
+        "elapsed_ms",
+        "proposed_result_status",
+        "decision_summary",
+        "confidence",
+        "information_gaps",
+        "context_categories",
+        "pre_model_notification_disposition",
+        "provider_reported_tool_activity",
+        "restricted_content_omitted",
+        "journal_status",
+    }
+    if (
+        not isinstance(record, dict)
+        or set(record) - (required | {"journal_note_id"})
+        or not required <= set(record)
+    ):
+        raise ValueError("INVALID_DECISION_RECORD")
+    if record["version"] != 1 or record["provider"] != "sentry":
+        raise ValueError("INVALID_DECISION_RECORD")
+    if str(record["request_id"]) != str(request_id):
+        raise ValueError("DECISION_REQUEST_MISMATCH")
+    if record["confidence"] not in {"LOW", "MEDIUM", "HIGH"}:
+        raise ValueError("INVALID_DECISION_CONFIDENCE")
+    statuses = {item.value for item in IntelligenceResultStatus}
+    if (
+        not isinstance(record["decision_summary"], str)
+        or not 1 <= len(record["decision_summary"]) <= 1200
+        or type(record["elapsed_ms"]) is not int
+        or not 0 <= record["elapsed_ms"] <= 900_000
+        or type(record["restricted_content_omitted"]) is not bool
+        or not isinstance(record["pre_model_notification_disposition"], str)
+        or not 1 <= len(record["pre_model_notification_disposition"]) <= 256
+        or record["proposed_result_status"] not in statuses
+        or record["origin"] not in {item.value for item in IntelligenceOrigin} | {"UNKNOWN"}
+        or not isinstance(record["journal_status"], str)
+        or not 1 <= len(record["journal_status"]) <= 128
+    ):
+        raise ValueError("INVALID_DECISION_RECORD")
+    gaps = record["information_gaps"]
+    contexts = record["context_categories"]
+    activity = record["provider_reported_tool_activity"]
+    if (
+        not isinstance(gaps, list)
+        or len(gaps) > 6
+        or any(not isinstance(item, str) or not 1 <= len(item) <= 200 for item in gaps)
+        or not isinstance(contexts, list)
+        or any(not isinstance(item, str) for item in contexts)
+        or len(contexts) != len(set(contexts))
+        or not set(contexts) <= _DECISION_CONTEXTS
+        or not isinstance(activity, list)
+        or len(activity) > 8
+    ):
+        raise ValueError("INVALID_DECISION_RECORD")
+    for field in ("provider_started_at", "decision_completed_at"):
+        moment = datetime.fromisoformat(str(record[field]))
+        if moment.tzinfo is None:
+            raise ValueError("INVALID_DECISION_TIME")
+    for item in activity:
+        if (
+            not isinstance(item, dict)
+            or set(item) != {"ordinal", "tool_id", "status", "reason"}
+            or type(item["ordinal"]) is not int
+            or not 1 <= item["ordinal"] <= 8
+            or not isinstance(item["tool_id"], str)
+            or not 1 <= len(item["tool_id"]) <= 128
+            or not isinstance(item["status"], str)
+            or not 1 <= len(item["status"]) <= 128
+            or (
+                item["reason"] is not None
+                and (not isinstance(item["reason"], str) or not 1 <= len(item["reason"]) <= 128)
+            )
+        ):
+            raise ValueError("INVALID_DECISION_TOOL_ACTIVITY")
+    if "journal_note_id" in record:
+        UUID(str(record["journal_note_id"]))
+    # This record is provider-authored explanatory metadata only. Core status,
+    # policy, Truth and tool/action records remain independently authoritative.
+    return {"decision_record": record}
 
 
 class ServiceAuthError(RuntimeError):
@@ -356,6 +460,7 @@ class CoreSentryHTTPService:
     def request_payload(request: Any, binding: str) -> dict[str, Any]:
         return {
             "request_id": str(request.request_id),
+            "trigger_id": str(request.trigger_id) if request.trigger_id else None,
             "household_id": str(request.household_id),
             "origin": request.origin.value,
             "context_packet_id": str(request.context_packet_id),
@@ -698,6 +803,9 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         ),
                         detail=(str(body["detail"]) if body.get("detail") is not None else None),
                         action_references=tuple(str(x) for x in body.get("action_references", [])),
+                        metadata=_decision_result_metadata(
+                            body.get("metadata"), request.request_id
+                        ),
                         provider_ambiguous=bool(body.get("provider_ambiguous", False)),
                     )
                     recorded, result, disposition = service.boundary.finalize_result(

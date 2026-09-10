@@ -39,7 +39,17 @@ type Enrollment = {
   samples: FaceSample[];
 };
 
-const POSES = ["straight", "left", "right", "up", "down", "straight", "left", "right"] as const;
+// Finish with the easiest straight-on capture. Side profiles are collected
+// earlier so the final response is not coupled to the hardest detector angle.
+const POSES = ["straight", "left", "right", "up", "down", "left", "right", "straight"] as const;
+type FacePose = (typeof POSES)[number];
+const POSE_TARGETS: Record<FacePose, number> = {
+  straight: 2,
+  left: 2,
+  right: 2,
+  up: 1,
+  down: 1,
+};
 const poseGuidance: Record<string, string> = {
   straight: "Look directly at the camera.",
   left: "Turn your head slightly to your left.",
@@ -92,6 +102,14 @@ function onboardingLabel(user: User) {
   return "No face profile";
 }
 
+function nextRequiredPose(enrollment: Enrollment): FacePose {
+  const remaining = { ...POSE_TARGETS };
+  for (const [pose, count] of Object.entries(enrollment.accepted_poses)) {
+    if (pose in remaining) remaining[pose as FacePose] -= Number(count) || 0;
+  }
+  return POSES.find((pose) => remaining[pose] > 0) ?? "straight";
+}
+
 export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
   const [page, setPage] = useState<UserPage | null>(null);
   const [draft, setDraft] = useState<Draft>(blank);
@@ -106,6 +124,8 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const controller = useRef<AbortController | null>(null);
   const generation = useRef(0);
+  const authFailure = useRef(onAuthFailure);
+  authFailure.current = onAuthFailure;
 
   const reload = useCallback(async () => {
     controller.current?.abort();
@@ -117,7 +137,7 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
     try {
       const response = await fetch("/api/v1/users", { credentials: "same-origin", cache: "no-store", signal: abort.signal, headers: { Accept: "application/json" } });
       if (current !== generation.current) return;
-      if (response.status === 401) { onAuthFailure(); return; }
+      if (response.status === 401) { authFailure.current(); return; }
       if (!response.ok) throw new Error("USERS_UNAVAILABLE");
       setPage(parsePage(await response.json()));
     } catch (reason) {
@@ -125,7 +145,7 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
     } finally {
       if (current === generation.current) setLoading(false);
     }
-  }, [onAuthFailure]);
+  }, []);
   useEffect(() => { void reload(); return () => { generation.current++; controller.current?.abort(); }; }, [reload]);
 
   const reset = () => { setDraft(blank()); setEditing(null); };
@@ -156,16 +176,20 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
       setEnrolling(user); setEnrollment(session);
     } finally { setFaceBusy(false); }
   };
-  const captureFace = async () => {
+  const captureFace = async (pose?: FacePose) => {
     if (!enrolling || !enrollment) return;
-    const pose = POSES[Math.min(enrollment.accepted_samples, POSES.length - 1)];
+    const requestedPose = pose ?? nextRequiredPose(enrollment);
+    if (Number(enrollment.accepted_poses[requestedPose] ?? 0) >= POSE_TARGETS[requestedPose]) return;
     setFaceBusy(true); setError("");
     try {
-      const result = await mutate("/api/v1/users/face-capture", { person_id: enrolling.person_id, session_id: enrollment.session_id, pose });
+      const result = await mutate("/api/v1/users/face-capture", { person_id: enrolling.person_id, session_id: enrollment.session_id, pose: requestedPose });
       const session = enrollmentFrom(result);
       if (!session) { setError(result?.reason || "No clear face was captured. Adjust position or lighting and try again."); return; }
       setEnrollment(session);
-      if (session.accepted_samples === enrollment.accepted_samples) setError("No clear face was captured. Adjust position or lighting and try again.");
+      if (session.accepted_samples === enrollment.accepted_samples) {
+        const detail = object(result?.result) && typeof result.result.reason === "string" ? result.result.reason : null;
+        setError(detail || "No clear face was captured. Adjust position or lighting and try again.");
+      }
     } finally { setFaceBusy(false); }
   };
   const removeSample = async (sampleId: string) => {
@@ -202,15 +226,16 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
       if (result?.status === "SUCCEEDED") { setNotice(`Face profile removed for ${user.name}.`); await reload(); }
     } finally { setFaceBusy(false); }
   };
-  const nextPose = enrollment ? POSES[Math.min(enrollment.accepted_samples, POSES.length - 1)] : "straight";
+  const nextPose = enrollment ? nextRequiredPose(enrollment) : "straight";
   const completePoses = enrollment ? ["straight", "left", "right", "up", "down"].every(pose => Number(enrollment.accepted_poses[pose] ?? 0) > 0) : false;
+  const readyToSave = Boolean(enrollment && enrollment.accepted_samples >= enrollment.target_samples && completePoses);
 
   return <div className="dashboard users-panel">
     <section className="card">
       <div className="card-heading"><h2 ref={heading} tabIndex={-1}><Icon name="Person" />{editing ? "Edit household user" : "Add household user"}</h2><button type="button" disabled={loading || busy || faceBusy} onClick={() => void reload()}><Icon name="Refresh" />Refresh</button></div>
       <p className="muted">Manage each person's household role, SENTRY access, Wi-Fi presence hints, and private local face profile. Wi-Fi presence supports context but never authenticates someone.</p>
       {error && <p className="notice error" role="alert">{error}</p>}{notice && <p className="notice success" role="status">{notice}</p>}
-      <form className="stack" onSubmit={event => void save(event)}><fieldset disabled={busy || loading}><legend>{editing ? "User details" : "New household user"}</legend><label>Name<input required maxLength={120} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} placeholder="Household member name" /></label><div className="settings-form"><label>Household role<select value={draft.role} onChange={event => setDraft({ ...draft, role: event.target.value as PersonRole })}><option value="member">Member</option><option value="guest">Guest</option>{editing && <option value="owner">Owner</option>}</select></label><label>SENTRY access<select value={draft.access_level} onChange={event => setDraft({ ...draft, access_level: event.target.value as AccessLevel })}><option value="LIMITED">Limited</option><option value="UNRESTRICTED">Unrestricted</option></select></label></div><label>Associated Wi-Fi MAC addresses<textarea rows={3} value={draft.wifi_macs} onChange={event => setDraft({ ...draft, wifi_macs: event.target.value })} placeholder="aa:bb:cc:dd:ee:ff" aria-describedby="users-mac-help" /></label><small id="users-mac-help" className="muted">Optional. Enter one per line, or separate them with commas. Saved addresses survive restarts.</small><div className="button-row"><button type="submit" disabled={busy || !draft.name.trim()}>{busy ? "Saving…" : editing ? "Save user" : "Add user"}</button>{editing && <button type="button" onClick={reset}>Cancel</button>}</div></fieldset></form>
+      <form className="stack" onSubmit={event => void save(event)}><fieldset disabled={busy || loading}><legend>{editing ? "User details" : "New household user"}</legend><label>Name<input required maxLength={120} value={draft.name} onChange={event => setDraft(current => ({ ...current, name: event.target.value }))} placeholder="Household member name" /></label><div className="settings-form"><label>Household role<select value={draft.role} onChange={event => setDraft(current => ({ ...current, role: event.target.value as PersonRole }))}><option value="member">Member</option><option value="guest">Guest</option>{editing && <option value="owner">Owner</option>}</select></label><label>SENTRY access<select value={draft.access_level} onChange={event => setDraft(current => ({ ...current, access_level: event.target.value as AccessLevel }))}><option value="LIMITED">Limited</option><option value="UNRESTRICTED">Unrestricted</option></select></label></div><label>Associated Wi-Fi MAC addresses<textarea rows={3} value={draft.wifi_macs} onChange={event => setDraft(current => ({ ...current, wifi_macs: event.target.value }))} placeholder="aa:bb:cc:dd:ee:ff" aria-describedby="users-mac-help" /></label><small id="users-mac-help" className="muted">Optional. Enter one per line, or separate them with commas. Saved addresses survive restarts.</small><div className="button-row"><button type="submit" disabled={busy || !draft.name.trim()}>{busy ? "Saving…" : editing ? "Save user" : "Add user"}</button>{editing && <button type="button" onClick={reset}>Cancel</button>}</div></fieldset></form>
     </section>
     <section className="card" aria-busy={loading}>
       <div className="card-heading"><h2><Icon name="Users" />Household users</h2></div>
@@ -220,7 +245,7 @@ export function UsersPanel({ mutate, onAuthFailure }: UsersPanelProps) {
         <div className="user-facts"><span><strong>Face profile</strong><small>{onboardingLabel(user)}</small></span><span><strong>Wi-Fi identity hints</strong><small>{user.wifi_macs.length ? user.wifi_macs.join(" · ") : "None associated"}</small></span></div>
         <p className="muted">{user.sentry_onboarding_state === "ACTIVE" ? "SENTRY can use this local biometric profile as recognition evidence. Improving it replaces the profile with a new reviewed capture set." : "Register a private face profile with the configured SENTRY camera."}</p>
         <div className="button-row"><button type="button" disabled={faceBusy} onClick={() => edit(user)}>Edit user</button><button type="button" disabled={faceBusy} onClick={() => void startFace(user)}>{user.sentry_onboarding_state === "ACTIVE" ? "Improve face profile" : "Register face profile"}</button>{user.sentry_onboarding_state === "ACTIVE" && <button type="button" disabled={faceBusy} onClick={() => void deleteFace(user)}>Remove face profile</button>}</div>
-        {enrolling?.person_id === user.person_id && enrollment && <div className="face-enrollment" aria-busy={faceBusy}><div><h3>Face profile for {user.name}</h3><p>{poseGuidance[nextPose]} Make sure one face is clearly visible and evenly lit.</p><p className="muted">{enrollment.accepted_samples} of {enrollment.target_samples} captures accepted. Review or remove any capture before saving.</p></div><div className="face-samples">{enrollment.samples.map((sample, index) => <figure key={sample.sample_id}><div className="face-preview">{sample.preview_jpeg_base64 ? <img src={`data:image/jpeg;base64,${sample.preview_jpeg_base64}`} alt={`${user.name} capture ${index + 1}, ${sample.pose ?? "face"}`} /> : <Icon name="Person" />}</div><figcaption><strong>{sample.pose ?? `Capture ${index + 1}`}</strong><small className="muted">Sharpness {String(sample.quality.sharpness ?? "accepted")}</small><button type="button" disabled={faceBusy} onClick={() => void removeSample(sample.sample_id)}>Remove this capture</button></figcaption></figure>)}</div><div className="button-row"><button type="button" disabled={faceBusy || enrollment.accepted_samples >= enrollment.target_samples} onClick={() => void captureFace()}>{faceBusy ? "Using camera…" : `Take ${nextPose} picture`}</button><button type="button" disabled={faceBusy || !enrollment.ready_to_save || !completePoses} onClick={() => void commitFace()}>Save face profile</button><button type="button" disabled={faceBusy} onClick={() => void cancelFace()}>Cancel enrollment</button></div><p className="muted privacy-note">Captured pictures stay in temporary memory only. After saving, SENTRY keeps the derived face profile and capture count—not the photos. To replace a poor saved profile, choose Improve face profile.</p></div>}
+        {enrolling?.person_id === user.person_id && enrollment && <div className="face-enrollment" aria-busy={faceBusy}><div><h3>Face profile for {user.name}</h3><p>{poseGuidance[nextPose]} Make sure one face is clearly visible and evenly lit.</p><p className="muted">{enrollment.accepted_samples} of {enrollment.target_samples} captures accepted. Eight reviewed captures are required; you can choose another view and return to a difficult one. The final recommended picture is straight-on.</p></div><div className="button-row face-pose-controls" role="group" aria-label="Choose face view">{(["straight", "left", "right", "up", "down"] as FacePose[]).map(pose => <button type="button" key={pose} disabled={faceBusy || enrollment.accepted_samples >= enrollment.target_samples || Number(enrollment.accepted_poses[pose] ?? 0) >= POSE_TARGETS[pose]} onClick={() => void captureFace(pose)}>Capture {pose} ({Number(enrollment.accepted_poses[pose] ?? 0)}/{POSE_TARGETS[pose]})</button>)}</div><div className="face-samples">{enrollment.samples.map((sample, index) => <figure key={sample.sample_id}><div className="face-preview">{sample.preview_jpeg_base64 ? <img src={`data:image/jpeg;base64,${sample.preview_jpeg_base64}`} alt={`${user.name} capture ${index + 1}, ${sample.pose ?? "face"}`} /> : <Icon name="Person" />}</div><figcaption><strong>{sample.pose ?? `Capture ${index + 1}`}</strong><small className="muted">Sharpness {String(sample.quality.sharpness ?? "accepted")}</small>{sample.quality.pose_verified === false && <small className="muted">Pose estimate uncertain; review this picture.</small>}<button type="button" disabled={faceBusy} onClick={() => void removeSample(sample.sample_id)}>Remove this capture</button></figcaption></figure>)}</div><div className="button-row"><button type="button" disabled={faceBusy || enrollment.accepted_samples >= enrollment.target_samples} onClick={() => void captureFace()}>{faceBusy ? "Using camera…" : `Take recommended ${nextPose} picture`}</button><button type="button" disabled={faceBusy || !readyToSave} onClick={() => void commitFace()}>Save face profile</button><button type="button" disabled={faceBusy} onClick={() => void cancelFace()}>Cancel enrollment</button></div><p className="muted privacy-note">Captured pictures stay in temporary memory only. After saving, SENTRY keeps the derived face profile and capture count—not the photos. To replace a poor saved profile, choose Improve face profile.</p></div>}
       </li>)}</ul>
     </section>
   </div>;

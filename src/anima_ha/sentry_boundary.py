@@ -576,10 +576,12 @@ class CoreSentryBoundary:
 
             assert self.learning_service is not None
             evidence = self.learning_service.evidence(request.household_id, limit=2000)
+            packet = self.learning_service.ensure_review_packet(request)
             scope = learning_request_scope(
                 request.request_id,
                 request.household_id,
                 (item["event_id"] for item in evidence["items"]),
+                packet.get("candidates", []) if packet else [],
             )
         with scope:
             result = self.manager.invoke(

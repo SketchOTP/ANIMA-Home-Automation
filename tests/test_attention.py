@@ -164,6 +164,7 @@ class FakeContextSource(PostgresContextSource):
     def __init__(self, source_event: dict[str, Any], *, fail_memory: bool = False) -> None:
         self.source_event = source_event
         self.fail_memory = fail_memory
+        self.memory_query = ""
 
     def source_events(self, event_ids: tuple[str, ...], limit: int) -> list[dict[str, Any]]:
         return [self.source_event]
@@ -237,6 +238,7 @@ class FakeContextSource(PostgresContextSource):
         now: datetime,
         limit: int,
     ) -> list[dict[str, Any]]:
+        self.memory_query = query
         if self.fail_memory:
             raise RuntimeError("memory index unavailable")
         return [
@@ -352,7 +354,33 @@ def test_context_is_sparse_uncertainty_preserving_and_secret_safe() -> None:
     assert any(item["reason_code"] == "BUDGET_PRUNED" for item in payload["omissions"])
     assert packet.serialized_bytes <= 25_000
     assert packet.digest
+    assert "What happened at the front door?" in broker.source.memory_query
+    assert "must-not-leak" not in broker.source.memory_query
     assert "must-not-leak" not in json.dumps(packet.cloud_safe_projection(), sort_keys=True)
+
+
+def test_memory_retrieval_query_ignores_non_request_payload_text() -> None:
+    source = event(
+        1,
+        event_type="external.provider.result",
+        payload={"text": "untrusted vendor prose", "request": "fake owner request"},
+    )
+    trigger = ReasoningTrigger(
+        uuid4(),
+        "EVENT",
+        (str(source["event_id"]),),
+        (1, 1),
+        (str(ENTRANCE_ID),),
+        "GUARANTEED_CLASS",
+        100,
+        BASE,
+        "test.context.memory-query",
+    )
+    broker = ContextBroker("postgresql://unused")
+    broker.source = FakeContextSource(source)
+    broker.assemble(trigger, household_id=HOUSEHOLD_ID, assembled_at=BASE, persist=False)
+    assert "untrusted vendor prose" not in broker.source.memory_query
+    assert "fake owner request" not in broker.source.memory_query
 
 
 def test_context_source_failure_is_degraded_without_losing_trigger() -> None:

@@ -1,6 +1,6 @@
 # Repository Map
 
-Latest focused update: owner connection / visual console 026A, 2026-09-06.
+Latest focused update: continuous household learning 027A R3, 2026-09-09.
 The remaining historical map below is not a full current-source audit.
 
 ## Owner console additions
@@ -25,8 +25,10 @@ The remaining historical map below is not a full current-source audit.
 
 - `ring_setup.py`, `ring_api.py`, `ring_events.py` — HA-owned account setup and canonical event-only Ring ingestion.
 - `household_event_context.py`, `household_initiative.py` — sparse source-qualified correlation and current notification disposition.
-- `household_learning.py`, `household_learning_api.py`, `learning_review_runner.py` — owner settings, inferred suggestions and scoped existing-task review dispatch.
-- `ui/src/InitiativePanel.tsx`, `RingConnectionPanel.tsx` — learning/notification controls and Ring setup/status.
+- `household_patterns.py` — bounded deterministic source-linked recurrence and sequence candidates, maturity evidence, contradictions and missing-day coverage.
+- `household_learning.py`, `household_learning_api.py`, `learning_review_runner.py` — owner settings, one-time catch-up, incremental review packets, correctable/superseding conclusions, Obsidian synchronization and durable-task dispatch.
+- `ui/src/InitiativePanel.tsx`, `KnowledgePanel.tsx`, `RingConnectionPanel.tsx` — learning evidence/review inspection, managed Memory hierarchy, notification controls and Ring setup/status.
+- `docs/GOAL-027A-HOUSEHOLD-LEARNING-R3.md` — continuous learning architecture, live catch-up evidence, privacy boundary and remaining gates.
 - `docs/RING-LEARNING-OWNER-INCREMENT-026A.md` — final local deployment and qualification limits.
 
 - `src/anima_ha/household_reasoning.py` — sparse live shared/personal context and reasoning guidance, without a scripted notification engine.

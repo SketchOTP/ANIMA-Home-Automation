@@ -1453,20 +1453,20 @@ def build_postgres_core(
         persist_choice=False,
     )
     knowledge_root = os.environ.get("ANIMA_KNOWLEDGE_ROOT", "").strip()
+    knowledge_plugin: KnowledgeNativePlugin | None = None
     if knowledge_root:
+        knowledge_plugin = KnowledgeNativePlugin(
+            KnowledgeConfig.from_environment(),
+            person_validator=lambda household, person: any(
+                item.canonical_id == person
+                and item.kind == NodeKind.PERSON
+                and item.retired_at is None
+                for item in graph.members_of_household(household)
+            ),
+        )
         register_and_enable(
             KNOWLEDGE_MANIFEST,
-            NativeRuntime(
-                KnowledgeNativePlugin(
-                    KnowledgeConfig.from_environment(),
-                    person_validator=lambda household, person: any(
-                        item.canonical_id == person
-                        and item.kind == NodeKind.PERSON
-                        and item.retired_at is None
-                        for item in graph.members_of_household(household)
-                    ),
-                )
-            ),
+            NativeRuntime(knowledge_plugin),
         )
     task_service = TaskService(PostgresTaskStore(database_url), journal)
     household_evidence = HouseholdEventEvidence(database_url, graph)
@@ -1476,6 +1476,7 @@ def build_postgres_core(
         journal,
         evidence_reader=household_evidence.recent_household_evidence,
         task_service=task_service,
+        knowledge_plugin=knowledge_plugin,
         timezone=os.environ.get("ANIMA_HOUSEHOLD_TIMEZONE", "UTC"),
     )
     register_and_enable(

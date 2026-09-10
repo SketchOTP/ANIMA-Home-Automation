@@ -57,3 +57,37 @@ safety invariant. If no fresh physical event can be obtained, finish all safe
 residual work and return `BLOCKED — OWNER PHYSICAL ACTION REQUIRED`.
 
 Do not self-declare `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE`.
+
+## R3 amendment — continuous household learning
+
+Architect directive:
+`ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A-R3`.
+
+This amendment remains inside 027A. It requires a continuous, evidence-backed,
+correctable learning loop over the existing Journal, Truth, Graph, Memory,
+routines, Attention, durable tasks, SENTRY provider boundary, Obsidian vault and
+OPA. Required work is:
+
+```text
+qualified observations
+→ deterministic source-linked candidates
+→ serious bounded SENTRY review
+→ versioned household understanding
+→ daily/multi-day incremental reevaluation
+→ owner inspection/promotion boundary
+→ later ordinary SENTRY retrieval
+```
+
+Candidate maturity must expose observable support, distinct days, elapsed span,
+temporal consistency, contradictions, source trust and missing evidence. SENTRY
+may support, retain, reject, contradict or supersede a hypothesis, but it may not
+fabricate evidence or persist private chain-of-thought.
+
+The initial catch-up must use the current real store and remain explicitly
+separate from scheduled-run evidence. Learned routines remain suggestions;
+owner acceptance is required before any declared routine, automation, policy,
+permission or physical behavior changes. Memory remains context and cannot
+override Truth, identity, OPA or canonical event history.
+
+Preserve all pre-existing local 027A work and do not open another active packet.
+The physical exact-build latency and elapsed household-trial gates remain open.

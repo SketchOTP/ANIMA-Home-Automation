@@ -1,5 +1,38 @@
 # Outcome Ledger
 
+## OUTCOME-CONTINUOUS-HOUSEHOLD-LEARNING-027A-R3 — evidence-backed learning loop
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / live catch-up and later retrieval E5 observed
+- Added deterministic source-linked recurrence/sequence candidates with bounded
+  evidence references, distinct-day/span/consistency maturity inputs,
+  contradictions, missing days and source trust. Event IDs deduplicate support;
+  late observations remain eligible through source-ID incremental tracking.
+- The normal provider-start-fenced SENTRY review emits structured supported,
+  tentative, learned-routine, insufficient, contradicted, rejected or
+  superseded outcomes. Preferences and owner-declared routines are comparison
+  context, never writable authority.
+- Stable candidate concepts correct/supersede existing Memory and synchronize
+  digest-checked notes into the managed Obsidian 300.1–300.5 hierarchy. Internal
+  packet/config/completion records are excluded from ordinary retrieval.
+- A real initial catch-up produced six source-linked outcomes: one reviewable
+  learned-routine suggestion and five tentative hypotheses. It created zero
+  declared routines, automations, permissions, identity claims or actions.
+  Current evidence contained no qualified presence transition, and no person
+  attribution was inferred.
+- A later real browser/SENTRY turn retrieved relevant learned/tentative Memory
+  and preserved its inferred/uncertain status. Daily and multi-day durable tasks
+  are active; no catch-up run is represented as a scheduled due-run.
+- PASSED: complete ANIMA validation with `1169 passed / 76 skipped`, Ruff,
+  strict mypy, focused migrated-PostgreSQL learning tests, main Playwright
+  `115 / 14 intentional viewport skips`, responsive initiative browser `42`,
+  frontend `14`, TypeScript/Vite, and qualified SENTRY `542`.
+- First SENTRY full-suite attempt under the wrong host interpreter failed on
+  missing NumPy/OpenCV/OpenVINO and was not promoted; the qualified environment
+  passed the same complete suite.
+- Physical exact-build alert latency and the three-day household trial remain
+  open under 027A. No permanent-Goal completion is claimed.
+
 ## 026A owner event-to-TTS and operational-trial start — 2026-09-08
 
 - `PASSED` (`E5_OPERATIONALLY_OBSERVED`, synthetic source): the unattended path
@@ -1735,3 +1768,70 @@ decision.
   restart. Temporary profiles were deleted after qualification.
 - The active 027A physical latency and elapsed household-trial gates are not
   affected and remain open.
+
+## OUTCOME-OWNER-USERS-AND-CHAT-REPAIR-027A — stable editing, complete face capture, bounded Codex output
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / live deployment observed
+- The Wi-Fi MAC editor no longer loses focus or moves the caret when a parent
+  refresh recreates the authentication callback. A desktop browser regression
+  preserves its value, active element and exact selection across refresh.
+- Face enrollment presents straight, left, right, up and down controls and
+  requires all eight reviewed captures before save. Uncertain pose guidance no
+  longer blocks a clear single-face capture; the uncertainty is visible and the
+  operator can remove the sample before committing the derived profile.
+- Codex event parsing permits bounded progress messages but accepts only the
+  last completed agent message as the final JSON result, with the existing JSON
+  Schema and forbidden-capability checks retained.
+- PASSED: ANIMA 1159 tests / 77 skips, Ruff, strict mypy, OPA 9/9, frontend 12
+  tests, TypeScript, Vite build, focused Playwright MAC regression, SENTRY
+  541/541, worker authentication smoke and both repository diff checks.
+- `scripts/validate.sh` itself could not start because `uv` is absent from this
+  host PATH; its underlying repository venv validation and OPA commands passed.
+- No commit, push, hosted CI or fresh owner chat retry is claimed.
+- Subsequent E5 browser observation supersedes only the final qualification in
+  the prior bullet: a fresh read-only owner request completed through the live
+  Codex worker without `CODEX_INVALID_OUTPUT`. The response was schema-valid
+  and honestly reported `FAILED` because the current lock-state read returned
+  `HAMappingError`; no mutation occurred. Commit, push and hosted CI remain
+  unclaimed.
+
+## OUTCOME-FACE-ENROLLMENT-FINAL-CAPTURE-027A — bounded eighth-capture path
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / owner retry pending
+- The recommended sequence ends straight-on, pose quotas cannot be overfilled,
+  and the browser shows the bounded service rejection reason when a capture is
+  not accepted.
+- SENTRY now derives review-only 320-pixel JPEG thumbnails from the original
+  quality-qualified frames. A noisy 1280x720 eight-capture regression kept the
+  complete response below the existing 2 MB loopback boundary and committed
+  all eight transient embeddings without persisting raw frames.
+- PASSED: focused identity tests 8/8, complete SENTRY 542/542, frontend 12/12,
+  TypeScript, Vite build, Python compilation, both diff checks, live service
+  restart, rebuilt UI health and deployed-bundle inspection.
+- A physical owner eight-capture completion after this exact correction is NOT
+  RUN; no commit, push or hosted CI is claimed.
+
+## OUTCOME-SENTRY-DECISION-JOURNAL-027A — inspectable rationale without private chain-of-thought
+
+- Date: 2026-09-09
+- Status: IMPLEMENTED / locally E4 regression protected / live owner workflow
+  observed
+- SENTRY now writes one bounded Obsidian-backed decision journal for each
+  eligible provider turn when the request-frozen knowledge tools are available.
+  The record begins only after provider-start and is finalized before result
+  submission; best-effort journal failure cannot alter the household result.
+- Records expose conclusion-level rationale, evidence/context categories,
+  deterministic notification disposition, tool IDs and terminal outcome
+  tokens, confidence and information gaps. They exclude hidden deliberation,
+  prompts, transcripts, response/announcement text, arguments/results,
+  secrets, private payloads and restricted content.
+- The owner can inspect the dedicated `decision` / `100.1` section from
+  Preferences → Memory → Show SENTRY decisions. System-authored entries are
+  retractable but not editable in the UI, preserving their audit meaning.
+- A live read-only request completed through the deployed ANIMA browser and
+  client-only Codex worker and created one completed decision entry with no
+  household mutation. Full repository validation passed with 1161 tests / 77
+  skips, Ruff, strict mypy and OPA 9/9; worker, frontend, build and focused
+  browser checks also passed. No commit, push or hosted CI is claimed.

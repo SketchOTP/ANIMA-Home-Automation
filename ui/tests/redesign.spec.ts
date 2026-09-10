@@ -39,7 +39,9 @@ async function fixture(page: Page, connection: Record<string, unknown> | null = 
       "/api/v1/places": { items: [{ place_id: "household", name: "Household", kind: "HOUSEHOLD" }, { place_id: "study", name: "Study", kind: "ROOM", parent_id: "household" }] },
       "/api/v1/capabilities": { items: [{ id: "control", label: "Device control", state: "available" }, { id: "weather", label: "Weather", state: "unavailable" }] },
       "/api/v1/automations": { items: [{ automation_id: "rule", name: "Reading routine", trigger_resource_id: "lamp", trigger_state: "on", action_resource_id: "lamp", action_desired_on: false, enabled: true, version: 3, updated_at: "2026-09-06T12:00:00Z" }] },
-      "/api/v1/initiative": { status: "SUCCEEDED", can_edit: true, config_version: null, config: { learning_days: 3, routine_review_days: 3, daily_review_enabled: true, routine_review_enabled: true, proactive_enabled: false, always_notify: [], device_notifications: [] } },
+      "/api/v1/initiative": { status: "SUCCEEDED", authority: "NONE", can_edit: true, config_version: null, timezone: "America/New_York", config: { learning_days: 3, routine_review_days: 3, daily_review_enabled: true, routine_review_enabled: true, proactive_enabled: false, always_notify: [], device_notifications: [] }, readiness: { ready: false, observed_local_days: 0, required_days: 3, first_observed_at: null, last_observed_at: null, elapsed_seconds: 0, required_elapsed_seconds: 259200, evidence_status: "SUCCEEDED", truncated: false }, proactive_eligible: false, scheduling: { status: "SCHEDULED", tasks: [] }, learning: { evidence_events: 0, candidate_count: 0, candidate_types: [], candidates: [], last_review: null, review_count: 0, pending_review_count: 0, gaps: ["No repeated qualified pattern meets the bounded candidate threshold."] } },
+      "/api/v1/initiative/suggestions": { status: "SUCCEEDED", items: [], next_cursor: null },
+      "/api/v1/users": { items: [{ person_id: "00000000-0000-0000-0000-000000000042", name: "Fixture User", role: "owner", access_level: "UNRESTRICTED", sentry_profile_id: null, sentry_profile_sample_count: null, sentry_onboarding_state: "NOT_STARTED", wifi_macs: [] }] },
       "/api/v1/conversation/request-1": { request_id: "request-1", status: "COMPLETED", lifecycle: "COMPLETED", response: "Fixture reply", available: true },
     };
     await route.fulfill({ json: data[path] ?? { items: [], next_cursor: null } });
@@ -96,6 +98,28 @@ test("owner page explanations match the controls and boundaries actually shown",
     await expect(page.locator(".section-description")).toContainText(description);
     for (const control of controls) await expect(page.getByText(control, { exact: true }).first()).toBeVisible();
   }
+});
+
+test("Users keeps an in-progress Wi-Fi MAC edit stable across background refresh", async ({ page }) => {
+  await fixture(page);
+  await page.getByRole("navigation").getByRole("button", { name: "Users", exact: true }).click();
+  await page.getByRole("button", { name: "Edit user" }).click();
+  const macs = page.getByLabel("Associated Wi-Fi MAC addresses");
+  const value = "aa:bb:cc:dd:ee:ff\n11:22:33:44:55:66";
+  await macs.fill(value);
+  await macs.focus();
+  await macs.evaluate((node) => (node as HTMLTextAreaElement).setSelectionRange(5, 5));
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("blur"));
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.waitForTimeout(100);
+  await expect(macs).toHaveValue(value);
+  await expect.poll(() => macs.evaluate((node) => ({
+    active: document.activeElement === node,
+    start: (node as HTMLTextAreaElement).selectionStart,
+    end: (node as HTMLTextAreaElement).selectionEnd,
+  }))).toEqual({ active: true, start: 5, end: 5 });
 });
 
 test("notification-only connections are not offered as On Off automation triggers", async ({ page }) => {

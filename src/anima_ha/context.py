@@ -449,6 +449,13 @@ class PostgresContextSource:
                   AND (expires_at IS NULL OR expires_at > %s)
                   AND (valid_from IS NULL OR valid_from <= %s)
                   AND (valid_until IS NULL OR valid_until >= %s)
+                  AND COALESCE(metadata->>'review_status', 'PENDING') <> 'DISMISSED'
+                  AND COALESCE(metadata->>'conclusion', 'SUPPORTED') NOT IN
+                      ('INSUFFICIENT_EVIDENCE', 'CONTRADICTED', 'REJECTED', 'SUPERSEDED')
+                  AND COALESCE(metadata->>'record_kind', '') NOT IN
+                      ('household_learning_review_packet',
+                       'household_learning_review_completion',
+                       'household_initiative_config')
                   AND (
                     graph_refs ?| %s
                     OR %s = ''
@@ -942,9 +949,24 @@ class ContextBroker:
             sections["recent_events"] = ContextSection(
                 "DEGRADED", (), f"{type(exc).__name__}:RECENT_EVENTS"
             )
+        # A direct owner request is already part of the bounded source-event
+        # section.  Use its text transiently to find relevant Memory records;
+        # otherwise a later SENTRY turn can only retrieve memories that happen
+        # to share an event type or Graph object name.  Do not inspect arbitrary
+        # payload fields (tokens, vendor prose, identity material, and other
+        # untrusted values remain outside the retrieval query).
+        request_terms: list[str] = []
+        for row in source_rows:
+            if row.get("event_type") != "user.request":
+                continue
+            payload = _mapping(row.get("payload"))
+            request_text = payload.get("text", payload.get("request"))
+            if isinstance(request_text, str):
+                request_terms.append(request_text[:500])
         query = " ".join(
             [str(row.get("event_type", "")) for row in source_rows]
             + [str(row.get("name", "")) for row in graph_rows]
+            + request_terms
         )
         try:
             memory_rows = self.source.memories(

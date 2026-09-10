@@ -170,14 +170,40 @@ test("Member reference and relevant search use bounded contracts", async ({ page
   await page.screenshot({ path: info.outputPath("Memory-profile-editor.png"), fullPage: true });
 });
 
-test("Configured memory eligibility never claims an automatic writer is qualified", async ({ page }) => {
+test("Configured memory reports the bounded SENTRY decision journal", async ({ page }) => {
   const panel = page.getByRole("region", { name: "Memory knowledge base" });
-  await page.route("**/api/v1/knowledge-status", route => route.fulfill({ json: { agent_memory_enabled: true, available: true, writer_status: "NOT_QUALIFIED" } }));
+  await page.route("**/api/v1/knowledge-status", route => route.fulfill({ json: { agent_memory_enabled: true, available: true, writer_status: "CONFIGURED", decision_journal: "ENABLED_FOR_ELIGIBLE_TURNS" } }));
   await panel.getByRole("button", { name: "Refresh memory", exact: true }).click();
-  await expect(panel.getByText(/eligible by configuration.*Storage available.*Automatic writer not qualified/)).toBeVisible();
+  await expect(panel.getByText(/eligible by configuration.*Storage available.*Decision journal enabled for eligible SENTRY turns/)).toBeVisible();
+  const decisionSearch = page.waitForRequest(request => request.url().includes("/api/v1/knowledge-search?") && new URL(request.url()).searchParams.get("note_type") === "decision");
+  await panel.getByRole("button", { name: "Show SENTRY decisions", exact: true }).click();
+  await decisionSearch;
   await page.route("**/api/v1/knowledge-status", route => route.fulfill({ status: 503, json: {} }));
   await panel.getByRole("button", { name: "Refresh memory", exact: true }).click();
   await expect(panel.getByText("Agent memory status unavailable; automatic capture is not established.", { exact: true })).toBeVisible();
+});
+
+test("SENTRY decision journals are inspectable but cannot be rewritten in the owner UI", async ({ page }) => {
+  const panel = page.getByRole("region", { name: "Memory knowledge base" });
+  const note = {
+    note_id: "00000000-0000-0000-0000-000000000777",
+    digest: "a".repeat(64), status: "ACTIVE", title: "SENTRY decision · synthetic-request",
+    body: "Decision summary: A bounded synthetic result.\nConfidence: HIGH.",
+    note_type: "decision", classifier: "100.1", classification: "SENTRY_INFERENCE",
+    confidence: 0.9, source_refs: [{ kind: "request", source_id: "synthetic-request", meaning: "Decision request." }],
+    observed_at: "2026-09-09T12:00:00Z", enabled: true, retention_days: null,
+    person_refs: [], created_at: "2026-09-09T12:00:00Z", updated_at: "2026-09-09T12:00:00Z", expires_at: null,
+  };
+  await page.route("**/api/v1/knowledge-search?**", route => route.fulfill({ json: { items: [note], next_cursor: null, truncated: false } }));
+  await page.route(`**/api/v1/knowledge/${note.note_id}`, route => route.fulfill({ json: { note } }));
+  await panel.getByRole("button", { name: "Show SENTRY decisions", exact: true }).click();
+  await panel.getByRole("button", { name: `Read ${note.title}`, exact: true }).click();
+  await expect(panel.getByText(/system-authored audit records/)).toBeVisible();
+  await expect(panel.getByRole("button", { name: "Edit note", exact: true })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Retract note", exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Close note", exact: true }).click();
+  await panel.getByRole("button", { name: "New note", exact: true }).click();
+  await expect(panel.getByLabel("Note type", { exact: true }).getByRole("option", { name: "decision", exact: true })).toHaveCount(0);
 });
 
 test("Correcting prose does not restart an unchanged finite retention clock", async ({ page }, info) => {

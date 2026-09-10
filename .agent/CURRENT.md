@@ -2,6 +2,44 @@
 
 Last updated: 2026-09-09
 
+## Continuous household learning — 027A R3, 2026-09-09
+
+ANIMA now converts qualified Journal history into bounded source-linked
+recurrence and sequence candidates, then submits an exact request-frozen packet
+through the normal provider-start-fenced SENTRY path. Outcomes can be supported,
+tentative, learned-routine suggestions, insufficient, contradicted, rejected or
+superseded. Observable maturity inputs remain attached; SENTRY cannot fabricate
+evidence, identity, authority or causation.
+
+Conclusions use stable concept identities and correct/supersede prior Memory
+rather than creating duplicate notes. They synchronize into the existing
+Obsidian vault under Household Model, Observed Patterns, Hypotheses, Learned
+Routines and Rejected/Superseded Hypotheses. Decision records remain separate.
+No prompt, transcript, audio, hidden chain-of-thought, raw vendor prose, secret
+or unrestricted payload is persisted.
+
+The explicitly labeled live initial catch-up completed over the real owner
+store: six candidates produced one owner-reviewable learned-routine suggestion
+and five tentative hypotheses. It created no declared routine, automation,
+permission, identity assertion or action. Current history has no qualified
+presence transitions, so no person-arrival/departure inference was made. Daily
+and multi-day durable review tasks are active and process unincorporated source
+identities incrementally, including late/out-of-order evidence.
+
+A later ordinary browser-to-SENTRY turn received relevant learned and tentative
+Memory in its sparse ContextPacket and described it as inferred/uncertain. The
+owner UI now exposes review coverage, candidates, maturity inputs, rationale,
+gaps, rejected alternatives and Obsidian receipts. Learned routines remain
+suggestions; acknowledgement does not install a routine or automation.
+
+Local E4 regression evidence includes complete ANIMA validation (`1169 passed,
+76 skipped`), strict mypy/Ruff, real PostgreSQL focused tests, main Playwright
+`115 passed / 14 intentional viewport skips`, focused responsive browser
+`42 passed`, frontend `14 passed`, TypeScript/Vite, and SENTRY `542 passed` in
+its qualified environment. Live catch-up and later-use evidence reach E5 for
+those exact paths. Physical exact-build Tapo latency and the minimum three-day
+trial remain open; permanent-Goal completion is not claimed.
+
 ## Owner-configurable SENTRY personality profiles — 2026-09-09
 
 ANIMA Settings now owns multiple household-scoped, free-form SENTRY
@@ -1851,3 +1889,64 @@ marker remains unclaimed.
   resource gate; no CPU result is presented as Hailo evidence.
 - This remains goal-wide product work. Phase 14 is accepted, Phase 15 is not
   started, and no phase acceptance is claimed by Codex.
+
+## Owner UI and bounded SENTRY model-output repair — 2026-09-09
+
+- Status: IMPLEMENTED / locally E4 regression protected / deployed source observed.
+- Stabilized the Users editor across background application refreshes so an
+  in-progress Wi-Fi MAC edit retains focus, value and caret position.
+- Face enrollment now exposes all five requested views and requires eight
+  reviewed captures. The camera still requires one clear quality-qualified
+  face, while an uncertain YuNet pose estimate is shown for operator review
+  instead of permanently trapping enrollment at three captures.
+- The client-only household worker now accepts bounded Codex progress messages
+  and validates the last completed agent message as the schema-constrained
+  result. Forbidden item types, malformed JSON, schema violations and trailing
+  invalid output continue to fail closed.
+- Live ANIMA UI, household worker and SENTRY identity service were restarted.
+  The deployed worker parser hash matches the repository source. No commit,
+  push or hosted CI is claimed for this repair.
+- A fresh harmless owner chat request completed through the live browser and
+  Codex worker without `CODEX_INVALID_OUTPUT`. It truthfully returned `FAILED`
+  because the requested Front Door Lock state read produced `HAMappingError`;
+  no household mutation was requested or performed.
+
+## Final face-capture completion correction — 2026-09-09
+
+- The guided sequence now collects side profiles before finishing with the
+  easiest straight-on eighth capture. Completed pose quotas are disabled so a
+  duplicate pose cannot consume the last slot and leave the profile unsavable.
+- The Users page surfaces the service's exact capture rejection reason instead
+  of replacing it with a generic message. SENTRY review previews are bounded
+  thumbnails; embeddings still use the original quality-qualified frame.
+- The rebuilt ANIMA UI and SENTRY identity service are live. Software evidence
+  is E4; one owner-performed eight-picture enrollment remains the E5 check.
+
+## Inspectable SENTRY decision journal — 2026-09-09
+
+- Status: IMPLEMENTED / locally E4 regression protected / E5 live owner path
+  observed.
+- Eligible SENTRY provider turns now create an in-progress, system-authored
+  decision note after durable provider-start and finalize it before bounded
+  result submission. Notes record request/origin identity, context categories,
+  pre-model notification disposition, governed tool outcome tokens,
+  uncertainty, confidence and a concise conclusion-level rationale.
+- The journal deliberately excludes private chain-of-thought, raw prompts,
+  transcripts, browser/voice response text, tool arguments/results, secrets,
+  household payloads and restricted content. Restricted-provider turns retain
+  only an honest omission marker.
+- Decision notes are stored through the existing policy-controlled Obsidian
+  MEMORY plugin as note type `decision`, Dewey class `100.1`. The owner UI can
+  filter/read/retract them but cannot rewrite a system-authored decision into a
+  different account. Idle polling creates no note and invokes no model.
+- Live evidence: one read-only owner request completed through the deployed
+  browser/Core/client-only Codex worker and produced one visible completed
+  decision journal entry. The request made no household change and invoked no
+  semantic household tool.
+- PASSED: governed Python validation (Ruff, strict mypy, 1161 tests / 77
+  skips), OPA 9/9, worker 50/50, focused decision-boundary tests, frontend
+  13/13, TypeScript, Vite production build, focused Playwright decision UI,
+  rebuilt healthy UI container, worker runtime/source comparison and worker
+  authenticated readiness. `scripts/validate.sh` itself remains unavailable
+  because `uv` is not on this host PATH; its underlying checked-in venv
+  validation and OPA commands passed. No commit, push or hosted CI is claimed.

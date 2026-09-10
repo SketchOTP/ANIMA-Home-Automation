@@ -11,11 +11,15 @@ from __future__ import annotations
 import threading
 from datetime import datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 from anima_ha.attention import AttentionProfile
 from anima_ha.events import EventEnvelope
-from anima_ha.intelligence import IntelligenceProviderMode, SentryAttentionBridge
+from anima_ha.intelligence import (
+    IntelligenceOrigin,
+    IntelligenceProviderMode,
+    SentryAttentionBridge,
+)
 from anima_ha.tasks import (
     DurableTask,
     DurableTaskDispatcher,
@@ -30,6 +34,8 @@ class LearningReviewError(ValueError):
 
 
 class LearningReviewRunner:
+    CATCH_UP_NAMESPACE = UUID("4f4ce26e-4cb7-42ba-b049-a4248c3c5fb5")
+
     def __init__(
         self,
         core: Any,
@@ -173,6 +179,9 @@ class LearningReviewRunner:
             context=self.core.context,
             store=self.core.intelligence_store,
             profile=profile,
+            # Learning is background durable work, not a latency-sensitive
+            # household event that may wake the resident voice surface.
+            origin=IntelligenceOrigin.DURABLE_TASK,
         ).run_once(
             household_id=self.household_id,
             tools=self.core.plugins.list_tools(),
@@ -188,8 +197,90 @@ class LearningReviewRunner:
             for request in requests
         ):
             raise LearningReviewError("SENTRY_ATTENTION_ENQUEUE_FAILED")
+        self.learning.create_review_packet(
+            self.household_id,
+            requests[0].request_id,
+            review_kind=str(tasks[task_id].payload["review_kind"]),
+            source_event_id=event.event_id,
+        )
         self._dispatch_error = None
         return appended
+
+    def dispatch_initial_catch_up(self, *, principal_id: UUID) -> dict[str, Any]:
+        """Owner-triggered one-time historical review, distinct from scheduler runs."""
+        if not isinstance(principal_id, UUID) or not principal_id.int:
+            raise LearningReviewError("INVALID_PRINCIPAL")
+        self.learning._owner(self.household_id, principal_id)
+        packets = self.learning._records(
+            self.household_id, "household_learning_review_packet", limit=50
+        )
+        prior = next(
+            (row for row in packets if row.metadata.get("review_kind") == "INITIAL_CATCH_UP"),
+            None,
+        )
+        if prior is not None:
+            packet = prior.metadata["packet"]
+            return {
+                "status": "ALREADY_REQUESTED",
+                "request_id": packet["request_id"],
+                "review_id": packet["review_id"],
+            }
+        if not self._provider_ready():
+            raise LearningReviewError("SENTRY_UNAVAILABLE")
+        event_id = str(uuid5(self.CATCH_UP_NAMESPACE, f"{self.household_id}:initial-catch-up:v1"))
+        now = self.learning._now()
+        event = EventEnvelope.create(
+            event_id=event_id,
+            event_type="household_learning_catch_up_requested",
+            source="anima:household-learning",
+            subject_key=f"household/{self.household_id}/learning-review",
+            occurred_at=now,
+            recorded_at=now,
+            payload={"review_kind": "INITIAL_CATCH_UP", "authority": "NONE"},
+            source_event_id=event_id,
+            correlation_id=event_id,
+            metadata={
+                "household_id": str(self.household_id),
+                "owner_principal_id": str(principal_id),
+                "explicit_catch_up": True,
+            },
+        )
+        appended = self.core.journal.append(event)
+        profile = AttentionProfile(
+            f"household.learning.catch-up.v2:{self.household_id}:{event_id}",
+            (),
+            guaranteed_event_types=("household_learning_catch_up_requested",),
+        )
+        consumer = f"learning-catch-up-v2:{self.household_id}:{event_id}"
+        self.core.attention.prime_consumer_before(profile, consumer, appended.journal_position - 1)
+        requests = SentryAttentionBridge(
+            attention=self.core.attention,
+            context=self.core.context,
+            store=self.core.intelligence_store,
+            profile=profile,
+            origin=IntelligenceOrigin.DURABLE_TASK,
+        ).run_once(
+            household_id=self.household_id,
+            tools=self.core.plugins.list_tools(),
+            principal_id=principal_id,
+            consumer_name=consumer,
+            limit=1,
+            source_event_id=event_id,
+        )
+        if len(requests) != 1:
+            raise LearningReviewError("SENTRY_ATTENTION_ENQUEUE_FAILED")
+        packet = self.learning.create_review_packet(
+            self.household_id,
+            requests[0].request_id,
+            review_kind="INITIAL_CATCH_UP",
+            source_event_id=event_id,
+        )
+        return {
+            "status": "QUEUED",
+            "request_id": str(requests[0].request_id),
+            "review_id": packet["review_id"],
+            "candidate_count": len(packet["candidates"]),
+        }
 
     def run_once(self, *, now: datetime | None = None) -> dict[str, Any]:
         if not self._tick_lock.acquire(blocking=False):

@@ -75,8 +75,25 @@ def install_household_learning_api(
     ) -> dict[str, Any]:
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)
-        if operation not in {"configure", "review"}:
+        if operation not in {"configure", "review", "catch-up"}:
             raise HTTPException(404, "UNKNOWN_LEARNING_OPERATION")
+        if operation == "catch-up":
+            if body.payload:
+                raise HTTPException(400, "INVALID_LEARNING_INPUT")
+            identity = service.identity_from_session(session)
+            boundary = getattr(service, "_owner_boundary", None)
+            runner = getattr(boundary, "review_runner", None)
+            if runner is None:
+                raise HTTPException(503, "HOUSEHOLD_LEARNING_RUNNER_UNAVAILABLE")
+            try:
+                catch_up_result: dict[str, Any] = runner.dispatch_initial_catch_up(
+                    principal_id=identity.principal_id
+                )
+                return catch_up_result
+            except ValueError:
+                raise HTTPException(400, "INVALID_LEARNING_INPUT") from None
+            except RuntimeError:
+                raise HTTPException(503, "HOUSEHOLD_LEARNING_UNAVAILABLE") from None
         invoke = getattr(service.commands, "learning_operation", None)
         if not callable(invoke):
             raise HTTPException(503, "HOUSEHOLD_LEARNING_UNAVAILABLE")

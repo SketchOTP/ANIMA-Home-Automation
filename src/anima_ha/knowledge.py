@@ -56,7 +56,19 @@ MAX_RETRIEVAL_BYTES = 16384
 # bounded local refinements, not claims of a licensed full schedule.
 # https://www.oclc.org/content/dam/oclc/dewey/resources/summaries/deweysummaries.pdf
 DEWEY_DIVISIONS = frozenset({"000", "100", "300", "600", "640", "900", "920"})
-NOTE_TYPES = ("event", "profile", "preference", "routine", "lesson")
+NOTE_TYPES = (
+    "event",
+    "profile",
+    "preference",
+    "routine",
+    "lesson",
+    "decision",
+    "household_model",
+    "observed_pattern",
+    "hypothesis",
+    "learned_routine",
+    "rejected_hypothesis",
+)
 CLASSIFICATIONS = ("SENTRY_INFERENCE", "OBSERVATION", "USER_STATED", "DISCOVERED")
 SOURCE_KINDS = (
     "event",
@@ -935,7 +947,7 @@ def _tool(
 
 KNOWLEDGE_MANIFEST = PluginManifest(
     plugin_id="anima.knowledge",
-    plugin_version="2.0.0",
+    plugin_version="2.2.0",
     manifest_version=MANIFEST_VERSION,
     requires_core=CORE_VERSION,
     name="Household knowledge notes",

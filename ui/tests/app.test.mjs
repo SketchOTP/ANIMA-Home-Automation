@@ -125,6 +125,13 @@ test("Users exposes persistent access, Wi-Fi, and private face enrollment contro
   assert.match(source, /Remove this capture/);
   assert.match(source, /SENTRY access/);
   assert.match(source, /Associated Wi-Fi MAC addresses/);
+  assert.match(source, /Eight reviewed captures are required/);
+  assert.match(source, /"down", "left", "right", "straight"/);
+  assert.match(source, /The final recommended picture is straight-on/);
+  assert.match(source, /POSE_TARGETS\[pose\]/);
+  assert.match(source, /Choose face view/);
+  assert.match(source, /\["straight", "left", "right", "up", "down"\]/);
+  assert.match(source, /authFailure\.current/);
   assert.match(source, /Captured pictures stay in temporary memory only/);
 });
 
@@ -139,4 +146,26 @@ test("Settings exposes free-form versioned SENTRY personality profiles", async (
   assert.match(source, /expected_version/);
   assert.match(source, /presentation guidance only/);
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|dangerouslySetInnerHTML/);
+});
+
+test("Memory exposes bounded SENTRY decision journals as a distinct note type", async () => {
+  const source = await readFile(new URL("../src/KnowledgePanel.tsx", import.meta.url), "utf8");
+  assert.match(source, /"lesson", "decision"/);
+  assert.match(source, /raw transcripts/);
+});
+
+test("SENTRY initiative exposes evidence-backed learning without promoting routines", async () => {
+  const source = await readFile(new URL("../src/InitiativePanel.tsx", import.meta.url), "utf8");
+  for (const phrase of [
+    "What SENTRY is learning",
+    "Candidate patterns and maturity evidence",
+    "Evidence gaps preventing stronger conclusions",
+    "Learned suggestions · not owner-declared routines",
+    "Reasoning summary and maturity evidence",
+    "Synced to Obsidian Memory",
+  ]) assert.match(source, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(source, /Acknowledge suggestion/);
+  assert.match(source, /Dismiss suggestion/);
+  assert.match(source, /Acknowledging does not approve execution, grant permission, or create a family routine/);
+  assert.doesNotMatch(source, /chain.of.thought|dangerouslySetInnerHTML|localStorage|sessionStorage|indexedDB/);
 });

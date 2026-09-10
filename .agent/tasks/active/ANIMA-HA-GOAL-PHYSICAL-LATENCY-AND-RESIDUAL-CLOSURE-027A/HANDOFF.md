@@ -20,3 +20,13 @@ multiple free-form profiles are durable in ANIMA Settings, one may be active,
 and SENTRY consumes it only as presentation guidance. Full local regressions
 and live browser lifecycle/restart checks pass. This does not close the pending
 physical latency or elapsed-time trial gates.
+
+The R3 learning amendment is also implemented. A real catch-up over qualified
+owner history generated six source-linked outcomes without inventing identity
+or authority; one met the deterministic threshold for an owner-reviewable
+learned-routine suggestion and five remain tentative. The same concept is
+corrected/superseded rather than duplicated in Memory/Obsidian. Daily and
+multi-day incremental durable reviews are active, and a later normal SENTRY
+turn retrieved relevant learned Memory with uncertainty intact. The UI exposes
+the evidence/maturity inputs and review boundary. Hosted exact-head publication
+is pending; the physical latency and three-day trial gates remain open.

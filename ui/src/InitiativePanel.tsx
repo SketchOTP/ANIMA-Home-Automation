@@ -15,9 +15,23 @@ type Snapshot = {
   readiness: { ready: boolean; observed_local_days: number; required_days: number; first_observed_at: string | null; last_observed_at: string | null; elapsed_seconds: number; required_elapsed_seconds: number; evidence_status: string; truncated: boolean };
   proactive_eligible: boolean; scheduling: { status: "NOT_SCHEDULED" | "SCHEDULED" | "PARTIAL"; tasks: unknown[] };
   running_status?: "AUTO_WAKE_DISABLED" | "AWAITING_SENTRY_CONSUMER";
+  learning: {
+    evidence_events: number; candidate_count: number; candidate_types: string[];
+    candidates: Array<{ candidate_id: string; candidate_class: string; title: string; factual_summary: string; observation_count: number; distinct_day_count: number; elapsed_hours: number; maturity: string; missing_information: string[] }>;
+    last_review: null | { review_id: string; review_kind: string; completed_at: string; candidate_count: number; outcome_count: number; evidence_start: string | null; evidence_end: string | null; authority: "NONE" };
+    review_count: number; pending_review_count: number; gaps: string[];
+  };
 };
 type Source = { event_id: string; event_type: string; occurred_at: string; recorded_at: string; canonical_id: string | null };
-type Suggestion = { suggestion_id: string; kind: "PATTERN" | "WORKFLOW" | "LESSON"; content: string; confidence: number; classification: "INFERRED"; review_status: "PENDING" | "ACKNOWLEDGED" | "DISMISSED"; source_refs: Source[]; created_at: string; authority: "NONE" };
+type Suggestion = {
+  suggestion_id: string; kind: "PATTERN" | "WORKFLOW" | "LESSON"; content: string;
+  confidence: number; classification: "INFERRED"; review_status: "PENDING" | "ACKNOWLEDGED" | "DISMISSED";
+  source_refs: Source[]; created_at: string; authority: "NONE";
+  conclusion?: string; candidate_class?: string | null; maturity?: string | null;
+  maturity_evidence?: Record<string, unknown>; rationale_summary?: string | null;
+  missing_information?: string[]; rejected_alternatives?: string[];
+  knowledge_note?: { digest?: string } | null;
+};
 type Suggestions = { items: Suggestion[]; next_cursor: string | null };
 export type InitiativePanelProps = { mutate: (path: string, payload?: Record<string, unknown>) => Promise<{ status: string; result?: unknown } | null>; onAuthFailure: () => void };
 const object = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -39,7 +53,11 @@ function parseSnapshot(value: unknown): Snapshot {
     || !nullableDate(ready.first_observed_at) || !nullableDate(ready.last_observed_at) || !number(ready.elapsed_seconds) || !number(ready.required_elapsed_seconds) || ready.required_elapsed_seconds === 0
     || !text(ready.evidence_status) || !/^[A-Z_]{1,64}$/.test(ready.evidence_status)
     || !["NOT_SCHEDULED", "SCHEDULED", "PARTIAL"].includes(String(scheduling.status)) || !Array.isArray(scheduling.tasks)
-    || !(value.running_status === undefined || value.running_status === "AUTO_WAKE_DISABLED" || value.running_status === "AWAITING_SENTRY_CONSUMER")) throw new Error("INVALID_RESPONSE");
+    || !(value.running_status === undefined || value.running_status === "AUTO_WAKE_DISABLED" || value.running_status === "AWAITING_SENTRY_CONSUMER")
+    || !object(value.learning) || !number(value.learning.evidence_events) || !number(value.learning.candidate_count)
+    || !number(value.learning.review_count) || !number(value.learning.pending_review_count)
+    || !Array.isArray(value.learning.candidate_types) || !value.learning.candidate_types.every(text)
+    || !Array.isArray(value.learning.candidates) || !Array.isArray(value.learning.gaps) || !value.learning.gaps.every(text)) throw new Error("INVALID_RESPONSE");
   return { ...value, config: { ...config, device_notifications: Array.isArray(config.device_notifications) ? config.device_notifications : [] } } as unknown as Snapshot;
 }
 function parseSuggestions(value: unknown): Suggestions {
@@ -47,6 +65,12 @@ function parseSuggestions(value: unknown): Suggestions {
   if (!value.items.every(item => object(item) && text(item.suggestion_id) && ["PATTERN", "WORKFLOW", "LESSON"].includes(String(item.kind))
     && text(item.content) && number(item.confidence) && item.confidence <= 1 && item.classification === "INFERRED" && item.authority === "NONE"
     && ["PENDING", "ACKNOWLEDGED", "DISMISSED"].includes(String(item.review_status)) && date(item.created_at) && Array.isArray(item.source_refs)
+    && (item.conclusion === undefined || text(item.conclusion)) && (item.candidate_class === undefined || item.candidate_class === null || text(item.candidate_class))
+    && (item.maturity === undefined || item.maturity === null || text(item.maturity)) && (item.maturity_evidence === undefined || object(item.maturity_evidence))
+    && (item.rationale_summary === undefined || item.rationale_summary === null || text(item.rationale_summary))
+    && (item.missing_information === undefined || (Array.isArray(item.missing_information) && item.missing_information.every(text)))
+    && (item.rejected_alternatives === undefined || (Array.isArray(item.rejected_alternatives) && item.rejected_alternatives.every(text)))
+    && (item.knowledge_note === undefined || item.knowledge_note === null || (object(item.knowledge_note) && (item.knowledge_note.digest === undefined || text(item.knowledge_note.digest))))
     && item.source_refs.every(source => object(source) && text(source.event_id) && text(source.event_type) && date(source.occurred_at) && date(source.recorded_at) && (source.canonical_id === null || text(source.canonical_id))))) throw new Error("INVALID_RESPONSE");
   if (new Set(value.items.map(item => item.suggestion_id)).size !== value.items.length) throw new Error("INVALID_RESPONSE");
   return value as unknown as Suggestions;
@@ -121,6 +145,19 @@ export function InitiativePanel({ mutate, onAuthFailure }: InitiativePanelProps)
       if (alive.current) { if (operation === "configure") setReviewRequired(true); setError("Change not confirmed. Draft kept; refresh and review before trying again. No automatic retry was sent."); }
     } finally { lock.current = false; if (alive.current) setBusy(false); }
   };
+  const runCatchUp = async () => {
+    if (lock.current || loading || !snapshot?.can_edit) return;
+    lock.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      const result = await mutate("/api/v1/initiative/catch-up", {});
+      if (!alive.current) return;
+      if (result?.status === "QUEUED") setNotice("Initial catch-up queued through ANIMA Attention for SENTRY review. Suggestions remain non-executable until you review them.");
+      else if (result?.status === "ALREADY_REQUESTED") setNotice("The initial catch-up was already requested. ANIMA will not duplicate it.");
+      else setError("Catch-up was not queued. No review result is being assumed.");
+      await load();
+    } catch { if (alive.current) setError("Catch-up could not be queued. No automatic retry was sent."); }
+    finally { lock.current = false; if (alive.current) setBusy(false); }
+  };
   const update = <K extends keyof Config,>(key: K, value: Config[K]) => setDraft(previous => previous ? { ...previous, [key]: value } : null);
   const ready = snapshot?.readiness;
   const validDraft = draft && inRange(draft.learning_days, 3, 14) && inRange(draft.routine_review_days, 2, 14);
@@ -137,6 +174,13 @@ export function InitiativePanel({ mutate, onAuthFailure }: InitiativePanelProps)
       </article>
       <article className="card"><h3><Icon name="Calendar" />Review scheduling</h3><strong>{({ NOT_SCHEDULED: "Not scheduled", SCHEDULED: "Scheduled — execution not verified", PARTIAL: "Partially scheduled" })[snapshot.scheduling.status]}</strong><p>{snapshot.scheduling.tasks.length} task records returned</p><p className="muted">Daily review: {snapshot.config.daily_review_enabled ? "enabled" : "disabled"}<br />Routine review: {snapshot.config.routine_review_enabled ? `every ${snapshot.config.routine_review_days} days` : "disabled"}</p><span className="status">{snapshot.proactive_eligible ? "Core eligibility met" : "Not eligible for optional initiative"}</span><p className="muted">Eligibility is not a running state or evidence of a notification.</p></article>
     </div>}
+    {snapshot && <section className="card" aria-label="Household learning activity"><h3><Icon name="Chart" />What SENTRY is learning</h3>
+      <p className="muted">ANIMA extracts source-linked candidates; SENTRY evaluates their meaning. These records are context only and cannot identify a person, grant authority, change Truth, or create a routine automatically.</p>
+      <dl><dt>Qualified events considered</dt><dd>{snapshot.learning.evidence_events}</dd><dt>Current deterministic candidates</dt><dd>{snapshot.learning.candidate_count}</dd><dt>Completed reviews</dt><dd>{snapshot.learning.review_count}</dd><dt>Pending reviews</dt><dd>{snapshot.learning.pending_review_count}</dd><dt>Last review</dt><dd>{snapshot.learning.last_review ? `${snapshot.learning.last_review.review_kind.replaceAll("_", " ")} · ${timestamp(snapshot.learning.last_review.completed_at)}` : "No completed learning review yet"}</dd></dl>
+      {snapshot.learning.candidates.length > 0 && <details><summary>Candidate patterns and maturity evidence</summary><ul className="clean-list list-spaced">{snapshot.learning.candidates.map(candidate => <li key={candidate.candidate_id}><strong>{candidate.title}</strong><p>{candidate.factual_summary}</p><small className="muted">{candidate.candidate_class.replaceAll("_", " ")} · {candidate.maturity.replaceAll("_", " ")} · {candidate.observation_count} observations · {candidate.distinct_day_count} local days · {Math.round(candidate.elapsed_hours * 10) / 10} h span</small></li>)}</ul></details>}
+      {snapshot.learning.gaps.length > 0 && <details><summary>Evidence gaps preventing stronger conclusions</summary><ul>{snapshot.learning.gaps.map(gap => <li key={gap}>{gap}</li>)}</ul></details>}
+      {snapshot.can_edit && <button type="button" disabled={busy || loading || snapshot.learning.review_count > 0 || snapshot.learning.pending_review_count > 0} onClick={() => void runCatchUp()}>{snapshot.learning.review_count || snapshot.learning.pending_review_count ? "Initial catch-up already requested" : "Run initial catch-up review"}</button>}
+    </section>}
     {draft && <form className="card initiative-settings" onSubmit={event => { event.preventDefault(); if (validDraft && !reviewRequired) void change("configure", { ...draft, expected_version: draftVersion }); }}>
       <h3>Notification and learning policy</h3><p className="muted">Only an authenticated owner can save this policy. Preferences and learned suggestions never grant authority.</p>
       {reviewRequired && <div className="notice warning"><p>Settings draft retained. Compare it with the latest saved version before resubmitting.</p><button type="button" disabled={busy || loading} onClick={() => void load(null, true)}>Discard draft and load saved settings</button></div>}
@@ -155,7 +199,8 @@ export function InitiativePanel({ mutate, onAuthFailure }: InitiativePanelProps)
       {suggestionError && <p role="alert" className="notice error">{suggestionError}</p>}
       {suggestions && !suggestions.items.length && <p className="empty-state"><Icon name="Chart" />No learned suggestions recorded. No examples or inferred household facts have been filled in.</p>}
       {confirmation && <section role="group" aria-label="Confirm suggestion review" className="notice warning"><h4 ref={confirmHeading} tabIndex={-1}>{confirmation.decision === "ACKNOWLEDGED" ? "Acknowledge this inference?" : "Dismiss this inference?"}</h4><p>{confirmation.item.content}</p><p>This records your review only; nothing is executed.</p><div className="button-row"><button type="button" disabled={busy || loading} onClick={() => void change("review", { suggestion_id: confirmation.item.suggestion_id, decision: confirmation.decision })}>Confirm review</button><button type="button" disabled={busy} onClick={() => setConfirmation(null)}>Cancel review</button></div></section>}
-      <ul className="clean-list initiative-suggestion-list">{suggestions?.items.map(item => <li key={item.suggestion_id}><div className="initiative-suggestion-header"><span className="status">{item.kind.toLowerCase()} · inferred</span><span>{item.review_status.toLowerCase()}</span></div><p className="initiative-suggestion-content">{item.content}</p><Meter value={item.confidence} max={1} label="Reported confidence" valueLabel={`${Math.round(item.confidence * 100)}% · not certainty`} />
+      <ul className="clean-list initiative-suggestion-list">{suggestions?.items.map(item => <li key={item.suggestion_id}><div className="initiative-suggestion-header"><span className="status">{(item.conclusion ?? item.kind).replaceAll("_", " ").toLowerCase()}</span><span>{item.review_status.toLowerCase()}</span></div><p className="initiative-suggestion-content">{item.content}</p><p className="muted">{item.candidate_class?.replaceAll("_", " ") ?? "Legacy suggestion"} · {item.maturity?.replaceAll("_", " ") ?? "No deterministic maturity classification"}</p><Meter value={item.confidence} max={1} label="Model-reported confidence" valueLabel={`${Math.round(item.confidence * 100)}% · not certainty`} />
+        <details><summary>Reasoning summary and maturity evidence</summary><p>{item.rationale_summary ?? "No structured rationale was recorded for this legacy suggestion."}</p>{item.maturity_evidence && <dl>{Object.entries(item.maturity_evidence).map(([key, value]) => <div key={key}><dt>{key.replaceAll("_", " ")}</dt><dd>{typeof value === "object" ? JSON.stringify(value) : String(value)}</dd></div>)}</dl>}{item.missing_information?.length ? <><h4>Missing information</h4><ul>{item.missing_information.map(value => <li key={value}>{value}</li>)}</ul></> : null}{item.rejected_alternatives?.length ? <><h4>Rejected alternatives</h4><ul>{item.rejected_alternatives.map(value => <li key={value}>{value}</li>)}</ul></> : null}<p className="muted">{item.knowledge_note?.digest ? `Synced to Obsidian Memory · digest ${item.knowledge_note.digest.slice(0, 12)}…` : "No Obsidian Memory sync receipt is attached."}</p></details>
         <details><summary>Evidence &amp; provenance · {item.source_refs.length} source references</summary><p>Created {timestamp(item.created_at)} · Authority: none</p>{item.source_refs.length ? <ol>{item.source_refs.map((source, index) => <li key={`${source.event_id}-${index}`}><strong>{source.event_type}</strong><dl><dt>Occurred</dt><dd>{timestamp(source.occurred_at)}</dd><dt>Recorded</dt><dd>{timestamp(source.recorded_at)}</dd><dt>Event</dt><dd>{source.event_id}</dd><dt>Canonical resource</dt><dd>{source.canonical_id ?? "Not supplied"}</dd></dl></li>)}</ol> : <p>No source references supplied. This suggestion is not independently evidenced here.</p>}</details>
         {snapshot?.can_edit && item.review_status === "PENDING" && <div className="button-row"><button type="button" disabled={busy || loading} onClick={() => setConfirmation({ item, decision: "ACKNOWLEDGED" })}>Acknowledge suggestion</button><button type="button" disabled={busy || loading} onClick={() => setConfirmation({ item, decision: "DISMISSED" })}>Dismiss suggestion</button></div>}
       </li>)}</ul>

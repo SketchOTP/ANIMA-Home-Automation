@@ -110,6 +110,9 @@ class HouseholdInitiativeContext:
             status = self.learning.status(request.household_id)
             result: dict[str, Any] = {"status": "AVAILABLE", **status, "notification": closed}
             result["status"] = "AVAILABLE"
+            packet = self.learning.ensure_review_packet(request)
+            if packet is not None:
+                result["learning_review"] = packet
             result["nearby_events"] = self.evidence.recent_household_evidence(
                 request.household_id, limit=24, now=at
             )

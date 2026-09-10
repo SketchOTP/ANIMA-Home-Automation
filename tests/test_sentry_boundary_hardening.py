@@ -39,6 +39,7 @@ from anima_ha.sentry_service import (
     SentryBindingCodec,
     SentryServicePrincipal,
     ServiceAuthError,
+    _decision_result_metadata,
     read_credential_file,
 )
 
@@ -305,6 +306,45 @@ def test_stale_fencing_generation_cannot_invoke_or_submit() -> None:
             WORKER,
             IntelligenceResult(request.request_id, IntelligenceResultStatus.RESPONSE, "done"),
         )
+
+
+def test_provider_decision_metadata_is_bounded_and_request_scoped() -> None:
+    request_id = uuid4()
+    record = {
+        "version": 1,
+        "provider": "sentry",
+        "request_id": str(request_id),
+        "origin": "AUTONOMOUS_ATTENTION",
+        "provider_started_at": datetime.now(UTC).isoformat(),
+        "decision_completed_at": datetime.now(UTC).isoformat(),
+        "elapsed_ms": 25,
+        "proposed_result_status": "RESPONSE",
+        "decision_summary": "A bounded conclusion summary.",
+        "confidence": "MEDIUM",
+        "information_gaps": [],
+        "context_categories": ["sparse_request_context", "declared_routines"],
+        "pre_model_notification_disposition": "allowed=yes; required=yes; reason=OWNER_RULE",
+        "provider_reported_tool_activity": [
+            {
+                "ordinal": 1,
+                "tool_id": "anima.truth.current_state",
+                "status": "SUCCEEDED",
+                "reason": None,
+            }
+        ],
+        "restricted_content_omitted": False,
+        "journal_status": "SUCCEEDED",
+        "journal_note_id": str(uuid4()),
+    }
+    assert _decision_result_metadata({"decision_record": record}, request_id) == {
+        "decision_record": record
+    }
+    with pytest.raises(ValueError, match="DECISION_REQUEST_MISMATCH"):
+        _decision_result_metadata(
+            {"decision_record": {**record, "request_id": str(uuid4())}}, request_id
+        )
+    with pytest.raises(ValueError, match="INVALID_RESULT_METADATA"):
+        _decision_result_metadata({"raw_chain_of_thought": "not accepted"}, request_id)
 
 
 def test_sentry_identity_evidence_never_escalates_to_authentication() -> None:

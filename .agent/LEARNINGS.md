@@ -399,3 +399,20 @@ Any future history rewrite proposal, remote migration, or change to the reposito
 - An owner request to always announce an unlock requires both a matching
   device/event selector and `mode=ALWAYS`; a generic `CONTEXTUAL / ANY` rule
   intentionally permits the model to remain silent on ordinary lock activity.
+
+### Continuous household learning — 2026-09-09
+
+- Incremental household learning must track incorporated source identities, not
+  only a timestamp cursor; otherwise a late out-of-order event is silently lost.
+- Deterministic extraction should create bounded review candidates and expose
+  evidence counts, distinct days, span, consistency, contradictions, trust and
+  missing days. A model-written confidence label cannot replace those inputs.
+- A stable candidate concept should be corrected or superseded in Memory and
+  its digest-checked Obsidian note, not copied into a new note each review.
+- Learning review packets/configuration/completion markers are internal control
+  records and must not leak into ordinary conversational Memory retrieval.
+- Ordinary retrieval may use bounded direct user-request text as a transient
+  query. Vendor payloads, arbitrary event fields and secrets are never suitable
+  retrieval queries.
+- Initial catch-up evidence is not scheduled-run evidence. Keep it explicitly
+  labeled and let the real durable schedule establish later due-run behavior.

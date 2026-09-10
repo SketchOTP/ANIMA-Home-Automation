@@ -159,6 +159,11 @@ def harness(database_url: str) -> Any:
     learning = HouseholdLearningService(
         MemoryService(database_url),
         graph,
+        evidence_reader=lambda _household, **_kwargs: {
+            "status": "SUCCEEDED",
+            "items": [],
+            "truncated": False,
+        },
         task_service=TaskService(tasks),
         timezone="America/New_York",
         clock=lambda: BASE,
@@ -280,14 +285,10 @@ def test_current_config_disabled_or_changed_cannot_consume_old_tasks(harness: An
     assert not request_rows(h)
 
 
-@pytest.mark.parametrize("case", ["fresh", "wrong_outcome", "wrong_source", "stale"])
-def test_real_pg_review_autowake_requires_fresh_exact_completed_run(
-    harness: Any, case: str
-) -> None:
+def test_real_pg_review_uses_background_queue_not_voice_autowake(harness: Any) -> None:
     h = harness
-    # SQL eligibility uses real now(); leave the broad fixture's BASE unchanged.
     now = datetime.now(UTC)
-    due = now - timedelta(seconds=180 if case == "stale" else 2)
+    due = now - timedelta(seconds=2)
     h.learning.clock = lambda: due - timedelta(days=3)
     configure(h, daily_review_enabled=False, routine_review_days=3)
     runner = LearningReviewRunner(h.core, h.learning, h.hh, reconcile=True)
@@ -307,38 +308,47 @@ def test_real_pg_review_autowake_requires_fresh_exact_completed_run(
             "SELECT occurred_at FROM anima_event_journal WHERE event_id=%s",
             (event_id,),
         ).fetchone() == (due,)
-        # Fault injection is confined to this test's synthetic run, never Journal.
-        if case == "wrong_outcome":
-            conn.execute(
-                "UPDATE anima_durable_task_runs SET outcome="
-                "jsonb_set(outcome,'{event_id}',to_jsonb(%s::text)) WHERE run_id=%s",
-                (str(uuid4()), run.run_id),
-            )
-        elif case == "wrong_source":
-            conn.execute(
-                "UPDATE anima_durable_task_runs SET source_event_id=%s WHERE run_id=%s",
-                (str(uuid4()), run.run_id),
-            )
+        assert conn.execute(
+            "SELECT origin FROM anima_intelligence_requests WHERE request_id=%s",
+            (request_id,),
+        ).fetchone() == ("DURABLE_TASK",)
     epoch = now - timedelta(minutes=10)
     claims = PostgresAutoWakeClaims(h.url, enabled_at=epoch)
     window = claims.window(
         {"origin": "AUTONOMOUS_ATTENTION", "not_before": epoch.isoformat(), "max_age_seconds": 120}
     )
-    eligible = claims.eligible(h.hh, "sentry", window, limit=2)
-    if case != "fresh":
-        assert eligible == []
-        assert claims.claim(request_id, h.hh, "sentry", "synthetic-review", window) is None
-        assert request_rows(h) == rows
-        return
-    assert [row["request_id"] for row in eligible] == [str(request_id)]
-    claimed = claims.claim(request_id, h.hh, "sentry", "synthetic-review", window)
-    assert claimed is not None
-    assert claimed[0].request_id == request_id
-    assert claimed[0].causation_id == event_id
+    assert claims.eligible(h.hh, "sentry", window, limit=2) == []
     assert claims.claim(request_id, h.hh, "sentry", "synthetic-review", window) is None
+    claimed = h.core.intelligence_store.claim(
+        "synthetic-background-worker", provider_id="sentry", household_id=h.hh
+    )
+    assert claimed is not None and claimed.request_id == request_id
+    assert claimed.origin.value == "DURABLE_TASK"
     assert claims.eligible(h.hh, "sentry", window, limit=2) == []
     assert runner.run_once(now=datetime.now(UTC))["claimed"] == 0
     assert len(h.tasks.list_runs(task_id)) == len(request_rows(h)) == 1
+
+
+def test_initial_catch_up_is_idempotent_background_work(harness: Any) -> None:
+    h = harness
+    first = h.runner.dispatch_initial_catch_up(principal_id=h.owner)
+    second = h.runner.dispatch_initial_catch_up(principal_id=h.owner)
+    assert first["status"] == "QUEUED"
+    assert second == {
+        "status": "ALREADY_REQUESTED",
+        "request_id": first["request_id"],
+        "review_id": first["review_id"],
+    }
+    with psycopg.connect(h.url) as conn:
+        assert conn.execute(
+            "SELECT origin,lifecycle,provider_invocation_started "
+            "FROM anima_intelligence_requests WHERE request_id=%s",
+            (first["request_id"],),
+        ).fetchone() == ("DURABLE_TASK", "PENDING", False)
+        assert conn.execute(
+            "SELECT count(*) FROM anima_intelligence_requests WHERE household_id=%s",
+            (h.hh,),
+        ).fetchone() == (1,)
 
 
 def test_scope_change_between_claim_and_append_fails_closed(
