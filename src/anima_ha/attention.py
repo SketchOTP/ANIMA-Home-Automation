@@ -196,9 +196,7 @@ class AttentionProfile:
         "system.health.critical",
         "scheduled_reasoning_due",
     )
-    default_sentry_path: SentryEventPath = (
-        SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
-    )
+    default_sentry_path: SentryEventPath = SentryEventPath.ANNOUNCEMENT_AND_CONTEXTUAL_REASONING
 
     def __post_init__(self) -> None:
         if self.schema_version != ATTENTION_PROFILE_SCHEMA_VERSION:
