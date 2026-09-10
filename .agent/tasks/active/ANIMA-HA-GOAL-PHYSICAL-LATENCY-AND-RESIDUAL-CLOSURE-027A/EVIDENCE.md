@@ -116,3 +116,58 @@ Status: `IN_PROGRESS`
   container health, main Playwright and the complete owner-product browser
   verifier. R3 is hosted-qualified at E4, with the live catch-up/later-use paths
   retaining E5 operational evidence.
+
+## R4 residual closure — 2026-09-10
+
+### Personality decision isolation
+
+- `PASSED` locally: direct and autonomous operational prompts now discard the
+  owner profile before prompt construction and use neutral built-in operational
+  guidance. The obsolete profile-to-operational prompt helper was removed.
+- `PASSED` locally: only a completed, harmless, tool-free, non-autonomous
+  result is eligible for a separate ephemeral presentation pass. The renderer
+  uses a bounded JSON schema and read-only/no-tool/ignore-user-config Codex
+  execution. Its only mutable field is `answer`; it cannot change structured
+  status, facts, tools, authorization, notification requirements or terminal
+  outcomes. Renderer failure falls back to the neutral answer.
+- `PASSED` locally: existing action/event regressions and new focused tests
+  prove tool-bearing, autonomous, limited, failure and consequential paths do
+  not enter the personality renderer. Mandatory first alert speech remains
+  outside this path.
+- `PASSED` locally: an active custom profile changes a harmless ordinary answer
+  only through the second renderer call while the operational invocation input
+  contains no profile text and structured result fields remain unchanged.
+
+### Profile lifecycle correction
+
+- `PASSED` locally: ANIMA PostgreSQL and owner API profile creation now always
+  saves `active=false`; the first profile is not implicitly selected.
+- `PASSED` locally: `Built-in SENTRY` is an explicit UI/API operation that
+  deactivates custom profiles without deleting them. Version-checked activation
+  remains atomic and household-scoped; the profile version is refreshed after
+  built-in fallback before reactivation, preserving optimistic concurrency.
+
+### Wake and identity evidence boundaries
+
+- `PASSED` (`E1_OBSERVED`): the completed ten-minute metadata-only observation
+  of the live office instance showed repeated `LISTENING`,
+  `last_segment_outcome=non_wake`, empty Vosk class, no wake-chime request, no
+  command dispatch and no Codex dispatch. This qualifies the unattended ambient
+  interval only and contains no audio or transcript.
+- `OWNER-ACTION GATE`: three exact spoken `Sentry` wakes plus the confusing
+  negative phrase remain to be performed against the running instance. No live
+  wake pass is fabricated.
+- `OWNER-ACTION GATE` / nonblocking UX follow-up: the permanent goal requires a
+  demonstrable voice software path, not final whole-home face hardware. Corrected
+  eight-capture face enrollment is therefore not a permanent-goal acceptance
+  gate; a fresh owner enrollment remains unobserved.
+
+### Tooling and remaining gates
+
+- `PASSED`: `DO_NOT_TRACK=1 npx --yes @nanonets/graft telemetry status` reports
+  telemetry `off`. Repository-local Graft `AGENTS.md`, `.gitignore` and ignored
+  `graft/` remain intentionally outside product commits.
+- Full exact residual matrix: `docs/GOAL-027A-R4-RESIDUAL-CLOSURE.md`.
+- Remaining gates are a fresh exact-build physical Tapo unlock latency sample,
+  the three-day household trial no earlier than `2026-09-12T02:21:00Z`, and
+  owner spoken wake/face follow-ups. Permanent-goal completion is not claimed.

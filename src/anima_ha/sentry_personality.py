@@ -128,11 +128,6 @@ class SentryPersonalityStore:
         version = uuid4()
         try:
             with psycopg.connect(self.database_url, row_factory=dict_row) as connection:
-                active = connection.execute(
-                    "SELECT 1 FROM anima_sentry_personality_profiles "
-                    "WHERE household_id=%s AND active",
-                    (household_id,),
-                ).fetchone()
                 row = connection.execute(
                     """
                     INSERT INTO anima_sentry_personality_profiles (
@@ -147,7 +142,7 @@ class SentryPersonalityStore:
                         profile["name"],
                         profile["profile_text"],
                         version,
-                        active is None,
+                        False,
                     ),
                 ).fetchone()
                 connection.commit()
@@ -240,6 +235,18 @@ class SentryPersonalityStore:
             "fallback_active": bool(row[0]),
         }
 
+    def activate_default(self, household_id: UUID) -> None:
+        """Select built-in SENTRY without deleting any saved custom profile."""
+
+        with psycopg.connect(self.database_url) as connection:
+            connection.execute(
+                "UPDATE anima_sentry_personality_profiles "
+                "SET active=FALSE, updated_at=now() "
+                "WHERE household_id=%s AND active",
+                (household_id,),
+            )
+            connection.commit()
+
     def mutate(self, household_id: UUID, operation: str, value: dict[str, Any]) -> dict[str, Any]:
         operations = {
             "create": self.create,
@@ -247,6 +254,9 @@ class SentryPersonalityStore:
             "activate": self.activate,
             "delete": self.delete,
         }
+        if operation == "activate_default":
+            self.activate_default(household_id)
+            return self.list(household_id)
         selected = operations.get(operation)
         if selected is None:
             raise ValueError("unsupported personality operation")

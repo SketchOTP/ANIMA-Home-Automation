@@ -10,23 +10,22 @@
 
 ## Current pointers
 
-- Current stage: GOAL-WIDE PRODUCT COMPLETION — MANAGEMENT-PLANE CONVERGENCE
-- Active directive: ANIMA-HA-OWNER-CONNECTION-VISUAL-CONSOLE-026A
-- Active task packet: `.agent/tasks/active/ANIMA-HA-OWNER-CONNECTION-VISUAL-CONSOLE-026A/`
-- Last accepted outcome: Phase 14 resilience/recovery completion,
-  `ANIMA_HA_RESILIENCE_RECOVERY_COMPLETE`, final governed head
-  `1f13b4421cff819d13163eb8580d16191fd1c40a`, exact CI `34013571702`;
-  native Pi 5 remains an external-resource gate. Phase 13 SENTRY-ready
-  household authority platform,
-  ANIMA f0456d24fa09ed6873e882c89a9dce759f73a619, CI 33938497635; isolated
-  SENTRY launcher compatibility patch 00aa9ac3a35b7b012581160b961e01a9480bbbdf,
-  CI 33939908542
-- Last completed outcome: Phase 14 resilience/recovery; the next scope is
-  selected from the permanent Goal usability audit. Phase 15 remains
-  unauthorized.
-- Last state sync: 2026-09-06; Phases 0-14 are Architect accepted. The
-  goal-wide management-plane increment is active; Phase 15 remains
-  unauthorized.
+> Superseding current-state pointer: the older 026A management-plane pointer
+> below is retained as history context. Current work is governed by 027A R4.
+
+- Current stage: GOAL-WIDE PRODUCT COMPLETION — 027A R4 RESIDUAL CLOSURE
+- Active directive: ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A
+- Active task packet: `.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/`
+- Last accepted outcome: R3 continuous household learning,
+  `01cf05410727e8e38d04bc3025ebb8ed062f8ac8`, exact CI `34428164158`;
+  Phase 14 resilience/recovery and Phase 13 SENTRY-ready platform remain
+  Architect accepted. R4 corrects personality decision isolation and explicit
+  profile activation; exact-build physical Tapo latency, live wake
+  qualification and the minimum household trial remain open.
+- Last completed outcome: R3 continuous household learning with live catch-up,
+  source-linked Memory correction/supersession and incremental review tasks.
+  The permanent Goal remains unclaimed; Phase 15 is not authorized.
+- Last state sync: 2026-09-10 UTC; retrieval confidence `ADEQUATE`.
 
 ## Phase 14 historical initial state
 

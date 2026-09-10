@@ -1,5 +1,28 @@
 # Outcome Ledger
 
+## OUTCOME-027A-R4-PERSONALITY-BOUNDARY — residual safety correction
+
+- Date: 2026-09-10 UTC
+- Status: IMPLEMENTED / locally qualified; exact-head hosted qualification and
+  owner physical gates remain pending.
+- ANIMA profile creation now persists new custom profiles inactive. Built-in
+  SENTRY is an explicit reversible fallback, and activation remains atomic,
+  household-scoped and version-checked.
+- SENTRY operational direct/autonomous prompts no longer receive owner-authored
+  personality text. A separate ephemeral, read-only, no-tool presentation pass
+  may style only a completed harmless tool-free ordinary answer. It cannot alter
+  structured facts, Truth interpretation, policy, authority, tool selection,
+  notification requirements, uncertainty or terminal results. Sensitive and
+  consequential paths bypass it.
+- PASSED locally: focused ANIMA personality API/PostgreSQL tests, focused SENTRY
+  operational/presentation tests, complete qualified SENTRY suite (`545
+  passed`), and final ANIMA validation after the optimistic-version test repair.
+- Live wake observation is metadata-only and remains an owner qualification
+  gate until ten minutes and three deliberate exact spoken wakes are completed.
+  Corrected face enrollment is a nonblocking owner UX follow-up. Exact-build
+  Tapo latency and the minimum three-day household trial remain open. No
+  permanent-goal or Phase 15 completion is claimed.
+
 ## OUTCOME-CONTINUOUS-HOUSEHOLD-LEARNING-027A-R3 — evidence-backed learning loop
 
 - Date: 2026-09-09

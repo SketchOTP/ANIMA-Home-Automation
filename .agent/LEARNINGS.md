@@ -416,3 +416,18 @@ Any future history rewrite proposal, remote migration, or change to the reposito
   retrieval queries.
 - Initial catch-up evidence is not scheduled-run evidence. Keep it explicitly
   labeled and let the real durable schedule establish later due-run behavior.
+
+### 027A R4 personality isolation — 2026-09-10
+
+- Owner-authored personality is presentation data, not operational context. The
+  safest boundary is to exclude it from the operational model entirely and
+  permit a second no-tool renderer only after a harmless structured result has
+  been accepted.
+- Profile activation must be an explicit owner operation. Saving the first
+  custom profile inactive preserves the distinction between storing a profile
+  and selecting it; optimistic version checks must use the latest returned
+  version after any fallback/deactivation operation.
+- Metadata-only wake observations can qualify absence of observed false
+  transitions, but cannot replace owner-performed spoken wake attempts. Physical
+  and elapsed-time gates remain explicit rather than being inferred from code or
+  passive telemetry.

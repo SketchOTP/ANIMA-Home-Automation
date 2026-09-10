@@ -1199,12 +1199,14 @@ class DemoHouseholdReadModel:
                     "profile_id": str(uuid4()),
                     **profile,
                     "version": str(uuid4()),
-                    "active": not items,
+                    "active": False,
                     "created_at": now,
                     "updated_at": now,
                     "presentation_only": True,
                 }
             )
+        elif operation == "activate_default":
+            items = [{**item, "active": False} for item in items]
         else:
             profile_id = str(value.get("profile_id", ""))
             index = next(

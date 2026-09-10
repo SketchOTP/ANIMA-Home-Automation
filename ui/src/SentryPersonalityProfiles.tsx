@@ -130,7 +130,8 @@ export function SentryPersonalityProfiles({
       </div>
       <p className="muted">
         Write SENTRY&apos;s voice and conversational character in your own words. Save several
-        profiles and activate one at a time; the first profile you save becomes active automatically.
+        profiles and activate one at a time. New profiles are saved inactive until you explicitly
+        activate them. Choose Built-in SENTRY to return to the default style without deleting profiles.
       </p>
       <p className="notice warning personality-boundary">
         {value?.boundary ?? "Personality changes presentation only; ANIMA safety and authority always win."}
@@ -172,6 +173,20 @@ export function SentryPersonalityProfiles({
 
       <div className="saved-personalities" aria-live="polite">
         <h3>Saved profiles</h3>
+        <div className="button-row personality-default-choice">
+          <button
+            type="button"
+            disabled={busy || value?.fallback_active === true}
+            onClick={() => void run(
+              "activate_default",
+              {},
+              "Activated built-in SENTRY presentation",
+            )}
+          >
+            Built-in SENTRY
+          </button>
+          {value?.fallback_active && <span className="status status-active">DEFAULT ACTIVE</span>}
+        </div>
         {value?.items.length ? (
           <ul className="clean-list list-spaced">
             {value.items.map((profile) => (

@@ -1,6 +1,39 @@
 # Current Project State
 
-Last updated: 2026-09-09
+Last updated: 2026-09-10
+
+## 027A R4 residual closure — personality boundary and profile lifecycle
+
+The owner-authored SENTRY personality profile is now structurally separated
+from operational reasoning. Direct and autonomous operational prompts receive
+neutral built-in guidance and no profile text. Only a harmless, tool-free,
+non-autonomous conversational result may enter a separate ephemeral,
+read-only, no-tool presentation pass; structured facts, policy, authority,
+notification requirements, tool choices and terminal results remain unchanged.
+Mandatory security, safety, failure, uncertainty and consequential paths bypass
+that pass entirely.
+
+New personality profiles are persisted inactive. The owner explicitly chooses a
+custom profile or Built-in SENTRY; switching to the built-in style deactivates
+the custom profile without deleting it, and saved versions remain available for
+later explicit activation. Local API/PostgreSQL lifecycle tests and SENTRY
+operational-invariance/presentation tests pass; hosted qualification is pending
+the consolidated R4 publication.
+
+The metadata-only wake observation completed for the ten-minute unattended
+office interval. It showed the instance continuously `LISTENING` with
+`non_wake`/empty recognition and no wake-chime or command-dispatch metadata;
+no unintended wake transition was observed. Three deliberate exact spoken wake
+attempts plus the confusing negative phrase remain an owner-action
+qualification gate; no complete wake pass is claimed yet. Corrected eight-capture
+face enrollment is a nonblocking owner UX follow-up under the adopted prototype
+goal, not a permanent goal gate.
+
+Graft remains repository-local tooling only: telemetry is off under `DO_NOT_TRACK=1`,
+and its authorized dirty `AGENTS.md`, `.gitignore`, and ignored `graft/` cache are
+intentionally excluded from product commits. Exact-build Tapo latency and the
+minimum three-day household trial remain open; permanent-goal completion is not
+claimed.
 
 ## Continuous household learning — 027A R3, 2026-09-09
 
@@ -62,9 +95,10 @@ the exact-build physical unlock latency and minimum three-day trial gates.
 
 ANIMA Settings now owns multiple household-scoped, free-form SENTRY
 personality profiles. The owner can create, edit, activate and delete profiles;
-the first profile becomes active automatically and all changes use durable
-PostgreSQL versions. With no active profile, SENTRY retains its built-in
-presentation style.
+profiles save inactive and activation is explicit, with all changes using
+durable PostgreSQL versions. With no active profile, SENTRY retains its built-in
+presentation style. See the current R4 section above for the corrected
+operational/presentation boundary.
 
 The active profile is read through SENTRY's credential-isolated ANIMA client
 and is applied only to conversational wording, tone, pacing and character.

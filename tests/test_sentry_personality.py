@@ -118,7 +118,7 @@ def test_owner_api_manages_multiple_versioned_profiles() -> None:
     )
     assert first.status_code == 200
     first_profile = first.json()["profiles"]["items"][0]
-    assert first_profile["active"] is True
+    assert first_profile["active"] is False
 
     second = mutation(
         client,
@@ -166,6 +166,27 @@ def test_owner_api_manages_multiple_versioned_profiles() -> None:
     active = next(item for item in activated.json()["profiles"]["items"] if item["active"])
     assert active["name"] == "Formal"
 
+    default = mutation(client, csrf, "activate_default", {})
+    assert default.status_code == 200
+    assert default.json()["profiles"]["fallback_active"] is True
+    assert all(item["active"] is False for item in default.json()["profiles"]["items"])
+
+    saved_after_default = next(
+        item
+        for item in default.json()["profiles"]["items"]
+        if item["profile_id"] == revised["profile_id"]
+    )
+    reactivated = mutation(
+        client,
+        csrf,
+        "activate",
+        {
+            "profile_id": saved_after_default["profile_id"],
+            "expected_version": saved_after_default["version"],
+        },
+    )
+    active = next(item for item in reactivated.json()["profiles"]["items"] if item["active"])
+
     deleted = mutation(
         client,
         csrf,
@@ -199,8 +220,8 @@ def test_postgres_profiles_survive_store_reconstruction_and_are_household_scoped
         household,
         {"name": "Night watch", "profile_text": "Calm, direct, and reassuring."},
     )
-    assert created["active"] is True
-    assert SentryPersonalityStore(database_url).active(household)["name"] == "Night watch"
+    assert created["active"] is False
+    assert SentryPersonalityStore(database_url).active(household)["status"] == "DEFAULT"
     assert SentryPersonalityStore(database_url).active(other_household)["status"] == "DEFAULT"
 
     with pytest.raises(SentryPersonalityConflict):
@@ -213,3 +234,13 @@ def test_postgres_profiles_survive_store_reconstruction_and_are_household_scoped
                 "profile_text": "Changed",
             },
         )
+
+    activated = store.activate(
+        household,
+        {"profile_id": created["profile_id"], "expected_version": created["version"]},
+    )
+    assert activated["active"] is True
+    default = store.mutate(household, "activate_default", {})
+    assert default["active_profile_id"] is None
+    assert default["fallback_active"] is True
+    assert default["items"][0]["active"] is False

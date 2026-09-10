@@ -40,3 +40,32 @@ implementation/correction head
 `sha256:adf82cd694063ed43ae01f8f3f2090cbece604572a28ba4783233012490788df`.
 R3 is complete; 027A remains active for the exact-build physical latency and
 minimum three-day household-trial gates.
+
+## R4 implementation handoff — 2026-09-10
+
+R4 corrected the two software-controllable residuals identified by the Architect.
+ANIMA profile creation is now explicitly inactive until the owner activates a
+profile or chooses Built-in SENTRY. SENTRY operational prompts no longer receive
+owner-authored personality text. Harmless, tool-free normal answers may use a
+separate bounded, ephemeral presentation renderer with no household or host
+authority; autonomous, tool-bearing, security, safety, failure, uncertainty and
+consequential paths remain neutral and bypass it.
+
+Local focused and full regression evidence is complete for this correction. The
+full validator initially exposed a test that reused a pre-activation profile
+version after Built-in SENTRY had returned it; the test now reads the current
+version before reactivation. This preserves the intended optimistic-concurrency
+contract rather than weakening it.
+
+The ten-minute live wake observation completed as metadata-only evidence with
+zero unintended transitions observed. Three deliberate exact spoken wake
+attempts and a confusing negative phrase require the owner and are not
+simulated. Corrected live eight-capture face enrollment is
+classified as a nonblocking owner UX follow-up because the adopted permanent
+goal requires demonstrable voice software rather than final face hardware.
+
+The exact residual matrix is in
+`docs/GOAL-027A-R4-RESIDUAL-CLOSURE.md`. Exact-build Tapo latency and the
+minimum three-day trial remain open; do not mark the permanent goal complete or
+start Phase 15. R4 is ready for publication after final local validation and
+exact-head hosted qualification.
