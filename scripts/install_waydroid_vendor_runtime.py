@@ -165,6 +165,8 @@ Environment=DISPLAY=:1
 Environment=WAYLAND_DISPLAY=anima-android-wayland
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/anima-android-bus
 Environment=PULSE_RUNTIME_PATH=%t/anima-android-no-audio
+ExecStartPre=/usr/bin/install -d -m 700 %t/anima-android-no-audio
+ExecStartPre=/usr/bin/install -m 600 /dev/null %t/anima-android-no-audio/native
 ExecStart=/usr/bin/waydroid session start
 Restart=on-failure
 RestartSec=5
