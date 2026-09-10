@@ -198,7 +198,7 @@ test("SENTRY decision journals are inspectable but cannot be rewritten in the ow
   await page.route(`**/api/v1/knowledge/${note.note_id}`, route => route.fulfill({ json: { note } }));
   await panel.getByRole("button", { name: "Show SENTRY decisions", exact: true }).click();
   await panel.getByRole("button", { name: `Read ${note.title}`, exact: true }).click();
-  await expect(panel.getByText(/system-authored audit records/)).toBeVisible();
+  await expect(panel.getByText(/system-authored, evidence-linked record/)).toBeVisible();
   await expect(panel.getByRole("button", { name: "Edit note", exact: true })).toHaveCount(0);
   await expect(panel.getByRole("button", { name: "Retract note", exact: true })).toBeVisible();
   await panel.getByRole("button", { name: "Close note", exact: true }).click();

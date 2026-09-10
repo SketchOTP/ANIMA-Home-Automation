@@ -99,3 +99,11 @@ Status: `IN_PROGRESS`
   installed fake clock and attempted to move backward. The test now starts at
   a fixed epoch and pauses one second forward; the same scenario passes on
   desktop, tablet and phone. This is a test-only correction.
+- Correction head `01433593f18247f181cc7a601a049e6bb10ec262` then
+  passed the formerly failing main browser suite and every earlier hosted gate.
+  Exact-head CI `34425286338` is nevertheless retained as `FAILED` because the
+  later owner-product Memory suite still expected the superseded phrase
+  “system-authored audit records.” The product now describes all managed
+  decision/learning records as “system-authored, evidence-linked”; the test was
+  aligned to that existing behavior. The complete owner-product browser
+  verifier subsequently passed locally (`42 + 15 + 3 + 33` scenarios).

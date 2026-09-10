@@ -31,3 +31,7 @@ turn retrieved relevant learned Memory with uncertainty intact. The UI exposes
 the evidence/maturity inputs and review boundary. Hosted exact-head publication
 is being requalified after a test-only Playwright clock-race correction. The
 physical latency and three-day trial gates remain open.
+The first correction's hosted run exposed one additional stale wording
+assertion in the separate Memory browser suite; that test-only assertion is now
+aligned and the full owner-product browser verifier passes locally. Final
+exact-head hosted requalification remains pending.

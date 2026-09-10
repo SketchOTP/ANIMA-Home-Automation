@@ -35,6 +35,12 @@
   attempted to pause its fake clock at a host-derived instant already in the
   past. A fixed forward-only epoch now passes that scenario across all three
   browser projects; no product behavior changed.
+- Hosted run `34425286338` on correction head `01433593...` is also retained as
+  `FAILED`: it closed the clock race and passed every earlier hosted gate, then
+  the owner-product Memory suite expected superseded UI wording for decision
+  records. The assertion now follows the current system-authored,
+  evidence-linked wording; the complete local owner-product browser verifier
+  passes. This second correction is test-only.
 - Physical exact-build alert latency and the three-day household trial remain
   open under 027A. No permanent-Goal completion is claimed.
 

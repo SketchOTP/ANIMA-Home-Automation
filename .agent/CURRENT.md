@@ -45,6 +45,11 @@ policy, build and frontend checks but exposed a Playwright clock race in the
 HTTP/1 stream-quota test (`114 passed / 14 skipped / 1 failed`). The test now
 uses a fixed forward-only browser-clock epoch; the formerly failing scenario
 passes on desktop, tablet and phone. This correction changes test timing only.
+Hosted run `34425286338` on the first correction head then passed that suite
+and every prior gate, but retained a stale phrase assertion in the separate
+Memory owner-product suite. The assertion now follows the current broader
+system-record explanation, and the full owner-product browser verifier passes
+locally. Neither correction changes production behavior.
 
 ## Owner-configurable SENTRY personality profiles — 2026-09-09
 
