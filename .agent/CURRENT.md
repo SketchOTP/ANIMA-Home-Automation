@@ -40,6 +40,12 @@ its qualified environment. Live catch-up and later-use evidence reach E5 for
 those exact paths. Physical exact-build Tapo latency and the minimum three-day
 trial remain open; permanent-Goal completion is not claimed.
 
+The first hosted run on implementation head `6ddee068...` passed all backend,
+policy, build and frontend checks but exposed a Playwright clock race in the
+HTTP/1 stream-quota test (`114 passed / 14 skipped / 1 failed`). The test now
+uses a fixed forward-only browser-clock epoch; the formerly failing scenario
+passes on desktop, tablet and phone. This correction changes test timing only.
+
 ## Owner-configurable SENTRY personality profiles — 2026-09-09
 
 ANIMA Settings now owns multiple household-scoped, free-form SENTRY

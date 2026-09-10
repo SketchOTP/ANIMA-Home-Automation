@@ -595,7 +595,9 @@ test("two-stream HTTP1 quota leaves initial seventh tab readable and client retr
     }
     await expect.poll(() => ({ active, rejected })).toEqual({ active: 2, rejected: 4 });
     await page.bringToFront();
-    await page.clock.install(); await page.clock.pauseAt(new Date());
+    const clockStart = new Date("2026-01-01T00:00:00Z");
+    await page.clock.install({ time: clockStart });
+    await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
     await page.goto(origin);
     await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
     await expect.poll(() => rejected).toBe(5);

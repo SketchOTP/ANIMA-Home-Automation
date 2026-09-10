@@ -30,6 +30,11 @@
 - First SENTRY full-suite attempt under the wrong host interpreter failed on
   missing NumPy/OpenCV/OpenVINO and was not promoted; the qualified environment
   passed the same complete suite.
+- Hosted run `34423847476` on implementation head `6ddee068...` is retained as
+  `FAILED`: all earlier gates passed, then the tablet stream-quota browser test
+  attempted to pause its fake clock at a host-derived instant already in the
+  past. A fixed forward-only epoch now passes that scenario across all three
+  browser projects; no product behavior changed.
 - Physical exact-build alert latency and the three-day household trial remain
   open under 027A. No permanent-Goal completion is claimed.
 

@@ -92,4 +92,10 @@ Status: `IN_PROGRESS`
   module is not installed in that environment. The repository-pinned
   `.venv/bin/uv build --sdist --wheel` completed both artifacts successfully.
 - Full architecture/evidence boundary: `docs/GOAL-027A-HOUSEHOLD-LEARNING-R3.md`.
-- Hosted exact-head evidence remains pending publication.
+- Implementation head `6ddee068dfa18e1623d9deacdb91cff0d0cbbdae`
+  published successfully, but exact-head CI `34423847476` is retained as
+  `FAILED`: every backend/policy/build/frontend gate passed before one tablet
+  Playwright stream-quota test failed because `pauseAt(new Date())` raced the
+  installed fake clock and attempted to move backward. The test now starts at
+  a fixed epoch and pauses one second forward; the same scenario passes on
+  desktop, tablet and phone. This is a test-only correction.

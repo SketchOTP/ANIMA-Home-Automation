@@ -29,4 +29,5 @@ corrected/superseded rather than duplicated in Memory/Obsidian. Daily and
 multi-day incremental durable reviews are active, and a later normal SENTRY
 turn retrieved relevant learned Memory with uncertainty intact. The UI exposes
 the evidence/maturity inputs and review boundary. Hosted exact-head publication
-is pending; the physical latency and three-day trial gates remain open.
+is being requalified after a test-only Playwright clock-race correction. The
+physical latency and three-day trial gates remain open.
