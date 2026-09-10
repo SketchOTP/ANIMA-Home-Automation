@@ -34,4 +34,9 @@ physical latency and three-day trial gates remain open.
 The first correction's hosted run exposed one additional stale wording
 assertion in the separate Memory browser suite; that test-only assertion is now
 aligned and the full owner-product browser verifier passes locally. Final
-exact-head hosted requalification remains pending.
+implementation/correction head
+`9b84d3aaa8fbf853ecb9812080f4ea667a696e07` has exact-head hosted CI
+`34426846774` `PASSED`, artifact `10133392831`, digest
+`sha256:adf82cd694063ed43ae01f8f3f2090cbece604572a28ba4783233012490788df`.
+R3 is complete; 027A remains active for the exact-build physical latency and
+minimum three-day household-trial gates.

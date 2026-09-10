@@ -107,3 +107,12 @@ Status: `IN_PROGRESS`
   decision/learning records as “system-authored, evidence-linked”; the test was
   aligned to that existing behavior. The complete owner-product browser
   verifier subsequently passed locally (`42 + 15 + 3 + 33` scenarios).
+- Final implementation/correction head
+  `9b84d3aaa8fbf853ecb9812080f4ea667a696e07` is exact-head hosted green:
+  CI `34426846774` `PASSED`. Artifact `10133392831`, digest
+  `sha256:adf82cd694063ed43ae01f8f3f2090cbece604572a28ba4783233012490788df`.
+  The run includes the full ANIMA validation, OPA, real Core/PostgreSQL and
+  accepted resilience qualifications, public-safety scan, ARM64 image/runtime,
+  container health, main Playwright and the complete owner-product browser
+  verifier. R3 is hosted-qualified at E4, with the live catch-up/later-use paths
+  retaining E5 operational evidence.

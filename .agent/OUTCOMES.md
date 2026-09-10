@@ -41,6 +41,12 @@
   records. The assertion now follows the current system-authored,
   evidence-linked wording; the complete local owner-product browser verifier
   passes. This second correction is test-only.
+- `PASSED`: exact-head hosted CI `34426846774` on
+  `9b84d3aaa8fbf853ecb9812080f4ea667a696e07`, including complete deterministic
+  validation, OPA, PostgreSQL/Core qualifications, public-safety scan, ARM64,
+  container health, the main interface suite and the full owner-product browser
+  verifier. Artifact `10133392831` digest is
+  `sha256:adf82cd694063ed43ae01f8f3f2090cbece604572a28ba4783233012490788df`.
 - Physical exact-build alert latency and the three-day household trial remain
   open under 027A. No permanent-Goal completion is claimed.
 

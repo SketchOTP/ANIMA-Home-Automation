@@ -51,6 +51,13 @@ Memory owner-product suite. The assertion now follows the current broader
 system-record explanation, and the full owner-product browser verifier passes
 locally. Neither correction changes production behavior.
 
+Published correction head `9b84d3aaa8fbf853ecb9812080f4ea667a696e07`
+has exact-head CI `34426846774` `PASSED`. Artifact `10133392831`
+(`sha256:adf82cd694063ed43ae01f8f3f2090cbece604572a28ba4783233012490788df`)
+is bound to that head. R3 household-learning implementation and operational
+catch-up evidence are therefore hosted-qualified; 027A remains active only for
+the exact-build physical unlock latency and minimum three-day trial gates.
+
 ## Owner-configurable SENTRY personality profiles — 2026-09-09
 
 ANIMA Settings now owns multiple household-scoped, free-form SENTRY
