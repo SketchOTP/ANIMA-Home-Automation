@@ -396,3 +396,38 @@ def test_canonical_immediate_announcement_is_factual_and_graph_named() -> None:
     assert announcement["text"] == "Front Door Lock was unlocked."
     assert announcement["authority"] == "ANIMA_CANONICAL_EVENT"
     assert "who" not in announcement and "actor" not in announcement
+
+
+@pytest.mark.parametrize(
+    "transition,expected",
+    [
+        ("DISCONNECTED", "Tym has left the residence."),
+        ("RECONNECTED", "Tym has returned home."),
+    ],
+)
+def test_presence_announcement_uses_owner_requested_transition_language(
+    transition: str, expected: str
+) -> None:
+    person_id = uuid4()
+
+    class Graph:
+        @staticmethod
+        def get_node(identifier: object) -> object | None:
+            return SimpleNamespace(name="Tym") if identifier == person_id else None
+
+    initiative = HouseholdInitiativeContext(
+        "postgresql://unused",
+        None,
+        cast(HouseholdEventEvidence, SimpleNamespace(graph=Graph())),
+    )
+    announcement = initiative._canonical_announcement(
+        {
+            "event_id": str(uuid4()),
+            "event_type": "household.presence.connection_changed",
+            "occurred_at": NOW,
+            "payload": {"transition": transition},
+        },
+        str(person_id),
+    )
+    assert announcement is not None
+    assert announcement["text"] == expected

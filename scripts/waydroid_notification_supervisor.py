@@ -52,6 +52,7 @@ class CommandResult:
 
 
 Runner = Callable[[Sequence[str], float], CommandResult]
+ForwarderChecker = Callable[[], tuple[str, str]]
 
 
 def run_command(argv: Sequence[str], timeout: float = 8.0) -> CommandResult:
@@ -134,15 +135,30 @@ class WaydroidSupervisor:
         status_path: Path = DEFAULT_STATUS,
         relay_status_path: Path = DEFAULT_RELAY_STATUS,
         clock: Callable[[], float] = time.time,
+        forwarder_checker: ForwarderChecker | None = None,
     ) -> None:
         self.runner = runner
         self.status_path = status_path
         self.relay_status_path = relay_status_path
         self.clock = clock
+        self.forwarder_checker = forwarder_checker or self._probe_notification_forwarder
         self.last_app_launch: dict[str, float] = {}
         self.last_process_observed: dict[str, bool] = {}
         self.last_container_start = 0.0
         self.last_session_start = 0.0
+
+    @staticmethod
+    def _probe_notification_forwarder() -> tuple[str, str]:
+        """Verify the actual Waydroid Binder notification service path."""
+        try:
+            import gbinder
+
+            manager = gbinder.ServiceManager("/dev/anbox-binder", "aidl3", "aidl3")
+            if manager.is_present():
+                return "CONNECTED", "WAYDROID_BINDER_SERVICE_MANAGER"
+            return "NOT_READY", "WAYDROID_BINDER_SERVICE_MANAGER_UNAVAILABLE"
+        except (ImportError, OSError, RuntimeError, TypeError, ValueError):
+            return "NOT_READY", "WAYDROID_BINDER_UNAVAILABLE"
 
     def _run(self, *argv: str, timeout: float = 8.0) -> CommandResult:
         return self.runner(argv, timeout)
@@ -362,10 +378,16 @@ class WaydroidSupervisor:
             for package in VENDOR_PACKAGES:
                 vendor_states[package] = {"state": "NOT_READY", "reason": "ANDROID_NOT_BOOTED"}
         relay, relay_reason, relay_metadata = self._relay_state(services)
+        forwarder, forwarder_reason = self.forwarder_checker()
         listener = (
-            ("CONNECTED", "WAYDROID_PRIVATE_DBUS_FORWARDER")
-            if relay in {"CONNECTED", "DEGRADED"}
-            else ("NOT_READY", "RELAY_NOT_CONNECTED")
+            ("CONNECTED", "WAYDROID_BINDER_FORWARDER")
+            if forwarder == "CONNECTED" and relay in {"CONNECTED", "DEGRADED"}
+            else (
+                "NOT_READY",
+                "WAYDROID_FORWARDER_NOT_READY"
+                if forwarder != "CONNECTED"
+                else "RELAY_NOT_CONNECTED",
+            )
         )
         vendor_ready = all(item.get("state") == "READY" for item in vendor_states.values())
         component_states = {
@@ -379,6 +401,10 @@ class WaydroidSupervisor:
             "dns": {"state": "READY" if network == "CONNECTED" else network},
             "clock": {"state": clock_state},
             "fcm": {"state": fcm, "reason": fcm_reason},
+            "notification_forwarder": {
+                "state": forwarder,
+                "reason": forwarder_reason,
+            },
             "notification_listener": {"state": listener[0], "reason": listener[1]},
             "relay": {"state": relay, "reason": relay_reason},
             "vendors": vendor_states,

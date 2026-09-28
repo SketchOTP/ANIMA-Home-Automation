@@ -100,6 +100,68 @@ def test_live_context_is_non_authoritative_and_does_not_change_stored_packet(
     assert "household_context" not in original
 
 
+def test_context_size_reduction_preserves_core_initiative(tmp_path: Path) -> None:
+    _, _, manager, evaluator = setup(tmp_path)
+    request = request_for(manager)
+    initiative = {
+        "status": "AVAILABLE",
+        "notification": {
+            "allowed": True,
+            "required": True,
+            "reason": "ALWAYS_NOTIFY",
+            "request_id": str(request.request_id),
+            "evaluated_at": datetime.now(UTC).isoformat(),
+        },
+    }
+    boundary = CoreSentryBoundary(
+        manager,
+        PolicyService(evaluator),
+        cast(Any, SimpleNamespace(get=lambda _: request)),
+        reasoning_context_loader=lambda _: {
+            "initiative": initiative,
+            "optional_household_history": "x" * 100_000,
+        },
+    )
+
+    context = boundary.request_context(request)
+
+    assert context["household_context"]["status"] == "CONTEXT_LIMIT_REQUIRES_SCOPED_READ"
+    assert context["household_context"]["initiative"] == initiative
+
+
+def test_compact_notification_uses_only_core_disposition(tmp_path: Path) -> None:
+    _, _, manager, evaluator = setup(tmp_path)
+    request = replace(request_for(manager), origin=IntelligenceOrigin.AUTONOMOUS_ATTENTION)
+    initiative = {
+        "status": "AVAILABLE",
+        "notification": {
+            "allowed": True,
+            "required": True,
+            "reason": "ALWAYS_NOTIFY",
+            "request_id": str(request.request_id),
+            "evaluated_at": datetime.now(UTC).isoformat(),
+        },
+    }
+    boundary = CoreSentryBoundary(
+        manager,
+        PolicyService(evaluator),
+        cast(Any, SimpleNamespace(get=lambda _: request)),
+        context_loader=lambda _: (_ for _ in ()).throw(
+            AssertionError("full context must not load")
+        ),
+        notification_context_loader=lambda _: initiative,
+    )
+
+    context = boundary.request_notification(request)
+
+    assert context == {
+        "household_context": {
+            "status": "AVAILABLE",
+            "initiative": initiative,
+        }
+    }
+
+
 def test_missing_context_stays_unavailable_not_empty_certainty(tmp_path: Path) -> None:
     _, _, manager, _ = setup(tmp_path)
     request = request_for(manager)

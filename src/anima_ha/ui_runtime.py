@@ -8,12 +8,17 @@ database service directly.
 
 from __future__ import annotations
 
+import json
 import os
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
+
+import psycopg
 
 from anima_ha.action import (
     ActionExecutionCoordinator,
@@ -142,6 +147,75 @@ from anima_ha.vendor_events import (
     PostgresVendorEventStore,
     VendorEventsNativePlugin,
 )
+
+
+def _wifi_presence_status_path() -> Path:
+    """Use the same owner-boundary location as the presence observer."""
+
+    owner_boundary = os.environ.get("ANIMA_OWNER_BOUNDARY_DIR", "/var/lib/anima/provider-boundary")
+    return Path(
+        os.environ.get(
+            "ANIMA_WIFI_PRESENCE_STATUS_PATH",
+            str(Path(owner_boundary) / "wifi-presence-status.json"),
+        )
+    )
+
+
+class JournalEventWatcher:
+    """Wake Core routing for events appended by an external local observer.
+
+    PostgreSQL carries only the immutable event ID in NOTIFY. The watcher then
+    reloads the canonical row and applies a fixed source/type allowlist, so a
+    display/status file or model cannot inject a household event or choose a
+    SENTRY route.
+    """
+
+    CHANNEL = "anima_journal_event_appended"
+
+    def __init__(
+        self,
+        journal: PostgresEventJournal,
+        dispatch: Callable[[EventEnvelope, int], Any],
+    ) -> None:
+        self.journal = journal
+        self.dispatch = dispatch
+        self._stop = threading.Event()
+        self._thread = threading.Thread(
+            target=self._run,
+            name="anima-journal-event-watcher",
+            daemon=True,
+        )
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def _run(self) -> None:
+        while not self._stop.is_set():
+            try:
+                with psycopg.connect(
+                    self.journal.database_url,
+                    connect_timeout=self.journal.connect_timeout,
+                    autocommit=True,
+                ) as connection:
+                    connection.execute(f"LISTEN {self.CHANNEL}")
+                    while not self._stop.is_set():
+                        notification = next(connection.notifies(timeout=2, stop_after=1), None)
+                        if notification is None:
+                            continue
+                        event = self.journal.get(str(notification.payload))
+                        if event is None or (
+                            event.source != "anima.household_presence"
+                            or event.event_type != "household.presence.connection_changed"
+                        ):
+                            continue
+                        position = self.journal.position(event.event_id)
+                        if position is not None:
+                            self.dispatch(event, position)
+            except (OSError, psycopg.Error):
+                self._stop.wait(2)
 
 
 def _dispatch_senseguard_attention(
@@ -1183,6 +1257,8 @@ class CoreRuntime:
     memory_service: Any | None = None
     learning_service: Any | None = None
     initiative_context: Any | None = None
+    event_dispatcher: Callable[[EventEnvelope, int], Any] | None = None
+    journal_event_watcher: JournalEventWatcher | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -1245,13 +1321,37 @@ class CoreRuntime:
             action_refresher=self.action_refresher,
             action_verifier=self.action_verifier,
             context_loader=lambda trigger_id: self.context.load(trigger_id),
+            notification_context_loader=(
+                (lambda request: self.initiative_context(request))
+                if self.initiative_context is not None
+                else None
+            ),
             reasoning_context_loader=lambda request: household_reasoning_context(
                 request, self.memory_service, self.graph, initiative=self.initiative_context
             ),
+            sensor_status_loader=self.sentry_sensor_status,
             policy_role_resolver=self.identity_resolver.resolve_role,
             access_level_resolver=self.identity_resolver.resolve_access_level,
             agent_memory_enabled=os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true",
             learning_service=self.learning_service,
+        )
+
+    def sentry_sensor_status(self, household_id: UUID) -> dict[str, Any]:
+        from anima_ha.sentry_sensor_status import build_sensor_status
+
+        wifi_presence: dict[str, Any] | None = None
+        status_path = _wifi_presence_status_path()
+        try:
+            wifi_presence = json.loads(Path(status_path).read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            wifi_presence = None
+
+        return build_sensor_status(
+            household_id,
+            graph=self.graph,
+            truth=self.truth,
+            journal=self.journal,
+            wifi_presence=wifi_presence,
         )
 
 
@@ -1362,6 +1462,7 @@ def build_postgres_core(
     opa_url: str = "http://127.0.0.1:8181",
     codex: Any | None = None,
     external_transport: Any | None = None,
+    watch_journal_events: bool = False,
 ) -> CoreRuntime:
     """Compose the normal local runtime from accepted Core implementations."""
     journal = PostgresEventJournal(database_url)
@@ -1880,6 +1981,18 @@ def build_postgres_core(
             ring_router.handle(event)
 
         ha_adapter.set_normalized_event_callback(handle_normalized_event)
+
+        def dispatch_journal_event(event: EventEnvelope, position: int) -> None:
+            if event.source == "anima.household_presence" and event.event_type == (
+                "household.presence.connection_changed"
+            ):
+                dispatch_presence_event(event, position)
+
+        runtime.event_dispatcher = dispatch_journal_event
+        if watch_journal_events:
+            watcher = JournalEventWatcher(journal, dispatch_journal_event)
+            runtime.journal_event_watcher = watcher
+            watcher.start()
     return runtime
 
 

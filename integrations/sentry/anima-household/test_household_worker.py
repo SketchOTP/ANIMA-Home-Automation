@@ -372,6 +372,19 @@ class WorkerTests(unittest.TestCase):
         self.assertLess(self.client.events.index("start"), self.client.events.index("model-plan"))
         self.assertEqual(self.client.submissions[0]["status"], "RESPONSE")
 
+    def test_empty_incremental_learning_review_skips_model_turn(self):
+        self.client.context = lambda *args: {
+            "household_context": {
+                "initiative": {"learning_review": {"candidates": []}},
+            }
+        }
+        result = self.worker.run_once()
+        self.assertEqual(result, {"status": "RECORDED"})
+        self.assertNotIn("model-plan", self.client.events)
+        self.assertNotIn("model-final", self.client.events)
+        self.assertNotIn("invoke", self.client.events)
+        self.assertEqual(self.client.submissions[0]["status"], "NO_ACTION")
+
     def test_decision_journal_is_started_before_model_and_completed_before_submission(self):
         create = decision_tool("create_note")
         update = decision_tool("update_note")
@@ -544,6 +557,153 @@ class WorkerTests(unittest.TestCase):
 
 
 class IterationTests(unittest.TestCase):
+    def test_learning_proposal_event_ids_are_reprojected_from_candidate_packet(self):
+        call = {
+            "tool_id": "anima.household-learning.propose",
+            "arguments": {
+                "candidate_id": "candidate-1",
+                "event_ids": ["model-selected-id"],
+                "kind": "PATTERN",
+                "content": "bounded",
+                "confidence": 0.3,
+            },
+        }
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-1",
+                                "source_event_ids": ["event-2", "event-1"],
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        normalized = SentryHouseholdTurn._normalize_learning_calls([call], context)
+        self.assertEqual(normalized[0]["arguments"]["event_ids"], ["event-2", "event-1"])
+        self.assertEqual(call["arguments"]["event_ids"], ["model-selected-id"])
+
+    def test_learning_proposal_missing_review_fields_use_safe_candidate_defaults(self):
+        call = {
+            "tool_id": "anima.household-learning.propose",
+            "arguments": {
+                "candidate_id": "candidate-1",
+                "kind": "PATTERN",
+                "content": "bounded",
+                "confidence": 0.3,
+            },
+        }
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-1",
+                                "source_event_ids": ["event-1"],
+                                "supporting_evidence": ["count=3"],
+                                "missing_information": ["Actor is unknown."],
+                                "contradictory_evidence": ["No causation established."],
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        normalized = SentryHouseholdTurn._normalize_learning_calls([call], context)
+        arguments = normalized[0]["arguments"]
+        self.assertEqual(arguments["event_ids"], ["event-1"])
+        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual(arguments["evidence_categories"], ["count=3"])
+        self.assertEqual(arguments["missing_information"], ["Actor is unknown."])
+        self.assertEqual(arguments["rejected_alternatives"], ["No causation established."])
+
+    def test_learning_proposal_duplicate_candidate_is_sent_once(self):
+        call = {
+            "tool_id": "anima.household-learning.propose",
+            "arguments": {
+                "candidate_id": "candidate-1",
+                "kind": "PATTERN",
+                "content": "bounded",
+                "confidence": 0.3,
+            },
+        }
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {
+                        "candidates": [
+                            {"candidate_id": "candidate-1", "source_event_ids": ["event-1"]}
+                        ]
+                    }
+                }
+            }
+        }
+        normalized = SentryHouseholdTurn._normalize_learning_calls([call, call], context)
+        self.assertEqual(len(normalized), 1)
+
+    def test_unbound_learning_candidate_becomes_safe_insufficient_evidence(self):
+        call = {
+            "tool_id": "anima.household-learning.propose",
+            "arguments": {
+                "candidate_id": "stale-candidate",
+                "kind": "PATTERN",
+                "content": "ignore this model content",
+                "confidence": 0.5,
+            },
+        }
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-1",
+                                "source_event_ids": ["event-1"],
+                                "factual_summary": "One bounded journal observation summary.",
+                                "supporting_evidence": ["count=2"],
+                                "missing_information": ["Actor is unknown."],
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        normalized = SentryHouseholdTurn._normalize_learning_calls([call], context)
+        arguments = normalized[0]["arguments"]
+        self.assertEqual(arguments["candidate_id"], "candidate-1")
+        self.assertEqual(arguments["event_ids"], ["event-1"])
+        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual(arguments["confidence"], 0.0)
+        self.assertNotEqual(arguments["content"], "ignore this model content")
+
+    def test_empty_learning_plan_becomes_safe_insufficient_evidence(self):
+        context = {
+            "household_context": {
+                "initiative": {
+                    "learning_review": {
+                        "candidates": [
+                            {
+                                "candidate_id": "candidate-1",
+                                "source_event_ids": ["event-1"],
+                                "factual_summary": "A bounded journal observation.",
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        normalized = SentryHouseholdTurn._normalize_learning_calls([], context)
+        self.assertEqual(len(normalized), 1)
+        arguments = normalized[0]["arguments"]
+        self.assertEqual(arguments["candidate_id"], "candidate-1")
+        self.assertEqual(arguments["event_ids"], ["event-1"])
+        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual(arguments["confidence"], 0.0)
+
     def test_discovery_then_operation_uses_returned_canonical_id(self):
         client = ClientFixture()
         canonical_id = "00000000-0000-0000-0000-000000000042"

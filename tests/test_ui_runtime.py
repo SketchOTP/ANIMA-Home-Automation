@@ -42,6 +42,7 @@ from anima_ha.ui_runtime import (
     CoreConversationPipeline,
     CoreUICommandGateway,
     _safe_confirmation_result,
+    _wifi_presence_status_path,
 )
 
 
@@ -58,6 +59,13 @@ class CapturingEvaluator(AllowEvaluator):
     def evaluate(self, document: dict[str, object]) -> dict[str, object]:
         self.documents.append(document)
         return super().evaluate(document)
+
+
+def test_wifi_presence_reader_uses_observer_owner_boundary(monkeypatch: Any, tmp_path: Any) -> None:
+    owner_boundary = tmp_path / "owner-boundary"
+    monkeypatch.setenv("ANIMA_OWNER_BOUNDARY_DIR", str(owner_boundary))
+    monkeypatch.delenv("ANIMA_WIFI_PRESENCE_STATUS_PATH", raising=False)
+    assert _wifi_presence_status_path() == owner_boundary / "wifi-presence-status.json"
 
 
 class StubAttention:

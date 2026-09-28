@@ -75,8 +75,8 @@ def main() -> int:
         if value.get("package_name") == TAPO_PACKAGE
     ]
     tapo_qualified = (
-        any("front door" in text and " was locked" in text for text in tapo_texts)
-        and any("front door" in text and " was unlocked" in text for text in tapo_texts)
+        any("front door" in text and "locked" in text for text in tapo_texts)
+        and any("front door" in text and "unlocked" in text for text in tapo_texts)
     ) or {
         (rule.get("resource_alias"), rule.get("kind"))
         for rule in config["rules"]
@@ -108,7 +108,7 @@ def main() -> int:
                 "resource_alias": "front-door",
                 "kind": "unlocked",
                 "alias_terms": ["front door"],
-                "event_terms": [" was unlocked"],
+                "event_terms": ["unlocked"],
                 "profile_after": "unlocked by ",
                 "reported_method": None,
             },
@@ -117,7 +117,7 @@ def main() -> int:
                 "resource_alias": "front-door",
                 "kind": "locked",
                 "alias_terms": ["front door"],
-                "event_terms": [" was locked"],
+                "event_terms": ["locked"],
                 "profile_after": None,
                 "reported_method": None,
             },

@@ -7,6 +7,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -31,6 +32,7 @@ from anima_ha.household_learning import (
     InitiativeConfig,
     learning_request_scope,
 )
+from anima_ha.household_patterns import ROUTINE_EVIDENCE_THRESHOLD
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
     IntelligenceOrigin,
@@ -38,6 +40,7 @@ from anima_ha.intelligence import (
     PostgresIntelligenceStore,
 )
 from anima_ha.journal import PostgresEventJournal
+from anima_ha.knowledge import KnowledgeConfig, KnowledgeNativePlugin
 from anima_ha.memory import (
     MemoryProvenance,
     MemoryRecord,
@@ -48,6 +51,7 @@ from anima_ha.memory import (
 )
 from anima_ha.plugins import (
     ExecutionBoundary,
+    InvocationContext,
     NativeRuntime,
     PluginManager,
     PluginValidationError,
@@ -161,6 +165,38 @@ def proposal(ids: list[str], **changes: Any) -> dict[str, Any]:
     }
 
 
+def test_qualified_learning_record_projects_as_non_executable_routine_context() -> None:
+    household = uuid4()
+    row = MemoryRecord.create(
+        household_id=household,
+        memory_type=MemoryType.INFERRED_PATTERN,
+        content="The front entry event sequence recurs.",
+        provenance=MemoryProvenance(ProvenanceKind.INFERRED_FROM_HISTORY, "anima:test"),
+        confidence=0.4,
+        metadata={
+            "record_kind": "household_learning_suggestion",
+            "kind": "PATTERN",
+            "review_status": "ACKNOWLEDGED",
+            "conclusion": "LEARNED_ROUTINE_SUGGESTION",
+            "candidate_key": "sequence:front:entry",
+            "candidate_title": "Repeated front entry sequence",
+            "candidate_factual_summary": "The front entry sequence recurred across several days.",
+            "candidate_class": "EVENT_SEQUENCE",
+            "maturity": "LEARNED_ROUTINE_ELIGIBLE",
+            "evidence_score": ROUTINE_EVIDENCE_THRESHOLD,
+            "source_refs": [],
+        },
+    )
+    routine = HouseholdLearningService._learned_routine(row)
+    assert routine is not None
+    assert routine["classification"] == "INFERRED_LEARNED_ROUTINE"
+    assert routine["executable"] is False
+    assert routine["authority"] == "NONE"
+
+    dismissed = replace(row, metadata={**row.metadata, "review_status": "DISMISSED"})
+    assert HouseholdLearningService._learned_routine(dismissed) is None
+
+
 def structured_proposal(candidate: dict[str, Any], **changes: Any) -> dict[str, Any]:
     return proposal(
         candidate["source_event_ids"],
@@ -261,6 +297,86 @@ def test_real_candidate_review_completes_and_later_review_corrects_in_place(
     )
     assert len(active) == 1
     assert sum(row.status == MemoryStatus.SUPERSEDED for row in memory.records.values()) >= 1
+
+
+def test_candidate_review_defaults_missing_model_explanation_safely(fixture: Any) -> None:
+    service, graph, _, evidence = fixture
+    household_id = graph.household.canonical_id
+    event_ids = [evidence.add(days) for days in (3.2, 2.2, 1.2)]
+    request_id = uuid4()
+    packet = service.create_review_packet(
+        household_id,
+        request_id,
+        review_kind="DAILY",
+        source_event_id=str(uuid4()),
+    )
+    candidate = packet["candidates"][0]
+    with learning_request_scope(
+        request_id,
+        household_id,
+        event_ids,
+        packet["candidates"],
+    ):
+        result = service.propose(
+            household_id,
+            None,
+            proposal(
+                candidate["source_event_ids"],
+                candidate_id=candidate["candidate_id"],
+            ),
+            request_id,
+        )
+    assert result["suggestion"]["conclusion"] == "INSUFFICIENT_EVIDENCE"
+    assert result["suggestion"]["missing_information"]
+
+
+def test_knowledge_projection_bounds_valid_review_explanations(
+    fixture: Any, tmp_path: Path
+) -> None:
+    service, graph, _, evidence = fixture
+    household_id = graph.household.canonical_id
+    for days in (3.2, 2.2, 1.2, 0.2):
+        evidence.add(days)
+    request_id = uuid4()
+    packet = service.create_review_packet(
+        household_id,
+        request_id,
+        review_kind="INITIAL_CATCH_UP",
+        source_event_id=str(uuid4()),
+    )
+    candidate = packet["candidates"][0]
+    refs = service.evidence(household_id)["items"]
+    knowledge_root = tmp_path / "ANIMA"
+    knowledge_root.mkdir()
+    knowledge_root.chmod(0o700)
+    service.knowledge_plugin = KnowledgeNativePlugin(KnowledgeConfig(knowledge_root))
+    invocation_context = InvocationContext(
+        household_id=household_id,
+        principal_id=None,
+        episode_id=uuid4(),
+        tool_request_id=uuid4(),
+        ordinal=1,
+        system_idempotency_key=str(uuid4()),
+        origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+    )
+
+    result = service._sync_knowledge(
+        household_id,
+        request_id,
+        invocation_context,
+        None,
+        candidate,
+        "TENTATIVE_HYPOTHESIS",
+        "x" * 1000,
+        refs,
+        {
+            "rationale_summary": "r" * 1200,
+            "missing_information": ["m" * 240] * 8,
+        },
+        "a" * 64,
+    )
+
+    assert result is not None and result["note_id"]
 
 
 def test_insufficient_history_completes_without_fabricating_candidate(fixture: Any) -> None:
@@ -1052,6 +1168,12 @@ def test_core_frozen_request_real_opa_proposal_to_real_pg_without_owner_authorit
     # No manually injected learning_request_scope: Core must establish it.
     result = boundary.invoke_tool(request, tool_id, arguments)
     assert result["status"] == "SUCCEEDED", result
+    # Scheduled reviews have no authenticated principal and therefore resolve
+    # to LIMITED. A source-bound learning proposal is still allowed through
+    # the explicit agent-memory/OPA autonomy boundary.
+    boundary.access_level_resolver = lambda _principal_id: "LIMITED"
+    assert boundary.invoke_tool(request, tool_id, arguments, ordinal=2)["status"] == "SUCCEEDED"
+    boundary.access_level_resolver = None
     assert boundary.invoke_tool(request, tool_id, arguments) == result
     suggestion = result["result"]["suggestion"]
     saved = memory.get(UUID(suggestion["suggestion_id"]))

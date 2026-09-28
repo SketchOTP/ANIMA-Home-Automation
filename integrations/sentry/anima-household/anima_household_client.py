@@ -323,6 +323,10 @@ class AnimaHouseholdClient:
     def context(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/context", {"binding": binding})
 
+    def notification(self, request_id: str, binding: str) -> dict[str, Any]:
+        """Fetch only the compact Core-owned event disposition."""
+        return self.call(f"/v1/requests/{request_id}/notification", {"binding": binding})
+
     def tools(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/tools", {"binding": binding})
 

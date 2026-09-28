@@ -123,6 +123,7 @@ def test_run_once_recovers_ready_stack_without_model_or_notification_payload(
         status_path=tmp_path / "readiness.json",
         relay_status_path=relay_status,
         clock=clock,
+        forwarder_checker=lambda: ("CONNECTED", "WAYDROID_BINDER_SERVICE_MANAGER"),
     )
     payload = supervisor.run_once()
     assert payload["state"] == "DEGRADED"

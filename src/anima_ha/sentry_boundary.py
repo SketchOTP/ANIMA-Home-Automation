@@ -156,14 +156,25 @@ class CoreSentryBoundary:
     action_refresher: Callable[[tuple[UUID, ...]], Any] | None = None
     action_verifier: Callable[[Any, InvocationResult, Any], Any] | None = None
     context_loader: Callable[[UUID], dict[str, Any] | None] | None = None
+    notification_context_loader: Callable[[IntelligenceRequest], dict[str, Any]] | None = None
     reasoning_context_loader: Callable[[IntelligenceRequest], dict[str, Any]] | None = None
     policy_role_resolver: Callable[[UUID], str | None] | None = None
     access_level_resolver: Callable[[UUID], str] | None = None
     agent_memory_enabled: bool = False
     learning_service: Any | None = None
+    sensor_status_loader: Callable[[UUID], dict[str, Any]] | None = None
 
     def health(self) -> SentryBoundaryHealth:
         return SentryBoundaryHealth("anima-core", "available")
+
+    def sensor_status(self, household_id: UUID) -> dict[str, Any]:
+        """Return only the bounded live-signal projection for one household."""
+        if self.sensor_status_loader is None:
+            raise SentryBoundaryError("SENSOR_STATUS_UNAVAILABLE")
+        payload = self.sensor_status_loader(household_id)
+        if not isinstance(payload, dict) or str(payload.get("status")) != "CURRENT":
+            raise SentryBoundaryError("SENSOR_STATUS_UNAVAILABLE")
+        return payload
 
     def claim_request(
         self,
@@ -233,11 +244,61 @@ class CoreSentryBoundary:
             support = self.reasoning_context_loader(request)
             # Context enrichment is live, non-authoritative and not written back
             # into the original immutable packet/request or its digest.
-            if len(json.dumps({**packet, "household_context": support}).encode()) <= 60000:
+            enriched = {**packet, "household_context": support}
+            if len(json.dumps(enriched).encode()) <= 60000:
                 packet["household_context"] = support
             else:
-                packet["household_context"] = {"status": "CONTEXT_LIMIT_REQUIRES_SCOPED_READ"}
+                # Initiative is a Core-owned, request-bound authorization and
+                # mandatory-alert decision. It must survive context-size
+                # reduction even when optional household history/preferences
+                # make the full support packet too large. Dropping it here
+                # turns a valid required alert into an indistinguishable
+                # UNAVAILABLE result at the SENTRY boundary.
+                reduced: dict[str, Any] = {"status": "CONTEXT_LIMIT_REQUIRES_SCOPED_READ"}
+                if isinstance(support, dict):
+                    initiative = support.get("initiative")
+                    if isinstance(initiative, dict):
+                        reduced["initiative"] = initiative
+                packet["household_context"] = reduced
         return packet
+
+    def request_notification(self, request: IntelligenceRequest) -> dict[str, Any]:
+        """Return only Core's compact disposition for an autonomous event.
+
+        Mandatory alerts must not depend on the larger household reasoning
+        context. This response exposes no tools, memory, routine history,
+        model prompt, or optional context; it contains only the fresh,
+        request-bound Core decision and canonical announcement.
+        """
+        if request.origin not in {
+            IntelligenceOrigin.AUTONOMOUS_ATTENTION,
+            IntelligenceOrigin.DURABLE_TASK,
+        }:
+            raise SentryBoundaryError("NOTIFICATION_NOT_UNSOLICITED")
+        loader = self.notification_context_loader
+        if loader is not None:
+            initiative = loader(request)
+        elif self.reasoning_context_loader is not None:
+            support = self.reasoning_context_loader(request)
+            initiative = support.get("initiative") if isinstance(support, dict) else None
+        else:
+            raise SentryBoundaryError("NOTIFICATION_CONTEXT_UNAVAILABLE")
+        if not isinstance(initiative, dict):
+            raise SentryBoundaryError("NOTIFICATION_CONTEXT_INVALID")
+        status = initiative.get("status")
+        return {
+            "household_context": {
+                "status": status if isinstance(status, str) else "UNAVAILABLE",
+                "initiative": {
+                    "status": status if isinstance(status, str) else "UNAVAILABLE",
+                    "notification": (
+                        initiative.get("notification")
+                        if isinstance(initiative.get("notification"), dict)
+                        else {}
+                    ),
+                },
+            }
+        }
 
     def _request_context(self, request: IntelligenceRequest) -> dict[str, Any]:
         if self.context_loader is None:
@@ -446,12 +507,17 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("INVALID_TOOL_ORDINAL")
         self._assert_active(request)
         tool = self._request_tool(request, tool_id)
-        agent_memory_tool = tool.tool_id in {
+        knowledge_tool = tool.tool_id in {
             "anima.knowledge.create_note",
             "anima.knowledge.update_note",
             "anima.knowledge.retract_note",
             "anima.knowledge.purge_expired",
         }
+        # Learning proposals are agent-maintained, source-bound memory. They
+        # use the same explicit autonomy gate as knowledge notes, but belong
+        # to the learning plugin and therefore need a separate source check.
+        learning_proposal = tool.tool_id == "anima.household-learning.propose"
+        agent_memory_tool = knowledge_tool or learning_proposal
         limited_allowed = self._limited_tool_allowed(tool, arguments, request.principal_id)
         # Exact agent-maintained knowledge remains non-authoritative even when
         # the speaker is unidentified. It still passes the dedicated deployment
@@ -503,7 +569,7 @@ class CoreSentryBoundary:
             if plugin is None or plugin.manifest.source != "builtin:anima_ha.household_learning":
                 raise SentryBoundaryError("AGENT_LEARNING_SOURCE_INVALID")
             origin = RequestOrigin.AUTONOMOUS_AGENT
-        if agent_memory_tool:
+        if knowledge_tool:
             if not self.agent_memory_enabled:
                 return {
                     "status": "DENIED",

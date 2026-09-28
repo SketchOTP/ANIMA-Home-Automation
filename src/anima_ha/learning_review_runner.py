@@ -35,6 +35,19 @@ class LearningReviewError(ValueError):
 
 class LearningReviewRunner:
     CATCH_UP_NAMESPACE = UUID("4f4ce26e-4cb7-42ba-b049-a4248c3c5fb5")
+    # A scheduled learning review already carries its source-linked candidate
+    # packet in the bounded household context. Sending the complete household
+    # catalogue here adds latency and token cost without giving the reviewer a
+    # useful operation. Keep the request catalogue frozen, but scoped to the
+    # review writer. The proposal tool is the sole learning mutation boundary;
+    # it performs the source-linked Memory/Obsidian synchronization itself.
+    # The knowledge plugin is an optional persisted component and must not make
+    # automatic review depend on an owner-facing plugin enablement choice.
+    REVIEW_TOOL_IDS = frozenset(
+        {
+            "anima.household-learning.propose",
+        }
+    )
 
     def __init__(
         self,
@@ -174,6 +187,13 @@ class LearningReviewRunner:
         )
         consumer = f"learning-review:{self.household_id}:{event.event_id}"
         self.core.attention.prime_consumer_before(profile, consumer, appended.journal_position - 1)
+        review_tools = [
+            tool
+            for tool in self.core.plugins.list_tools()
+            if tool.tool_id in self.REVIEW_TOOL_IDS
+        ]
+        if {tool.tool_id for tool in review_tools} != self.REVIEW_TOOL_IDS:
+            raise LearningReviewError("REVIEW_TOOL_CATALOGUE_INCOMPLETE")
         requests = SentryAttentionBridge(
             attention=self.core.attention,
             context=self.core.context,
@@ -184,7 +204,7 @@ class LearningReviewRunner:
             origin=IntelligenceOrigin.DURABLE_TASK,
         ).run_once(
             household_id=self.household_id,
-            tools=self.core.plugins.list_tools(),
+            tools=review_tools,
             principal_id=None,
             consumer_name=consumer,
             limit=1,
@@ -253,6 +273,13 @@ class LearningReviewRunner:
         )
         consumer = f"learning-catch-up-v2:{self.household_id}:{event_id}"
         self.core.attention.prime_consumer_before(profile, consumer, appended.journal_position - 1)
+        review_tools = [
+            tool
+            for tool in self.core.plugins.list_tools()
+            if tool.tool_id in self.REVIEW_TOOL_IDS
+        ]
+        if {tool.tool_id for tool in review_tools} != self.REVIEW_TOOL_IDS:
+            raise LearningReviewError("REVIEW_TOOL_CATALOGUE_INCOMPLETE")
         requests = SentryAttentionBridge(
             attention=self.core.attention,
             context=self.core.context,
@@ -261,7 +288,7 @@ class LearningReviewRunner:
             origin=IntelligenceOrigin.DURABLE_TASK,
         ).run_once(
             household_id=self.household_id,
-            tools=self.core.plugins.list_tools(),
+            tools=review_tools,
             principal_id=principal_id,
             consumer_name=consumer,
             limit=1,

@@ -158,7 +158,8 @@ class PostgresAutoWakeClaims:
         if type(limit) is not int or not 1 <= limit <= 10:
             raise ValueError("limit must be an integer from 1 to 10")
         rows = connection.execute(
-            "SELECT r.request_id,r.household_id,r.provider_id,r.origin,r.created_at "
+            "SELECT r.request_id,r.household_id,r.provider_id,r.origin,r.created_at,"
+            "r.request_metadata->>'sentry_event_path' AS sentry_event_path "
             "FROM anima_intelligence_requests r WHERE "
             + _ELIGIBLE
             + " ORDER BY CASE WHEN (r.request_metadata->>'priority') ~ '^-?[0-9]+$' "

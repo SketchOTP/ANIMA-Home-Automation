@@ -2594,7 +2594,9 @@ class UIService:
             raise UIAuthError("HOUSEHOLD_DATABASE_UNAVAILABLE")
         if getattr(self.core_runtime, "home_assistant_adapter", None) is not None:
             return
-        core = build_postgres_core(database_url, opa_url=self.config.opa_url)
+        core = build_postgres_core(
+            database_url, opa_url=self.config.opa_url, watch_journal_events=True
+        )
         self.core_runtime = core
         self.identity_resolver = core.identity_resolver
         self.commands = core.commands(self.events)
@@ -2839,6 +2841,7 @@ def create_app(
                 opa_url=config.opa_url,
                 codex=codex,
                 external_transport=external_transport,
+                watch_journal_events=True,
             )
             read_model = PostgresHouseholdReadModel(
                 database_url,

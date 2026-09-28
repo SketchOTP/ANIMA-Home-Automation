@@ -1313,13 +1313,14 @@ class PluginManager:
                 dispatch_state=DispatchState.BEFORE_DISPATCH,
             )
         except Exception as exc:
+            safe_code = getattr(exc, "safe_code", None)
             return InvocationResult(
                 InvocationOutcome.PLUGIN_ERROR,
                 tool_id,
                 tool.plugin_id,
                 tool.version,
                 (time.monotonic() - started) * 1000,
-                error_class=type(exc).__name__,
+                error_class=(safe_code() if callable(safe_code) else type(exc).__name__),
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,

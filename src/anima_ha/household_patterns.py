@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 PATTERN_NAMESPACE = UUID("bc23b402-7872-4cc7-ae67-d35f6f3cd568")
 MAX_CANDIDATES = 6
 MAX_SOURCE_REFS = 12
+ROUTINE_EVIDENCE_THRESHOLD = 0.65
 
 
 def _stamp(value: str) -> datetime:
@@ -46,6 +47,7 @@ class PatternCandidate:
     missing_information: tuple[str, ...]
     source_trust: str
     maturity: str
+    evidence_score: float
     canonical_ids: tuple[str, ...]
 
     def to_payload(self) -> dict[str, Any]:
@@ -67,6 +69,18 @@ def _event_qualifier(item: dict[str, Any]) -> str:
         if isinstance(value, str) and value:
             return value.upper()
     return str(item["event_type"]).rsplit(".", 1)[-1].upper()
+
+
+def evidence_score(count: int, days: int, elapsed_hours: float, consistency: float) -> float:
+    """Calculate deterministic evidence strength, not probability or authority."""
+    bounded_consistency = max(0.0, min(1.0, consistency))
+    score = (
+        0.30 * min(count / 10.0, 1.0)
+        + 0.30 * min(days / 7.0, 1.0)
+        + 0.20 * min(elapsed_hours / (7.0 * 24.0), 1.0)
+        + 0.20 * bounded_consistency
+    )
+    return round(score, 3)
 
 
 def _maturity(count: int, days: int, elapsed_hours: float, consistency: float) -> str:
@@ -125,6 +139,7 @@ def extract_pattern_candidates(
             else []
         )
         maturity = _maturity(len(rows), len(days), elapsed, consistency)
+        score = evidence_score(len(rows), len(days), elapsed, consistency)
         conflicting_slots = sum(
             1
             for row in rows
@@ -170,6 +185,7 @@ def extract_pattern_candidates(
                 missing_information=tuple(missing + ["The observations do not identify an actor."]),
                 source_trust="CORE_QUALIFIED_JOURNAL_PROJECTION",
                 maturity=maturity,
+                evidence_score=score,
                 canonical_ids=(canonical_id,),
             )
         )
@@ -229,6 +245,7 @@ def extract_pattern_candidates(
                 ),
                 source_trust="CORE_QUALIFIED_JOURNAL_PROJECTION",
                 maturity=_maturity(len(pairs), len(days), elapsed, 1.0),
+                evidence_score=evidence_score(len(pairs), len(days), elapsed, 1.0),
                 canonical_ids=tuple(
                     sorted({event["canonical_id"] for pair in pairs for event in pair})
                 ),

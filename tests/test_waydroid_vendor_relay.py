@@ -118,6 +118,19 @@ def test_tapo_unlock_preserves_only_bounded_reported_profile() -> None:
     assert "Front Door" not in repr(report)
 
 
+def test_tapo_unlock_accepts_vendor_wording_without_was() -> None:
+    module = relay_module()
+    report = module.match_report(
+        module.TAPO_PACKAGE,
+        "Front Door Lock",
+        "Unlocked",
+        rules(module),
+        received_at=datetime(2026, 9, 7, tzinfo=UTC),
+    )
+    assert report is not None
+    assert report["fields"]["kind"] == "unlocked"
+
+
 def test_unknown_same_app_notice_is_not_forwarded() -> None:
     module = relay_module()
     assert (

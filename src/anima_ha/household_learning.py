@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
@@ -24,7 +25,13 @@ from zoneinfo import ZoneInfo
 from psycopg.errors import UniqueViolation
 
 from anima_ha.attention import SentryEventPath, compatible_sentry_path
-from anima_ha.household_patterns import candidate_digest, extract_pattern_candidates
+from anima_ha.household_patterns import (
+    ROUTINE_EVIDENCE_THRESHOLD,
+    candidate_digest,
+    evidence_score,
+    extract_pattern_candidates,
+)
+from anima_ha.knowledge import KnowledgeValidationError
 from anima_ha.memory import (
     MemoryProvenance,
     MemoryRecord,
@@ -55,6 +62,12 @@ REVIEW_PACKET_KIND = "household_learning_review_packet"
 REVIEW_COMPLETION_KIND = "household_learning_review_completion"
 MAX_EVIDENCE = 2000
 EVIDENCE_WINDOW_DAYS = 28
+# Knowledge notes have a deliberately small filesystem/API body limit. Keep
+# the durable Memory record lossless within its existing proposal bounds, but
+# make the Obsidian projection deterministic and bounded for every valid
+# review explanation.
+KNOWLEDGE_NOTE_RATIONALE_CHARS = 800
+KNOWLEDGE_NOTE_MISSING_ITEM_CHARS = 120
 EVENT_TYPES = (
     "senseguard.opened",
     "senseguard.event",
@@ -76,6 +89,15 @@ _REQUEST_SCOPE: ContextVar[tuple[UUID, UUID, frozenset[str], dict[str, dict[str,
 
 class HouseholdLearningError(ValueError):
     """Invalid scope, version, evidence or initiative input."""
+
+    def safe_code(self) -> str:
+        """Return only a fixed diagnostic category for provider evidence."""
+        value = self.args[0] if self.args else None
+        if isinstance(value, str) and re.fullmatch(r"KNOWLEDGE_SYNC_KNOWLEDGE_[A-Z0-9_]+", value):
+            return value
+        if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 ._-]{1,95}", value):
+            return "HOUSEHOLD_LEARNING_" + re.sub(r"[^A-Za-z0-9]+", "_", value).upper().strip("_")
+        return "HOUSEHOLD_LEARNING_ERROR"
 
 
 def _uuid(value: Any) -> UUID:
@@ -104,6 +126,29 @@ def _text(value: Any, maximum: int) -> str:
     if any(ord(char) < 32 and char not in "\n\t" for char in value):
         raise HouseholdLearningError("control characters forbidden")
     return value.strip()
+
+
+def _bounded_note_text(value: str, maximum: int, byte_limit: int) -> str:
+    """Fit a non-empty review field into the human-readable note projection."""
+    marker = "\n[bounded for Obsidian projection]"
+    truncated = len(value) > maximum
+    value = value[:maximum]
+    if len(value.encode("utf-8")) > byte_limit:
+        truncated = True
+        remaining = byte_limit - len(marker.encode("utf-8"))
+        while len(value.encode("utf-8")) > remaining:
+            value = value[:-1]
+    return value + marker if truncated else value
+
+
+def _bounded_note_missing(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [
+        _bounded_note_text(item, KNOWLEDGE_NOTE_MISSING_ITEM_CHARS, 120)
+        for item in value[:8]
+        if isinstance(item, str) and item.strip()
+    ]
 
 
 @contextmanager
@@ -550,6 +595,11 @@ class HouseholdLearningService:
         )
         completions = self._records(household_id, REVIEW_COMPLETION_KIND, limit=50)
         packets = self._records(household_id, REVIEW_PACKET_KIND, limit=50)
+        learned_routines = [
+            routine
+            for row in self._records(household_id, SUGGESTION_KIND, limit=MAX_EVIDENCE)
+            if (routine := self._learned_routine(row)) is not None
+        ]
         return {
             "status": "SUCCEEDED",
             "config": config.to_payload(),
@@ -568,6 +618,7 @@ class HouseholdLearningService:
                 "review_count": len(completions),
                 "pending_review_count": max(0, len(packets) - len(completions)),
                 "gaps": self._learning_gaps(evidence, candidates),
+                "learned_routines": learned_routines,
             },
             "authority": "NONE",
         }
@@ -768,12 +819,78 @@ class HouseholdLearningService:
         }
 
     @staticmethod
-    def _suggestion(row: MemoryRecord) -> dict[str, Any]:
+    def _evidence_score_from_metadata(metadata: dict[str, Any]) -> float | None:
+        value = metadata.get("evidence_score")
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+            return round(max(0.0, min(1.0, float(value))), 3)
+        evidence = metadata.get("maturity_evidence")
+        if not isinstance(evidence, dict):
+            return None
+        count, days, elapsed = (
+            evidence.get("observation_count"),
+            evidence.get("distinct_day_count"),
+            evidence.get("elapsed_hours"),
+        )
+        if not (
+            isinstance(count, (int, float))
+            and not isinstance(count, bool)
+            and math.isfinite(count)
+            and isinstance(days, (int, float))
+            and not isinstance(days, bool)
+            and math.isfinite(days)
+            and isinstance(elapsed, (int, float))
+            and not isinstance(elapsed, bool)
+            and math.isfinite(elapsed)
+        ):
+            return None
+        consistency = 1.0 if metadata.get("candidate_class") == "EVENT_SEQUENCE" else 0.0
+        temporal = evidence.get("temporal_consistency")
+        if isinstance(temporal, dict) and isinstance(temporal.get("ratio"), (int, float)):
+            consistency = float(temporal["ratio"])
+        return evidence_score(int(count), int(days), float(elapsed), consistency)
+
+    @classmethod
+    def _learned_routine(cls, row: MemoryRecord) -> dict[str, Any] | None:
+        metadata = row.metadata
+        if (
+            metadata.get("review_status") == "DISMISSED"
+            or metadata.get("conclusion") != "LEARNED_ROUTINE_SUGGESTION"
+        ):
+            return None
+        score = cls._evidence_score_from_metadata(metadata)
+        if score is None or score < ROUTINE_EVIDENCE_THRESHOLD:
+            return None
+        candidate_key = metadata.get("candidate_key")
+        if not isinstance(candidate_key, str) or not candidate_key:
+            return None
+        return {
+            "routine_id": str(
+                uuid5(NAMESPACE, f"learned-routine:{row.household_id}:{candidate_key}")
+            ),
+            "title": metadata.get("candidate_title", "Learned household pattern"),
+            "summary": metadata.get("candidate_factual_summary", row.content),
+            "candidate_class": metadata.get("candidate_class"),
+            "maturity": metadata.get("maturity", "LEARNED_ROUTINE_ELIGIBLE"),
+            "evidence_score": score,
+            "evidence_threshold": ROUTINE_EVIDENCE_THRESHOLD,
+            "source_suggestion_id": str(row.memory_id),
+            "source_refs": metadata.get("source_refs", []),
+            "created_at": row.created_at.isoformat(),
+            "status": "ACTIVE",
+            "classification": "INFERRED_LEARNED_ROUTINE",
+            "executable": False,
+            "authority": "NONE",
+        }
+
+    @classmethod
+    def _suggestion(cls, row: MemoryRecord) -> dict[str, Any]:
+        learned_routine = cls._learned_routine(row)
         return {
             "suggestion_id": str(row.memory_id),
             "kind": row.metadata["kind"],
             "content": row.content,
             "confidence": row.confidence,
+            "evidence_score": cls._evidence_score_from_metadata(row.metadata),
             "classification": "INFERRED",
             "review_status": row.metadata["review_status"],
             "source_refs": row.metadata["source_refs"],
@@ -789,6 +906,7 @@ class HouseholdLearningService:
             "missing_information": row.metadata.get("missing_information", []),
             "rejected_alternatives": row.metadata.get("rejected_alternatives", []),
             "knowledge_note": row.metadata.get("knowledge_note"),
+            "learned_routine": learned_routine,
         }
 
     def suggestions(
@@ -831,8 +949,6 @@ class HouseholdLearningService:
         if set(payload) - legacy_fields - review_fields or not legacy_fields <= set(payload):
             raise HouseholdLearningError("exact suggestion fields required")
         structured = "candidate_id" in payload
-        if structured and not review_fields <= set(payload):
-            raise HouseholdLearningError("complete candidate review fields required")
         if not structured and set(payload) != legacy_fields:
             raise HouseholdLearningError("candidate review fields must be complete")
         kind, confidence = payload["kind"], payload["confidence"]
@@ -872,6 +988,37 @@ class HouseholdLearningService:
                 raise HouseholdLearningError("candidate not bound to request")
             if set(ids) != set(candidate["source_event_ids"]):
                 raise HouseholdLearningError("candidate source references changed")
+            # The model may omit explanatory fields from a valid typed
+            # proposal. Fill only from the deterministic candidate packet,
+            # and use an explicitly conservative conclusion when the model
+            # did not provide one. Missing model output must never become a
+            # learned routine, identity, authority, or policy decision.
+            candidate_supporting = candidate.get("supporting_evidence")
+            candidate_missing = candidate.get("missing_information")
+            candidate_contradictory = candidate.get("contradictory_evidence")
+            defaults = {
+                "conclusion": "INSUFFICIENT_EVIDENCE",
+                "rationale_summary": (
+                    "The provider supplied no separate rationale; ANIMA retained the bounded "
+                    "candidate as unconfirmed."
+                ),
+                "evidence_categories": (
+                    [value for value in candidate_supporting if isinstance(value, str)][:8]
+                    if isinstance(candidate_supporting, list)
+                    else ["qualified_journal_evidence"]
+                ),
+                "missing_information": (
+                    [value for value in candidate_missing if isinstance(value, str)][:8]
+                    if isinstance(candidate_missing, list)
+                    else ["The provider supplied no additional missing-information summary."]
+                ),
+                "rejected_alternatives": (
+                    [value for value in candidate_contradictory if isinstance(value, str)][:6]
+                    if isinstance(candidate_contradictory, list)
+                    else []
+                ),
+            }
+            payload = {**defaults, **payload}
             conclusion = payload["conclusion"]
             if conclusion not in {
                 "SUPPORTED_OBSERVATION",
@@ -946,7 +1093,10 @@ class HouseholdLearningService:
                 candidate_id=candidate_id,
                 candidate_key=candidate["candidate_key"],
                 candidate_class=candidate["candidate_class"],
+                candidate_title=candidate["title"],
+                candidate_factual_summary=candidate["factual_summary"],
                 maturity=candidate["maturity"],
+                evidence_score=candidate["evidence_score"],
                 maturity_evidence={
                     key: candidate[key]
                     for key in (
@@ -955,6 +1105,7 @@ class HouseholdLearningService:
                         "elapsed_hours",
                         "temporal_consistency",
                         "contradictory_evidence",
+                        "evidence_score",
                     )
                 },
                 rationale_summary=payload["rationale_summary"],
@@ -1059,12 +1210,23 @@ class HouseholdLearningService:
                 )
             }
         )
+        rationale = metadata.get("rationale_summary", "Not separately supplied.")
+        if not isinstance(rationale, str) or not rationale.strip():
+            rationale = "Not separately supplied."
+        maturity_text = _bounded_note_text(json.dumps(maturity, sort_keys=True), 1200, 600)
+        missing_text = _bounded_note_text(
+            json.dumps(
+                _bounded_note_missing(metadata.get("missing_information", [])), sort_keys=True
+            ),
+            2048,
+            1000,
+        )
         body = (
-            f"Conclusion: {conclusion}\n\n{content}\n\n"
-            f"Review rationale: {metadata.get('rationale_summary', 'Not separately supplied.')}\n\n"
-            f"Observable maturity inputs: {json.dumps(maturity, sort_keys=True)}\n\n"
-            "Missing information: "
-            f"{json.dumps(metadata.get('missing_information', []), sort_keys=True)}\n\n"
+            f"Conclusion: {conclusion}\n\n{_bounded_note_text(content, 1000, 1000)}\n\n"
+            "Review rationale: "
+            f"{_bounded_note_text(rationale, 1200, KNOWLEDGE_NOTE_RATIONALE_CHARS)}\n\n"
+            f"Observable maturity inputs: {maturity_text}\n\n"
+            f"Missing information: {missing_text}\n\n"
             "This is inferred context, not Truth, identity, policy, authentication, "
             "or an executable routine."
         )
@@ -1097,9 +1259,20 @@ class HouseholdLearningService:
             system_idempotency_key=f"{invocation_context.system_idempotency_key}:knowledge",
             origin=invocation_context.origin,
         )
-        result = self.knowledge_plugin.invoke_with_invocation_context(
-            operation, arguments, 10, context
-        )
+        try:
+            result = self.knowledge_plugin.invoke_with_invocation_context(
+                operation, arguments, 10, context
+            )
+        except KnowledgeValidationError as exc:
+            # Keep the provider boundary content-free while retaining the
+            # exact fixed validation category needed to repair automation.
+            code = exc.args[0] if exc.args else None
+            safe_code = (
+                code
+                if isinstance(code, str) and re.fullmatch(r"KNOWLEDGE_[A-Z0-9_]+", code)
+                else "KNOWLEDGE_VALIDATION_ERROR"
+            )
+            raise HouseholdLearningError(f"KNOWLEDGE_SYNC_{safe_code}") from None
         note = result.get("note") if isinstance(result, dict) else None
         if not isinstance(note, dict) or not note.get("note_id") or not note.get("digest"):
             raise HouseholdLearningError("knowledge synchronization failed")

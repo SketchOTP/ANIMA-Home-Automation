@@ -1,7 +1,7 @@
 [Unit]
 Description=ANIMA bounded Codex household helper
-Requires=anima-pc.service
-After=anima-pc.service
+Requires=anima-pc.service anima-core.service
+After=anima-pc.service anima-core.service
 
 [Service]
 Type=simple

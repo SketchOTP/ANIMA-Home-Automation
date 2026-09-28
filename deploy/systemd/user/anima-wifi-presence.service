@@ -1,0 +1,19 @@
+[Unit]
+Description=ANIMA local-router Wi-Fi presence observer
+Requires=anima-pc.service
+After=anima-pc.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/sketch/Projects/ANIMA Home Automation
+EnvironmentFile=-/home/sketch/.config/anima/anima-project.env
+Environment=ANIMA_WIFI_PRESENCE_STATUS_PATH=/home/sketch/.local/share/anima-owner-boundary/wifi-presence-status.json
+Environment=ANIMA_WIFI_PRESENCE_INTERVAL=30
+ExecStart="/home/sketch/Projects/ANIMA Home Automation/.venv/bin/python" "/home/sketch/Projects/ANIMA Home Automation/scripts/anima_wifi_presence.py"
+Restart=on-failure
+RestartSec=10
+UMask=0027
+
+[Install]
+WantedBy=default.target

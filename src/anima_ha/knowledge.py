@@ -32,6 +32,7 @@ from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from errno import EACCES, EEXIST, EIO, ENOENT, ENOSPC, EPERM
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4, uuid5
@@ -383,9 +384,15 @@ def _write(fd: int, name: str, note: dict[str, Any], config: KnowledgeConfig) ->
     if len(encoded) > MAX_FILE_BYTES:
         raise KnowledgeValidationError("KNOWLEDGE_FILE_TOO_LARGE")
     temporary = f".pending-{uuid4()}"
-    opened = os.open(
-        temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, config.file_mode, dir_fd=fd
-    )
+    try:
+        opened = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            config.file_mode,
+            dir_fd=fd,
+        )
+    except PermissionError:
+        raise KnowledgeValidationError("KNOWLEDGE_FILESYSTEM_WRITE_PERMISSION") from None
     try:
         with os.fdopen(opened, "wb") as stream:
             os.fchmod(stream.fileno(), config.file_mode)
@@ -393,8 +400,11 @@ def _write(fd: int, name: str, note: dict[str, Any], config: KnowledgeConfig) ->
             stream.write(encoded)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, name, src_dir_fd=fd, dst_dir_fd=fd)
-        os.fsync(fd)
+        try:
+            os.replace(temporary, name, src_dir_fd=fd, dst_dir_fd=fd)
+            os.fsync(fd)
+        except PermissionError:
+            raise KnowledgeValidationError("KNOWLEDGE_FILESYSTEM_REPLACE_PERMISSION") from None
     finally:
         try:
             os.unlink(temporary, dir_fd=fd)
@@ -584,8 +594,18 @@ class KnowledgeNativePlugin:
             return self._invoke(name, arguments, context)
         except FileNotFoundError:
             raise KnowledgeValidationError("KNOWLEDGE_NOT_FOUND_OR_VAULT_UNAVAILABLE") from None
-        except OSError:
-            raise KnowledgeValidationError("KNOWLEDGE_FILESYSTEM_UNAVAILABLE") from None
+        except OSError as exc:
+            errno_code = {
+                EACCES: "PERMISSION",
+                EEXIST: "CONFLICT",
+                EIO: "IO",
+                ENOENT: "MISSING",
+                ENOSPC: "FULL",
+                EPERM: "PERMISSION",
+            }.get(exc.errno)
+            if errno_code is None:
+                raise KnowledgeValidationError("KNOWLEDGE_FILESYSTEM_UNAVAILABLE") from None
+            raise KnowledgeValidationError(f"KNOWLEDGE_FILESYSTEM_{errno_code}") from None
 
     def _validate_people(self, household: UUID, people: list[str]) -> None:
         for person in people:

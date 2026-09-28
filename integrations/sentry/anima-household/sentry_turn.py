@@ -146,6 +146,192 @@ class SentryHouseholdTurn:
         return f"allowed={allowed}; required={required}; reason={reason}"
 
     @staticmethod
+    def _safe_learning_arguments(candidate: dict[str, Any], reason: str) -> dict[str, Any]:
+        def bounded_strings(value: Any, maximum: int) -> list[str]:
+            if not isinstance(value, list):
+                return []
+            return [item for item in value if isinstance(item, str) and item.strip()][:maximum]
+
+        supporting = bounded_strings(candidate.get("supporting_evidence"), 8)
+        missing = bounded_strings(candidate.get("missing_information"), 8)
+        contradictory = bounded_strings(candidate.get("contradictory_evidence"), 6)
+        summary = candidate.get("factual_summary")
+        content = (
+            summary.strip()
+            if isinstance(summary, str) and summary.strip()
+            else "No provider interpretation was retained for this candidate."
+        )
+        return {
+            "candidate_id": str(candidate["candidate_id"]),
+            "kind": "PATTERN",
+            "content": content,
+            "confidence": 0.0,
+            "event_ids": list(candidate["source_event_ids"]),
+            "conclusion": "INSUFFICIENT_EVIDENCE",
+            "rationale_summary": reason,
+            "evidence_categories": supporting or ["qualified_journal_evidence"],
+            "missing_information": missing or ["No provider review explanation was supplied."],
+            "rejected_alternatives": contradictory,
+        }
+
+    @staticmethod
+    def _learning_review_candidates(context: dict[str, Any]) -> list[Any] | None:
+        """Return the deterministic review packet when this is a learning turn."""
+        household = context.get("household_context")
+        initiative = household.get("initiative") if isinstance(household, dict) else None
+        learning = initiative.get("learning_review") if isinstance(initiative, dict) else None
+        if not isinstance(learning, dict) or not isinstance(learning.get("candidates"), list):
+            return None
+        return learning["candidates"]
+
+    @staticmethod
+    def _normalize_learning_calls(
+        calls: list[dict[str, Any]],
+        context: dict[str, Any],
+        completed_calls: list[dict[str, Any]] | None = None,
+        max_fallback_calls: int = 3,
+    ) -> list[dict[str, Any]]:
+        """Bind learning proposals to ANIMA's deterministic candidate packet.
+
+        The model may select which candidate to review and write the bounded
+        explanation, but it must not be the source of truth for the candidate's
+        event references.  The packet supplied by ANIMA already contains the
+        exact source IDs.  Reprojecting that one field prevents a valid review
+        from failing because the model reordered, omitted, or otherwise
+        reformatted the same source list; Core still validates the candidate ID
+        and all other proposal fields.
+        """
+        household = context.get("household_context")
+        initiative = household.get("initiative") if isinstance(household, dict) else None
+        learning = initiative.get("learning_review") if isinstance(initiative, dict) else None
+        candidates = learning.get("candidates") if isinstance(learning, dict) else None
+        if not isinstance(candidates, list):
+            return calls
+        by_id = {
+            str(candidate.get("candidate_id")): candidate
+            for candidate in candidates
+            if isinstance(candidate, dict) and candidate.get("candidate_id")
+        }
+        normalized: list[dict[str, Any]] = []
+        seen_learning_candidates: set[str] = set()
+        for item in completed_calls or []:
+            host_call = item.get("host_call")
+            arguments = host_call.get("arguments") if isinstance(host_call, dict) else None
+            if (
+                item.get("status") == "SUCCEEDED"
+                and isinstance(host_call, dict)
+                and host_call.get("tool_id") == "anima.household-learning.propose"
+                and isinstance(arguments, dict)
+                and arguments.get("candidate_id") is not None
+            ):
+                seen_learning_candidates.add(str(arguments["candidate_id"]))
+        for call in calls:
+            if call.get("tool_id") != "anima.household-learning.propose":
+                normalized.append(call)
+                continue
+            arguments = call.get("arguments")
+            candidate_id = arguments.get("candidate_id") if isinstance(arguments, dict) else None
+            candidate = by_id.get(str(candidate_id))
+            if candidate is None:
+                candidate = next(
+                    (
+                        item
+                        for item in candidates
+                        if isinstance(item, dict)
+                        and str(item.get("candidate_id")) not in seen_learning_candidates
+                    ),
+                    None,
+                )
+                if candidate is None:
+                    continue
+                candidate_id = candidate.get("candidate_id")
+                arguments = SentryHouseholdTurn._safe_learning_arguments(
+                    candidate,
+                    "The provider candidate reference did not bind to this request; ANIMA "
+                    "recorded no interpretation for this candidate.",
+                )
+            if not isinstance(arguments, dict):
+                normalized.append(call)
+                continue
+            candidate_key = str(candidate_id)
+            if candidate_key in seen_learning_candidates:
+                continue
+            seen_learning_candidates.add(candidate_key)
+            source_ids = candidate.get("source_event_ids")
+            if not isinstance(source_ids, list) or not all(
+                isinstance(value, str) and value for value in source_ids
+            ):
+                normalized.append(call)
+                continue
+            candidate_evidence = candidate.get("supporting_evidence")
+            evidence_categories = (
+                [value for value in candidate_evidence if isinstance(value, str)][:8]
+                if isinstance(candidate_evidence, list)
+                else []
+            )
+            candidate_missing = candidate.get("missing_information")
+            missing_information = (
+                [value for value in candidate_missing if isinstance(value, str)][:8]
+                if isinstance(candidate_missing, list)
+                else []
+            )
+            candidate_contradictions = candidate.get("contradictory_evidence")
+            rejected_alternatives = (
+                [value for value in candidate_contradictions if isinstance(value, str)][:6]
+                if isinstance(candidate_contradictions, list)
+                else []
+            )
+            review_arguments = {
+                "conclusion": "INSUFFICIENT_EVIDENCE",
+                "rationale_summary": (
+                    "The provider supplied no separate rationale; ANIMA retained the bounded "
+                    "candidate as unconfirmed."
+                ),
+                "evidence_categories": evidence_categories or ["qualified_journal_evidence"],
+                "missing_information": missing_information
+                or ["The provider supplied no additional missing-information summary."],
+                "rejected_alternatives": rejected_alternatives,
+            }
+            review_arguments.update(
+                {
+                    key: arguments[key]
+                    for key in review_arguments
+                    if key in arguments
+                }
+            )
+            normalized.append(
+                {
+                    **call,
+                    "arguments": {
+                        **arguments,
+                        **review_arguments,
+                        "event_ids": list(source_ids),
+                    },
+                }
+            )
+        if not normalized and max_fallback_calls > 0:
+            for candidate in candidates:
+                if not isinstance(candidate, dict):
+                    continue
+                candidate_key = str(candidate.get("candidate_id"))
+                if candidate_key in seen_learning_candidates:
+                    continue
+                normalized.append(
+                    {
+                        "tool_id": "anima.household-learning.propose",
+                        "arguments": SentryHouseholdTurn._safe_learning_arguments(
+                            candidate,
+                            "The provider returned no candidate review call; ANIMA retained "
+                            "this candidate as insufficient evidence.",
+                        ),
+                    }
+                )
+                seen_learning_candidates.add(candidate_key)
+                if len(normalized) >= max_fallback_calls:
+                    break
+        return normalized
+
+    @staticmethod
     def _source_id(value: Any, fallback: str) -> str:
         candidate = str(value or "")
         return candidate if _SAFE_TOKEN.fullmatch(candidate) else fallback
@@ -497,6 +683,39 @@ class SentryHouseholdTurn:
             str(opened.get("origin") or context.get("origin") or "UNKNOWN"),
             str(opened["trigger_id"]) if opened.get("trigger_id") else None,
         )
+        learning_candidates = self._learning_review_candidates(context)
+        if learning_candidates == []:
+            # An incremental review with no new qualified candidates is a
+            # deterministic no-op.  It still records the already-fenced
+            # provider result, but must not spend a Luna plan/final turn.
+            self._decision_override = {
+                "summary": (
+                    "No new qualified household evidence was available; the incremental "
+                    "learning review completed without a model turn."
+                ),
+                "confidence": "HIGH",
+                "information_gaps": [
+                    "No new qualified journal evidence was available for this review."
+                ],
+            }
+            decision_record = self._complete_decision_journal("NO_ACTION")
+            self.result_submission_started = True
+            self.diagnostic_stage = "RESULT_SUBMIT"
+            submitted = self.client.submit_result(
+                request_id,
+                binding,
+                status="NO_ACTION",
+                response=None,
+                metadata={"decision_record": decision_record},
+                provider_ambiguous=False,
+            )
+            return {
+                "status": submitted.get("status", "UNKNOWN_RESULT"),
+                "request_id": request_id,
+                "sentry_request_id": self.sentry_request_id,
+                "tool_results": [],
+                "response": None,
+            }
         iterative = getattr(self.model, "plan_round", None)
         round_limit = MAX_ROUNDS if callable(iterative) else 1
         stop_reason = "PLAN_COMPLETE"
@@ -534,6 +753,7 @@ class SentryHouseholdTurn:
             # a later invalid call must not allow earlier side effects.
             self.diagnostic_stage = "PLAN_VALIDATE"
             calls = validate_calls(plan, catalogue, max_calls=min(3, remaining))
+            calls = self._normalize_learning_calls(calls, context, tool_results)
             if not calls:
                 break
             for call in calls:

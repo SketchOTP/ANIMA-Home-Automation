@@ -1,0 +1,38 @@
+[Unit]
+Description=ANIMA household Core service for local SENTRY
+Requires=anima-pc.service
+After=anima-pc.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/sketch/Projects/ANIMA Home Automation
+EnvironmentFile=/home/sketch/.config/anima/anima-project.env
+Environment=ANIMA_SENTRY_SOCKET=%h/.local/share/anima-owner-boundary/core.sock
+Environment=ANIMA_SENTRY_SERVICE_TOKEN_FILE=%h/.local/share/anima-household-client/client.token
+Environment=ANIMA_SENTRY_CLIENT_ID=owner-household-7c809eb2-0492-5e03-8c94-a4f178d87a20
+Environment=ANIMA_SENTRY_HOUSEHOLD_ID=7c809eb2-0492-5e03-8c94-a4f178d87a20
+Environment=ANIMA_SENTRY_CREDENTIAL_GENERATION=1
+Environment=ANIMA_OPA_URL=http://127.0.0.1:18181
+Environment=ANIMA_INTELLIGENCE_PROVIDER=sentry
+Environment=ANIMA_HOUSEHOLD_TIMEZONE=America/New_York
+Environment=ANIMA_HA_BASE_URL=http://127.0.0.1:8123
+Environment=ANIMA_HA_WEBSOCKET_URL=ws://127.0.0.1:8123/api/websocket
+Environment=ANIMA_HA_EXPECTED_VERSION=2026.9.0
+Environment=ANIMA_OWNER_BOUNDARY_DIR=%h/.local/share/anima-owner-boundary
+Environment=ANIMA_OWNER_BOUNDARY_GROUP=1000
+Environment=ANIMA_KNOWLEDGE_ROOT=%h/Documents/MEMORY/ANIMA
+Environment=ANIMA_SENTRY_AGENT_MEMORY=true
+Environment=ANIMA_KNOWLEDGE_OWNER_UID=10001
+Environment=ANIMA_KNOWLEDGE_GROUP_ID=1000
+ExecStart=/bin/sh -c 'ANIMA_DATABASE_URL="postgresql://${ANIMA_DB_USER}:${ANIMA_DB_PASSWORD}@127.0.0.1:55434/${ANIMA_DB_NAME}"; export ANIMA_DATABASE_URL; unset ANIMA_DB_PASSWORD; exec "/home/sketch/Projects/ANIMA Home Automation/.venv/bin/anima-core-service"'
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=20
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=false
+
+[Install]
+WantedBy=default.target

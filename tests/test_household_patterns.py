@@ -4,7 +4,12 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from anima_ha.household_patterns import candidate_digest, extract_pattern_candidates
+from anima_ha.household_patterns import (
+    ROUTINE_EVIDENCE_THRESHOLD,
+    candidate_digest,
+    evidence_score,
+    extract_pattern_candidates,
+)
 
 
 def event(at: datetime, *, event_type: str, resource: str, qualifier: str) -> dict[str, str]:
@@ -16,6 +21,14 @@ def event(at: datetime, *, event_type: str, resource: str, qualifier: str) -> di
         "recorded_at": at.isoformat(),
         "canonical_id": resource,
     }
+
+
+def test_evidence_strength_is_deterministic_and_separate_from_model_confidence() -> None:
+    strong = evidence_score(41, 5, 87.8, 1.0)
+    weak = evidence_score(3, 2, 24.0, 0.5)
+    assert strong >= ROUTINE_EVIDENCE_THRESHOLD
+    assert weak < ROUTINE_EVIDENCE_THRESHOLD
+    assert strong == evidence_score(41, 5, 87.8, 1.0)
 
 
 def test_candidate_extraction_is_deterministic_and_exposes_maturity_inputs() -> None:
@@ -43,6 +56,7 @@ def test_candidate_extraction_is_deterministic_and_exposes_maturity_inputs() -> 
     assert candidate.distinct_day_count == 4
     assert candidate.source_trust == "CORE_QUALIFIED_JOURNAL_PROJECTION"
     assert candidate.maturity == "TENTATIVE_HYPOTHESIS"
+    assert 0 <= candidate.evidence_score <= 1
     assert "actor" in " ".join(candidate.missing_information).lower()
 
 

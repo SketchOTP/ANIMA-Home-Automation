@@ -151,6 +151,11 @@ class HouseholdInitiativeContext:
                 or ""
             )
             status = self.learning.status(household_id)
+            if source["event_type"] in status.get("config", {}).get("always_notify", []):
+                # A server-owned always-notify event has already made its
+                # alert decision. Keep the first factual announcement off the
+                # model path; optional contextual work may not gate speech.
+                return SentryEventPath.IMMEDIATE_ANNOUNCEMENT_ONLY
             rule = next(
                 (
                     item
@@ -319,10 +324,14 @@ class HouseholdInitiativeContext:
             "motion": f"Motion was detected by {name}.",
             "motion_reported": f"Motion was detected by {name}.",
             "doorbell": f"{name} was pressed.",
-            "reconnected": f"{name} reconnected to home Wi-Fi.",
-            "disconnected": f"{name} disconnected from home Wi-Fi.",
         }
-        text = phrases.get(event_kind)
+        if event_type == "household.presence.connection_changed":
+            text = {
+                "reconnected": f"{name} has returned home.",
+                "disconnected": f"{name} has left the residence.",
+            }.get(event_kind)
+        else:
+            text = phrases.get(event_kind)
         if text is None:
             return None
         return {

@@ -468,6 +468,7 @@ class CoreSentryHTTPService:
             "catalogue_digest": request.catalogue_digest,
             "provider_id": request.provider_id,
             "provider_version": request.provider_version,
+            "sentry_event_path": request.request_metadata.get("sentry_event_path"),
             "fencing_generation": request.fencing_generation,
             "binding": binding,
         }
@@ -663,6 +664,29 @@ class CoreSentryHTTPService:
             if not self.boundary.start_provider(request, str(request.claim_owner)):
                 raise SentryBoundaryError("INTELLIGENCE_CLAIM_LOST")
 
+    def sensor_status(self, principal: SentryServicePrincipal | None) -> dict[str, Any]:
+        if principal is None:
+            raise ServiceAuthError("sensor status requires a scoped service principal")
+        return self.boundary.sensor_status(principal.household_id)
+
+
+def _start_learning_review_runner(core: Any, household_id: UUID) -> Any | None:
+    """Start the sole household-learning scheduler with the Core owner.
+
+    The UI may expose learning controls, but it cannot start a second owner
+    boundary when the Core service already owns the authenticated Unix socket.
+    Keeping the scheduler beside that single Core composition makes automatic
+    review independent of UI startup and avoids competing runners.
+    """
+    learning = getattr(core, "learning_service", None)
+    if learning is None:
+        return None
+    from anima_ha.learning_review_runner import LearningReviewRunner
+
+    runner = LearningReviewRunner(core, learning, household_id, reconcile=True)
+    runner.start()
+    return runner
+
 
 class _Handler(http.server.BaseHTTPRequestHandler):
     server: _UnixHTTPServer
@@ -764,6 +788,8 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         else None
                     ),
                 )
+            elif self.path == "/v1/sentry/sensor-status":
+                response = service.sensor_status(principal)
             elif self.path == "/v1/requests/renew":
                 request = service._request(str(body["request_id"]), body, principal)
                 ok = service.boundary.renew_request(request, str(request.claim_owner))
@@ -777,6 +803,8 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 operation = parts[3]
                 if operation == "context":
                     response = service.boundary.request_context(request)
+                elif operation == "notification":
+                    response = service.boundary.request_notification(request)
                 elif operation == "tools":
                     response = {"tools": service.boundary.catalogue(request)}
                 elif operation == "invoke":
@@ -877,7 +905,11 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         return read_credential_file(token_path)
 
     migrate(database_url, 5)
-    core = build_postgres_core(database_url, opa_url=opa_url)
+    # The SENTRY-facing Core process owns the resident event boundary. It must
+    # also observe ANIMA-owned presence transition events appended by the
+    # independent Wi-Fi observer; otherwise those events remain durable but
+    # never reach Attention/SENTRY for the immediate owner-configured alert.
+    core = build_postgres_core(database_url, opa_url=opa_url, watch_journal_events=True)
     path = Path(socket_path)
     if path.exists():
         if not stat.S_ISSOCK(path.lstat().st_mode):
@@ -935,9 +967,16 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
             else None
         ),
     )
+    learning_runner = None
     try:
+        # Core is the single owner of the SENTRY socket. Start the existing
+        # idempotent learning scheduler here rather than from the optional UI
+        # boundary, which cannot bind a competing socket after Core starts.
+        learning_runner = _start_learning_review_runner(core, principal.household_id)
         server.serve_forever()
     finally:
+        if learning_runner is not None:
+            learning_runner.stop()
         server.server_close()
         path.unlink(missing_ok=True)
 

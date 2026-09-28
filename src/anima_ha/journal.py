@@ -12,7 +12,10 @@ from psycopg.rows import dict_row
 
 from anima_ha.events import (
     SUPPORTED_EVENT_SCHEMA_VERSION,
+    DeliveryClass,
     EventEnvelope,
+    EventImportance,
+    EvidenceKind,
     TruthObservation,
     UnsupportedEventSchema,
 )
@@ -76,6 +79,58 @@ class PostgresEventJournal:
             row = cursor.fetchone()
         return int(row["journal_position"]) if row else None
 
+    @staticmethod
+    def _event_from_row(row: dict[str, Any]) -> EventEnvelope:
+        payload = row["payload"]
+        metadata = row["metadata"]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        return EventEnvelope(
+            event_id=str(row["event_id"]),
+            schema_version=int(row["schema_version"]),
+            event_type=str(row["event_type"]),
+            source=str(row["source"]),
+            source_event_id=(
+                str(row["source_event_id"]) if row["source_event_id"] is not None else None
+            ),
+            subject_key=str(row["subject_key"]),
+            occurred_at=row["occurred_at"],
+            recorded_at=row["recorded_at"],
+            source_sequence=row["source_sequence"],
+            correlation_id=(
+                str(row["correlation_id"]) if row["correlation_id"] is not None else None
+            ),
+            causation_id=(
+                str(row["causation_id"]) if row["causation_id"] is not None else None
+            ),
+            confidence=row["confidence"],
+            evidence_kind=EvidenceKind(str(row["evidence_kind"])),
+            importance=EventImportance(str(row["importance"])),
+            delivery_class=DeliveryClass(str(row["delivery_class"])),
+            payload=dict(payload),
+            metadata=dict(metadata),
+        )
+
+    def get(self, event_id: str) -> EventEnvelope | None:
+        """Load one immutable event for an internal, source-scoped dispatcher."""
+        with psycopg.connect(
+            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+        ) as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT event_id, schema_version, event_type, source, source_event_id,
+                       subject_key, occurred_at, recorded_at, source_sequence,
+                       correlation_id, causation_id, confidence, evidence_kind,
+                       importance, delivery_class, payload, metadata, journal_position
+                FROM anima_event_journal WHERE event_id=%s
+                """,
+                (event_id,),
+            )
+            row = cursor.fetchone()
+        return self._event_from_row(row) if row else None
+
     def append_in_connection(
         self, connection: psycopg.Connection[Any], event: EventEnvelope
     ) -> AppendResult:
@@ -130,6 +185,13 @@ class PostgresEventJournal:
             )
             inserted = cursor.fetchone()
             if inserted:
+                # The payload remains in PostgreSQL and is never placed in the
+                # notification.  Core listeners use this ID to fetch the
+                # immutable event after the transaction commits.
+                cursor.execute(
+                    "SELECT pg_notify('anima_journal_event_appended', %s)",
+                    (event.event_id,),
+                )
                 return AppendResult(event.event_id, int(inserted["journal_position"]), False)
             cursor.execute(
                 """
@@ -199,6 +261,36 @@ class PostgresEventJournal:
         ) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query, params)
+                return list(cursor.fetchall())
+
+    def list_recent_events(
+        self, *, limit: int = 500, event_type: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Return the newest bounded events without replaying the full journal."""
+        bounded = max(1, min(int(limit), 2000))
+        clauses = []
+        params: list[Any] = []
+        if event_type is not None:
+            clauses.append("event_type = %s")
+            params.append(event_type)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        with psycopg.connect(
+            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT journal_position, event_id, schema_version, event_type, source,
+                           source_event_id, subject_key, occurred_at, recorded_at,
+                           source_sequence, correlation_id, causation_id, confidence,
+                           evidence_kind, importance, delivery_class, payload, metadata
+                    FROM anima_event_journal
+                    {where}
+                    ORDER BY journal_position DESC
+                    LIMIT %s
+                    """,
+                    (*params, bounded),
+                )
                 return list(cursor.fetchall())
 
     def count(self) -> int:
