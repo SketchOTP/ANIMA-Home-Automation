@@ -1,5 +1,21 @@
 # Project Profile
 
+## Stage9 final hosted / controlled rollout — 2026-10-02T21:38Z
+
+Bounded engineering release complete: ANIMA2e98da3 exactCI37064702371 PASS;
+SENTRYb331c05 exactCI37064633241 PASS. Actual artifact11253521093 inspected:
+Stage9PG5/Stage8PG70/browser2 and retained required inputs0targetskip. Installed
+helper7 bounded synthetic controls now PASS; original timeout/negative retained.
+UI image0b066c8/source112/assets3/packages47 match accepted source; app/Core/
+paired voice/stateAPI controlled restart preserves private/Graft/durable state,
+46ambiguities and unchanged DB/OPA/HA/searx identities. Core/stack READY, six
+required consumers ACTIVE, voice LISTENING/office; no wholeGoal/physical claim.
+STAGE9-DEPLOYMENT and STAGE9-ARCHITECT-ACCEPTANCE carry exact proof/remaining gates.
+Sole Coder closed; no new feature/audit stage. Android owner-root action unanswered;
+real owner/authenticated voice enrollment/vendor/playback/private agent/prospective
+usefulness/full MO01–15/A–O evidence remain. Earlier dated snapshots are history,
+not reopened software defects. Graft remains out of product staging.
+
 Current verified20:08Z deployment supersedes older live pointers: Stage8
 ANIMA8396c7e/SENTRY6eafe70 exact hosted PASS, imageb841/source112/assets3/
 47packages/11installed files MATCH. Controlled app-only restart preserves
