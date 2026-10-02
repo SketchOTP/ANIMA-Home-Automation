@@ -468,7 +468,9 @@ class VendorEventIngress:
                     separators=(",", ":"),
                 ).encode()
             ).hexdigest()
-        return self._record(event, digest, source.registration.relay_id)
+        acknowledged = self._record(event, digest, source.registration.relay_id)
+        acknowledged["delivery_id"] = str(body["fields"]["delivery_id"])
+        return acknowledged
 
     def _record(
         self, event: EventEnvelope, digest: str, relay_id: UUID | None = None
@@ -520,7 +522,14 @@ class VendorEventIngress:
         if relay_id is not None:
             with self._lock:
                 self._receipts[relay_id] = self.clock().isoformat()
-        return {"status": "RECORDED", "deduplicated": result.deduplicated, "attention": attention}
+        return {
+            "status": "RECORDED",
+            "deduplicated": result.deduplicated,
+            "attention": attention,
+            "event_id": result.event_id,
+            "journal_position": result.journal_position,
+            "delivery_status": "NOT_VERIFIED",
+        }
 
     def ingest_tapo_state(
         self,

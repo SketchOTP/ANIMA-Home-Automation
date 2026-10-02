@@ -14,11 +14,16 @@
   `01a052d8-2511-7382-a1ef-b0a080514788`; one native Coder, independent review.
 - Integration continuation: existing `ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A`
   / R5F. BASELINE/GOVERNANCE accepted by primary Architect; Stage1 source bundle
-  is `REVIEW_PENDING`. See ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`.
+  and bounded controlled recovery are independently ACCEPTED, not whole Stage1
+  or physical/full-goal acceptance. Both published-head CI runs passed.
+  Stage2 accountable delivery/presence SOURCE is independently ACCEPTED FOR
+  PUBLICATION / CONTROLLED DEPLOYMENT; hosted CI/deployment pending. See ANIMA 027A
+  `NATIVE-ARCHITECT-REVIEWS.md`, `STAGE1-CODER-RESULT.md` and
+  `STAGE2-CODER-RESULT.md`. Parent owns reviews/coverage/publication.
 - Canonical packet: ANIMA `.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/`.
-- ANIMA local: `main` / `c8ea05efe8c5a6ae5def4a1c75834910aa519d44`.
+- ANIMA local/published: `main` / `949804dc9f07487868664d2b1508eceb9f44cc6c`.
 - SENTRY local: `feature/v0.4-personal-continuity` /
-  `e2ab3b75781ec293f8830d910cb7622f34bd82cb`.
+  `23fb216250d646451c47e8d3ea8c63cd7f289d18` (parent-published).
 - Parent owns ANIMA execution lock/state, generation/fence 4; Coder is delegate.
 - Integration goal authority: ANIMA `.agent/PROJECT_GOAL.md` adopted 2026-08-28,
   [completion contract](https://app.notion.com/p/3d2833cb27ff8154a7b2dd259b4d5250),
@@ -27,7 +32,7 @@
   in 027A; Coder does not create or update that map in this assignment.
 - Current evidence/gaps: CURRENT and 027A EVIDENCE/HANDOFF. Historical accepted
   stages and reboot evidence stand; current startup regression is separate.
-- Governance acceptance is bounded; Stage1/runtime/whole-goal completion is not
+- Governance and controlled recovery acceptance are bounded; full Stage1/goal completion is not
   established. Parent-owned review and GOAL-COVERAGE records remain authoritative.
 
 Historical R5C/R5D pointers are superseded by owner takeover under 027A/R5F.

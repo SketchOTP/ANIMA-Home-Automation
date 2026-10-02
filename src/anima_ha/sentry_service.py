@@ -30,6 +30,7 @@ from uuid import UUID
 
 import psycopg
 
+from anima_ha.alert_delivery import PostgresRequiredDelivery
 from anima_ha.db.migrate import migrate
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
@@ -38,6 +39,14 @@ from anima_ha.intelligence import (
     IntelligenceResultStatus,
 )
 from anima_ha.live_results import PostgresSentryLivePublisher, live_result_payload
+from anima_ha.policy import (
+    ActionIntent,
+    Assurance,
+    Decision,
+    IdentityContext,
+    PolicyContext,
+    RequestOrigin,
+)
 from anima_ha.sentry_autowake import PostgresAutoWakeClaims, aware_timestamp
 from anima_ha.sentry_boundary import (
     CoreSentryBoundary,
@@ -498,6 +507,7 @@ class CoreSentryHTTPService:
         auto_wake_claims: PostgresAutoWakeClaims | None = None,
         voice_settings_store: SentryVoiceSettingsStore | None = None,
         personality_store: SentryPersonalityStore | None = None,
+        required_delivery: PostgresRequiredDelivery | None = None,
     ) -> None:
         self.boundary = boundary
         self.token_loader = token_loader
@@ -508,7 +518,125 @@ class CoreSentryHTTPService:
         self.auto_wake_claims = auto_wake_claims
         self.voice_settings_store = voice_settings_store
         self.personality_store = personality_store
+        self.required_delivery = required_delivery
         self.bindings = SentryBindingCodec("unused-until-authenticated")
+
+    def _alert_disposition(self, request: Any) -> dict[str, Any]:
+        packet = self.boundary.request_notification(request)
+        result = dict(packet["household_context"]["initiative"]["notification"])
+        if (
+            self.voice_settings_store is None
+            or self.voice_settings_store.get(request.household_id)["sleep_enabled"] is not False
+        ):
+            result.update(allowed=False, required=False, reason="SLEEP_ENABLED")
+        if result.get("allowed") is True and result.get("required") is True:
+            decision = self.boundary.policy_service.evaluate(
+                ActionIntent.create(
+                    household_id=request.household_id,
+                    semantic_action="notifications.send",
+                    origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+                    correlation_id=str(request.request_id),
+                ),
+                IdentityContext(request.household_id, None, Assurance.ANONYMOUS),
+                PolicyContext(
+                    graph_metadata={
+                        "notification_alert_authorized": True,
+                        "notification_route_id": "sentry-required-speech",
+                        "alert_policy_id": str(request.request_id),
+                    }
+                ),
+            )
+            if decision.decision != Decision.ALLOW:
+                result.update(allowed=False, required=False, reason="CURRENT_OPA_NOT_ALLOWED")
+        return result
+
+    def required_alert(
+        self, body: dict[str, Any], principal: SentryServicePrincipal | None, *, operation: str
+    ) -> dict[str, Any]:
+        if (
+            principal is None
+            or "SENTRY_PROVIDER" not in principal.allowed_origins
+            or self.required_delivery is None
+            or self.auto_wake_claims is None
+        ):
+            raise ServiceAuthError("required alert service unavailable")
+        if operation == "next":
+            if set(body) != {"origin", "not_before", "max_age_seconds", "active_instance_id"}:
+                raise ValueError("INVALID_ALERT_FILTERS")
+            window = self.auto_wake_claims.window(body)
+            if (
+                self.voice_settings_store is None
+                or self.voice_settings_store.get(principal.household_id)["active_instance_id"]
+                != body["active_instance_id"]
+            ):
+                return {"status": "EMPTY", "reason": "SELECTED_INSTANCE_CHANGED"}
+            return self.required_delivery.next(
+                household_id=principal.household_id,
+                client_id=principal.client_id,
+                not_before=window.not_before,
+                disposition=self._alert_disposition,
+                active_instance_id=str(body["active_instance_id"]),
+                credential_generation=principal.credential_generation,
+                max_age_seconds=window.max_age_seconds,
+            )
+        if operation == "followup-ready":
+            if set(body) != {"request_id", "response_digest"}:
+                raise ValueError("INVALID_FOLLOWUP_RECEIPT")
+            return {
+                "status": "RECORDED"
+                if self.required_delivery.ready_followup(
+                    UUID(str(body["request_id"])),
+                    principal.household_id,
+                    str(body["response_digest"]),
+                )
+                else "UNAVAILABLE"
+            }
+        if set(body) != {
+            "request_id",
+            "delivery_token",
+            "generation",
+            "outcome",
+            "active_instance_id",
+            "evidence",
+            "phase",
+        }:
+            raise ValueError("INVALID_ALERT_RECEIPT")
+        if type(body["generation"]) is not int or not isinstance(body["delivery_token"], str):
+            raise ValueError("INVALID_ALERT_RECEIPT")
+        if self.voice_settings_store is None or (
+            body["outcome"] == "PLAYBACK_INTENT"
+            and self.voice_settings_store.get(principal.household_id)["active_instance_id"]
+            != body["active_instance_id"]
+        ):
+            raise ValueError("SELECTED_INSTANCE_CHANGED")
+        evidence = body["evidence"]
+        if (
+            not isinstance(evidence, dict)
+            or set(evidence)
+            - {
+                "playback_state",
+                "timing_source",
+                "playback_process_started_at",
+                "playback_completed_at",
+                "actual_audible_start_at",
+            }
+            or len(json.dumps(evidence)) > 2048
+            or evidence.get("actual_audible_start_at") is not None
+        ):
+            raise ValueError("INVALID_PLAYBACK_EVIDENCE")
+        return self.required_delivery.transition(
+            UUID(str(body["request_id"])),
+            household_id=principal.household_id,
+            client_id=principal.client_id,
+            token=body["delivery_token"],
+            generation=body["generation"],
+            outcome=str(body["outcome"]),
+            disposition=self._alert_disposition,
+            active_instance_id=str(body["active_instance_id"]),
+            credential_generation=principal.credential_generation,
+            evidence=evidence,
+            phase=str(body["phase"]),
+        )
 
     def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
         # Reloading on every request gives rotation/revocation semantics. A
@@ -857,6 +985,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             elif self.path == "/v1/health":
                 response = service.boundary.health().to_payload()
             elif self.path in {
+                "/v1/provider/alerts/next",
+                "/v1/provider/alerts/receipt",
+                "/v1/provider/alerts/followup-ready",
+            }:
+                response = service.required_alert(
+                    body, principal, operation=self.path.rsplit("/", 1)[-1]
+                )
+            elif self.path in {
                 "/v1/provider/requests/eligible",
                 "/v1/provider/requests/wait",
                 "/v1/provider/claims/exact",
@@ -910,6 +1046,12 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                     response = service.boundary.request_context(request)
                 elif operation == "notification":
                     response = service.boundary.request_notification(request)
+                    if service.required_delivery is not None:
+                        ledger = service.required_delivery.state(request.request_id)
+                        response["required_delivery"] = {
+                            "managed": ledger.get("version") == 1,
+                            "state": ledger.get("state"),
+                        }
                 elif operation == "tools":
                     response = {"tools": service.boundary.catalogue(request)}
                 elif operation == "invoke":
@@ -965,6 +1107,24 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                         "result_status": result.status.value,
                         "notification": disposition,
                     }
+                    if service.required_delivery is not None:
+                        queued_followup = False
+                        if (
+                            recorded
+                            and result.status == IntelligenceResultStatus.RESPONSE
+                            and result.response_text
+                        ):
+                            queued_followup = service.required_delivery.queue_followup(
+                                request.request_id,
+                                result.response_text,
+                                service._alert_disposition,
+                            )
+                        response["followup_queued"] = queued_followup
+                        ledger = service.required_delivery.state(request.request_id)
+                        response["required_delivery"] = {
+                            "managed": ledger.get("version") == 1,
+                            "state": ledger.get("state"),
+                        }
                 elif operation == "status":
                     response = {
                         "request_id": str(request.request_id),
@@ -1083,6 +1243,7 @@ def _serve_owned(
         live_result_publisher=PostgresSentryLivePublisher(database_url),
         voice_settings_store=SentryVoiceSettingsStore(database_url),
         personality_store=SentryPersonalityStore(database_url),
+        required_delivery=PostgresRequiredDelivery(database_url),
         auto_wake_claims=(
             PostgresAutoWakeClaims(
                 database_url,

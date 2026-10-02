@@ -107,14 +107,18 @@ class SentryBoundaryHealth:
     state: str
     version: str = SENTRY_BOUNDARY_VERSION
     detail: str | None = None
+    journal_handoff_state: str | None = None
 
     def to_payload(self) -> dict[str, str | None]:
-        return {
+        payload = {
             "provider_id": self.provider_id,
             "state": self.state,
             "version": self.version,
             "detail": self.detail,
         }
+        if self.journal_handoff_state is not None:
+            payload["journal_handoff_state"] = self.journal_handoff_state
+        return payload
 
 
 def _origin(value: IntelligenceOrigin) -> RequestOrigin:
@@ -163,9 +167,16 @@ class CoreSentryBoundary:
     agent_memory_enabled: bool = False
     learning_service: Any | None = None
     sensor_status_loader: Callable[[UUID], dict[str, Any]] | None = None
+    journal_handoff_status_loader: Callable[[], str] | None = None
 
     def health(self) -> SentryBoundaryHealth:
-        return SentryBoundaryHealth("anima-core", "available")
+        return SentryBoundaryHealth(
+            "anima-core",
+            "available",
+            journal_handoff_state=(
+                self.journal_handoff_status_loader() if self.journal_handoff_status_loader else None
+            ),
+        )
 
     def sensor_status(self, household_id: UUID) -> dict[str, Any]:
         """Return only the bounded live-signal projection for one household."""

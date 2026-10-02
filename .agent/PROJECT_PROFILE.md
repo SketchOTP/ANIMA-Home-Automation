@@ -1,13 +1,13 @@
 # Project Profile
 
-## Current development and integration checkpoint — 2026-10-01
+## Current development and integration checkpoint — 2026-10-02
 
 Owner transfer: primary Codex Architect plus one native development Coder with
 independent review; see RECORD and the existing 027A / R5F packet. Actual local
 root is `/home/sketch/Projects/ANIMA Home Automation`, main at
-`c8ea05efe8c5a6ae5def4a1c75834910aa519d44`; SENTRY companion is
+`949804dc9f07487868664d2b1508eceb9f44cc6c` before Stage2 publication; SENTRY companion is
 `/home/sketch/Projects/SENTRY`, feature/v0.4-personal-continuity at
-`e2ab3b75781ec293f8830d910cb7622f34bd82cb`.
+`23fb216250d646451c47e8d3ea8c63cd7f289d18` before Stage2 publication.
 
 ANIMA owns canonical Journal/Truth/Graph/operational memory, household settings,
 identity/OPA, typed tools/tasks, execution/verification, audit and recovery.
@@ -19,9 +19,14 @@ runtime brain or developer authority for the household resident.
 Historical model/version/environment snapshots below are qualification history;
 they do not instruct changes to the inherited development model or separately
 configured resident profile. Local source is not deployed-byte identity. The
-current startup failure is independently observed in installed units/journal;
-installed `anima-pc.service` is outside tracked deployment units. Full deployment
-pair qualification and full-goal coverage remain parent-owned open work.
+historical startup failure is preserved in the packet; bounded Stage1 recovery
+and exact-head CI were independently accepted. Stage2 source is independently
+accepted for publication/controlled deployment, not yet loaded operational proof.
+It adds durable minimized relay outbox, independent fenced required speech,
+Journal-to-Attention recovery, episode-less approval and conservative presence
+baseline recovery. Docker Python dependencies now resolve from unchanged uv.lock;
+apt/image bit reproducibility is not claimed. Android remains owner-root gated.
+Full MO-01–MO-15/A–O qualification remains parent-owned open work in 027A/R5F.
 
 
 ## Repository

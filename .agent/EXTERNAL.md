@@ -490,3 +490,22 @@ Reconsider a workflow service only after measured Phase 10 scale, long-running m
 - Preserve source/receipt freshness and unknown identity. REJECT fabricated
   notifications, private vendor API guessing, media capture, and calling a
   structured ANIMA test report an observed Wansview notification format.
+
+## 2026-10-02 — Stage2 protocol/persistence/build correction (027A/R5F)
+
+REFERENCE, not runtime qualification. Official D-Bus notification protocol
+§9.1.2 (https://specifications.freedesktop.org/notification/latest/protocol.html)
+defines replacement of an active notification ID, not immutable occurrence
+identity. Installed Waydroid1.6.2 notification_manager.py:23–50 and
+INotifications.py:58–87 provide replaces_id without an occurrence key/time.
+Disposition: preserve server protocol ID; every callback creates a distinct
+minimized report UUID stable only across that report's durable transport retries.
+Cross-callback replay discrimination remains unobservable; no text dedup/raw
+retention is invented. Existing private atomic-JSON snapshots are reused; the
+rejected SQLite/volatile-status-derived draft is superseded, not deployed.
+Official uv sync/Docker guidance (https://docs.astral.sh/uv/concepts/projects/sync/
+and https://docs.astral.sh/uv/guides/integration/docker/) supports locked,
+non-editable production sync. Existing qualified CI uv0.12.7 retained, lock
+unchanged; Python dependency/source lock is distinct from unsnapshotted apt OS
+and non-byte-identical image builds. Authority/external-discovery skills guided
+reuse and evidence boundaries, not a new persistence/model/audio framework.

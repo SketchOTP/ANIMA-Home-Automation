@@ -401,11 +401,11 @@ def test_canonical_immediate_announcement_is_factual_and_graph_named() -> None:
 @pytest.mark.parametrize(
     "transition,expected",
     [
-        ("DISCONNECTED", "Tym has left the residence."),
-        ("RECONNECTED", "Tym has returned home."),
+        ("DISCONNECTED", "Tym's Wi-Fi presence is now uncertain."),
+        ("RECONNECTED", "Tym's associated device is visible on Wi-Fi."),
     ],
 )
-def test_presence_announcement_uses_owner_requested_transition_language(
+def test_presence_announcement_does_not_invent_physical_arrival_or_departure(
     transition: str, expected: str
 ) -> None:
     person_id = uuid4()

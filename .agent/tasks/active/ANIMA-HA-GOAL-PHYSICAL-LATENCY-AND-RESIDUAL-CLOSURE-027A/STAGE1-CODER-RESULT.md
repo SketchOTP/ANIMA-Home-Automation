@@ -582,3 +582,253 @@ history. Both diff checks pass and staged-path lists remain empty. Read-only
 baseline export remains available to the Architect. No introduced validation
 failure or remaining ANIMA format/type/lint debt under the required src/tests
 contract; hosted CI and deployed/runtime acceptance remain NOT RUN.
+
+## CODEX RESULT — 027A/R5F controlled installation and IMAGE_READY recovery — 2026-10-02
+
+### Verdict / retrieval confidence
+
+PARTIAL / ADEQUATE. Primary independently ACCEPTED corrected Stage1 source FOR
+CONTROLLED DEPLOYMENT in parent-owned `NATIVE-ARCHITECT-REVIEWS.md`. Coder did
+not accept its own result. Runtime observations below are limited recovery
+evidence, not physical/audible/browser/reboot/prospective/whole-goal acceptance.
+Same parent OWNED generation/fence4 revalidated before installation, Core and
+consumer operations; no ownership acquisition/release/state write.
+
+### Technical state discovered / source identities
+
+Primary-published local heads independently observed:
+ANIMA main `949804dc9f07487868664d2b1508eceb9f44cc6c`;
+SENTRY feature/v0.4-personal-continuity `23fb216250d646451c47e8d3ea8c63cd7f289d18`.
+Source stayed frozen; Coder made no product edits, commit or push.
+Primary supplied IMAGE_READY image
+`sha256:0fc3f95a7c4fdcc5189c2010182b9fe6f7c5e3512cdb894b3cb25072600422da`
+and reported all103 image-imported .py/.sql files match host src without extras.
+Coder independently verified the actual Compose-selected image ID before mutation
+and the running replacement UI image ID afterward; the103-file import comparison
+is parent evidence, not a duplicated Coder comparison.
+
+Hosted runs36955481716/36955483533 were parent-reported IN_PROGRESS at the gate.
+Coder did not independently check hosted conclusions; do not infer green CI.
+
+### Work performed
+
+Only authorized installers applied:
+`ANIMA .venv/bin/python scripts/install_pc_runtime.py --apply` (11 files)
+and `SENTRY /home/sketch/.venvs/sentry-ubuntu/bin/python -m
+tools.sentry_install_stage1 --anima-core --apply` (12 files). Then
+`systemctl --user daemon-reload`; no start/restart before IMAGE_READY.
+Installed plans were checked against actual disk bytes and modes.
+
+After explicit IMAGE_READY and preservation gates:
+`docker compose -p anima-pc -f compose.yaml -f compose.pc.yaml
+up -d --no-deps --no-build ui` replaced ONLY UI. No `anima-pc` restart/ExecStop.
+Verified healthy new UI and effective `ANIMA_OWNER_BOUNDARY_MODE=external`;
+explicit stack readiness; started Core, whose authenticated ExecStartPost passed;
+rechecked work states; started household-worker, restarted existing voice
+supervisor to load reviewed code, ensured voice started, restarted native UI
+display only. Voice had already started normally via the existing supervisor
+after Core became available; its PID was retained by the explicit start command.
+No broad installer, root helper, Android restart or Wi-Fi start.
+
+### Files / areas changed
+
+Runtime installation: the exact23 manifest targets below, and the authorized
+UI container replacement / named service lifecycle. Repository product source
+is unchanged from the published pair. Local records only: this result plus
+existing027A EVIDENCE/HANDOFF and both CURRENT/OUTCOMES.
+
+Installer/readiness source SHA256:
+ANIMA installer `f6df7500c435cdba645e77f504585dea6fa797206f8ddc9988ca5417a186f228`;
+ANIMA readiness `fcd41d839424afb282d7802ea68c602d12c32b6288188341214fa31db1eb9eb7`;
+SENTRY installer `26966cff0e5d516f033ba0e16631308b96dd8a8c1fcd56278c37645b0a1ab608`.
+
+Each installed hash equals the dry-plan expected hash; all23 match.
+Aggregate algorithm: absolute target path + ':' + SHA256(raw expected/installed
+bytes), lexicographically sorted rows joined by newline, NO final newline;
+SHA256 UTF8 aggregate. ANIMA11:
+`372a86248430dcc54f31367e3005e7713dec1bfba906a4f3c51137cadbafb5ce`;
+SENTRY12 `5bf933cc27639bb621c6776d21870f473f65fa2758c7d2f1d73ddc3b308e8c57`.
+
+| Installed target | Expected = installed SHA256 | Mode |
+| --- | --- | --- |
+| `/home/sketch/.config/systemd/user/anima-core.service` | `0cfc103d1af13dcb2b4eab2714da3ded4b40072a1fbcd762c0eb40cc7db6c421` | 0o600 |
+| `/home/sketch/.config/systemd/user/anima-household-worker.service` | `67664400eb4974722efd324e41c0b5428d1e4afef2fa9176736396dcabc9f905` | 0o600 |
+| `/home/sketch/.config/systemd/user/anima-pc.service` | `cb176231686fc061a64ceef0198ab896ec5f6c31aabd5dc77c587e48a18d82b8` | 0o600 |
+| `/home/sketch/.config/systemd/user/anima-wifi-presence.service` | `e3681eb82734ff740437fb36464f2a4bf9b519bc4feae0a27e36f753ca7f4af2` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/anima_household_client.py` | `ee17624b7067bc3cbb084a572e5c8c1d5c0086b707a1d1bf13cb2c9f7902a030` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/anima_household_mcp.py` | `9d041ecc07baa67a037a67f16a501d091d5ecb9942776710271938dff381d8f6` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/codex_model.py` | `74f31f08cae17c7c59558b68bff0c49c1e377886963935e25e62cf49e00a586e` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/household_worker.py` | `f1e6f7cf20effd264c2e7b93cf969dfc1e8f388ed629fa6913a40df0797f385d` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/scripts/launch_anima_household_mcp` | `c6f85e2417428457069a0361f331abf2f54fd5f18b075fd96c35b40018fda601` | 0o700 |
+| `/home/sketch/.local/share/anima-household-client/runtime/sentry_turn.py` | `556e024c67a300098af886e908f2a72df1e8a26c64ce71a0b5ead83f92e8fc97` | 0o600 |
+| `/home/sketch/.local/share/anima-household-client/runtime/skills/anima-household-agent/SKILL.md` | `c21ccc097efcc2417e85225f5aa9c65f900605a1baf1f8d638877e8e738d33de` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-alarms.service` | `e1c330f793d64586646e780ecb6d6ffd1fef88d86e6b560cdcd7d9f749453f95` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-perception.service` | `f52428a99a8a22bd5c6581c63d18ab61ed96d244136206689c9f949f274c947b` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-proactive.service` | `5372eb7c49042849ee2cd559bd7a53a0197038d31aefffee187cdee5c97fa34d` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-projection-status.service` | `c14776d99d858f4a5a625d967a02de2ca261c053ad17c84033329bf1a17682e2` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-routines.service` | `1dbae7b21bb1af3452d51c67e3268a2e08a617d1064f30a1aa9711f3783786fb` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-state-api.service` | `957194c1eb68bbea3938a6ca2d3b719bb7fc440bfe30b96db3b181ce05ada687` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-ui.service` | `3f10a4db3a010dce7c7fd9e25ba979f3a3adf80bc457eb9b4c2c1517d3ff7947` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-voice-supervisor.service` | `aa5b3de269fc41931b955ea8996b10a33f5ffb3d7d8cf0fd8d1f29023c723aab` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-voice-supervisor.service.d/20-anima-core.conf` | `c31bfcdc2ca50299dca1258eaa781a26d90d09149d43fd8adb19b35dc34f947e` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-voice.service` | `d517c68479a38b79993201815b32d8967af7001ad5e944d75f6850ce9017ce36` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-voice.service.d/20-anima-core.conf` | `c31bfcdc2ca50299dca1258eaa781a26d90d09149d43fd8adb19b35dc34f947e` | 0o600 |
+| `/home/sketch/.config/systemd/user/sentry-weather.service` | `e117943cfb7398ff8ba30dd0d94857101ce995ae06b6a809cfc6d356cb463ca5` | 0o600 |
+
+### Validation — effective graph/readiness
+
+- PASSED: user `systemd-analyze verify` all14 installed main service targets
+  plus default.target, exit0. Read-only; no unit starts from this verification.
+- PASSED: effective pc/Core/voice/supervisor After edges no longer include
+  default.target. Core Requires/After pc; worker Requires/After Core+pc;
+  voice and supervisor effective Requires/After Core via20-anima-core.conf.
+- Preserved: voice/UI10-atlas-storage.conf only adds local-fs.target;
+  inverse After atlas-storage-mount comes from that shared unit's Before list.
+  Shared mount remains active; no Linux-only mount independence is claimed.
+- Before gate: STACK_READY, expected CORE_NOT_READY while Core intentionally held.
+  After gate: STACK_READY and AUTHENTICATED_CORE_READY (twice after startup).
+  Core ExecStartPost at02:29:53–02:29:56Z completed exit0.
+- Two initial read-only Compose ps attempts used an incomplete/nonexistent
+  overlay and failed. Corrected to the actual installed two-file/-p invocation
+  before UI mutation; neither diagnostic changed containers.
+
+### Observed runtime states
+
+At02:38:58Z: Core active/running PID615885; worker active/running PID623013;
+voice active/running PID616425; supervisor active/running PID623249;
+native display UI active/running PID623258. Core, voice, supervisor and UI
+reported NRestarts0 on sampled units. No native display visual acceptance claimed.
+anima-pc remains active/exited with original2026-09-30 10:26:57EDT activation.
+Wi-Fi, Android session and Android notification supervisor remain inactive/dead;
+their enablement was not changed. Root/container/shared services not restarted.
+
+UI old container094e671ede50... replaced by
+`821d4d1858c78e9fd6cadbdfec1bcbd2387efdf3bbaa5c5c88df9d110c90c126`,
+healthy, started2026-10-02T02:28:47.142799746Z, exact IMAGE_READY image.
+Actual UI identity uid10001/gid10001 with supplementary group1000; Core UID1000.
+Exactly one live Unix listener observed, owned by Core PID615885/fd4.
+Core socket and persistent lock are uid/gid1000:1000 mode0600; native UID1000
+authenticated probe works. UI external mode does not claim socket ownership.
+
+DB/OPA/searxng container IDs respectively80cabad6b9b9...,7bc42222d93f...,
+061f9e6cdbf9... unchanged, all healthy, start timestamps remain2026-09-30
+21:05:40Z. Independently compared pre/post inspect: same container IDs,
+start times and mount lists for these three. All UI mounts also unchanged.
+No volume removal, DB/OPA/search restart or whole-stack stop.
+
+Voice observations: LISTENING / vad_healthy true; observed active_instance office;
+desired_sleep_enabled false / desired_instance office; wake_enabled true.
+Timestamp advanced02:32:39.454449Z →02:33:49.847315Z →02:35:56.824313Z;
+stream sequence6836→10804, stream end samples3500032→5531648.
+Fresh healthy standby observed beyond TTL60 without a manual wake/model/test
+turn. Authenticated native sensor_status read reports CURRENT and10 items,
+not a fabricated empty registry. This is registry/readiness evidence, not
+physical freshness of every held Android/Wi-Fi sensor.
+
+### Preservation and no-blind-replay evidence
+
+Pre-consumer SQL: active CLAIMED/PROVIDER_RUNNING0; historical autonomous
+PENDING134 with0 younger than120s; original RECOVERY_REQUIRED33+UNKNOWN_RESULT13.
+Core materialized two additional DURABLE_TASK requests from configured
+household_learning/HOUSEHOLD_REVIEW DAILY and ROUTINE tasks. Their immutable
+scheduled_reasoning_due source events were older (2026-10-01 07:37/07:38Z),
+not fresh household events. These are the configured reviews expressly allowed
+by the recovery gate; no manual request/model invocation was created.
+Both reached NO_ACTION by02:35:35Z; final active claims/provider runs0;
+historical autonomous PENDING134 unchanged, zero fresh; NO_ACTION275→277.
+Read-only transition audit since02:28Z: AUTONOMOUS_ATTENTION transitions0.
+Ambiguous original46 ID/lifecycle digest before/after
+`1f3453c5ce88d3d3b46f119bb4a24462`, computed MD5 of comma-joined
+`request_id:lifecycle` sorted by request_id. No reset/reclaim/replay.
+
+Eleven private files byte/mode fingerprinted before installers and independently
+rechecked after both installation and recovery: ANIMA private env + project .env;
+SENTRY anima/config/display JSON/env and identity/projection tokens; copied-client
+token; actual resident Codex config/profile/history-profile. All preserved.
+Resident session actual `/home/sketch/.local/state/sentry/codex-agent-session.json`
+is mode0600, mtime2026-09-15 17:14:43EDT, current SHA256
+`20f95c15914d3f9da3a37917eb95108ac7880341b7c576f63c5ad998ba9153c3`.
+Coder did not reset/change its thread; no new voice turn was invoked.
+
+Own DB row fingerprints captured after UI replacement/before Core, then matched
+again after reviews: principals1/d2bcd229d6900bd8bd72546eec6cd1a4;
+voice1/45fd765acb3c04d0bc54f95a78753645;
+personality1/2abe012ded27fd970890df39ff7e9b86;
+preferences2/3bb5636491fed9335ccb8f3c67b107ad.
+Algorithm: MD5 coalesce(string_agg(to_jsonb(row)::text,'' ORDER BY
+to_jsonb(row)::text),''). These are content-free change detectors, not security
+proof. Parent's supplied pre-UI digests use an unspecified different algorithm;
+do not claim direct equivalence to them or a Coder pre-UI DB fingerprint.
+Counts match the parent snapshot; no authority/token/settings rotation observed.
+Actual growth by02:35:56Z versus parent pre-snapshot: memory238→254;
+journal57734→57912; routines0, graph95 nodes/101 relationships unchanged.
+Ordinary recovery/configured-review activity writes occurred; no global
+'no effects' or unchanged-journal/memory claim.
+
+### Effective voice launch/profile boundary
+
+Actual live voice process environment whitelisted read: SENTRY_CODEX_HOME
+`/home/sketch/.local/share/sentry/codex-home`; SENTRY_CODEX_EXECUTABLE
+`/home/sketch/Projects/SENTRY/tools/sentry_codex_launcher.sh`.
+Actual installed sentry-resident.config.toml hash remains
+`04b2d03d19356a628c03d84ff7d69e88f7898ab9b6cdc1118b438c7dde0b12ee`.
+Sanitized at-rest config: model gpt-5.6-luna, medium; approval never;
+default_permissions sentry-resident, network false, shell_tool true;
+configured MCP sentry_office + anima_household, only sentry_office enabled at rest.
+Existing bound-turn loader validates anima_household and enables per qualified
+turn; disabled-at-rest is not missing binding. No permissions/model/profile edit.
+Source-qualified prospective voice CLI uses dedicated CODEX_HOME, --profile
+sentry-resident, --model MODEL (bridge source gpt-5.6-luna), exec --strict-config,
+--json and output schema; resumes existing session if present. No actual new
+voice Codex-child argv was observed because no manual voice turn was performed.
+No inference of unrestricted network or household authority from shell_tool.
+
+### Evidence level / acceptance results
+
+E5_OPERATIONALLY_OBSERVED only for bounded installation identity, authenticated
+Core readiness, UI container health, fresh idle voice and no-blind-replay audit.
+Source acceptance is independently recorded by parent. Bounded controlled
+recovery checks PASSED; complete runtime/product/goal acceptance NOT ESTABLISHED.
+
+### External discovery / assumptions / durable learnings
+
+NONE newly triggered. Confirmed: external UI coexists with sole Core UID1000
+owner; idle stream diagnostics remain fresh; review-task recovery is distinct
+from fresh autonomous eligibility. Source and newly running native processes
+now use the published checkout paths. Unchanged underlying infrastructure is
+directly compared, not inferred from compose exit0. Installation is not reboot
+qualification; existing shared mount dependence and held services remain gaps.
+
+### Risks / blockers / deviations
+
+Android root Binder repair remains gated/not performed here; no privilege bypass
+or full privileged vendor installer. Existing Android guard-unit narrowing
+remains parent-owned. Wi-Fi intentionally held for the retained stale-restart
+arrival-baseline Stage3 gap. Owner authenticated UI workflow, audible/physical
+turn, reboot and full MO/A–O coverage remain unproven. Hosted CI not independently
+verified. No new product-code edit under freeze; no deviation from recovery scope.
+
+### Project records updated / GitHub state
+
+Existing027A result/EVIDENCE/HANDOFF and both CURRENT/OUTCOMES only;
+parent-owned NATIVE-ARCHITECT-REVIEWS/GOAL-COVERAGE untouched. Notion NOT UPDATED.
+Commit/push by Coder NONE; published pair above belongs to parent. Protected
+ignore files/Graft fence/cache not edited. Any publication of these new runtime
+records remains parent-owned.
+
+### Recommendation to Architect / review disposition
+
+Independently verify these narrow runtime observations, then select the next
+remaining gap/root action within existing027A. Runtime remains PARTIAL; this
+Coder return is REVIEW_PENDING for observed recovery, not acceptance or closure.
+
+Final return checkpoint2026-10-02T02:43:50Z: all five recovered service PIDs
+above remain active; Android session/supervisor and Wi-Fi inactive. SQL active
+claims/provider runs0, PENDING134, RECOVERY_REQUIRED33, UNKNOWN_RESULT13;
+canonical sleep=false/office. Voice LISTENING timestamp02:43:50.568346Z,
+vad_healthy true, stream sequence25608. All23 installed manifests and11 private
+byte/mode fingerprints rechecked PASS. Both product path diffs versus published
+HEADs are empty; diff checks PASS and staged-path lists empty. Only qualified
+records changed by Coder after freeze; prior protected tooling dirt is preserved.
+Final read-only Binder mount count8247, matching parent's contained count.
+GOAL-COVERAGE's concurrent dirty update belongs to primary; Coder did not edit it.

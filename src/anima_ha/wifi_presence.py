@@ -309,19 +309,41 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
         raise
 
 
-def _read_previous(path: Path) -> dict[str, dict[str, Any]]:
+def _read_previous(path: Path, *, now: datetime | None = None) -> dict[str, dict[str, Any]]:
     try:
         if path.stat().st_mode & 0o007:
             return {}
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return {}
+    usable = True
+    if now is not None:
+        try:
+            observed = datetime.fromisoformat(str(value["observed_at"]))
+            if (
+                observed.tzinfo is None
+                or value.get("state") not in {"READY", "DEGRADED"}
+                or not timedelta(0) <= now.astimezone(UTC) - observed <= timedelta(seconds=120)
+            ):
+                usable = False
+        except (KeyError, TypeError, ValueError, AttributeError):
+            usable = False
     households = value.get("households") if isinstance(value, dict) else None
     if not isinstance(households, dict):
         return {}
     # The monitor loads one household at a time; callers select their scope.
     return {
-        str(person_id): dict(item)
+        str(person_id): (
+            dict(item)
+            if usable
+            else {
+                **item,
+                "active": None,
+                "status": "UNKNOWN",
+                "baseline_usable": False,
+                "absence_sweeps": 0,
+            }
+        )
         for household in households.values()
         if isinstance(household, dict)
         for person_id, item in (household.get("people", {}) or {}).items()
@@ -466,7 +488,9 @@ class WifiPresenceMonitor:
         return interface, ipv4_network(address, interface=interface)
 
     def _neighbors(self, interface: str) -> list[WifiNeighbor]:
-        _, output = self._run("/usr/sbin/ip", "neigh", "show", "dev", interface)
+        code, output = self._run("/usr/sbin/ip", "neigh", "show", "dev", interface)
+        if code != 0:
+            raise ValueError("NEIGHBOR_COVERAGE_UNAVAILABLE")
         return parse_neighbors(output, interface=interface)
 
     def _probe(self, address: str, interface: str) -> None:
@@ -507,14 +531,17 @@ class WifiPresenceMonitor:
         if network is not None and now_mono - self._last_sweep >= self.interval:
             self._scan(interface, network)
             self._last_sweep = now_mono
-        neighbors = self._neighbors(interface)
+        try:
+            neighbors = self._neighbors(interface)
+        except ValueError:
+            return self._write({}, state="NOT_READY", reason="NEIGHBOR_COVERAGE_UNAVAILABLE")
         for neighbor in neighbors:
             self._known_addresses[neighbor.mac] = neighbor.address
         router_presence = self._nmap_presence(people)
         by_household: dict[str, list[WifiPerson]] = {}
         for person in people:
             by_household.setdefault(person.household_id, []).append(person)
-        old = _read_previous(self.status_path)
+        old = _read_previous(self.status_path, now=self.now())
         previous_by_person: dict[str, dict[str, Any]] = {}
         for person in people:
             saved = old.get(person.person_id, {})
@@ -567,6 +594,30 @@ class WifiPresenceMonitor:
         )
 
     def _write(self, households: dict[str, Any], *, state: str, reason: str) -> dict[str, Any]:
+        if state == "NOT_READY" and not households:
+            # Coverage failure invalidates current baseline, NOT the owner's
+            # genuine historical transition/last-seen/binding record.
+            try:
+                saved = json.loads(self.status_path.read_text(encoding="utf-8"))
+                history = saved.get("households", {})
+                if isinstance(history, dict):
+                    for household_id, value in history.items():
+                        if isinstance(value, dict) and isinstance(value.get("people"), dict):
+                            households[household_id] = {
+                                "people": {
+                                    key: {
+                                        **item,
+                                        "active": None,
+                                        "status": "UNKNOWN",
+                                        "baseline_usable": False,
+                                        "absence_sweeps": 0,
+                                    }
+                                    for key, item in value["people"].items()
+                                    if isinstance(item, dict)
+                                }
+                            }
+            except (OSError, ValueError, TypeError, AttributeError):
+                pass
         payload: dict[str, Any] = {
             "version": 1,
             "observed_at": self.now().astimezone(UTC).isoformat(),

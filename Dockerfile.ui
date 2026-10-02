@@ -13,8 +13,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --no-deps uv==0.12.7 \
+    && uv sync --locked --no-dev --no-editable
+ENV PATH="/app/.venv/bin:$PATH"
 COPY policy/phase4 /usr/local/lib/python3.12/policy/phase4
+COPY policy/phase4 /app/.venv/lib/python3.12/policy/phase4
 COPY --from=ui-build /build/ui/dist ./ui/dist
 RUN useradd --create-home --uid 10001 anima \
     && mkdir -p /var/lib/anima/backups /var/lib/anima/connection /var/lib/anima/provider-boundary \

@@ -249,7 +249,9 @@ class HouseholdInitiativeContext:
                 for item in result["nearby_events"]["items"]
             )
             # Delay/absence never authorizes a stale greeting. Reviews remain silent.
-            fresh = at - timedelta(seconds=120) <= source["occurred_at"] <= at
+            managed = request.request_metadata.get("required_delivery", {})
+            freshness_seconds = 600 if managed.get("version") == 1 else 120
+            fresh = at - timedelta(seconds=freshness_seconds) <= source["occurred_at"] <= at
             resource_id = str(
                 source["payload"].get("canonical_resource_id")
                 or source["payload"].get("resource_id")
@@ -327,8 +329,8 @@ class HouseholdInitiativeContext:
         }
         if event_type == "household.presence.connection_changed":
             text = {
-                "reconnected": f"{name} has returned home.",
-                "disconnected": f"{name} has left the residence.",
+                "reconnected": f"{name}'s associated device is visible on Wi-Fi.",
+                "disconnected": f"{name}'s Wi-Fi presence is now uncertain.",
             }.get(event_kind)
         else:
             text = phrases.get(event_kind)

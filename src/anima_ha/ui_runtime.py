@@ -13,7 +13,7 @@ import os
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -171,15 +171,23 @@ class JournalEventWatcher:
     """
 
     CHANNEL = "anima_journal_event_appended"
+    CHECKPOINT = "anima-household-journal-handoff-v1"
 
     def __init__(
         self,
         journal: PostgresEventJournal,
         dispatch: Callable[[EventEnvelope, int], Any],
+        household_id: UUID | None = None,
+        *,
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.journal = journal
         self.dispatch = dispatch
+        self.household_id = household_id
+        self.clock = clock
+        self.CHECKPOINT = f"{self.CHECKPOINT}:{household_id or 'unscoped'}"
         self._stop = threading.Event()
+        self.delivery_state = "INITIALIZING"
         self._thread = threading.Thread(
             target=self._run,
             name="anima-journal-event-watcher",
@@ -192,6 +200,130 @@ class JournalEventWatcher:
     def stop(self) -> None:
         self._stop.set()
 
+    def recover_pending(self) -> int:
+        """NOTIFY is a hint; the existing durable projection cursor is truth.
+
+        Exact Attention/request identity survives a crash after dispatch but
+        before this cursor commits. Historical stale events are not dispatched.
+        """
+        processed = 0
+        with psycopg.connect(self.journal.database_url) as connection:
+            # Initialize only the recent ingress suffix, never adopt historical
+            # provider work. The separate immutable management watermark makes
+            # later outages accountable even when a new event expires unseen.
+            connection.execute(
+                "INSERT INTO anima_projection_checkpoints"
+                "(projection_name,last_position,last_error) "
+                "SELECT %s, COALESCE(MIN(journal_position) FILTER "
+                "(WHERE recorded_at >= %s)-1, MAX(journal_position), 0), "
+                "'HISTORICAL_PREFIX_NOT_REPLAYED' FROM anima_event_journal "
+                "ON CONFLICT DO NOTHING",
+                (self.CHECKPOINT, self.clock() - timedelta(seconds=600)),
+            )
+            connection.execute(
+                "INSERT INTO anima_projection_checkpoints(projection_name,last_position) "
+                "SELECT %s, COALESCE(MAX(journal_position),0) FROM anima_event_journal "
+                "ON CONFLICT DO NOTHING",
+                (self.CHECKPOINT + ":managed",),
+            )
+            managed = connection.execute(
+                "SELECT last_position FROM anima_projection_checkpoints WHERE projection_name=%s",
+                (self.CHECKPOINT + ":managed",),
+            ).fetchone()
+            assert managed is not None
+            row = connection.execute(
+                "SELECT last_position FROM anima_projection_checkpoints "
+                "WHERE projection_name=%s FOR UPDATE",
+                (self.CHECKPOINT,),
+            ).fetchone()
+            assert row is not None
+            # Filter at the durable store: unrelated history is not a 57k-row
+            # startup replay. Managed expired rows retain an explicit disposition.
+            rows = connection.execute(
+                """SELECT event_id,journal_position FROM anima_event_journal
+                   WHERE journal_position>%s AND delivery_class='GUARANTEED'
+                   AND (%s::text IS NULL OR metadata->>'household_id'=%s)
+                   AND ((source='anima.household_presence'
+                         AND event_type='household.presence.connection_changed')
+                        OR (source='anima.ring' AND event_type IN
+                            ('household.ring.motion','household.ring.doorbell'))
+                        OR (source='anima:senseguard-policy'
+                            AND event_type IN ('senseguard.opened','senseguard.event')
+                            AND metadata->>'delivery_mode'='SENTRY_COGNITION'
+                            AND metadata->>'provenance'='anima.senseguard.alert_policy')
+                        OR (source LIKE 'android-relay-report:%%'
+                            AND metadata->'synthetic'='false'::jsonb
+                            AND metadata->'producer_qualified'='true'::jsonb
+                            AND metadata->'wake_eligible'='true'::jsonb
+                            AND metadata->>'schema_qualification'='ANIMA_OWNED_SCHEMA'
+                            AND event_type IN
+                            ('external.android.motion_reported','external.android.lock_reported')))
+                   ORDER BY journal_position LIMIT 256""",
+                (
+                    int(row[0]),
+                    str(self.household_id) if self.household_id else None,
+                    str(self.household_id) if self.household_id else None,
+                ),
+            ).fetchall()
+            events = [{"event_id": item[0], "journal_position": item[1]} for item in rows]
+            for item in events:
+                event = self.journal.get(str(item["event_id"]))
+                position = int(item["journal_position"])
+                if event is not None and (
+                    timedelta(0) <= self.clock() - event.occurred_at <= timedelta(seconds=600)
+                ):
+                    try:
+                        self.dispatch(event, position)
+                    except Exception as exc:
+                        self.delivery_state = "HANDOFF_FAILED"
+                        connection.execute(
+                            "UPDATE anima_projection_checkpoints SET last_error=%s "
+                            "WHERE projection_name=%s",
+                            (type(exc).__name__, self.CHECKPOINT),
+                        )
+                        connection.commit()
+                        raise
+                else:
+                    newly_managed = position > int(managed[0])
+                    disposition_key = (
+                        self.CHECKPOINT + ":expired:" + str(item["event_id"])
+                        if newly_managed
+                        else self.CHECKPOINT + ":historical-skipped"
+                    )
+                    connection.execute(
+                        "INSERT INTO anima_projection_checkpoints "
+                        "(projection_name,last_position,last_error) VALUES(%s,%s,%s) "
+                        "ON CONFLICT(projection_name) DO UPDATE SET "
+                        "last_position=EXCLUDED.last_position,last_error=EXCLUDED.last_error",
+                        (
+                            disposition_key,
+                            position,
+                            "EXPIRED_UNHANDED_REQUIRED_SOURCE"
+                            if newly_managed
+                            else "HISTORICAL_STALE_NOT_REPLAYED",
+                        ),
+                    )
+                connection.execute(
+                    "UPDATE anima_projection_checkpoints SET last_position=%s, "
+                    "last_error=NULL,updated_at=now() WHERE projection_name=%s",
+                    (position, self.CHECKPOINT),
+                )
+                processed += 1
+            connection.commit()
+            expired = connection.execute(
+                "SELECT EXISTS(SELECT 1 FROM anima_projection_checkpoints "
+                "WHERE projection_name LIKE %s AND last_error=%s)",
+                (self.CHECKPOINT + ":expired:%", "EXPIRED_UNHANDED_REQUIRED_SOURCE"),
+            ).fetchone()
+        self.delivery_state = (
+            "DEGRADED_EXPIRED_HANDOFF"
+            if expired and expired[0]
+            else "CURRENT"
+            if processed < 256
+            else "RECOVERING"
+        )
+        return processed
+
     def _run(self) -> None:
         while not self._stop.is_set():
             try:
@@ -202,19 +334,11 @@ class JournalEventWatcher:
                 ) as connection:
                     connection.execute(f"LISTEN {self.CHANNEL}")
                     while not self._stop.is_set():
-                        notification = next(connection.notifies(timeout=2, stop_after=1), None)
-                        if notification is None:
-                            continue
-                        event = self.journal.get(str(notification.payload))
-                        if event is None or (
-                            event.source != "anima.household_presence"
-                            or event.event_type != "household.presence.connection_changed"
-                        ):
-                            continue
-                        position = self.journal.position(event.event_id)
-                        if position is not None:
-                            self.dispatch(event, position)
-            except (OSError, psycopg.Error):
+                        count = self.recover_pending()
+                        if count < 256:
+                            next(connection.notifies(timeout=2, stop_after=1), None)
+            except Exception:
+                self.delivery_state = "HANDOFF_FAILED"
                 self._stop.wait(2)
 
 
@@ -985,13 +1109,17 @@ class CoreUICommandGateway:
         except ValueError as exc:
             raise UICommandError("INVALID_APPROVAL_ID") from exc
         pending = self.action_executor.pending_approvals.get(approval_uuid)
-        if pending is None or pending.household_id != identity.household_id:
+        if (
+            pending is None
+            or pending.household_id != identity.household_id
+            or pending.principal_id != identity.principal_id
+        ):
             raise UICommandError("APPROVAL_NOT_FOUND")
         tool = self._tool_by_id(pending.tool_id)
-        if tool is None or not tool.availability:
+        if (tool is None or not tool.availability) and decision.upper() != "REJECT":
             raise UICommandError(f"CORE_TOOL_UNAVAILABLE:{pending.tool_id}")
         choice = decision.upper()
-        if self.agent is not None:
+        if self.agent is not None and pending.episode_id is not None:
             resumed = self.agent.resume_confirmation(
                 approval_uuid,
                 identity=_identity(identity),
@@ -1331,6 +1459,11 @@ class CoreRuntime:
                 request, self.memory_service, self.graph, initiative=self.initiative_context
             ),
             sensor_status_loader=self.sentry_sensor_status,
+            journal_handoff_status_loader=lambda: (
+                self.journal_event_watcher.delivery_state
+                if self.journal_event_watcher is not None
+                else "NOT_CONFIGURED"
+            ),
             policy_role_resolver=self.identity_resolver.resolve_role,
             access_level_resolver=self.identity_resolver.resolve_access_level,
             agent_memory_enabled=os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true",
@@ -1808,6 +1941,11 @@ def build_postgres_core(
         database_url, learning_service, household_evidence
     )
     runtime.initiative_context = initiative_context
+    from anima_ha.alert_delivery import initialize_required_delivery
+
+    intelligence_store.delivery_initializer = lambda request: initialize_required_delivery(
+        request, initiative_context(request).get("notification", {})
+    )
     if ha_adapter is not None and household_value and intelligence_store is not None:
         household_id = UUID(household_value)
 
@@ -1988,10 +2126,37 @@ def build_postgres_core(
                 "household.presence.connection_changed"
             ):
                 dispatch_presence_event(event, position)
+            elif event.source == "anima.ring":
+                dispatch_ring_event(event, position)
+            elif event.source == "anima:senseguard-policy":
+                dispatch_attention_event(event, position)
+            elif event.source.startswith("android-relay-report:"):
+                from anima_ha.vendor_event_ingress import ExactVendorAttention, VendorRelayConfig
+
+                configuration = VendorRelayConfig.from_environment()
+                relay_id = event.source.rsplit(":", 1)[-1]
+                permitted = any(
+                    str(item.registration.relay_id) == relay_id
+                    and item.registration.household_id == household_id
+                    and item.enabled
+                    and item.producer_qualified
+                    and item.wake_enabled
+                    and item.official_app_ready
+                    and item.source_privacy_qualified
+                    for item in configuration.sources
+                )
+                if configuration.enabled and permitted:
+                    ExactVendorAttention(
+                        attention,
+                        context,
+                        intelligence_store,
+                        plugins.list_tools,
+                        initiative_context.resolve_event_path,
+                    )(event, position)
 
         runtime.event_dispatcher = dispatch_journal_event
         if watch_journal_events:
-            watcher = JournalEventWatcher(journal, dispatch_journal_event)
+            watcher = JournalEventWatcher(journal, dispatch_journal_event, household_id)
             runtime.journal_event_watcher = watcher
             watcher.start()
     return runtime

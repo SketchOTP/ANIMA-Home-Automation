@@ -1,8 +1,67 @@
 # Current Project State
 
+## Stage2 independent source acceptance — 2026-10-02T04:41Z
+
+Primary Architect collected the sole native Coder's final corrected result and
+independently ACCEPTED SOURCE FOR PUBLICATION / CONTROLLED DEPLOYMENT.
+ANIMA18 manifest0dc074efea7ae0a4ca83edbcace093283010580892e8c935100b22d0ff3dafc5;
+SENTRY8 manifestd16cfb23b28fa3f97c15e6e8bc12972d97af0fe8a365f1d6c89ca3d6dc332d5c.
+Complete ANIMA1251 passed/76 skipped, Ruff/strict mypy160/OPA9; SENTRY575 and
+security56 PASS. Parent directly reproduced isolated PG11, mandatory delivery6,
+relay7, approval/context47 and conservative presence12 passes; manifests and
+104 image Python/SQL file equality verified independently. Final whole-file
+SENTRY lint retains18 inherited findings, zero introduced; no broad cleanup.
+Source is not yet deployed; publication/hosted CI and controlled recovery are
+next. Actual audible start, vendor ingress and owner workflows remain unproven.
+Android owner-root gate remains; no replay of134 old PENDING/46 ambiguous work.
+Full MO-01–MO-15/A–O, Stage3 context/incident and Stage4 measurable learning remain
+open under the same 027A/R5F and active Goal. No product-goal completion claim.
+
+
 Last updated: 2026-10-01
 
 ## Current owner takeover checkpoint — 027A / R5F — 2026-10-01
+
+Latest Stage2 checkpoint — 2026-10-02 UTC: primary independently ACCEPTED the
+bounded Stage1 controlled installation/authenticated Core/fresh idle voice/
+registry/no-blind-replay result. Exact-head CI36955481716 (ANIMA949804dc) and
+CI36955483533 (SENTRY23fb2162) PASS, parent-reported and recorded in 027A
+NATIVE-ARCHITECT-REVIEWS.md. This is not physical or whole Stage1/goal acceptance.
+Current assignment is the coherent Stage2 accountable alert/presence bundle;
+local source/test bundle is now frozen READY_FOR_REVIEW / REVIEW_PENDING.
+Complete validator1251 passed/76 skipped; strict mypy160/Ruff/OPA9 and
+SENTRY575/security56/compile PASS. Locked test image104 source files and46
+runtime dependencies exactly match host/lock. Canonical negatives, limitations
+and exact manifests in STAGE2-CODER-RESULT.md. No worker self-acceptance.
+Current work is uncommitted and NOT deployed/restarted; older loaded runtime
+remains the Stage1 recovery observation boundary. Native checkout is also used
+by services; this statement does not prove every future lazy import is frozen.
+Android session/supervisor and Wi-Fi remain stopped/held. No model/physical
+test turn, owner-store fixture injection, privileged repair or publication.
+Parent retains OWNED generation/fence4 and owns coverage/review/publication.
+Canonical detailed result: ANIMA 027A STAGE2-CODER-RESULT.md. Earlier source,
+CI-in-progress and recovery-review-pending entries below are historical.
+
+Latest checkpoint — 2026-10-02UTC: primary independently ACCEPTED corrected
+Stage1 source FOR CONTROLLED DEPLOYMENT, then explicitly supplied IMAGE_READY.
+Published pair: ANIMA949804dc9f07487868664d2b1508eceb9f44cc6c;
+SENTRY23fb216250d646451c47e8d3ea8c63cd7f289d18. Coder froze product source,
+applied only the two reviewed installers (23/23 installed hashes match), reloaded
+user units, then replaced only the UI container on approved image0fc3f95a7c4f...
+and recovered Core/worker/voice/supervisor/native display. Core authenticated
+readiness PASS; idle voice LISTENING fresh beyond60s, awake/office; authenticated
+sensor surface CURRENT/10 rows. DB/OPA/searxng IDs/start times/mounts unchanged.
+Private settings/profile/token files11/11 preserved; no resident thread reset.
+134 historical autonomous PENDING untouched, zero fresh/active claims after
+two expressly allowed configured review requests ended NO_ACTION; original46
+ambiguity rows unchanged. Memory/journal grew during ordinary recovery/reviews;
+no global no-effect claim. Android session/supervisor and Wi-Fi remain stopped/
+held; root repair and stale Wi-Fi baseline Stage3 remain gates. Runtime PARTIAL
+and review-pending, no whole-goal/browser/physical/audible/reboot acceptance.
+Exact identities/manifests/observations in027A STAGE1-CODER-RESULT.md. Parent
+reported hosted CI IN_PROGRESS; Coder did not independently check conclusions.
+Earlier source-only checkpoints below remain history, superseded for current
+pair/disposition by this entry. Parent generation/fence4 remains OWNED.
 
 BASELINE/GOVERNANCE: `ACCEPTED` by primary Architect; exact bounded disposition
 and next Stage1 scope are linked in ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`.

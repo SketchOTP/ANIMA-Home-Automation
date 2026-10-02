@@ -2051,3 +2051,44 @@ appended to existing027A `STAGE1-CODER-RESULT.md`. No service/cache/profile/mode
 goal/household action, staging/commit/push or Notion write. Parent retains OWNED
 generation/fence4. Independent product review remains PENDING; recovery/root
 repair/whole-goal completion unproven. Parent-owned coverage/reviews untouched.
+
+## 2026-10-02UTC — 027A/R5F accepted source, controlled recovery observed — PARTIAL
+
+Primary independently ACCEPTED source FOR CONTROLLED DEPLOYMENT, then explicitly
+supplied IMAGE_READY for published pair949804dc/23fb2162 and image0fc3f95a7c4f....
+Coder applied only two reviewed installers (23 expected=installed hashes), user
+daemon-reload, UI-only Compose replacement, Core/worker and resident voice/UI
+recovery. Actual authenticated Core readiness and fresh idle LISTENING awake/
+office observed; sensor surface CURRENT10 items. Underlying DB/OPA/searxng and
+all mounts preserved,11 private files/modes preserved, no source/profile/thread/
+model/permission change or Coder commit/push. Historical134 PENDING/46 ambiguous
+unchanged; zero autonomous transitions, two allowed configured reviews NO_ACTION,
+then active claims0. Memory/journal growth recorded, not denied. Android and Wi-Fi
+held. Detailed canonical runtime return appended to STAGE1-CODER-RESULT.md;
+runtime review PENDING/PARTIAL, not whole-goal/physical/audible/reboot acceptance.
+
+## 2026-10-02 — 027A/R5F Stage2 source/test result, independent review pending
+
+Primary accepted bounded Stage1 controlled recovery and both published CI runs
+passed; prior pending entries above are history. Sole Coder Stage2 product bundle
+is frozen LOCAL / READY_FOR_REVIEW, not deployed or accepted. Canonical exact
+paths/manifests/commands/negative results and gates: 027A STAGE2-CODER-RESULT.md.
+ANIMA complete validator1251 passed/76 skipped, strict mypy160 files, Ruff/format
+PASS; OPA9/9; isolated ingress45 and new real-PG delivery11 pass. SENTRY575 full,
+56 security, compile pass. Locked image104 source files and46 dependencies match
+exactly, UID10001/policy/migrations/assets checked, no running image replaced.
+Real PostgreSQL plus test policy evaluators is not live OPA/physical proof.
+Graft/ignore/goal/profile hashes unchanged; parent reviews/coverage untouched.
+Root Android/guard deployment and runtime/physical qualification remain gates;
+Android/Wi-Fi stopped. No Coder commit/push/Notion/model/action turn/descendants.
+
+## 2026-10-02T04:41Z — Stage2 source independently accepted, operational proof pending
+
+Primary collected actual final native correction and accepts E4 source for one
+publication/controlled deployment cycle. Full ANIMA1251/76 and SENTRY575/security56
+pass; parent directly checked critical target suites, frozen manifests and104
+test-image source equality. SENTRY lint baseline18/current18/introduced0; inherited
+debt and earlier disproven counts retained. Isolated PG11/ingress45 now required
+by existing hosted CI/artifact workflow. Source acceptance is not live delivery,
+audible3s proof, vendor readiness, Stage3/4 or full-goal completion. Graft excluded;
+same sole native Coder has preflight-only scope until explicit IMAGE_READY/GO.

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import hmac
 import json
@@ -22,13 +23,14 @@ import re
 import stat
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from uuid import uuid4
 
 TAPO_PACKAGE = "com.tplink.iot"
@@ -277,8 +279,81 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
 
 
 class Relay:
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, *, clock: Callable[[], float] = time.time) -> None:
         self.config = config
+        self.clock = clock
+        # Reuse the existing private atomic JSON snapshot facility, not a new
+        # database platform. Persistent minimized outbox is separate from the
+        # volatile heartbeat AND from credentials, beside the private token.
+        self.outbox_path = config.token_file.with_name("vendor-relay-outbox.json")
+        self._directory = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+        for part in self.outbox_path.parent.parts[1:]:
+            following = os.open(
+                part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=self._directory
+            )
+            os.close(self._directory)
+            self._directory = following
+        info = os.fstat(self._directory)
+        if info.st_uid != os.geteuid() or info.st_mode & 0o022:
+            os.close(self._directory)
+            raise RelayConfigurationError("unsafe outbox directory")
+        self._lock_fd = os.open(
+            "vendor-relay-outbox.lock",
+            os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW,
+            0o600,
+            dir_fd=self._directory,
+        )
+        info = os.fstat(self._lock_fd)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.geteuid()
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_nlink != 1
+        ):
+            self.close()
+            raise RelayConfigurationError("unsafe outbox lock")
+        try:
+            fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            try:
+                fd = os.open(
+                    self.outbox_path.name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=self._directory
+                )
+            except FileNotFoundError:
+                self.outbox: list[dict[str, Any]] = []
+                self.overflow_count = 0
+            else:
+                with os.fdopen(fd, "r", encoding="utf-8") as stream:
+                    info = os.fstat(stream.fileno())
+                    if (
+                        not stat.S_ISREG(info.st_mode)
+                        or stat.S_IMODE(info.st_mode) != 0o600
+                        or info.st_uid != os.geteuid()
+                        or info.st_nlink != 1
+                        or info.st_size > 65536
+                    ):
+                        raise RelayConfigurationError("unsafe outbox snapshot")
+                    value = json.load(stream)
+                if (
+                    not isinstance(value, dict)
+                    or value.get("version") != 1
+                    or not isinstance(value.get("deliveries"), list)
+                    or len(value["deliveries"]) > 80
+                ):
+                    raise RelayConfigurationError("invalid outbox snapshot")
+                self.outbox = value["deliveries"]
+                self.overflow_count = value.get("overflow_count", 0)
+                if type(self.overflow_count) is not int or self.overflow_count < 0:
+                    raise RelayConfigurationError("invalid outbox snapshot")
+                for item in self.outbox:
+                    self._validate_delivery(item)
+        except Exception:
+            self.close()
+            raise
+        # Bus IDs and occurrence UUIDs have separate lifetimes. The epoch is
+        # metadata only; no upstream immutable occurrence key/time is available.
+        self.epoch = str(uuid4())
+        self._next_id = 1
+        self._notifications: set[int] = set()
         self.capture_count = 0
         self.received = 0
         self.accepted = 0
@@ -287,12 +362,64 @@ class Relay:
         self.received_by_package: dict[str, int] = {}
         self.accepted_by_package: dict[str, int] = {}
 
+    def close(self) -> None:
+        for attribute in ("_lock_fd", "_directory"):
+            fd = getattr(self, attribute, None)
+            if fd is not None:
+                os.close(fd)
+                setattr(self, attribute, None)
+
+    def _persist(self) -> None:
+        # Directory descriptor pins the validated directory through replace;
+        # neither an attacker symlink nor a sidefile is followed/created.
+        encoded = json.dumps(
+            {"version": 1, "deliveries": self.outbox, "overflow_count": self.overflow_count},
+            sort_keys=True,
+        ).encode()
+        if len(encoded) > 65536:
+            raise RelayConfigurationError("outbox snapshot capacity exhausted")
+        temporary = f".outbox-{uuid4()}.tmp"
+        fd = os.open(
+            temporary,
+            os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW,
+            0o600,
+            dir_fd=self._directory,
+        )
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.rename(
+                temporary,
+                self.outbox_path.name,
+                src_dir_fd=self._directory,
+                dst_dir_fd=self._directory,
+            )
+            os.fsync(self._directory)
+        finally:
+            try:
+                os.unlink(temporary, dir_fd=self._directory)
+            except FileNotFoundError:
+                pass
+
     def _status(self, state: str, package_name: str | None = None) -> None:
+        counts: dict[str, int] = {}
+        for item in self.outbox:
+            counts[item["state"]] = counts.get(item["state"], 0) + 1
+        pending = counts.get("PENDING", 0)
+        failed = counts.get("ESCALATED", 0) + counts.get("UNKNOWN", 0) + self.overflow_count
         _atomic_json(
             self.config.status_file,
             {
                 "version": 1,
                 "state": state,
+                "transport_state": "LISTENING",
+                "bus_epoch": self.epoch,
+                "delivery_state": "FAULT" if failed else "PENDING" if pending else "CURRENT",
+                "pending_obligations": pending,
+                "escalated_obligations": failed,
+                "overflow_count": self.overflow_count,
                 "observed_at": datetime.now(UTC).isoformat(),
                 "last_package": package_name,
                 "received": self.received,
@@ -330,7 +457,7 @@ class Relay:
         finally:
             os.close(descriptor)
 
-    def receive(self, package_name: str, summary: Any, body: Any) -> None:
+    def receive(self, package_name: str, summary: Any, body: Any) -> str | None:
         # Package identity comes from Waydroid's server-owned desktop-entry hint.
         # Return before reading text for every other Android package.
         if package_name not in ALLOWED_PACKAGES:
@@ -345,27 +472,180 @@ class Relay:
             self.rejected += 1
             self._status("UNRECOGNIZED_FORMAT", package_name)
             return
+        delivery_id = report["fields"]["delivery_id"]
+        at = self.clock()
+        self._compact_receipts(at)
+        if sum(item["state"] != "ACKNOWLEDGED" for item in self.outbox) >= 64:
+            self.overflow_count += 1
+            self._persist()
+            self._status("OUTBOX_CAPACITY_EXHAUSTED", package_name)
+            raise RelayConfigurationError("outbox capacity exhausted")
+        self.outbox.append(
+            {
+                "delivery_id": delivery_id,
+                "package": package_name,
+                "report": report,
+                "created": at,
+                "due": at,
+                "attempts": 0,
+                "state": "PENDING",
+                "transport_attempted": False,
+            }
+        )
+        self._persist()  # Persist before transport/Notify acknowledgement.
+        self.drain()
+        return str(delivery_id)
+
+    def notify(self, package_name: str, replaces_id: int, summary: Any, body: Any) -> int:
+        # Every callback is distinct, even a same-text replacement. Upstream
+        # does not supply an immutable event key; cross-callback dedup UNKNOWN.
+        self.receive(package_name, summary, body)
+        assigned = replaces_id if replaces_id else self._next_id
+        self._next_id = max(self._next_id, assigned + 1)
+        self._notifications.add(assigned)
+        return assigned
+
+    def close_notification(self, notification_id: int) -> None:
+        if notification_id not in self._notifications:
+            raise ValueError("unknown notification ID")
+        self._notifications.remove(notification_id)
+
+    def _compact_receipts(self, at: float) -> None:
+        acknowledged = [
+            item
+            for item in self.outbox
+            if item["state"] == "ACKNOWLEDGED" and item["created"] >= at - 86400
+        ][-16:]
+        # Unresolved/uncertain obligations are NEVER displaced by receipt history.
+        self.outbox = [
+            item for item in self.outbox if item["state"] != "ACKNOWLEDGED"
+        ] + acknowledged
+
+    @staticmethod
+    def _validate_delivery(item: Any) -> None:
+        if (
+            not isinstance(item, dict)
+            or item.get("package") not in ALLOWED_PACKAGES
+            or item.get("state") not in {"PENDING", "ACKNOWLEDGED", "UNKNOWN", "ESCALATED"}
+            or type(item.get("attempts")) is not int
+            or item["attempts"] < 0
+            or type(item.get("transport_attempted")) is not bool
+            or any(type(item.get(key)) not in {int, float} for key in ("created", "due"))
+            or not isinstance(item.get("delivery_id"), str)
+        ):
+            raise RelayConfigurationError("invalid outbox delivery")
+        from uuid import UUID
+
+        UUID(item["delivery_id"])
+        report = item.get("report")
+        if item["state"] != "PENDING":
+            if report is not None:
+                raise RelayConfigurationError("unexpected retained report")
+            return
+        expected = (
+            {
+                "format",
+                "delivery_id",
+                "camera_alias",
+                "channel_id",
+                "kind",
+                "android_posted_at",
+                "source_occurred_at",
+                "relay_received_at",
+                "is_group_summary",
+                "reported_loss_count",
+            }
+            if item["package"] == WANSVIEW_PACKAGE
+            else {
+                "format",
+                "delivery_id",
+                "resource_alias",
+                "kind",
+                "reported_profile_ref",
+                "reported_method",
+                "source_occurred_at",
+                "relay_received_at",
+            }
+        )
+        if (
+            not isinstance(report, dict)
+            or set(report) != {"package_name", "fields"}
+            or report["package_name"] != item["package"]
+            or not isinstance(report["fields"], dict)
+            or set(report["fields"]) != expected
+            or report["fields"].get("delivery_id") != item["delivery_id"]
+            or any(
+                value is not None and not isinstance(value, (str, bool, int))
+                for value in report["fields"].values()
+            )
+            or any(
+                isinstance(value, str) and len(value) > 100 for value in report["fields"].values()
+            )
+        ):
+            raise RelayConfigurationError("invalid minimized outbox report")
+
+    def drain(self) -> None:
+        at = self.clock()
+        # An attempted POST can have committed Journal/handoff despite a lost
+        # receipt. Expiration never relabels that uncertainty as clearly unsent.
+        for item in self.outbox:
+            if item["state"] == "PENDING" and item["created"] < at - 3600:
+                item.update(
+                    state="UNKNOWN" if item["transport_attempted"] else "ESCALATED",
+                    report=None,
+                    receipt="EXPIRED_UNACKNOWLEDGED",
+                )
+        row = next(
+            (item for item in self.outbox if item["state"] == "PENDING" and item["due"] <= at), None
+        )
+        self._persist()
+        if row is None:
+            self._status("READY")
+            return
+        package_name = row["package"]
         master = _private_regular(self.config.token_file, maximum=512).decode().strip()
         token = _vendor_token(master, package_name)
         request = urllib.request.Request(
             self.config.endpoint,
-            data=json.dumps(report, separators=(",", ":")).encode(),
+            data=json.dumps(row["report"], separators=(",", ":")).encode(),
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             method="POST",
         )
+        row["transport_attempted"] = True
+        self._persist()
         try:
             with urllib.request.urlopen(request, timeout=5) as response:
                 if response.status != 200:
                     raise urllib.error.HTTPError(
                         self.config.endpoint, response.status, "receiver rejected report", {}, None
                     )
-                response.read(4096)
+                receipt = json.loads(response.read(4096))
+                if (
+                    receipt.get("status") != "RECORDED"
+                    or receipt.get("delivery_id") != row["delivery_id"]
+                    or not isinstance(receipt.get("event_id"), str)
+                    or type(receipt.get("journal_position")) is not int
+                    or receipt.get("attention") not in {"QUEUED", "NO_NEW_REQUEST", "NOT_ELIGIBLE"}
+                ):
+                    raise ValueError("invalid durable receipt")
+            row.update(
+                state="ACKNOWLEDGED",
+                report=None,
+                receipt={
+                    key: receipt[key] for key in ("event_id", "journal_position", "attention")
+                },
+            )
+            self._compact_receipts(at)
+            self._persist()
             self.accepted += 1
             self.accepted_by_package[package_name] = (
                 self.accepted_by_package.get(package_name, 0) + 1
             )
             self._status("DELIVERED", package_name)
-        except (OSError, urllib.error.URLError, urllib.error.HTTPError):
+        except (OSError, ValueError, urllib.error.URLError, urllib.error.HTTPError):
+            attempts = row["attempts"] + 1
+            row.update(attempts=attempts, due=at + min(300, 2 ** min(attempts, 9)))
+            self._persist()
             self.failed += 1
             self._status("DELIVERY_FAILED", package_name)
 
@@ -385,7 +665,6 @@ def serve(config: Config) -> None:
 
     class NotificationService(dbus.service.Object):
         def __init__(self) -> None:
-            self._next_id = 1
             owner = dbus.service.BusName(
                 "org.freedesktop.Notifications", bus=bus, do_not_queue=True
             )
@@ -408,18 +687,24 @@ def serve(config: Config) -> None:
             hints: Any,
             expire_timeout: Any,
         ) -> int:
-            del app_name, replaces_id, app_icon, actions, expire_timeout
+            del app_name, app_icon, actions, expire_timeout
             desktop_entry = str(hints.get("desktop-entry", ""))
             prefix = "waydroid."
             if desktop_entry.startswith(prefix):
-                relay.receive(desktop_entry[len(prefix) :], summary, body)
-            notification_id = self._next_id
-            self._next_id += 1
-            return notification_id
+                desktop_entry = desktop_entry[len(prefix) :]
+            return relay.notify(desktop_entry, int(replaces_id), summary, body)
 
         @dbus.service.method("org.freedesktop.Notifications", in_signature="u")
         def CloseNotification(self, notification_id: Any) -> None:
-            del notification_id
+            try:
+                relay.close_notification(int(notification_id))
+            except ValueError as exc:
+                raise dbus.exceptions.DBusException(str(exc)) from None
+            self.NotificationClosed(int(notification_id), 3)
+
+        @dbus.service.signal("org.freedesktop.Notifications", signature="uu")
+        def NotificationClosed(self, notification_id: int, reason: int) -> None:
+            del notification_id, reason
 
         @dbus.service.method("org.freedesktop.Notifications", out_signature="as")
         def GetCapabilities(self) -> list[str]:
@@ -439,9 +724,12 @@ def serve(config: Config) -> None:
 
     service = NotificationService()
     relay._status("READY")
-    GLib.timeout_add_seconds(30, lambda: (relay._status("READY"), True)[1])
-    GLib.MainLoop().run()
-    del service
+    GLib.timeout_add_seconds(2, lambda: (relay.drain(), True)[1])
+    try:
+        GLib.MainLoop().run()
+    finally:
+        relay.close()
+        del service
 
 
 def main(argv: list[str] | None = None) -> int:

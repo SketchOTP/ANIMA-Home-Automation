@@ -280,6 +280,10 @@ def test_atomic_delivery_replay_conflict_and_no_synthetic_wake() -> None:
         "status": "RECORDED",
         "deduplicated": False,
         "attention": "NOT_ELIGIBLE",
+        "delivery_id": data["fields"]["delivery_id"],
+        "event_id": journal.events[0]["event_id"],
+        "journal_position": 1,
+        "delivery_status": "NOT_VERIFIED",
     }
     ingress.clock = lambda: NOW + timedelta(seconds=10)
     assert post(client, data).json()["deduplicated"] is True
@@ -631,8 +635,9 @@ def test_optin_real_postgres_http_append_dedup_conflict_without_truth() -> None:
     if not database_url:
         pytest.skip("requires disposable ANIMA_VENDOR_TEST_DATABASE_URL")
     with psycopg.connect(database_url) as connection:
-        assert connection.execute("SELECT current_database()").fetchone() == (
+        assert connection.execute("SELECT current_database(),current_user").fetchone() == (
             "anima_vendor_ingress_test",
+            "stage2",
         )
     migrate(database_url, 5)
     client, ingress, source, _, _ = fixture(synthetic=False, qualified=True)
@@ -663,6 +668,10 @@ def test_optin_real_postgres_http_append_dedup_conflict_without_truth() -> None:
         "status": "RECORDED",
         "deduplicated": False,
         "attention": "NOT_ELIGIBLE",
+        "delivery_id": data["fields"]["delivery_id"],
+        "event_id": journal.list_recent_events(limit=1)[0]["event_id"],
+        "journal_position": journal.list_recent_events(limit=1)[0]["journal_position"],
+        "delivery_status": "NOT_VERIFIED",
     }
     source_name = (
         f"android-relay-report:{source.registration.household_id}:{source.registration.relay_id}"
@@ -717,6 +726,10 @@ def test_qualified_real_protocol_records_deduplicates_and_status_is_receipt_not_
         "status": "RECORDED",
         "deduplicated": False,
         "attention": "NOT_ELIGIBLE",
+        "delivery_id": data["fields"]["delivery_id"],
+        "event_id": journal.events[0]["event_id"],
+        "journal_position": 1,
+        "delivery_status": "NOT_VERIFIED",
     }
     assert post(client, data).json()["deduplicated"] is True
     event = journal.events[0]

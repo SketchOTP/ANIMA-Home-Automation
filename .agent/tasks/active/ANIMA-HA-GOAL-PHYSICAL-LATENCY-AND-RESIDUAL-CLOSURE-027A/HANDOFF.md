@@ -305,3 +305,14 @@ UI assertions execute actual native authority branches; existing silent PCM
 diagnostics protect freshness without adding a heartbeat. No service installation,
 restart/deploy, household/model/profile/goal/cache action. Product REVIEW_PENDING;
 parent must independently review and explicitly approve subsequent safe recovery.
+
+### 2026-10-02UTC — controlled recovery return for independent verification
+
+Primary accepted source and authorized IMAGE_READY recovery; Coder performed
+only reviewed installers, user reload, UI-only replacement and named Core/worker/
+resident starts/restarts. See appended canonical STAGE1-CODER-RESULT.md for exact
+23 installed manifests, published949804dc/23fb2162 pair/image, authenticated
+READY and fresh awake/office standby. Historical134 pending/46 ambiguity and
+private11/11 fingerprints preserved; two configured reviews NO_ACTION; growth
+explicit. Android/Wi-Fi held. Runtime PARTIAL/review-pending, no whole-goal closure;
+next material/root/Stage3 assignment belongs to primary. No product source edits.

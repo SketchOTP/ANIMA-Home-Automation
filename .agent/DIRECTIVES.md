@@ -734,3 +734,17 @@ binding: installed `anima_household` is present, disabled at rest, exact-preboun
 and protected by existing denies/overrides. No resident profile change is made.
 ANIMA Graft ask's automatic cache refresh is an explicit preservation failure;
 no manual rebuild, further ask or speculative byte restoration was performed.
+
+## 2026-10-02 — 027A / R5F Stage2 native assignment register
+
+Primary Architect independently accepted bounded Stage1 controlled recovery;
+both published-head hosted CI runs PASS. Source: existing 027A
+NATIVE-ARCHITECT-REVIEWS.md and direct native assignment/review corrections.
+Sole Coder implements accountable alert delivery and conservative dependent
+presence recovery, episode-less approval/rejection and locked UI packaging.
+Existing stores/callbacks only; no new brain, historical ambiguous replay,
+owner-store fixtures, model/physical turns, source deployment/restart, privileged
+repair, publication, descendants or edits to parent-owned reviews/coverage.
+Stage2 remains LOCAL / REVIEW_PENDING under parent OWNED generation/fence4.
+Canonical implementation, negative checks, tests and gates: STAGE2-CODER-RESULT.md
+inside the existing 027A packet. Source-vs-loaded runtime is explicit there.

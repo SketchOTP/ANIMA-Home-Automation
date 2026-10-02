@@ -666,3 +666,15 @@ plus3 format failures are independently reproduced and preserved, then bounded
 types/formatting reconciled. Full SENTRY567 PASS; full ANIMA validate1229/76 skips,
 OPA9/9, full156-file strict mypy and Ruff format/lint PASS. Original negative
 result remains intact; parent review PENDING; no deployment/restart/cache writes.
+
+### 2026-10-02UTC — controlled installation / IMAGE_READY recovery
+
+Primary source acceptance and recovery gate recorded separately from runtime.
+Exact public manifests23/23 installed bytes, source pair949804dc/23fb2162,
+image0fc3f95a7c4f..., effective graph, single-owner UID boundary, authenticated
+Core readiness and idle voice freshness are appended to STAGE1-CODER-RESULT.md.
+DB/OPA/searxng container identities/start times/mounts unchanged; private11/11
+fingerprints/modes preserved. Two configured reviews NO_ACTION; historical134
+pending/46 ambiguity unchanged, zero autonomous transitions. Growth recorded.
+Android/Wi-Fi held; root/Stage3/browser/physical/reboot/goal gates remain open.
+Runtime observed PARTIAL, independent recovery disposition PENDING.

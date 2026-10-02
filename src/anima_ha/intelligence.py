@@ -274,6 +274,9 @@ class PostgresIntelligenceStore:
     def __init__(self, database_url: str, connect_timeout: int = 5) -> None:
         self.database_url = database_url
         self.connect_timeout = connect_timeout
+        self.delivery_initializer: Callable[[IntelligenceRequest], dict[str, Any] | None] | None = (
+            None
+        )
 
     def _connect(self) -> psycopg.Connection[Any]:
         return psycopg.connect(
@@ -281,6 +284,11 @@ class PostgresIntelligenceStore:
         )
 
     def enqueue(self, request: IntelligenceRequest) -> IntelligenceRequest:
+        metadata = dict(request.request_metadata)
+        if self.delivery_initializer is not None:
+            obligation = self.delivery_initializer(request)
+            if obligation is not None:
+                metadata["required_delivery"] = obligation
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -306,7 +314,7 @@ class PostgresIntelligenceStore:
                     request.provider_id,
                     request.provider_version,
                     request.idempotency_key,
-                    json.dumps(request.request_metadata, sort_keys=True),
+                    json.dumps(metadata, sort_keys=True),
                     json.dumps(list(request.catalogue), sort_keys=True),
                 ),
             )

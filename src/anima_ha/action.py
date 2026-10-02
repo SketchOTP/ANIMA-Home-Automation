@@ -1780,7 +1780,7 @@ class ActionExecutionCoordinator:
         household_id: UUID,
         principal_id: UUID,
         decision: str,
-        tool: ToolDescriptor,
+        tool: ToolDescriptor | None,
         policy_service: PolicyService,
         policy_context: PolicyContext | None = None,
         refresher: TruthRefresher | None = None,
@@ -1841,7 +1841,7 @@ class ActionExecutionCoordinator:
             return ActionExecutionResult(record)
         if pending.status != PendingApprovalStatus.APPROVED:
             return None
-        if tool.tool_id != pending.tool_id or tool.version != pending.tool_version:
+        if tool is None or tool.tool_id != pending.tool_id or tool.version != pending.tool_version:
             record = self.store.update(
                 pending.action_id,
                 ActionStatus.POLICY_DENIED,

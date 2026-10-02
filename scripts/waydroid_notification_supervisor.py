@@ -376,6 +376,10 @@ class WaydroidSupervisor:
         if not _iso_recent(observed, now=self.clock()):
             return "DEGRADED", "RELAY_HEARTBEAT_STALE", relay
         state = relay.get("state")
+        if relay.get("delivery_state") in {"FAULT", "PENDING"}:
+            return "DEGRADED", "RELAY_DELIVERY_" + str(relay["delivery_state"]), relay
+        if state not in {"READY", "DELIVERED"}:
+            return "DEGRADED", "RELAY_REPORTED_FAILURE", relay
         return (
             "CONNECTED",
             "HEARTBEAT" if state in {"READY", "DELIVERED"} else "RELAY_REPORTED_FAILURE",

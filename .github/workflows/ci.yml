@@ -73,6 +73,22 @@ jobs:
           docker compose exec -T db pg_isready -U anima -d anima
           curl --fail --silent http://127.0.0.1:18181/health >/dev/null
           uv run --locked --group dev anima-migrate
+      - name: Qualify Stage2 delivery and vendor ingress against isolated PostgreSQL
+        env:
+          ANIMA_DB_PASSWORD: anima_dev_only
+          SEARXNG_SECRET: ci-only-placeholder
+          ANIMA_STAGE2_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
+          ANIMA_VENDOR_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
+        run: |
+          set -euo pipefail
+          docker compose exec -T db psql -U anima -d postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE stage2 LOGIN PASSWORD 'stage2-test-only' NOSUPERUSER NOCREATEDB NOCREATEROLE;"
+          docker compose exec -T db createdb -U anima -O stage2 anima_vendor_ingress_test
+          mkdir -p /tmp/anima-owner-evidence
+          uv run --locked pytest -q tests/test_stage2_delivery_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/stage2-delivery-postgres.xml
+          uv run --locked pytest -q tests/test_vendor_event_ingress.py \
+            --junitxml=/tmp/anima-owner-evidence/stage2-vendor-ingress.xml
       - name: Qualify late device entities against isolated PostgreSQL
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
