@@ -1,6 +1,51 @@
 # 027A handoff
 
+Latest supersession2026-10-02T11:30Z: compatible Stage4 source7fe3c705/862cc8ec
+both exact hosted PASS and live originals normal-fast-forwarded. Image02a42012
+in a6236c4b matches106 imported files/47 locked packages; authenticated Core/
+stack/health and bounded restart pass, private six/task/profile baseline exact.
+Historical46 ambiguity records remain unchanged, all254 earlier Memory rows
+retained with versioned reconciliation.51 active review dispositions contain20
+successes,23failed,5incomplete/3unknown. No new model request or physical proof.
+Android Binder root gate remains; same native Coder Stage5 is active in distinct
+worktrees. Real owner workflows/helper accounting/prospective outcomes and full
+MO/A–O remain open. Notion deployment checkpoint reconciliation next; source
+publication is done but accumulated governance remains uncommitted.
+
+Latest checkpoint2026-10-02T11:12Z: Stage4 actual native final source-accepted
+and published7fe3c705/862cc8ec; SENTRY exactCI36998958481 PASS, ANIMA36998956233
+pending. Candidate image02a42012 matches106 files/47 lock packages, NOT deployed.
+Loaded pair remains52e90c6b/89bbf6c7/image761b6182. Parent exact four-call synthetic
+audit classification applied append-only,8 receipts byte-preserved/idempotent;
+missing ANIMA helper accounting remains partial. Same sole Coder Leibniz has
+STAGE5-ASSIGNMENT in distinct worktrees, no final yet. Next parent step is exact
+ANIMA CI and safe compatible deployment, not source-only operational acceptance.
+Root Binder/real vendor/audible/owner workflows/future learning gates stand.
+
 Status: `IN_PROGRESS`
+
+## Native recovery continuation — 2026-10-02T10:38Z
+
+Prior sole Coder Laplace terminated with usage error, then handle not_found.
+Exactly one replacement Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95 recovers the
+same preserved Stage4 worktrees under027A/R5F. No actual final/acceptance yet;
+no reset/model override/new packet or household developer powers. Current
+accepted52e90c6b/89bbf6c7 deployment unchanged. Parent retains fence4 and
+review/publication/live audit correction custody. Both Notion pages now carry
+the recovery/negative/residual checkpoint, complete fetched additions verified
+literal and normalized. Prepared Stage5 owner workflows remains NOT ISSUED.
+Resume from STAGE4-ASSIGNMENT/result and CURRENT; do not treat interrupted drafts
+or mocked-call receipts as accepted outcomes. Full Goal remains incomplete.
+
+## Current native continuation — 2026-10-02T09:32Z
+
+ANIMA52e90c6b and SENTRY89bbf6c7 published/deployed/exact CI PASS. Independent
+controlled Stage3 recovery/source proof is bounded; Core handoff CURRENT and
+relay CURRENT do not qualify unavailable Android/vendor receipt. Same sole
+Coder Laplace continues Stage4, actual final outstanding. No new owner physical
+test is armed. Root Binder, full owner journeys/A–O and future shadow evidence
+remain explicit. CURRENT/GOAL-COVERAGE/NATIVE-ARCHITECT-REVIEWS supersede older
+current-state claims below while preserving their historical evidence.
 
 The exact accepted ANIMA/SENTRY deployments are reconciled and healthy. The
 content-free timing ledger and Front Door Lock `UNLOCKED → ALWAYS` rule are

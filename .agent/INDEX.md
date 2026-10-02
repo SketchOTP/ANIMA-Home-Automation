@@ -1,5 +1,32 @@
 # Authority Project-State Index
 
+Current superseding pointer — 2026-10-02T11:30Z: Stage4 actual native final
+independently accepted, compatible7fe3c705/862cc8ec exact hosted PASS and loaded
+image02a42012/source106/package47. Bounded Core/voice recovery observed;
+Android/root/vendor/owner/future improvement gates remain. SAME sole Leibniz
+implements Stage5 in separate worktrees; actual final/review still pending.
+See CURRENT, GOAL-COVERAGE and existing027A native review11:29Z. Full MO/A–O
+Goal ACTIVE; previous source/runtime/worker pointers below are historical.
+
+Current pointer — 2026-10-02T11:10Z: actual Stage4 final independently SOURCE
+ACCEPTED and published7fe3c705/862cc8ec; ANIMA CI pending/SENTRY CI PASS, runtime
+still Stage3. Same sole Coder Leibniz has issued STAGE5-ASSIGNMENT in distinct
+worktrees; exact result/coverage in CURRENT and027A independent reviews. Full
+MO/A–O, owner workflows, actual helper model accounting and operational/future
+evidence remain open. Earlier pending-worker pointers below are history.
+
+Latest worker pointer — 2026-10-02T10:34Z: prior Laplace terminal usage error
+and missing handle independently observed. Exactly one replacement Coder
+Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95 recovers existing Stage4 drafts,
+same027A/R5F. CURRENT/NATIVE-ARCHITECT-REVIEWS supersede older live-worker pointers.
+No final/source acceptance or model/profile change follows replacement.
+
+Latest current pointer — 2026-10-02T09:32Z: accepted Stage3 source is now published
+and deployed, ANIMA52e90c6b/SENTRY89bbf6c7 with exact CI PASS. Core handoff and
+relay recover; Android remains root Binder-gated. Same sole Coder continues
+Stage4 under027A/R5F. CURRENT and NATIVE-ARCHITECT-REVIEWS carry exact versions,
+runtime/source proof and remaining full Goal gates; earlier pointers are history.
+
 Current native checkpoint — 2026-10-02T07:34Z: Stage3 source independently
 ACCEPTED after actual native final, local implementation f44e99caa067f29ff798edc693ab8ce3c950f02f
 and SENTRY3e521a10c64344a834d0a72786216fb8ad1337ef. Publication/deployment pending.

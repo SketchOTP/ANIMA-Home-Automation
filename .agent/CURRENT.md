@@ -1,5 +1,150 @@
 # Current Project State
 
+Synchronization supersession — 2026-10-02T11:32Z: dual existing Notion authority
+deployment checkpoints fully refetched and complete section match PASS. Task
+after-only query4 is disproven as current activity by preexisting future dates;
+bounded [restart,current clock] query0 with50 runs retained. No history reset.
+Current compatible product pair is7fe3c705/862cc8ec; pending governance publication
+does not change deployed product bytes. Same sole-Coder Stage5 remains active.
+
+## Stage4 exact hosted and controlled deployment accepted — 2026-10-02T11:29Z
+
+ANIMA live main/product7fe3c705579e3a82985da848102558e25f17ba6a exact hosted
+36998956233 PASS; native artifact11223356853 digest
+sha256:ddaa7ef54cb7436ee384eebce7d9abfb4c549df6993a5731f25e363c661194e8.
+SENTRY live feature862cc8ecff7390000fcc66f3fe5f32f23101b66e exact36998958481
+PASS; protected main unchanged. Normal fast-forwards preserve all preexisting
+dirty governance/Graft bytes. Running image02a42012020a894bacecdf2f4bc95597e1bd962db5af17d9b4df62d810ece54a
+in containera6236c4b25ba6cfd2b91be6fa708620dcb4a4b6b79aed1073f86e08a820ab85c
+matches106 imported source files, fingerprint8c239cb3cb0b8a35eb2a4892fa0c8a2dfd20e92647effcfe49c2cdb8a054a111,
+47 locked packages. Authenticated Core readiness/stack/UIhealth200 PASS. Core,
+worker/Wi-Fi/relay/native voice/UI/supervisor active with0 restarts. PostgreSQL,
+OPA/HA/searx containers were not replaced or restarted; no host reboot.
+
+Private six profile/token baselines unchanged; profile/task digests exact,
+17 tasks/1 profile/95 Graph nodes/5 calendar records retained. All254 prior
+Memory rows remain; versioned review/quarantine reconciliation adds60 records,
+not new model work. Current51 active review dispositions:20 qualified success,
+23 FAILED,5 INCOMPLETE,3 UNKNOWN_RESULT;85 total completion versions is NOT85
+successful reviews. All46 historical ambiguous/recovery requests unchanged,
+zero new requests/provider-start updates after replacement. No synthetic owner
+test, speech/physical operation or replay. Android passive access still reports
+NOT_READY/BINDER_PERMISSION, while relay READY is not vendor receipt.
+
+Stage5 SAME sole Leibniz remains implementation/review-pending in separate
+worktrees. Full owner/API/MCP/A–O, actual ANIMA helper accounting, root/vendor/
+physical and prospective outcome gates remain; full Goal ACTIVE. Detailed
+deployment/source/negative evidence in existing027A native reviews. Local
+governance remains uncommitted pending this meaningful checkpoint publication.
+
+Audit correction supersession — 2026-10-02T11:12Z: parent appended exact reviewed
+SYNTHETIC_TEST classification for4 mocked calls, preserving all8 original receipts
+and prefix byte-for-byte. Idempotent readback PASS;0 observed runtime attempts in
+new source's instrumented population, NOT a whole-project/provider billing claim.
+Actual ANIMA helper calls remain uninstrumented/UNKNOWN and belong same Stage5.
+Candidate Stage4 image02a42012 independently matches106 files/47 lock packages,
+not deployed. Earlier "unclassified" pointers below are retained history.
+
+## Stage4 published / Stage5 same-Coder active — 2026-10-02T11:08Z
+
+Accepted compatible Stage4 source is published: ANIMA7fe3c705579e3a82985da848102558e25f17ba6a
+CI36998956233 IN_PROGRESS; SENTRY862cc8ecff7390000fcc66f3fe5f32f23101b66e
+exactCI36998958481 PASS. Original/running source remains52e90c6b/89bbf6c7 and
+image761b6182 pending compatible hosted qualification/controlled deployment.
+Protected SENTRY main970d1cf5 unchanged. No new product runtime qualification.
+
+Same sole Coder Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95 now has issued
+STAGE5-ASSIGNMENT.md in distinct worktrees /tmp/anima-stage5-development.GTPF5Q
+and /tmp/sentry-stage5-development.R8sgq7 at the compatible Stage4 source heads.
+This is the full-contract owner-workflow/result vertical, not a new directive,
+agent/Phase15 or blanket resilience loop. Stage4 worktrees remain frozen.
+Actual owner-authenticated paths and prospective improvement remain evidence
+gates; no live model/physical tests authorized for the Coder. Parent retains
+ownership fence4, private profiles and separate Graft tooling.
+
+Notion acceptance/issuance sections on both existing authority pages fully
+match after native page-mention normalization. Literal serialization differed
+only in native mention URL/title expansion; no missing substantive content.
+Local governance records remain unpublished. Eight synthetic audit receipts
+are still unchanged/unclassified. Android/root/vendor/physical gates stand.
+
+## Stage4 native final independently reviewed — 2026-10-02T11:00Z
+
+Actual Leibniz native final collected; bounded source ACCEPTED FOR PUBLICATION /
+CONTROLLED DEPLOYMENT, not prospective improvement or whole-goal acceptance.
+Frozen ANIMA24 manifest d94db352587c8a93769754f005a50745493d71478e32c7a84cd2b3debef8890f
+and SENTRY11 aedb72a1cbdd1d4c65ad7e76c7c3a0429af3e368e3fa202d97e23822120c798c
+independently match every file. Parent directly passed learning/replay76 with3
+explicit skips, actual isolated PostgreSQL/current OPA9 in18.965s, and SENTRY77
+delivery/accounting/bridge tests in2.222s using temporary authority. Full Coder
+logs confirm ANIMA1262/113 skips and SENTRY586/3 skips, not owner usability.
+Negative history, eight mocked audit receipts and missing coverage remain intact.
+Source publication/deployment pending; running52e90c6b/89bbf6c7 unchanged.
+
+Parent additionally reproduced existing PluginManager INVALID_RESULT reporting
+BEFORE_DISPATCH after one actual in-memory read-only runtime invocation. No owner
+effect/model/physical operation occurred. Action coordinator consumes this flag;
+blind redispatch was NOT demonstrated. Include exact dispatch-result correction
+in next full-contract owner-workflow bundle; do not reopen blanket Phase14.
+Full Goal ACTIVE. Android root, genuine receipt/audible/owner workflows and
+prospective outcome gates remain explicit. Details in NATIVE-ARCHITECT-REVIEWS.
+
+## Native Coder recovery — 2026-10-02T10:34Z
+
+Prior sole Coder Laplace01a0fa23-8952-78b3-986c-5aec930a6939 terminated with
+an actual native usage-limit error before returning the Stage4 final. The later
+send_input returned not_found; that worker is not live. App usage snapshot
+ordinaryUsageAllowed=true does not establish model eligibility. Parent started
+exactly one replacement native Coder, Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95,
+with inherited current developer settings and the preserved Stage4 worktrees.
+No parallel worker, model override, source reset, new directive or self-acceptance.
+
+Stage4 canonical result remains IN_PROGRESS/REVIEW_PENDING. Original ANIMA52e90c6b
+and SENTRY89bbf6c7 accepted source/runtime are unchanged. Draft product changes,
+test negatives and eight mocked-call audit receipts remain intact; parent has
+not applied live classification or deployed the draft. New Coder must finish
+the existing bundle, freeze manifests and return an actual native final.
+Prepared Stage5 owner workflows/OpenAPI gap is NOT ISSUED and remains outside
+Stage4. Full MO-01–15/A–O/Goal ACTIVE; parent ownership generation/fence4 intact.
+
+Fresh parent read-only runtime checkpoint10:47Z: accepted image761b6182 remains
+running/healthy and UI health returns HTTP200. Core, household worker, Wi-Fi,
+vendor relay, native UI/voice/supervisor and projection services are active.
+Android bus/compositor are active, but Android session/notification supervisor
+are inactive: vendor notification readiness is NOT established. The existing
+root Binder gate remains the recorded unresolved boundary; process listing alone
+does not newly diagnose it or prove vendor receipt. New Coder is still awaiting
+an actual final. Dual Notion recovery additions fully match fetched content;
+local records remain unpublished pending coherent product qualification.
+
+## Controlled Stage3 deployment independently observed — 2026-10-02T09:32Z
+
+Live ANIMA main/origin is52e90c6b39bb9cfa67754d815d67c6258dc99efa;
+exact hosted36984465148 PASS, native artifact11217376889 digest
+sha256:471f12f5bd1fee9c84169cd4543bc360afcfec6ec313c4149518a99805d51b3d.
+Live SENTRY feature/origin is89bbf6c77d5e019956903fe1f57de341e718b0f4,
+exact36979873750 PASS; protected main unchanged. Normal fast-forwards preserved
+dirty governance/local Graft bytes, private profile/model/thread/persona/orb.
+UI image761b6182aa1eb5a91c9a97ef6d1b267b0a4de8d1d9e43c52118b9189f3d363fd
+running39cfe8bfc12d independently matches105 imported source files/47 packages.
+
+Host-only private HA/vendor custody restored using existing bindings, no new
+identity/token. Existing endpoint mismatch guard retained; later operator
+EnvironmentFile supplies saved connection metadata without changing old .env.
+Core handoff CURRENT, fresh office voice LISTENING, relay READY/CURRENT observed.
+Android remains NOT_READY/BINDER_PERMISSION; relay readiness is NOT vendor receipt.
+Six private baseline files/Graft byte-preserved;134 pending and46 historical
+ambiguous/recovery requests preserved, no new post-recovery request observed.
+Two latest PARTIAL outcomes predate deployment and are not causally attributed.
+
+Detailed source/privacy/negative/operating evidence in027A
+NATIVE-ARCHITECT-REVIEWS,2026-10-02T09:32Z. Dual Notion updates fully verified by
+normalized complete readback, not byte-exact serialization. Sole native Coder
+Laplace01a0fa23-8952-78b3-986c-5aec930a6939 continues preserved Stage4 in the
+same027A/R5F; no actual Stage4 final yet. Full MO-01–15/A–O/Goal ACTIVE.
+Root Android, genuine vendor/audible/owner journeys and future shadow evidence
+remain open; no overall stage/goal completion or new physical qualification.
+
 ## Native correction accepted — 2026-10-02T08:26Z
 
 Actual sole-Coder correction final collected; parent independently accepts the

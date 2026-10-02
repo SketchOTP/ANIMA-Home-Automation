@@ -2137,3 +2137,77 @@ pair still081f1198/380422df. Same sole Coder received Stage4 learning-outcomes
 vertical bundle in isolated same-Git worktrees through native tools; owner/root/
 physical/prospective gates remain, full MO/A–O retained. No developer powers
 transferred to household runtime, no future evidence invented or goal accepted.
+
+## 2026-10-02T09:32Z — controlled Stage3 deployment independently accepted
+
+ANIMA52e90c6b/SENTRY89bbf6c7 now published, exact CI PASS and deployed. UI source
+105/package47 proof and private-custody/Core CURRENT/fresh voice/relay recovery
+independently observed; private six baseline/Graft preserved. Android remains
+NOT_READY/Binder root gate; no vendor/audible/full-Goal outcome accepted. Exact
+versions, native artifact digest, negatives, preserved134/46 requests and dual
+Notion normalized complete readback in027A NATIVE-ARCHITECT-REVIEWS09:32Z.
+Same sole Coder continues Stage4, actual final pending; full MO/A–O remains open.
+
+## 2026-10-02T10:38Z — terminal native Coder recovery, no draft acceptance
+
+Laplace actual usage terminal and later missing handle observed. Exactly one
+replacement Leibniz recovers the preserved Stage4 bundle, inherited developer
+settings, same027A/R5F. No completed handoff/acceptance/deploy follows. Parent
+recorded the four mocked-call/eight-receipt isolation negative and current70-route/
+65-free-form-response contract evidence gap without expanding Stage4. Both
+Notion authority additions saved and fully refetched with literal/normalized
+matches. Accepted52e90c6b/89bbf6c7 source/runtime and fence4 are preserved.
+Prospective improvement, root Android/vendor/physical and full owner workflows
+remain incomplete; next prepared product bundle is NOT ISSUED.
+
+## 2026-10-02T11:22Z — actual Stage4 final accepted, publication and Stage5
+
+Supersedes the prior review-pending/prepared-only snapshot, retaining its history.
+Primary collected the actual sole replacement Coder final and independently
+checked both frozen manifests, learning/replay76 PASS/3 explicit skips, actual
+isolated PostgreSQL/current OPA9 PASS, and SENTRY77 PASS/0 skips under temporary
+authority. Complete Coder logs confirm ANIMA1262 PASS/113 skips and SENTRY586
+PASS/3 skips. Bounded SOURCE ACCEPTED for controlled deployment, not owner E5
+or prospective outcome improvement. Exact details: existing027A native reviews.
+
+Normal compatible publication7fe3c705/862cc8ec preserved histories/protectedmain.
+SENTRY exact hosted36998958481 PASS; ANIMA36998956233 IN_PROGRESS. Candidate
+image02a42012 independently matches106 imported source files/47 lock versions;
+running originals52e90c6b/89bbf6c7/image761b6182 are still the live boundary.
+
+Parent exact-ID/digest append-only classification of four mocked calls PASS:
+all eight original audit receipts/prefix remain byte-preserved; repeat is
+ALREADY_CLASSIFIED/no write. Zero observed runtime attempts in the new ledger's
+instrumented population is NOT all-project/billing zero. Actual installed ANIMA
+helper launches Codex but discards reported usage; this gap is in same Stage5.
+
+Same sole Coder implements Stage5 owner API/Core/MCP/result vertical in separate
+worktrees; no actual Stage5 final/acceptance yet. Product source untouched in live
+originals. Read-only pre-deploy11:20 shows no active provider execution,46
+historical ambiguous/recovery records preserved,17 tasks/1 profile/254 Memory
+records/95 Graph nodes/5 calendar records. Initial review query used incorrect
+metadata.kind and returned0; corrected metadata.record_kind establishes29
+completion records, not29 qualified successful reviews. Negative query retained.
+Android root, genuine vendor/audible/owner journeys and future observations stand.
+
+## 2026-10-02T11:32Z — Stage4 controlled deployment and Notion readback
+
+Compatible published product7fe3c705/862cc8ec has both exact hosted PASS and
+is now live. Runningimage02a42012/source106/package47 proof, authenticated
+Core/stack/UIhealth and bounded restart independently PASS. No replacement
+of DB/OPA/HA/searx or owner private profile/model/thread; all254 older Memory
+rows/17tasks/1profile/46 ambiguous historical requests retained. Versioned
+review reconciliation creates audit dispositions, not model calls;20 qualified
+successes/23FAILED/5INCOMPLETE/3UNKNOWN_RESULT active reviews are reported
+honestly. Exact details/diagnostic negatives in native review11:29Z.
+
+Task history has4 preexisting future-dated completed rows; after-only query4
+is not new dispatch. Bounded [restart,current clock] query0 and50 total runs
+retained. No new intelligence request/provider-started update after deployment.
+Android passive NOT_READY/BINDER_PERMISSION persists; relayREADY not vendorproof.
+
+Both existing Notion authorities received meaningful deployment checkpoints at
+11:31:58Z and were fully refetched; complete sections match after whitespace/
+Markdown-escape normalization. No missing history/child moves/page replacement.
+Same sole-Coder Stage5 continues; full MO/A–O, helper cost accounting, owner/
+physical and future outcome gates remain. No overall prototype acceptance.

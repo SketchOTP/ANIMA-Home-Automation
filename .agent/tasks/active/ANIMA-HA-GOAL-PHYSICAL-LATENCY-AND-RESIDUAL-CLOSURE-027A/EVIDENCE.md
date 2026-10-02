@@ -1,6 +1,70 @@
 # 027A evidence
 
+## Stage4 deployed exact pair — 2026-10-02T11:30Z
+
+Both exact hosted runs PASS:7fe3c705/36998956233 and862cc8ec/36998958481.
+Running image02a42012/source106/package47 proof, active services and preserved
+private/task/profile/Memory/ambiguity are independently recorded in native review
+11:29Z.51 active review dispositions split20 qualified successes/23failed/
+5incomplete/3unknown; not85 successful reviews. No new owner model/physical test.
+Initial task after-only query returned4 due to preexisting future-dated COMPLETED
+rows (Oct6/Oct26); bounded [restart,current clock] returns0,50 total retained.
+This historical clock-quality limitation is not new duplicate dispatch; preserve
+rows rather than rewrite them. Notion deployment synchronization next.
+
+## Parent Stage4 source/publication checkpoint — 2026-10-02T11:12Z
+
+Actual sole replacement Coder final independently collected. Frozen24/11 file
+manifests match; parent76 learning/replay PASS3 explicit skips,9 real isolated
+PG/currentOPA PASS18.965s,77 SENTRY delivery/accounting/bridge PASS2.222s.
+Compatible committed/pushed implementation ANIMA7fe3c705579e3a82985da848102558e25f17ba6a
+and SENTRY862cc8ecff7390000fcc66f3fe5f32f23101b66e. SENTRY exact36998958481
+PASS; ANIMA36998956233 still running. No Stage4 deployment/physical/prospective
+acceptance. Candidate image02a42012020a894bacecdf2f4bc95597e1bd962db5af17d9b4df62d810ece54a
+matches106 imported source files/47 unchanged-lock packages; source aggregate
+8c239cb3cb0b8a35eb2a4892fa0c8a2dfd20e92647effcfe49c2cdb8a054a111.
+Isolated --network none/read-only image probe, no owner mounts/services.
+
+Parent applied exact reviewed UUID/digest append-only synthetic classification
+for4 known mocked calls using published SENTRY utility. All8 original receipts
+and entire original prefix byte-preserved;1 classification record appended,
+repeat ALREADY_CLASSIFIED/bytes unchanged. New source summary excludes4 synthetic
+calls and shows0 runtime attempts in this observed instrumented population.
+Historical/helper calls remain UNKNOWN/uninstrumented, not zero total billing.
+No raw prompt/audio/vendor content or private config/profile changed; no deletion.
+Canonical Coder result's unapplied statements are truthful earlier snapshots,
+superseded only by this later parent action. Detailed independent source review
+is in NATIVE-ARCHITECT-REVIEWS; Stage5 assignment includes missing actual ANIMA
+helper accounting and truthful owner workflow/results, full Goal ACTIVE.
+
 Status: `IN_PROGRESS`
+
+## Recovery and broader-contract evidence — 2026-10-02T10:38Z
+
+Native Laplace wait returned usage-limit terminal; follow-up handle missing.
+One replacement Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95 is running the same
+bounded Stage4 assignment. No final/new source acceptance. Original heads and
+drafts preserved; both diff checks pass. Current app ordinary-usage allowance
+is not a substitute for a final model-specific worker result.
+
+Independent declared-route audit70/27 and generated OpenAPI65 free-form owner
+success responses are scoped source evidence, not actual typed/API/UI/MCP
+usability proof. Eight mocked-call receipts/four EVENT calls remain intact;
+parent read-only metadata at10:06 found no additions after09:32:55.245641Z.
+No live correction/new model invocation or future improvement claim.
+Dual authority checkpoint additions were saved and complete literal/normalized
+readback matched (ANIMA10:37:34.921Z, SENTRY10:37:37.973Z). Previous deployed
+source/negative history remains in both pages. Full remaining gates retained.
+
+## Current native evidence checkpoint — 2026-10-02T09:32Z
+
+Stage3 source publication and bounded controlled recovery are independently
+accepted: ANIMA52e90c6b exact36984465148 PASS/artifact11217376889, SENTRY89bbf6c7
+exact36979873750 PASS. Running image761b6182/source105/package47 proof, private
+CLI denies, private custody/connection guard, Core CURRENT, fresh voice and
+relay CURRENT in NATIVE-ARCHITECT-REVIEWS09:32Z. Android NOT_READY/Binder gate,
+physical/audible/useful incident/full contract/future evaluation remain open.
+No newer physical evidence is inferred from older subsections below.
 
 ## Retrieval
 

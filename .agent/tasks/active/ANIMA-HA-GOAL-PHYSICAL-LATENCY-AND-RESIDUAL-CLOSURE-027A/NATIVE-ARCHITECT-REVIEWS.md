@@ -1,5 +1,114 @@
 # Native Architect reviews — existing 027A / R5F continuation
 
+## 2026-10-02T11:29Z — Stage4 controlled exact-source deployment
+
+Disposition: ACCEPTED bounded exact-source deployment and affected recovery;
+not owner usability, prospective improvement, vendor receipt or Goal completion.
+Normal fast-forward originals now7fe3c705/862cc8ec; ANIMA exact36998956233 PASS,
+SENTRY36998958481 PASS. Native artifact11223356853 digest
+sha256:ddaa7ef54cb7436ee384eebce7d9abfb4c549df6993a5731f25e363c661194e8,
+239113 bytes; not an independently downloaded evidence-tree digest.
+
+Running UI image02a42012020a894bacecdf2f4bc95597e1bd962db5af17d9b4df62d810ece54a
+in containera6236c4b25ba6cfd2b91be6fa708620dcb4a4b6b79aed1073f86e08a820ab85c
+matches106 imported Python/SQL files byte-exact to accepted clean source and47
+unchanged lock package versions. Source fingerprint
+8c239cb3cb0b8a35eb2a4892fa0c8a2dfd20e92647effcfe49c2cdb8a054a111.
+Controlled stop/replacement/restart changed only UI application and reviewed
+host services; db/OPA/HA/searx IDs/start times unchanged. Installed Core unit
+now matches reviewed host-private vendor path; existing override unchanged.
+Core2428786/worker2430473/Wi-Fi2430474/relay2430475/voice2430477/nativeUI2430480/
+supervisor2430479 active with zero restarts at11:25. Authenticated Core/stack
+checks pass, UIhealth200. Service status is not physical or owner E5 proof.
+
+All preexisting dirty governance/Graft bytes unchanged through fast-forward;
+six private profile/model/thread/token baselines exact. Profile/task digests
+unchanged,17tasks/1profile/95Graphnodes/5calendar entries retained. SQL confirms
+254 prior Memory rows remain; new source's versioned reconciliation added60
+records.85 completion versions contain51 active dispositions:20COMPLETED/
+terminal_success,23FAILED,5INCOMPLETE,3UNKNOWN_RESULT. Neither versions nor
+dispatch count is a successful review count. No new intelligence request or
+provider-started update after11:24;46 historical ambiguous records retain older
+updated_at. No ambiguity reset/replay or owner fixture/model/physical test.
+
+Preserved diagnostic negatives: guessed wrong repository revision/install.py
+path returned errors; one patch with nonexistent heading changed no files.
+Initial completion query metadata.kind returned0; corrected record_kind gives29
+pre-deploy records, not29 qualified reviews. First docker exec source probe
+omitted -i and produced no output; corrected stdin probe verifies106 files.
+Bare Core readiness lacked required environment and exhausted90s, not a service
+failure; exact socket/token-file environment succeeds within5s. Task-run query
+guessed nonexistent created_at and failed; do not infer no duplicate from it.
+Stop was initially yielded; completion confirmed before starting new services.
+No raw private payload, credentials, media or ambient speech persisted.
+
+Android passive access remainsNOT_READY/BINDER_PERMISSION/recoveryfalse; relay
+READY is not vendor/Android readiness. Existing root owner gate is unchanged,
+no repeated reboot/app launch/root bypass. Both existing Notion authority pages
+accounting supersession fully refetched11:23Z; current deployment synchronization
+is next. Same sole Leibniz continues Stage5, full Goal ACTIVE.
+
+## 2026-10-02T11:00Z — Stage4 source independently ACCEPTED
+
+Collected actual native final from sole replacement Leibniz
+01a0fc2d-54f3-7b81-ba44-919b8458db95, not inferred from draft files. Independently
+verified all24/11 frozen file digests against canonical result; aggregate
+d94db352587c8a93769754f005a50745493d71478e32c7a84cd2b3debef8890f /
+aedb72a1cbdd1d4c65ad7e76c7c3a0429af3e368e3fa202d97e23822120c798c.
+Reviewed terminal/retrieval SQL, correction/projection quarantine exception,
+frozen future scoring, existing runner integration, semantic replay, UI, model
+caller wrappers and operator-only exact audit classification. Parent tests:
+learning/replay76 PASS3 skips; actual isolated PostgreSQL/current OPA9 PASS,
+JUnit /tmp/anima-stage4-architect-postgres.xml,18.965s; SENTRY77 PASS2.222s with
+temporary authority/profile/state/workspace. Both diff checks PASS. Full Coder
+logs independently inspected: ANIMA1262 PASS113 skips and SENTRY586 PASS3 skips.
+Existing disposable database role is privileged; no restricted-role claim.
+
+Accept exact bounded source FOR PUBLICATION / CONTROLLED DEPLOYMENT. No E5
+household improvement, real owner workflow, physical delivery or full-goal
+acceptance. UNKNOWN quiet coverage remains honest; no negative scoring from
+heartbeat. ACK is review only. Failed provider-origin owner correction persists
+through reconciliation/ACK; retraction disables retrieval/Obsidian projection.
+Eight synthetic receipts remain unchanged/unclassified until parent exact
+operator correction. No owner private profile/thread/model/persona/orb change.
+
+Preserved review negatives: read-only diagnostic guessed action_execution.py
+(absent) before locating actual action.py; no product mutation. First record
+patch used a wrong header and changed no files before correction. Repository-local
+Graft ask with DO_NOT_TRACK=1 automatically refreshed48 local cache files;
+tooling cache only, no source/instruction/global change or publication.
+
+Additional full-contract finding independently reproduced on accepted52 source:
+PluginManager runtime invoked once and returned malformed output, resulting in
+INVALID_RESULT / BEFORE_DISPATCH. In-memory READ_ONLY fixture, no owner effect.
+Actual ActionExecutionCoordinator treats POSSIBLY_DISPATCHED separately. This
+proves incorrect dispatch evidence, not an observed duplicate physical effect.
+Next coherent owner-workflow bundle must correct exact result semantics and
+audit typed transport contracts/support-matrix workflows. Stage4 source frozen;
+full MO-01–15/A–O and027A ACTIVE. Parent handles compatible source integration,
+publication/exact CI/deployment; same Coder receives next native assignment.
+
+## Terminal Coder recovery — 2026-10-02T10:34Z
+
+Actual native wait returned Laplace usage-limit terminal; no Stage4 final was
+collected. Subsequent resume attempt failed with agent not_found. Current app
+usage snapshot separately reports ordinaryUsageAllowed=true and zero credits;
+this does not falsify the prior error or prove selected-model eligibility.
+Both preserved worktrees and original unpublished records were re-inspected:
+ANIMA20 tracked modifications plus4 new product/test files and dependency setup;
+SENTRY8 tracked modifications plus3 new files. Diff checks pass; checksums/full
+qualification are not inferred from those statuses. Draft canonical result is
+still IN_PROGRESS. No source/runtime/private/Graft reset or product publication.
+
+Exactly one replacement native Coder Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95
+was spawned with inherited current settings, explicit Stage4 recovery scope,
+preserved negatives and no permission for live audit correction, owner fixtures,
+model turns, root actions, deploy/commit/push/Notion or descendants. Parent
+retains independent review and generation/fence4. New handle replaces a missing
+terminal one; this is not competing development or a second active directive.
+The native Goal/full contract remain ACTIVE and incomplete. Stage5 prepared
+owner-workflow/OpenAPI evidence gap is not added to Stage4.
+
 ## 2026-10-02T01:20:02Z — baseline/governance assignment
 
 Disposition: **ACCEPTED — bounded governance scope only**.
@@ -781,3 +890,115 @@ non-final concurrent full-suite failure and typing/setup negatives retained.
 Same sole Coder may resume preserved Stage4 after direct native follow-up. No
 new worker/packet/phase, root repair, private provisioning, physical qualification
 or whole-goal acceptance. Full contract remains active.
+
+### 2026-10-02T09:32Z — controlled Stage3 deployment independently observed
+
+Disposition: ACCEPTED exact-source deployment and affected bounded recovery;
+PARTIAL operational outcome, not whole Stage3/security/Goal acceptance.
+
+Publication: ANIMA52e90c6b39bb9cfa67754d815d67c6258dc99efa exact36984465148
+completed SUCCESS08:49:33Z. Native artifact11217376889,238446 bytes, digest
+sha256:471f12f5bd1fee9c84169cd4543bc360afcfec6ec313c4149518a99805d51b3d;
+API-native digest only, not a downloaded evidence-tree digest. Prior55253b11
+failed36979872665 and all correction negatives remain. SENTRY89bbf6c77d5e0199
+5690393fe1f57de341e718b0f4 exact36979873750 PASS; protected main unchanged.
+
+Deployment custody: parent rehearsed normal Git fast-forward preservation in
+owned disposable repository, then advanced actual originals with index-only
+incoming governance blobs; no reset/stash/discard/amend/new product commit.
+Extra SENTRY CURRENT, local Graft files and untracked Stage4 result preserved.
+Build from clean52 revision label, running image
+sha256:761b6182aa1eb5a91c9a97ef6d1b267b0a4de8d1d9e43c52118b9189f3d363fd,
+container39cfe8bfc12d5fc6a51e70bc703d01b362a156f27f3ab1d46141758fc96a18e5.
+105 imported Python/SQL files match, source fingerprint
+02c6871e6e5eeaaa08350cfcbeae28f32b711768f2ea841b2b936139aa550d29;
+47 packages/project plus46 dependencies match unchanged lock. Health200.
+Database/OPA/HA/searx services and volumes not replaced; no host reboot.
+
+Preserved deployment negatives: first isolated image probe omitted ENTRYPOINT
+override and launched UI instead of Python. Identified exact isolated container
+0ba656a8dd561b3b200e6d6f73a8e39b3c64c8a78a3d10f81bdb180e97ecdcc0,
+networknone/read-only/no owner env/volumes; stopped that exact owned container.
+The pre-existing installer subsequently ran without fail-fast, installed4 units/
+7 bounded client files and did not start/provision private state. Corrected
+entrypoint probe independently established105/47 proof. No first-probe PASS.
+
+Effective private profile probes: ordinary and autonomous actual Codex sandbox
+deny open of .env, private config directory/symlink and owner-boundary directory,
+preserving public README read. First ordinary30s timed out; bounded retries
+ordinary33.180s/autonomous29.190s PASS, no private contents/model/profile writes,
+zero LLM calls. These are sandbox-probe times, not model/audible latency.
+Actual existing CLI privacy suite4 PASS/61.296s. Actual systemd relay sandbox
+2 PASS with correct ANIMA_STAGE3_SANDBOX_TEST flag; earlier wrong flag result
+1 PASS/1 SKIP is explicitly not the actual two-test proof.
+
+Private custody: existing saved HA and vendor binding provisioned into host-only
+UID1000/mode0600 files under private0700 config. Same existing identities/tokens,
+no reseed/new permission/credential issuer. Container shared UID10001/mode0600
+binding untouched. Authenticated HA config200/pinned2026.9.0. Strict connection
+guard initially rejected existing endpoint mismatch twice. Actual systemd probe
+proved EnvironmentFile overrides Environment; retained .env has correct existing
+instance but old endpoints. Earlier missing-instance/default-UUID assumption is
+DISPROVEN; never hardcode owner UUID or auto-trust transport. Later nonsecret
+operator-only connection EnvironmentFile reconciles saved endpoints/version,
+preserving .env and guard. Coder received corrected facts; host vendor default
+fix remains in same Stage4 source bundle. No global config or raw secret env.
+
+Live recovery: Core1932043/worker1936286/Wi-Fi1936287/voice1936288/supervisor
+1936290/relay1936291/native UI1936292 active, zero restarts at09:17. Core health
+available/CURRENT/null detail. Fresh office voice LISTENING09:17:21.340780Z;
+owner intent/selection preserved, not deliberate wake/TTS qualification. Relay
+READY/CURRENT/no fault. Android passive check09:22:13.874874Z remains NOT_READY/
+BINDER_PERMISSION/owner_root_gate=true/recovery_attempted=false. Supervisor
+recovery remains held; no root bypass/manual vendor launch. Relay READY is NOT
+Android/vendor READY. Existing root owner request unanswered; no repeated reboot.
+
+Six private baseline files exact unchanged, Graft instruction/ignore bytes
+preserved, no tooling staging. Owner read-only snapshot09:17 retains134 pending,
+33 RECOVERY/13 UNKNOWN and no active providers; post-recovery new requests since
+09:14 count0 at09:22. Latest two PARTIAL outcomes08:40/08:48 predate deployment;
+cause not inferred. Aggregate counts are not identity-level delivery proof.
+No historical ambiguity cleared/replayed or owner event fabricated.
+
+Notion ANIMA/SENTRY meaningful deployment checkpoints appended and fetched
+09:23:21.850Z/09:24:51.843Z. Both complete sections match after whitespace/
+Markdown-escape normalization; literal byte equality is NOT claimed. Prior
+records preserved. Same sole native Coder Stage4 continues, actual final not
+yet collected. Full MO-01–15/A–O Goal ACTIVE. Root/vendor/physical/audible,
+duplicate-consumer effective event, real owner product journeys and prospective
+future improvement remain unqualified. No new packet/agent/phase/architecture.
+
+### 2026-10-02T09:44Z — Stage4 independent draft corrections; not final acceptance
+
+Same sole Coder actual final remains outstanding. Parent inspected changing
+Stage4 source, without modifying product implementation or running concurrent
+full regressions. Found production prospective scoring has no interval coverage
+reader: every closed live window would be UNKNOWN even for a qualified positive
+observation. Directed same Coder to provide a genuinely observable prospective
+path with honest positive/negative coverage distinctions using existing stores;
+never infer absence from a present heartbeat or fabricate interval coverage.
+This is existing Stage4 acceptance, not a new scenario family or learning engine.
+
+Coder disclosed actual test-isolation violation: clear=True environment fixture
+removed temporary authority path and new mocked-call instrumentation wrote8
+MODEL_CALL receipts into default owner execution audit. Parent read-only verified
+8 receipts/4 call IDs,4 ATTEMPTED/4 FINISHED, purposeEVENT only, earliest
+2026-10-02T09:01:18.621556Z/latest09:32:55.245641Z, private0600/current UID.
+Reported underlying runners mocked; these are NOT genuine runtime/provider-cost
+evidence. No real model invocation or raw payload is claimed. No receipts deleted
+or live ledger correction yet. Directed same Coder to fix fixture isolation and
+provide narrow append-only classification/exclusion, tested and not LLM-writable;
+parent owns any later reviewed bounded live correction. This is a preserved
+boundary failure, not an authorized owner fixture or retroactive no-effect claim.
+
+Post-deployment read-only09:38:35Z: Journal58611/maxposition64478, post09:14
+2 HA reconciliations/26 truth observations/42 healthy+44 registered plugin events;
+zero new intelligence requests/provider starts,134pending/46ambiguities retained.
+Four pre-existing task runs completed after recovery; not new learning-provider
+success. Authenticated sensor projection09:37:23Z has10 rows,6 QUIET event rows,
+3 HOME/1 UNKNOWN presence; fresh projection is not source completeness or human
+identity. Relay09:36:59Z READY/CURRENT/LISTENING, received0/accepted0/failed0/
+pending obligations0; no vendor receipt asserted. Wrong preliminary row-state key
+returned None, corrected to actual status; wrong container alias health template
+errored, corrected exact container health proves healthy. Those failed diagnostics
+did not mutate household data. No physical/LLM test, reboot or root workaround.

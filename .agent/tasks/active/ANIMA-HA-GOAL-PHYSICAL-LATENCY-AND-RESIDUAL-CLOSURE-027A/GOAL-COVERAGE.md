@@ -1,5 +1,62 @@
 # Permanent goal coverage — native takeover baseline
 
+Controlled deployment delta — 2026-10-02T11:29Z: accepted7fe3c705/862cc8ec
+pair now hosted PASS and loaded, UI image02a42012/imported106/package47 matched.
+Authenticated Core/stack/health and bounded restart observed, not owner A–O/E5.
+Versioned learning reconciliation exposes20 successful reviews,23failed,
+5incomplete/3unknown active dispositions, not all completion rows as success.
+All254 prior Memory rows/17tasks/1profile/46 ambiguity records retained. Android
+root/vendor/physical/real owner workflows/future outcome and ANIMA helper cost
+accounting gaps remain. Same native Coder Stage5 in progress; full goal unchanged.
+
+Independent superseding delta — 2026-10-02T11:10Z: actual Stage4 native final
+independently source-accepted; published7fe3c705/862cc8ec (ANIMA hosted pending,
+SENTRY hosted PASS), not deployed or prospective improvement. Parent76 learning/
+replay,9 actual isolated PG/currentOPA,77 SENTRY pass; precise evidence in reviews.
+Same sole Coder now issued Stage5 owner-workflow/result vertical. Broader full
+contract is unchanged. Qualified SENTRY caller accounting does NOT cover actual
+installed ANIMA CodexHouseholdModel helper: run/_capture launches model, parser
+discards usage. Project-wide cost accounting remains PARTIAL; same Stage5
+refinement includes this actual missing path without a new store/brain. Actual
+owner-authenticated workflows/typed transport, root Android/vendor/audible and
+future improvement remain open; no omitted gate becomes complete by aggregation.
+
+Independent scoped delta — 2026-10-02T09:58Z: the current deployed-source owner
+support verifier reports70 API routes/27 domains, matrix digest
+28928cba68cf96e6c04eb5a85ad58e87e07f93ece85014e5af2f44e65760afb9.
+This supersedes the historical69-route count only; declared route equality is
+not complete typed API/MCP, authenticated owner-browser or real provider proof.
+Read-only generated OpenAPI inspection at2026-10-02T10:00Z found65 owner
+operation200-responses declared as free-form objects and1 other shape. This is
+a documented transport-schema EVIDENCE GAP under MO-03, not proof every existing
+Core/plugin validation is absent or a new Stage4 assignment. The next coherent
+owner-workflow review must compare existing bounded schemas/contracts to this
+surface before deciding the smallest complete correction. No production
+test-auth/session bypass or owner data mutation was used for this inspection.
+Current owner session uses real server-side OAuth/session/CSRF; test-auth
+fallback must not be enabled on the owner deployment to manufacture acceptance.
+Existing browser scripts explicitly use isolated stores/providers and cannot
+stand in for a final owner journey. The broader MO-02–14/A–O obligations remain.
+
+Stage4 changing source now distinguishes qualified positive Journal receipts
+from unproven negative-window coverage. This is draft inspection, not acceptance
+or demonstrated improvement; actual native final and independent validation
+remain pending. Four mocked calls accidentally wrote eight metadata receipts to
+the default SENTRY audit. No real model ran; an append-only exact-receipt test
+classification is being qualified. Original receipts are preserved, and parent
+has not yet applied a live correction. See NATIVE-ARCHITECT-REVIEWS09:44Z.
+
+Latest scoped delta — 2026-10-02T09:32Z: Stage3 accepted source is deployed on
+ANIMA52e90c6b/SENTRY89bbf6c7, exact CI PASS; Core CURRENT and relay READY/CURRENT
+are operationally observed with private custody/guard preservation. UI source
+and package correspondence independently proved. This is affected recovery
+evidence, NOT genuine event/incident/physical/audible/full-Goal acceptance.
+Android remains root Binder-gated; duplicate-consumer effective-event proof and
+owner UI/API/MCP/voice/Away/useful outcomes remain open. Same sole Coder Stage4
+continues; actual final not yet collected and future evaluation not qualified.
+Full MO-01–15/A–O rows retain their acceptance requirements. Detailed evidence,
+negatives, manifests and Notion readbacks in NATIVE-ARCHITECT-REVIEWS09:32Z.
+
 Latest scoped delta — 2026-10-02T07:34Z: actual Stage3 native final collected
 and exact27-file SOURCE independently accepted. Local implementation checkpoints
 ANIMA f44e99caa067f29ff798edc693ab8ce3c950f02f / SENTRY

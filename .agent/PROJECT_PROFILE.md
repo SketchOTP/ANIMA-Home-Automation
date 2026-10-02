@@ -1,5 +1,31 @@
 # Project Profile
 
+## Verified Stage4 deployment supersession — 2026-10-02T11:32Z
+
+Live product pair7fe3c705/862cc8ec has exact hosted PASS and loaded UIimage
+02a42012/source106/package47 proof. Stage4 now exposes actual terminal learning
+dispositions, correction/projection quarantine, frozen prospective shadow and
+scoped SENTRY model-attempt receipts. Installed ANIMA helper accounting remains
+PARTIAL in Stage5; no all-call/billing/prediction-accuracy claim. Existing51
+active review dispositions include20 qualified successes, not85 success counts.
+Private profiles/17 tasks/254 preexisting Memory rows and46 ambiguities retained.
+Core/UI/idle voice recover; Android Binder owner root gate remains. Full owner
+workflows/vendor/physical/audible/prospective improvement remain unqualified.
+Detailed exact-source/runtime boundary:027A native reviews11:29Z. Earlier
+profile snapshots below remain history, not the current deployment boundary.
+
+## Verified current deployment delta — 2026-10-02T09:32Z
+
+Live/source pair is ANIMA52e90c6b39bb9cfa67754d815d67c6258dc99efa and SENTRY
+89bbf6c77d5e019956903fe1f57de341e718b0f4; both exact-head CI PASS. UI image
+761b6182aa1eb5a91c9a97ef6d1b267b0a4de8d1d9e43c52118b9189f3d363fd matches
+105 source files/47 installed packages. Host private credential custody and
+existing operator connection override restore CURRENT Core handoff; office
+voice/relay recovery observed. Android NOT_READY/BINDER_PERMISSION means vendor
+delivery remains unavailable. Detailed evidence/limits in027A independent review.
+Same Stage4 development worktrees/sole Coder remain active; earlier profile
+checkpoints below are retained history, not current loaded-source assertions.
+
 ## Current development and integration checkpoint — 2026-10-02
 
 Owner transfer: primary Codex Architect plus one native development Coder with

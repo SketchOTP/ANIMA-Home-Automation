@@ -748,3 +748,21 @@ repair, publication, descendants or edits to parent-owned reviews/coverage.
 Stage2 remains LOCAL / REVIEW_PENDING under parent OWNED generation/fence4.
 Canonical implementation, negative checks, tests and gates: STAGE2-CODER-RESULT.md
 inside the existing 027A packet. Source-vs-loaded runtime is explicit there.
+
+## 2026-10-02T11:22Z — Stage4 independently accepted; same-Coder Stage5 issued
+
+The primary Architect collected Leibniz's actual Stage4 native final and
+independently accepted bounded source for publication/controlled deployment.
+Published compatible pair: ANIMA7fe3c705579e3a82985da848102558e25f17ba6a and
+SENTRY862cc8ecff7390000fcc66f3fe5f32f23101b66e. SENTRY36998958481 PASS;
+ANIMA36998956233 remains IN_PROGRESS. Candidate image02a42012 is not deployed.
+Source acceptance is not prospective household improvement or full-goal closure.
+
+Stage5 is ISSUED to the SAME sole native Coder Leibniz
+01a0fc2d-54f3-7b81-ba44-919b8458db95 in distinct same-Git development worktrees,
+as recorded in existing027A STAGE5-ASSIGNMENT.md. It closes actual owner workflow,
+typed transport/result and separately installed household-helper model accounting
+gaps. No new packet/phase/brain or delegated acceptance/publication/deployment.
+Parent retains execution ownership generation/fence4; full MO-01–15/A–O remains
+active. Actual owner journeys, Android root/vendor/physical, future shadow and
+all-call accounting gates are explicit. Stage4 worktrees remain frozen.
