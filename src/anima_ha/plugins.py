@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 from uuid import UUID, uuid4
 
 import psycopg
@@ -35,6 +35,9 @@ from anima_ha.policy import (
     PolicyService,
     RequestOrigin,
 )
+
+if TYPE_CHECKING:
+    from anima_ha.action import ActionRequest
 
 
 class PluginValidationError(ValueError):
@@ -121,6 +124,8 @@ class InvocationContext:
     ordinal: int
     system_idempotency_key: str
     origin: RequestOrigin
+    # Core-owned durable binding for the bounded non-idempotent audio path.
+    audio_action_request: ActionRequest | None = None
 
     def __post_init__(self) -> None:
         if self.ordinal < 1:
@@ -324,6 +329,10 @@ _TRUSTED_INTERNAL_TOOL_SOURCES = {
     "anima.automations.create_automation": "builtin:anima_ha.automations",
     "anima.automations.update_automation": "builtin:anima_ha.automations",
     "anima.sentry-control.enter_sleep_mode": "builtin:anima_ha.sentry_voice_settings",
+    "anima.sentry-control.set_system_volume": "builtin:anima_ha.sentry_voice_settings",
+    "anima.sentry-control.adjust_system_volume": "builtin:anima_ha.sentry_voice_settings",
+    "anima.sentry-control.set_system_muted": "builtin:anima_ha.sentry_voice_settings",
+    "anima.sentry-control.set_projection_audio_output": "builtin:anima_ha.sentry_voice_settings",
     "anima.provider.home-assistant.reconnect": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.start_zha_setup": "builtin:anima_ha.home_assistant",
     "anima.provider.home-assistant.continue_zha_setup": "builtin:anima_ha.home_assistant",

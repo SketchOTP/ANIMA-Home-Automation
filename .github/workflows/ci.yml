@@ -14,7 +14,7 @@ jobs:
     env:
       # Architect must pin the published accepted Stage8 SENTRY commit before
       # publication. Never substitute mutable main or the pre-Stage8 baseline.
-      SENTRY_STAGE8_QUALIFICATION_REF: 6eafe70dcf0674ca66a8df866105965705dff841
+      SENTRY_STAGE8_QUALIFICATION_REF: b331c058aae4b33bfd5db0a3420855f09142acff
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -87,7 +87,7 @@ jobs:
           ref: ${{ env.SENTRY_STAGE8_QUALIFICATION_REF }}
           path: .stage8-sentry-source
           persist-credentials: false
-      - name: Qualify Stage2–8 delivery, owner workflows and learning against isolated PostgreSQL
+      - name: Qualify Stage2–9 delivery, owner workflows, audio and learning against isolated PostgreSQL
         env:
           PYTHONPATH: src
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -121,6 +121,9 @@ jobs:
             --junitxml=/tmp/anima-owner-evidence/stage6-owner-postgres.xml
           uv run --locked pytest -q tests/test_stage7_learning_postgres.py \
             --junitxml=/tmp/anima-owner-evidence/stage7-learning-postgres.xml
+          uv run --locked pytest -q tests/test_stage9_audio_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/stage9-audio-postgres.xml
+          .venv/bin/python -c 'import xml.etree.ElementTree as E; r=E.parse("/tmp/anima-owner-evidence/stage9-audio-postgres.xml").getroot(); assert sum(int(s.get("tests","0")) for s in r.iter("testsuite"))==5; assert all(int(s.get(k,"0"))==0 for s in r.iter("testsuite") for k in ("skipped","failures","errors"))'
           export SENTRY_STAGE8_QUALIFICATION_SOURCE="$GITHUB_WORKSPACE/.stage8-sentry-source"
           test "$(git -C "$SENTRY_STAGE8_QUALIFICATION_SOURCE" rev-parse HEAD)" = "$SENTRY_STAGE8_QUALIFICATION_REF"
           .venv/bin/python -c 'import anima_ha,os; from pathlib import Path; assert Path(str(anima_ha.__file__)).resolve().is_relative_to(Path.cwd()/"src"); print(anima_ha.__file__, os.environ["SENTRY_STAGE8_QUALIFICATION_SOURCE"])' \

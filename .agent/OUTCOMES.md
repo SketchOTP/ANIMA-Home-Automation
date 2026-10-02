@@ -2721,3 +2721,54 @@ supervisor LAST. Source integration is not hosted CI/deployment/owner outcome.
 Publish SENTRY FIRST then immutable ANIMA paired-source pin. Graft/private state
 preserved; live remains accepted Stage7. Stage9 effective-authority gap prepared
 until compatible issuance; full MO01–15/A–O/027A/root/vendor/owner/future open.
+
+## 2026-10-02T19:40Z — Matched publication and next coherent authority bundle
+
+Ordinary descendant SENTRY6eafe70dcf0674ca66a8df866105965705dff841 pushed feature,
+exactCI37055182830 PASS. ANIMA8396c7eb261c6c0ee51c96d24b4012966d216768 pushed
+main, exactCI37055256859 IN_PROGRESS; actual pinned workflowcfdddec0 matches.
+No Graft tooling/private fields staged, protected SENTRY main unchanged. Clean
+accepted-source UI image building, not yet deployed; liveStage7 remains.
+Same sole Coder Stage9 ISSUED in new compatible worktrees, no prior freeze edits.
+Disjoint read-only reviewer maps existing Core bounded audio/enrollment authority
+so household Office power separation does not delete useful owner features.
+No new architecture/owner privilege or accepted full Goal; current criteria open.
+
+## 2026-10-02T20:08Z — Exact hosted Stage8 / state-preserving live replacement
+
+ANIMA8396c7e/CI37055256859 and SENTRY6eafe70/CI37055182830 PASS; actual native
+artifact11249596490 PG70/browser2 plus retained required inputs0targetskip.
+Controlled imageb841/source112/assets3/packages47/installed11 matches clean
+accepted source. DB/OPA/HA/searx/private/Graft/365Memory/17tasks50runs/1profile/
+5calendar/voice settings/46ambiguities preserved; natural queue changes accounted.
+Authenticated Core/OPA READY, actual relay active; Android Binder owner-root gate
+remains NOT_READY. STAGE8-DEPLOYMENT.md is exact evidence/limitations boundary.
+Stage9 same sole Coder finishes only known authority corrections, primary material
+dispositions issued; reviewer final independently static-checked and closed.
+Owner wrap-up steer freezes exploratory scope. Not whole Goal/audible/model proof.
+
+## 2026-10-02T20:44Z — Bounded Stage9 independent correction evidence
+
+Same Coder corrected relative-audio duplicate dispatch using the existing action
+ledger. Primary fresh restrictedPG/currentOPA7PASS0skip plus draft SENTRY9PASS;
+229 source entries unchanged. Same-context relative/lost response/restart/stale/
+current principal/policy/argument controls are qualified E3 with mocked audio,
+not real playback. Exact evidence and retained initial failures in Stage9
+Architect disposition. Full final now includes the60 household-worker cases
+omitted by the first changed-source run; actual native final/acceptance pending.
+Accepted Stage8 runtime/state retained; no new agent, scope, product publication,
+owner/model/physical test or root bypass. Android owner action remains pending.
+
+## 2026-10-02T21:03Z — Stage9 bounded source acceptance and frozen closeout
+
+Actual native final collected20:56Z, Coder closed; primary independently checked
+20 integrated source hashes and503 frozen entries. Final ANIMA1531PASS81SKIP
+including60worker; SENTRY596PASS7SKIP; primary restrictedPG/currentOPA7PASS0SKIP.
+Bounded scope/current authority/audio-relative durable reservation source accepted
+for one paired publication, not effective installed sandbox/live rollout/fullGoal.
+Installed legitimate-read timeout retained; voice AUTHENTICATED gate remains.
+Earlier six-helper-PASS assignment statement corrected in acceptance record.
+Current live matched Stage8 remains; no media/model/physical test or historical
+work reset. Graft excluded, owner-root Binder unanswered. Exact acceptance,
+counts/digests/negatives/remaining permanent boundaries in ANIMA027A
+STAGE9-ARCHITECT-ACCEPTANCE. No further speculative stage/feature assignment.

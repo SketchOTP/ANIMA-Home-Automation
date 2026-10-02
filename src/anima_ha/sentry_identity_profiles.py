@@ -30,6 +30,17 @@ class SentryIdentityProfileClient:
         "commit": "/v1/identity/enrollment/commit",
         "cancel": "/v1/identity/enrollment/cancel",
         "delete": "/v1/identity/profiles/delete",
+        **{
+            name: f"/v1/audio/{name}"
+            for name in (
+                "get_system_volume",
+                "set_system_volume",
+                "adjust_system_volume",
+                "set_system_muted",
+                "get_projection_audio_output",
+                "set_projection_audio_output",
+            )
+        },
     }
 
     def __init__(self, base_url: str, token_file: Path, *, timeout: float = 8.0) -> None:
@@ -137,3 +148,15 @@ class SentryIdentityProfileClient:
 
     def delete(self, person_id: str) -> dict[str, Any]:
         return self._post("delete", {"person_id": person_id})
+
+    def audio(self, operation: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        if operation not in {
+            "get_system_volume",
+            "set_system_volume",
+            "adjust_system_volume",
+            "set_system_muted",
+            "get_projection_audio_output",
+            "set_projection_audio_output",
+        }:
+            raise ValueError("unsupported SENTRY audio operation")
+        return self._post(operation, arguments)

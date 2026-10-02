@@ -940,3 +940,32 @@ owner operations. Do not restart anima-pc.service or solve known Binder gate.
 Parent owns independent source/currentPG verification; sole Leibniz edits all
 product source and completes corrected frozen regression. Reviewer returns a
 finite evidence/runbook result; no acceptance delegation or competing Coder.
+
+## 2026-10-02T19:40Z — Stage8 published / compatible Stage9 issued
+
+Actual Stage8 native final independently accepted; published8396c7e/6eafe70,
+ANIMA exactCI37055256859 pending/SENTRY37055182830 PASS. ANIMA immutable paired
+source pin exact6eafe70; no Graft staging. Same sole implementation Coder native
+input01a0fe20-5694-7023-8ea4-b21bd3c17e4b issued full STAGE9-ASSIGNMENT in
+ANIMA/tmp/anima-stage9-development.uaXhQt@8396c7e and
+SENTRY/tmp/sentry-stage9-development.UFN3qc@6eafe70; previous roots frozen.
+Household effective/native/host scope correction preserves explicit standalone
+Office/audio/enrollment and private continuity, no new permissive exception.
+Planck READ-ONLY native01a0fe20-af7a-7582-a4ed-d791d8b5758b maps existing Core
+audio/enrollment authority preservation only, no product/shared/runtime writes.
+Parent owns publication/exactCI/deploy/main/lock/Notion and acceptance. Same027A
+and fullMO/A–O remain active; no implementation from sidecar or Phase15.
+
+## 2026-10-02T21:03Z — Stage9 bounded source acceptance and frozen closeout
+
+Actual native final collected20:56Z, Coder closed; primary independently checked
+20 integrated source hashes and503 frozen entries. Final ANIMA1531PASS81SKIP
+including60worker; SENTRY596PASS7SKIP; primary restrictedPG/currentOPA7PASS0SKIP.
+Bounded scope/current authority/audio-relative durable reservation source accepted
+for one paired publication, not effective installed sandbox/live rollout/fullGoal.
+Installed legitimate-read timeout retained; voice AUTHENTICATED gate remains.
+Earlier six-helper-PASS assignment statement corrected in acceptance record.
+Current live matched Stage8 remains; no media/model/physical test or historical
+work reset. Graft excluded, owner-root Binder unanswered. Exact acceptance,
+counts/digests/negatives/remaining permanent boundaries in ANIMA027A
+STAGE9-ARCHITECT-ACCEPTANCE. No further speculative stage/feature assignment.

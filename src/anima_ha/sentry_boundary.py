@@ -630,6 +630,37 @@ class CoreSentryBoundary:
             raise SentryBoundaryError("INVALID_TOOL_ORDINAL")
         self._assert_active(request)
         tool = self._request_tool(request, tool_id)
+        if (
+            tool.tool_id.startswith("anima.sentry-control.")
+            and tool.name != "enter_sleep_mode"
+            and request.origin
+            not in {IntelligenceOrigin.DIRECT_SENTRY_INTERACTION, IntelligenceOrigin.DIRECT_UI_USER}
+        ):
+            return {
+                "status": "DENIED",
+                "operation": tool.tool_id,
+                "reason": "DIRECT_OPERATOR_REQUIRED",
+            }
+        if (
+            tool.tool_id
+            in {
+                f"anima.sentry-control.{name}"
+                for name in (
+                    "get_system_volume",
+                    "set_system_volume",
+                    "adjust_system_volume",
+                    "set_system_muted",
+                    "get_projection_audio_output",
+                    "set_projection_audio_output",
+                )
+            }
+            and request.principal_id is None
+        ):
+            return {
+                "status": "DENIED",
+                "operation": tool.tool_id,
+                "reason": "CURRENT_PRINCIPAL_REQUIRED",
+            }
         knowledge_tool = tool.tool_id in {
             "anima.knowledge.create_note",
             "anima.knowledge.update_note",
@@ -723,6 +754,32 @@ class CoreSentryBoundary:
             system_idempotency_key=f"{request.idempotency_key}:tool:{ordinal}",
             origin=origin,
         )
+        if tool.tool_id == "anima.sentry-control.adjust_system_volume":
+            from dataclasses import replace
+
+            invocation_context = replace(
+                invocation_context,
+                audio_action_request=ActionRequest.create(
+                    action_id=invocation_context.tool_request_id,
+                    idempotency_key=f"sentry-audio:{request.household_id}:"
+                    f"{invocation_context.system_idempotency_key}",
+                    household_id=request.household_id,
+                    tool=tool,
+                    arguments={
+                        **arguments,
+                        "_invocation": {
+                            "principal_id": str(request.principal_id),
+                            "origin": origin.value,
+                            "tool_request_id": str(invocation_context.tool_request_id),
+                            "ordinal": ordinal,
+                        },
+                    },
+                    identity=identity,
+                    policy_service=self.policy_service,
+                    origin=origin,
+                    tool_request_number=ordinal,
+                ),
+            )
         role = (
             self.policy_role_resolver(request.principal_id)
             if (self.policy_role_resolver is not None and request.principal_id is not None)

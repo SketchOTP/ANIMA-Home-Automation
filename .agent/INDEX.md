@@ -1,5 +1,25 @@
 # Authority Project-State Index
 
+Current21:03Z: Stage9 actual final independently source accepted/integrated20files;
+publication pending, runtime rollout withheld by installed-sandbox qualification.
+See CURRENT and027A/STAGE9-ARCHITECT-ACCEPTANCE for exact tests and explicit
+voice authentication/Android owner/vendor/physical/future/fullGoal gates. Sole
+Coder completed/closed; no speculative next phase. Live remains matched Stage8.
+
+Current20:08Z: Stage8 pair8396c7e/6eafe70 exact hosted PASS, artifactPG70/browser2
+inspected; controlled imageb841/source112/lock47/client11 live matched with
+private/durable/infrastructure preservation. See CURRENT/027A/STAGE8-DEPLOYMENT.
+Same sole Stage9 Coder finishes known authority gaps; no new exploratory scope.
+Actual owner/vendor/playback/future/full MO/A–O gates remain.
+
+
+Current19:40Z: Stage8 published8396c7e/6eafe70, ANIMA exactCI pending/SENTRY
+exactCI PASS; liveStage7. Same sole Coder Stage9 now ISSUED in distinct compatible
+worktrees; full STAGE9-ASSIGNMENT, not prepared-only pointer, is authoritative.
+Read-only audio/enrollment preservation verifier disjoint; parent retains main/
+deployment/lock/acceptance. CURRENT and original027A retain exact remaining Goal.
+
+
 Current19:34Z: Stage8 actual native final independently SOURCE ACCEPTED; all33
 integrated source hashes match corrected manifest. CURRENT and existing027A
 STAGE8-ARCHITECT-ACCEPTANCE retain exact suites/custody/negatives and deployment

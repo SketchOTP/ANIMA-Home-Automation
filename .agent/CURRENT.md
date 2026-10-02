@@ -1,5 +1,99 @@
 # Current Project State
 
+## Stage9 final source release / runtime gates — 2026-10-02T21:03Z
+
+Actual Coder final collected and agent closed. Twenty files independently hash-
+matched and integrated; bounded source ACCEPTED FOR PUBLICATION, not deployed.
+Final ANIMA1531PASS81SKIP incl60worker; SENTRY596PASS7SKIP; primary realPG/current
+OPA7PASS0SKIP. Full custody/negatives and exact remaining boundary:
+027A/STAGE9-ARCHITECT-ACCEPTANCE.md and STAGE9-CODER-RESULT.md.
+Relative audio duplicate/unknown/restart fencing fixed using existing ledger.
+Installed effective sandbox readiness timed out: NOT QUALIFIED, so live Stage9
+rollout is withheld pending bounded readiness resolution. Voice enrollment needs
+genuine authenticated authority; UI remains preserved. Earlier assignment's
+six-sandbox-PASS claim is corrected, not retained as acceptance.
+Live stays matched Stage8b841/8396c7e/6eafe70; Android owner-root step unanswered.
+No new features/phase/agents; one coherent source release/exact paired CI pending.
+Owner/vendor/playback/prospective/full MO01–15/A–O outcomes remain explicit.
+Graft unstaged. Permanent Goal ACTIVE, not complete.
+
+## Final bounded Stage9 qualification — 2026-10-02T20:44Z
+
+Accepted Stage8 live pair8396c7e/6eafe70/imageb841 remains unchanged and healthy.
+Same native Coder finishes the already-issued authority/audio bundle. Primary
+independent fresh restrictedPG/currentOPA7PASS0skip and temporary SENTRY9PASS;
+relative volume duplicate/lost-response/restart/stale protection now E3 verified.
+Final full source freeze/native handoff/acceptance/publication/deployment pending;
+earlier changed-source/omitted60worker regression cannot be promoted to final.
+Corrected complete regression now includes worker coverage. Exact bounded proof
+and all negatives in STAGE9-ARCHITECT-DISPOSITION.md. No new scope or writer.
+Android owner-root Binder step unanswered; genuine vendor/playback/real owner
+and prospective-usefulness/full MO01–15/A–O gates remain. Goal remains ACTIVE.
+
+## Stage8 exact hosted and controlled deployment — 2026-10-02T20:08Z
+
+ANIMA8396c7e/CI37055256859 PASS; SENTRY6eafe70/CI37055182830 PASS.
+Actual artifact11249596490 downloaded/checked: Stage8PG70/browser2 and retained
+Stage2–7 required inputs PASS0targetskip. Native digest892b50a51d7637b9f996caa113bf86022c9cc08599de6a4469c30f12cbb7ec8e.
+Live imageb84160834c4e52bdaf42de8ab4f4b3463464f07fdea0410b363d7ab22ea2b0f8,
+containera5f92c0e, source112/assets3/packages47 match clean accepted source and
+host Core;11 installed client/unit files exact. App-only replacement20:05–20:06Z,
+supervisor held FIRST/restored LAST, authenticated Core restored before voice.
+DB/OPA/HA/searx IDs/start times, private/Graft fingerprints and full-row digests
+365Memory/17tasks50runs/1profile/5calendar/voice settings/46ambiguities preserved.
+Natural2new pending while held and1NO_ACTION after recovery accounted, not false
+global queue equality. Core/helper/WiFi/nativeUI/voice/supervisor/actualrelay active,
+UIhealth200/unauthbootstrap401, voice LISTENING/office, desired settings unchanged.
+STAGE8-DEPLOYMENT.md retains exact proof and diagnostic unit-name correction.
+Same sole Coder Stage9 finite authority correction continues; no scope expansion.
+Android Binder owner-root/vendor/playback/complete actual MO/A–O/future usefulness
+remain open. Notion source-published checkpoint verified; deployment sync pending.
+Deployment Notion checkpoint subsequently written and complete section refetched
+MATCH in BOTH authorities20:13Z; older source-published record retained. One
+specific owner Binder installation/restart action requested asynchronously,
+no root bypass or manual vendor-app launch by developer. Answer pending.
+
+
+## Owner convergence steer / bounded authority disposition — 2026-10-02T19:59Z
+
+Owner requests wrap-up after18hours, not another exploratory cycle. Scope frozen
+to demonstrated Stage9 authority corrections; same sole Coder has received the
+two Architect dispositions, no new agents/neighboring scenarios/framework.
+See STAGE9-ARCHITECT-DISPOSITION.md: retained history with broad Office fail-closed
+when household exposure/legacy eligibility unknown; narrow existing audio/Core
+adapters approved under unchanged access/OPA; no forged face authentication.
+Read-only preservation reviewer actual final independently static-checked and
+closed. Voice assurance gap, if no existing authenticated bridge, must remain
+explicit rather than delaying other safe corrections or lowering policy.
+SENTRY6eafe70 exactCI37055182830 PASS; ANIMA8396c7e exactCI37055256859 still
+running local interface validation, no failed steps observed. Clean Stage8image
+b84160834c4e52bdaf42de8ab4f4b3463464f07fdea0410b363d7ab22ea2b0f8
+built and source-verified112files/47packages, NOT_DEPLOYED. Live remains Stage7.
+Read-only19:56:45Z preflight confirms zero active provider/action/delivery claims;
+46historical ambiguities retained, Memory365/tasks17/runs50/profile1/calendar5.
+Both Notion authority Stage8/source-published sections fully read back MATCH.
+Next: hosted result/artifact, controlled app-only deployment and exact state/
+readiness proof; independent finite Stage9 review. Full actual Goal gates remain,
+no ceremonial new feature cycle, no test-only completion or physical waiver.
+
+## Stage8 publication / Stage9 same-Coder issuance — 2026-10-02T19:40Z
+
+Published ANIMA8396c7eb261c6c0ee51c96d24b4012966d216768 main exactCI37055256859
+IN_PROGRESS; published SENTRY6eafe70dcf0674ca66a8df866105965705dff841 feature
+exactCI37055182830 PASS. ANIMA workflow pins that immutable accepted SENTRY
+SHA; workflow hashcfdddec0f64e1f84c9787d6688bf5da5dd4f94928f5b9547fed5ba03f0b173f6,
+all other accepted source hashes unchanged. Clean image build in progress from
+/tmp/anima-stage8-published.mpTofr; live remains Stage7 until exactCI/quiescence.
+Same sole Leibniz Stage9 issued native01a0fe20-5694-7023-8ea4-b21bd3c17e4b,
+ANIMA/tmp/anima-stage9-development.uaXhQt@8396c7e and
+SENTRY/tmp/sentry-stage9-development.UFN3qc@6eafe70. Exact full assignment
+STAGE9-ASSIGNMENT.md supersedes prepared-only status, not older history.
+READ-ONLY Planck resumed01a0fe20-af7a-7582-a4ed-d791d8b5758b for disjoint
+existing Core typed audio/enrollment preservation/caller map, no source/runtime
+writes. Parent owns acceptance/publication/deploy/lock/fullMO/A–O. Graft excluded,
+private resident settings and all owner/root/vendor/future gates unchanged.
+
+
 ## Stage8 independent source acceptance — 2026-10-02T19:34Z
 
 Actual native Leibniz final collected; complete appended result and refinement

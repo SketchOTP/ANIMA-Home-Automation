@@ -1,5 +1,15 @@
 # Project Profile
 
+Current verified20:08Z deployment supersedes older live pointers: Stage8
+ANIMA8396c7e/SENTRY6eafe70 exact hosted PASS, imageb841/source112/assets3/
+47packages/11installed files MATCH. Controlled app-only restart preserves
+365Memory/17tasks50runs/1profile/5calendar/voice settings/46ambiguous records,
+private/Graft fingerprints and infrastructure identities. Core/OPA ready,
+Core/helper/voice/supervisor/UI/relay active. Task/originating approval-result/
+required-alert corrections loaded, not genuine owner audible outcome proof.
+Stage9 authority correction ongoing; Android owner-root/vendor/owner/future open.
+
+
 Current deployment16:42Z: accepted Stage7 9ee8128/image4259b74a live, source110/
 lock47/installed11 exact; authenticated Core/stack ready, application recovery
 active0restarts. Prospective automatic commissioning is now deployed only for

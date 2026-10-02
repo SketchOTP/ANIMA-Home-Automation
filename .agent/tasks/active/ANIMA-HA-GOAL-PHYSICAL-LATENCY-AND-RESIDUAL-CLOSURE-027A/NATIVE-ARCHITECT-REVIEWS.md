@@ -1864,3 +1864,30 @@ Global anima-pc.service stop forbidden (actualExecStopwhole-stack), supervisor
 must be held until app services restored. Publish SENTRY first then immutable
 paired-source ANIMA pin; no Graft/private edits. Stage9 remains prepared pending
 compatible source issuance; all permanent MO/A–O/physical/future gates remain.
+
+## 2026-10-02T20:08Z — Stage8 exact hosted/live correspondence accepted
+
+Actual paired exact CI PASS8396c7e/6eafe70. Native artifact11249596490 actual
+PG70/browser2 and retained required inputs0targetskip. Controlled imageb841/
+source112/assets3/47packages/installed11 correspondence independently verified;
+private/durable/infrastructure preserved,46ambiguities unchanged, natural queue
+changes accounted, no replay/reset. Authenticated Core/OPA and consumer recovery
+observed. Full evidence STAGE8-DEPLOYMENT.md. Android owner-root gate remains.
+Bounded source/live correspondence accepted, not actual owner audible/full MO/
+A–O/prospective usefulness. Stage9 same Coder continues only known defects;
+read-only final ten static checks independently repeated, material dispositions
+sent and reviewer closed. Owner requests wrap-up; no new scope/qualification phase.
+
+## 2026-10-02T21:03Z — Stage9 bounded source acceptance and frozen closeout
+
+Actual native final collected20:56Z, Coder closed; primary independently checked
+20 integrated source hashes and503 frozen entries. Final ANIMA1531PASS81SKIP
+including60worker; SENTRY596PASS7SKIP; primary restrictedPG/currentOPA7PASS0SKIP.
+Bounded scope/current authority/audio-relative durable reservation source accepted
+for one paired publication, not effective installed sandbox/live rollout/fullGoal.
+Installed legitimate-read timeout retained; voice AUTHENTICATED gate remains.
+Earlier six-helper-PASS assignment statement corrected in acceptance record.
+Current live matched Stage8 remains; no media/model/physical test or historical
+work reset. Graft excluded, owner-root Binder unanswered. Exact acceptance,
+counts/digests/negatives/remaining permanent boundaries in ANIMA027A
+STAGE9-ARCHITECT-ACCEPTANCE. No further speculative stage/feature assignment.

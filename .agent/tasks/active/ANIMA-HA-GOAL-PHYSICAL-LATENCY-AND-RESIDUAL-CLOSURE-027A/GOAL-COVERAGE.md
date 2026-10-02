@@ -1,5 +1,24 @@
 # Permanent goal coverage — native takeover baseline
 
+Current21:03Z: bounded Stage9 source accepted/integrated, NOT deployed or fullGoal
+complete. Installed effective sandbox EVIDENCE GAP blocks live rollout; spoken
+enrollment OWNER/AUTHENTICATED authority gate; Android OWNER-ACTION GATE.
+Actual owner journeys/vendor receipt/playback timing/qualified prospective
+usefulness remain EVIDENCE GAP or OWNER/EXTERNAL gates, not inferred from unit
+tests or elapsed trial clock. STAGE9-ARCHITECT-ACCEPTANCE supersedes older current
+implementation pointers while retaining the entire MO01–15/A–O contract.
+
+Current20:08Z: Stage8 pair8396c7e/6eafe70 exact hosted PASS and controlled
+imageb841/source112/lock47/client11 LIVE_MATCHED. Actual PG70/browser2 artifact
+and retained required inputs no target skips. STAGE8-DEPLOYMENT retains exact
+state/private/infrastructure/quiescence proof and natural queue changes.
+Task→result, originating approval→response and required-alert improvements now
+DEPLOYED_SOURCE_QUALIFIED, not genuine owner/model/audible outcome qualification.
+Stage9 effective authority correction remains bounded under primary dispositions.
+Android Binder owner-root/vendor/playback/complete actual MO/A–O journeys and
+prospective usefulness/coverage remain open. Full Goal definition unchanged.
+
+
 Current19:34Z: bounded Stage8 future-task result/originating approval response/
 required-alert accounting SOURCE ACCEPTED after actual native final and
 independent74realPG/currentOPA plus full regression. All33 integrated hashes

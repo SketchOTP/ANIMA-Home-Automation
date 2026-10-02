@@ -1670,7 +1670,16 @@ def build_postgres_core(
     )
     register_and_enable(
         SENTRY_CONTROL_MANIFEST,
-        NativeRuntime(SentryControlNativePlugin(sentry_voice_settings_store)),
+        NativeRuntime(
+            SentryControlNativePlugin(
+                sentry_voice_settings_store,
+                SentryIdentityProfileClient.from_environment(),
+                lambda home, person: any(
+                    member.canonical_id == person for member in graph.members_of_household(home)
+                ),
+                PostgresActionStore(database_url),
+            )
+        ),
         persist_choice=False,
     )
     register_and_enable(
