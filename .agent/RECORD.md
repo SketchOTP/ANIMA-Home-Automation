@@ -400,3 +400,50 @@ UI, and voice remain out of scope.
 - This is `COMPLETE - PENDING ARCHITECT ACCEPTANCE`, not self-acceptance.
   Native Pi 5 remains an external hardware gate. Phase 15 remains unauthorized
   and unimplemented.
+
+## Owner development-role amendment — 027A / R5F — 2026-10-01
+
+- Source: owner directive titled "ANIMA HA / SENTRY — EXISTING-PROJECT TAKEOVER
+  AND NATIVE CODEX ARCHITECT–CODER LOOP", read in full from
+  `/home/sketch/.codex/attachments/d2488108-0732-485c-99ef-e3f34f04efc4/Pasted text.txt`;
+  SHA-256 `403d0c5f0115f71854cda6eb43f5f2977635e7b9b2ae681eb611334ff32c48cd`.
+  This dated local record carries provenance; the attachment path is not a
+  required future-worker dependency.
+- Owner explicitly transfers ChatGPT development Architect responsibility to
+  primary Codex `01a052d8-2511-7382-a1ef-b0a080514788`, with one native Coder,
+  direct follow-up and independent review. Architect can inspect the live
+  working tree and select/accept follow-up within owner-authorized scope;
+  external ChatGPT relay is superseded. Coder cannot self-accept or spawn agents.
+  Final material owner decisions remain with the owner.
+- This is an amendment inside existing ANIMA 027A / R5F, not a new directive,
+  phase or goal. Historical directives/startup template/evidence remain unchanged.
+  Root AGENTS, local Authority skill/references and INDEX route the current loop.
+- ANIMA goal success measures, full completion contract and resident brain/profile
+  are unchanged. SENTRY standalone office goal is preserved; owner-authorized
+  ANIMA integration responsibilities supersede only conflicting component-scope
+  exclusions (2026-09-06 integration amendment and current takeover), not the
+  other standalone goal. PROFILE/INDEX reference the shared ANIMA adopted goal.
+- Parent owns canonical execution lock/state generation/fence 4; Coder validated
+  it before delegated edits and neither acquired nor released it. No global Codex,
+  model/permission, household runtime authority, product/service or external write.
+- Status: governance amendment IMPLEMENTED LOCALLY; independent Architect
+  verification/disposition `PENDING`. No retroactive approval or acceptance.
+
+
+## 027A / R5F — native Architect governance acceptance and Stage1 follow-up — 2026-10-02
+
+Governance disposition is ACCEPTED (bounded scope), by primary Architect's
+independent review in ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`, not by this Coder.
+That record supersedes earlier PENDING governance status while preserving its
+original result/evidence. Stage1 source/testing is authorized by direct follow-up;
+deployment/restarts/household mutations remain gated. Sole Coder under parent
+OWNED generation/fence4; no new directive, phase, goal or runtime brain.
+
+Stage1 implementation, exact changed paths, loading fingerprints, tests, source/
+installed boundary and negative checks are in ANIMA 027A `STAGE1-CODER-RESULT.md`.
+Product result is REVIEW_PENDING; actual recovery and whole goal remain unproven.
+The earlier enabled-only profile listing did not establish a missing ANIMA MCP
+binding: installed `anima_household` is present, disabled at rest, exact-prebound,
+and protected by existing denies/overrides. No resident profile change is made.
+ANIMA Graft ask's automatic cache refresh is an explicit preservation failure;
+no manual rebuild, further ask or speculative byte restoration was performed.

@@ -74,3 +74,11 @@ What was checked, disposition, and whether it affects strategic direction. Use `
 ## Recommendation to Architect
 
 State the technical recommendation, but do not self-authorize a strategic next step.
+
+## Review disposition
+
+Return this result directly to the primary Codex Architect. Implementation
+completion is a Coder report, never acceptance. Record independent review as
+PENDING until the Architect records its own verification/disposition; leave the
+packet active. The parent may assign corrections or the next authorized gap
+without an external ChatGPT relay. Whole-goal completion needs its full contract.

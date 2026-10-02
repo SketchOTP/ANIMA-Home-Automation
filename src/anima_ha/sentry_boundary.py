@@ -275,6 +275,7 @@ class CoreSentryBoundary:
             IntelligenceOrigin.DURABLE_TASK,
         }:
             raise SentryBoundaryError("NOTIFICATION_NOT_UNSOLICITED")
+        initiative: dict[str, Any] | None
         loader = self.notification_context_loader
         if loader is not None:
             initiative = loader(request)

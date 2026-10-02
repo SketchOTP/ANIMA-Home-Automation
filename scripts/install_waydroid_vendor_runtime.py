@@ -154,13 +154,16 @@ WantedBy=default.target
     )
     write_unit(
         "anima-android-session.service",
-        """[Unit]
+        f"""[Unit]
 Description=ANIMA Waydroid vendor-app session
 After=anima-android-bus.service anima-vendor-notification-relay.service anima-android-compositor.service
 Requires=anima-android-bus.service anima-vendor-notification-relay.service anima-android-compositor.service
+StartLimitIntervalSec=300
+StartLimitBurst=1
 
 [Service]
 Type=simple
+ExecCondition=/usr/bin/python3 "{quoted_project}/scripts/waydroid_notification_supervisor.py" --check-access --status "{quoted_readiness}"
 Environment=DISPLAY=:1
 Environment=WAYLAND_DISPLAY=anima-android-wayland
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/anima-android-bus
@@ -181,7 +184,7 @@ WantedBy=default.target
         f"""[Unit]
 Description=ANIMA persistent Android notification readiness supervisor
 After=anima-android-session.service anima-vendor-notification-relay.service
-Wants=anima-android-session.service anima-vendor-notification-relay.service
+Wants=anima-vendor-notification-relay.service
 
 [Service]
 Type=simple

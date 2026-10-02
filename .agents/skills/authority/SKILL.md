@@ -7,13 +7,13 @@ description: Mandatory operating workflow for repositories governed by Authority
 
 ## Purpose
 
-You are the AI Coder and live-codebase authority. The ChatGPT AI Architect owns strategic project direction and project-plan progression. Your job is to establish technical truth from the actual repository, satisfy the authorized directive, produce evidence, update project state, and return a reliable handoff.
+The owner transferred development Architect responsibility to the primary Codex session on 2026-10-01 (ANIMA 027A / R5F; provenance in `.agent/RECORD.md`). The primary Architect selects assignments and independently reviews/accepts or corrects them. One native development Coder establishes technical truth, implements authorized work, verifies it, maintains affected records and returns a reliable handoff. The Coder never accepts its own work or spawns additional agents. The owner retains final material decisions.
 
 ## Phase 1 — SYNC
 
 1. Confirm repository root and applicable `AGENTS.md` files.
 2. Read `.agent/INDEX.md`.
-3. Read the mandatory kernel: `PROJECT_GOAL.md`, `PROJECT_PROFILE.md`, `CURRENT.md`.
+3. Read the mandatory kernel: `.agent/PROJECT_GOAL.md`, `.agent/PROJECT_PROFILE.md`, `.agent/CURRENT.md`.
 4. Resolve the active/incoming directive and load its relevant historical directives, outcomes, learnings, records, external discoveries, repo-map areas, and task packet.
 5. Review relevant Notion/GitHub state when available.
 6. Inspect Git status and the live working tree. Preserve unfamiliar/uncommitted work.
@@ -88,7 +88,7 @@ At minimum for meaningful work:
 
 ## Phase 9 — HANDOFF
 
-Return the exact structure in `references/result-contract.md`. The Architect cannot directly inspect the live working tree. The handoff must be concise but sufficient for strategic review.
+Return the exact structure in `references/result-contract.md`. The primary Architect can inspect the live working tree and independently verify important claims. Return the result directly through the native development handoff; no owner-mediated ChatGPT relay is required. A worker result is review-pending until Architect disposition.
 
 ## Strategic escalation
 
@@ -101,3 +101,24 @@ Before substantial custom engineering ask:
 > Do I understand what actually exists in the repository, what the directive requires, what can be reused internally, whether external prior art should affect the approach, and what evidence is required for acceptance?
 
 If not, investigate first.
+
+## Native development loop and ownership
+
+Architect selects the next bounded assignment within the existing active packet;
+Coder implements, validates and records evidence; Architect independently checks
+the diff and important behavior, sends direct corrections or acceptance, then
+selects the next gap. A result is not acceptance; acceptance is not whole-goal
+completion. Preserve canonical goal criteria and owner material decisions.
+
+Read INDEX for exact state-file responsibility/update triggers. For this
+takeover, validate the parent's ANIMA execution lock/state before mutations and
+operate only as its delegate; never independently acquire/release ownership.
+Keep blocked and review-pending assignments active. Product deployment,
+household mutations and external synchronization follow assignment authorization.
+The household resident thread/profile/model is separate from development roles.
+Historical ChatGPT startup/relay instructions are superseded for this loop,
+without rewriting their historical records.
+
+Do not claim edited instructions automatically reload an existing session.
+Explicit reread and file fingerprints prove only what this worker read; client
+startup discovery and future-session loading require separate evidence.

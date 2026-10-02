@@ -9,6 +9,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 
 def supervisor_module() -> Any:
     path = Path(__file__).parents[1] / "scripts" / "waydroid_notification_supervisor.py"
@@ -124,6 +126,7 @@ def test_run_once_recovers_ready_stack_without_model_or_notification_payload(
         relay_status_path=relay_status,
         clock=clock,
         forwarder_checker=lambda: ("CONNECTED", "WAYDROID_BINDER_SERVICE_MANAGER"),
+        access_checker=lambda: None,
     )
     payload = supervisor.run_once()
     assert payload["state"] == "DEGRADED"
@@ -146,3 +149,111 @@ def test_run_once_recovers_ready_stack_without_model_or_notification_payload(
     assert (tmp_path / "readiness.json").stat().st_mode & 0o777 == 0o600
     encoded = (tmp_path / "readiness.json").read_text(encoding="utf-8")
     assert "notification body" not in encoded
+
+
+def test_binder_permission_fault_never_retries_session_or_container(tmp_path: Path) -> None:
+    module = supervisor_module()
+    calls = []
+    supervisor = module.WaydroidSupervisor(
+        runner=lambda *arguments: calls.append(arguments),
+        status_path=tmp_path / "readiness.json",
+        access_checker=lambda: "BINDER_PERMISSION",
+    )
+    for _ in range(4):
+        payload = supervisor.run_once()
+        assert payload["state"] == "NOT_READY"
+        assert payload["owner_root_gate"] is True
+        assert payload["components"]["android_session"]["state"] == "BLOCKED"
+        assert payload["components"]["vendors"][module.TAPO_PACKAGE]["state"] == "UNKNOWN"
+    assert calls == []
+
+
+def test_source_access_fault_never_starts_any_unit(tmp_path: Path) -> None:
+    module = supervisor_module()
+    calls = []
+
+    def runner(argv: Sequence[str], _timeout: float) -> Any:
+        calls.append(tuple(argv))
+        return module.CommandResult(
+            0 if argv[0] == "systemctl" else 1,
+            access_fault=None if argv[0] == "systemctl" else "SOURCE_ACCESS",
+        )
+
+    supervisor = module.WaydroidSupervisor(
+        runner=runner,
+        status_path=tmp_path / "readiness.json",
+        access_checker=lambda: None,
+    )
+    for _ in range(3):
+        assert supervisor.run_once()["reason"] == "SOURCE_ACCESS"
+    assert all("start" not in call and "restart" not in call for call in calls)
+
+
+def test_normal_coldboot_and_stopped_container_session_can_recover(tmp_path: Path) -> None:
+    module = supervisor_module()
+    for container_stopped in (True, False):
+        calls: list[tuple[str, ...]] = []
+        active = set() if container_stopped else {"waydroid-container.service"}
+
+        def runner(
+            argv: Sequence[str],
+            _timeout: float,
+            calls: list[tuple[str, ...]] = calls,
+            active: set[str] = active,
+        ) -> Any:
+            command = tuple(argv)
+            calls.append(command)
+            if "is-active" in command:
+                return module.CommandResult(0 if command[-1] in active else 1)
+            if "start" in command:
+                active.add(command[-1])
+                return module.CommandResult(0)
+            # Transitional shell failure: NOT a positively observed permission error.
+            return module.CommandResult(1)
+
+        supervisor = module.WaydroidSupervisor(
+            runner=runner,
+            status_path=tmp_path / "readiness.json",
+            clock=lambda: 1000,
+            access_checker=lambda: None,
+            forwarder_checker=lambda: ("NOT_READY", "ANDROID_NOT_BOOTED"),
+        )
+        payload = supervisor.run_once()
+        assert payload["state"] == "NOT_READY"
+        assert payload.get("owner_root_gate") is not True
+        assert any(call[-2:] == ("start", "anima-android-session.service") for call in calls)
+        if container_stopped:
+            assert any(call[-2:] == ("start", "waydroid-container.service") for call in calls)
+
+
+def test_root_only_control_node_is_not_a_user_readiness_requirement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = supervisor_module()
+    opened = []
+    monkeypatch.setattr(module.Path, "exists", lambda _path: True)
+    monkeypatch.setattr(module.Path, "stat", lambda _path: type("Info", (), {"st_mode": 0o20666})())
+
+    def open_driver(path: str, _flags: int) -> int:
+        opened.append(str(path))
+        return 10
+
+    monkeypatch.setattr(module.os, "open", open_driver)
+    monkeypatch.setattr(module.os, "close", lambda _descriptor: None)
+    assert module.binder_access_fault() is None
+    assert len(opened) == 3
+    assert all("binder-control" not in path for path in opened)
+
+
+def test_shell_permission_is_distinct_from_normal_stopped_container(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = supervisor_module()
+    for stderr, expected in (
+        ("Container is STOPPED", None),
+        ("PermissionError: Operation not permitted", "SOURCE_ACCESS"),
+        ("sudo: no new privileges flag is set", "SOURCE_ACCESS"),
+    ):
+        result = type("Completed", (), {"returncode": 1, "stdout": "", "stderr": stderr})()
+        monkeypatch.setattr(module.subprocess, "run", lambda *args, result=result, **kwargs: result)
+        assert module.run_command(("sudo", "-n", "waydroid", "shell"), 1).access_fault == expected

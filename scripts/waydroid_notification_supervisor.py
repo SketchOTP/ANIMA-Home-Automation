@@ -33,7 +33,6 @@ USER_UNITS = (
     "anima-android-bus.service",
     "anima-android-compositor.service",
     "anima-vendor-notification-relay.service",
-    "anima-android-session.service",
 )
 DEFAULT_STATUS = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / (
     "anima-android-notification-readiness.json"
@@ -49,10 +48,36 @@ STATUS_MAX_AGE = 90.0
 class CommandResult:
     returncode: int
     stdout: str = ""
+    access_fault: str | None = None
 
 
 Runner = Callable[[Sequence[str], float], CommandResult]
 ForwarderChecker = Callable[[], tuple[str, str]]
+AccessChecker = Callable[[], str | None]
+
+
+def binder_access_fault() -> str | None:
+    """Passive access check only: no driver probing, ioctl, mounts or chmod."""
+    # Upstream's root-only control node is NOT needed by the user listener.
+    # Missing drivers are ordinary cold-start state, not proof of denied access.
+    for name in ("anbox-binder", "anbox-hwbinder", "anbox-vndbinder"):
+        path = Path("/dev") / name
+        if not path.exists():
+            path = Path("/dev/binderfs") / name
+        try:
+            info = path.stat()
+            if not stat.S_ISCHR(info.st_mode):
+                return "SOURCE_ACCESS"
+            descriptor = os.open(path, os.O_RDWR | os.O_NONBLOCK)
+            os.close(descriptor)
+        except PermissionError:
+            return "BINDER_PERMISSION"
+        except FileNotFoundError:
+            continue
+        except OSError:
+            # A driver unavailable during startup is not an access diagnosis.
+            continue
+    return None
 
 
 def run_command(argv: Sequence[str], timeout: float = 8.0) -> CommandResult:
@@ -60,17 +85,27 @@ def run_command(argv: Sequence[str], timeout: float = 8.0) -> CommandResult:
         completed = subprocess.run(
             list(argv),
             check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            capture_output=True,
             text=True,
             timeout=timeout,
         )
+    except PermissionError:
+        return CommandResult(1, access_fault="SOURCE_ACCESS")
     except (OSError, subprocess.TimeoutExpired):
         return CommandResult(1)
     # Android diagnostics are parsed in memory for bounded booleans only.  A
     # larger cap avoids truncating package permissions/channels that appear
     # after the package header; nothing from this buffer is logged or stored.
-    return CommandResult(completed.returncode, completed.stdout[:262_144])
+    error = (completed.stderr or "").casefold()
+    denied = completed.returncode != 0 and any(
+        marker in error for marker in (
+            "permission denied", "operation not permitted", "no new privileges",
+            "no-new-privileges", "a password is required", "not allowed to execute",
+        )
+    )
+    return CommandResult(
+        completed.returncode, completed.stdout[:262_144], "SOURCE_ACCESS" if denied else None
+    )
 
 
 def _now() -> str:
@@ -136,12 +171,14 @@ class WaydroidSupervisor:
         relay_status_path: Path = DEFAULT_RELAY_STATUS,
         clock: Callable[[], float] = time.time,
         forwarder_checker: ForwarderChecker | None = None,
+        access_checker: AccessChecker = binder_access_fault,
     ) -> None:
         self.runner = runner
         self.status_path = status_path
         self.relay_status_path = relay_status_path
         self.clock = clock
         self.forwarder_checker = forwarder_checker or self._probe_notification_forwarder
+        self.access_checker = access_checker
         self.last_app_launch: dict[str, float] = {}
         self.last_process_observed: dict[str, bool] = {}
         self.last_container_start = 0.0
@@ -345,7 +382,18 @@ class WaydroidSupervisor:
             relay,
         )
 
+    def check_access(self) -> str | None:
+        fault = self.access_checker()
+        # Only positively classified permission failures block recovery. A
+        # stopped/cold container and empty getprop are normal transitional state.
+        if fault is None and self._system_active("waydroid-container.service"):
+            fault = self._android("getprop", "sys.boot_completed").access_fault
+        return fault
+
     def run_once(self) -> dict[str, object]:
+        fault = self.check_access()
+        if fault is not None:
+            return self._blocked_access(fault)
         container = self._ensure_container()
         services = self._ensure_services() if container in {"ACTIVE", "RECOVERED"} else {}
         session = self._ensure_android_session() if services else "NOT_READY"
@@ -444,10 +492,30 @@ class WaydroidSupervisor:
         _atomic_json(self.status_path, payload)
         return payload
 
+    def _blocked_access(self, fault: str) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "version": 1, "observed_at": _now(), "state": "NOT_READY",
+            "reason": fault, "owner_root_gate": True, "recovery_attempted": False,
+            "services": {}, "android": {"boot_completed": False},
+            "components": {
+                "android_session": {"state": "BLOCKED", "reason": fault},
+                "notification_forwarder": {"state": "NOT_READY", "reason": fault},
+                "notification_listener": {"state": "NOT_READY", "reason": fault},
+                "vendors": {package: {"state": "UNKNOWN", "reason": "SOURCE_ACCESS"}
+                            for package in VENDOR_PACKAGES},
+            },
+            "relay_counters": {},
+        }
+        _atomic_json(self.status_path, payload)
+        return payload
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--once", action="store_true")
+    parser.add_argument(
+        "--check-access", action="store_true", help="Passive session ExecCondition; no recovery"
+    )
     parser.add_argument("--interval", type=float, default=15.0)
     parser.add_argument("--status", type=Path, default=DEFAULT_STATUS)
     parser.add_argument("--relay-status", type=Path, default=DEFAULT_RELAY_STATUS)
@@ -457,6 +525,12 @@ def main(argv: list[str] | None = None) -> int:
     supervisor = WaydroidSupervisor(
         status_path=args.status, relay_status_path=args.relay_status
     )
+    if args.check_access:
+        fault = supervisor.check_access()
+        if fault:
+            supervisor._blocked_access(fault)
+            return 1
+        return 0
     while True:
         supervisor.run_once()
         if args.once:

@@ -43,6 +43,7 @@ services:
       ANIMA_HA_BROWSER_URL: http://localhost:8123
       ANIMA_HA_EXPECTED_VERSION: "2026.9.0"
       ANIMA_OWNER_BOUNDARY_GROUP: "1000"
+      ANIMA_OWNER_BOUNDARY_MODE: external
       ANIMA_VENDOR_RELAY_CONFIG: /var/lib/anima/provider-boundary/vendor-relay.json
       ANIMA_SENTRY_IDENTITY_URL: http://127.0.0.1:48174
       ANIMA_SENTRY_IDENTITY_TOKEN_FILE: /var/lib/anima/provider-boundary/sentry-identity.token

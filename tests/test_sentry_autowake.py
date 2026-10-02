@@ -98,7 +98,7 @@ class Harness:
             auto_wake_claims=PostgresAutoWakeClaims(url, enabled_at=self.epoch),
         )
         self.path = str(tmp_path / "s")
-        self.server = _UnixHTTPServer(self.path, _Handler)  # type: ignore[arg-type]
+        self.server = _UnixHTTPServer(self.path, _Handler)
         self.server.service = self.service
         self.thread = Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()

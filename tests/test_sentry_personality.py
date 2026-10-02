@@ -80,7 +80,7 @@ def test_scoped_sentry_client_reads_only_the_active_household_profile(tmp_path: 
         token=token,
     )
     socket_path = tmp_path / "core.sock"
-    server = _UnixHTTPServer(str(socket_path), _Handler)  # type: ignore[arg-type]
+    server = _UnixHTTPServer(str(socket_path), _Handler)
     server.service = CoreSentryHTTPService(
         cast(Any, object()),
         lambda: token,

@@ -188,9 +188,7 @@ class LearningReviewRunner:
         consumer = f"learning-review:{self.household_id}:{event.event_id}"
         self.core.attention.prime_consumer_before(profile, consumer, appended.journal_position - 1)
         review_tools = [
-            tool
-            for tool in self.core.plugins.list_tools()
-            if tool.tool_id in self.REVIEW_TOOL_IDS
+            tool for tool in self.core.plugins.list_tools() if tool.tool_id in self.REVIEW_TOOL_IDS
         ]
         if {tool.tool_id for tool in review_tools} != self.REVIEW_TOOL_IDS:
             raise LearningReviewError("REVIEW_TOOL_CATALOGUE_INCOMPLETE")
@@ -274,9 +272,7 @@ class LearningReviewRunner:
         consumer = f"learning-catch-up-v2:{self.household_id}:{event_id}"
         self.core.attention.prime_consumer_before(profile, consumer, appended.journal_position - 1)
         review_tools = [
-            tool
-            for tool in self.core.plugins.list_tools()
-            if tool.tool_id in self.REVIEW_TOOL_IDS
+            tool for tool in self.core.plugins.list_tools() if tool.tool_id in self.REVIEW_TOOL_IDS
         ]
         if {tool.tool_id for tool in review_tools} != self.REVIEW_TOOL_IDS:
             raise LearningReviewError("REVIEW_TOOL_CATALOGUE_INCOMPLETE")

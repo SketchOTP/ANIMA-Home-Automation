@@ -173,12 +173,9 @@ def _definition_for_node(node: CanonicalNode) -> SensorDefinition | None:
         if "garage" in words:
             return next(item for item in SENSOR_DEFINITIONS if item.key == "wansview_garage")
         if "back" in words and "yard" in words:
-            return next(
-                item for item in SENSOR_DEFINITIONS if item.key == "wansview_backyard"
-            )
+            return next(item for item in SENSOR_DEFINITIONS if item.key == "wansview_backyard")
     if "tapo" in provider or (
-        str(node.metadata.get("resource_type", "")).casefold() == "lock"
-        and "lock" in words
+        str(node.metadata.get("resource_type", "")).casefold() == "lock" and "lock" in words
     ):
         return next(item for item in SENSOR_DEFINITIONS if item.key == "tapo")
     if "ring" in provider or ("front" in words and "camera" in words):
@@ -205,9 +202,7 @@ def _definition_from_event(text: str) -> SensorDefinition | None:
         if "garage" in words:
             return next(item for item in SENSOR_DEFINITIONS if item.key == "wansview_garage")
         if "back" in words and "yard" in words:
-            return next(
-                item for item in SENSOR_DEFINITIONS if item.key == "wansview_backyard"
-            )
+            return next(item for item in SENSOR_DEFINITIONS if item.key == "wansview_backyard")
     return None
 
 
@@ -292,9 +287,7 @@ def _person_row(
         raw_status_changed = wifi_data.get("last_status_changed_at")
         if isinstance(raw_status_changed, str):
             try:
-                last_status_changed_at = datetime.fromisoformat(
-                    raw_status_changed
-                ).astimezone(UTC)
+                last_status_changed_at = datetime.fromisoformat(raw_status_changed).astimezone(UTC)
             except (TypeError, ValueError, OverflowError):
                 last_status_changed_at = None
     if truth is not None:
@@ -417,9 +410,7 @@ def build_sensor_status(
         if event_entry is None:
             fallback = latest_by_definition.get(definition.key)
             event_entry = fallback
-        device_event: dict[str, Any] | None = (
-            event_entry[1] if event_entry is not None else None
-        )
+        device_event: dict[str, Any] | None = event_entry[1] if event_entry is not None else None
         rows.append(_device_row(definition, node, device_event, now=current))
 
     wifi_presence = _fresh_wifi_presence(wifi_presence, now=current)

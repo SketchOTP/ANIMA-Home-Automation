@@ -112,3 +112,42 @@ also requires session/container/listener/relay restart qualification, a full
 host reboot qualification or explicit owner operational gate, genuine Tapo and
 Wansview receipt evidence where physically available, final owner wake tests,
 and exact-build Tapo playback latency. Phase 15 remains unauthorized.
+
+## Existing 027A / R5F — owner takeover BASELINE/GOVERNANCE assignment — 2026-10-01
+
+- Authority/provenance: owner role-transfer amendment in RECORD; primary Codex
+  Architect delegates one native Coder under parent execution generation4.
+- Purpose: reconcile current development routing and minimal state navigation,
+  preserve prior work, and independently check one important assessment finding.
+- Scope: root AGENTS, project-local Authority workflow/references, INDEX/PROFILE/
+  CURRENT and append-only role decisions/directive/outcomes; existing ANIMA 027A
+  packet only. No new packet/phase; parent owns GOAL-COVERAGE.md/Notion.
+- Criteria: owner-authorized primary Architect + one Coder with no self-acceptance;
+  short standing rules; current 027A/R5F pointer; state responsibility/update
+  navigation; required files verified; exact instruction loading evidence;
+  preserved tooling/history/protected product; independent startup observation.
+- Exclusions: product source, installed units, service/model calls, runtime data/
+  authority, commit/staging/push/Notion, global configuration, agents/threads.
+- Shared baseline: ANIMA main c8ea05efe8c5a6ae5def4a1c75834910aa519d44;
+  SENTRY feature/v0.4-personal-continuity e2ab3b75781ec293f8830d910cb7622f34bd82cb.
+- Result/evidence: ANIMA existing 027A EVIDENCE/HANDOFF dated subsection.
+  Coder report `PARTIAL — REVIEW_PENDING`; Architect disposition PENDING.
+  Parent review/direct follow-up precedes any Stage1 product assignment.
+
+
+## 027A / R5F Stage1 native handoff — 2026-10-02
+
+Bounded BASELINE/GOVERNANCE disposition is ACCEPTED by independent primary
+Architect; see parent-owned `NATIVE-ARCHITECT-REVIEWS.md`. Original PENDING
+result/history remains intact, superseded by that review, not by Coder acceptance.
+Direct follow-up authorized only the Stage1 source/test bundle before deployment.
+Exact implementation, loading paths/fingerprints, baseline/dirty inventory,
+validation, source/installed boundary, corrected profile inference and root gate:
+[STAGE1-CODER-RESULT.md](STAGE1-CODER-RESULT.md).
+Product review is PENDING; no installation/restart/model/physical action or
+whole-goal completion. Parent owns full GOAL-COVERAGE and Notion records.
+ANIMA Graft ask automatically refreshed its internal cache; preservation FAILED,
+exact prefix/sort/no-final-newline recipe and unchanged tooling hashes are recorded.
+No manual rebuild or unsupported cache rollback. Android containment remains
+parent-owned; dynamic Binder candidate requires legitimate reviewed owner/root
+access. Shared Atlas mount and protected resident configuration are untouched.

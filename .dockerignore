@@ -1,5 +1,9 @@
 .git
 .gitignore
+graft/
+.agent/
+.agents/
+.ignore
 .venv
 __pycache__
 *.py[cod]

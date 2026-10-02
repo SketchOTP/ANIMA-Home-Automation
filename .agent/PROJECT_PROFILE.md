@@ -1,5 +1,29 @@
 # Project Profile
 
+## Current development and integration checkpoint — 2026-10-01
+
+Owner transfer: primary Codex Architect plus one native development Coder with
+independent review; see RECORD and the existing 027A / R5F packet. Actual local
+root is `/home/sketch/Projects/ANIMA Home Automation`, main at
+`c8ea05efe8c5a6ae5def4a1c75834910aa519d44`; SENTRY companion is
+`/home/sketch/Projects/SENTRY`, feature/v0.4-personal-continuity at
+`e2ab3b75781ec293f8830d910cb7622f34bd82cb`.
+
+ANIMA owns canonical Journal/Truth/Graph/operational memory, household settings,
+identity/OPA, typed tools/tasks, execution/verification, audit and recovery.
+SENTRY is the sole integrated production intelligence/persona/voice/text/native
+interaction layer through the authenticated versioned ANIMA boundary; HA is
+replaceable substrate. These are existing adopted responsibilities, not a new
+runtime brain or developer authority for the household resident.
+
+Historical model/version/environment snapshots below are qualification history;
+they do not instruct changes to the inherited development model or separately
+configured resident profile. Local source is not deployed-byte identity. The
+current startup failure is independently observed in installed units/journal;
+installed `anima-pc.service` is outside tracked deployment units. Full deployment
+pair qualification and full-goal coverage remain parent-owned open work.
+
+
 ## Repository
 
 - Name: ANIMA HA (Home Automation)

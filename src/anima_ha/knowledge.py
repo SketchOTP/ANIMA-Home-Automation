@@ -595,14 +595,18 @@ class KnowledgeNativePlugin:
         except FileNotFoundError:
             raise KnowledgeValidationError("KNOWLEDGE_NOT_FOUND_OR_VAULT_UNAVAILABLE") from None
         except OSError as exc:
-            errno_code = {
-                EACCES: "PERMISSION",
-                EEXIST: "CONFLICT",
-                EIO: "IO",
-                ENOENT: "MISSING",
-                ENOSPC: "FULL",
-                EPERM: "PERMISSION",
-            }.get(exc.errno)
+            errno_code = (
+                {
+                    EACCES: "PERMISSION",
+                    EEXIST: "CONFLICT",
+                    EIO: "IO",
+                    ENOENT: "MISSING",
+                    ENOSPC: "FULL",
+                    EPERM: "PERMISSION",
+                }.get(exc.errno)
+                if exc.errno is not None
+                else None
+            )
             if errno_code is None:
                 raise KnowledgeValidationError("KNOWLEDGE_FILESYSTEM_UNAVAILABLE") from None
             raise KnowledgeValidationError(f"KNOWLEDGE_FILESYSTEM_{errno_code}") from None

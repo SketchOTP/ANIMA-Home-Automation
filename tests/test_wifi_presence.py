@@ -26,12 +26,15 @@ def test_parse_neighbor_table_and_network_are_bounded() -> None:
         WifiNeighbor("192.168.254.50", "aa:bb:cc:dd:ee:ff", "STALE"),
     ]
     assert default_interface("default via 192.168.254.254 dev enp7s0 proto dhcp") == "enp7s0"
-    assert str(
-        ipv4_network(
-            "2: enp7s0: <BROADCAST> inet 192.168.254.5/24 brd 192.168.254.255",
-            interface="enp7s0",
+    assert (
+        str(
+            ipv4_network(
+                "2: enp7s0: <BROADCAST> inet 192.168.254.5/24 brd 192.168.254.255",
+                interface="enp7s0",
+            )
         )
-    ) == "192.168.254.0/24"
+        == "192.168.254.0/24"
+    )
 
 
 def test_match_is_private_and_absence_is_unknown_not_away() -> None:
@@ -136,9 +139,7 @@ def test_status_change_timestamp_ignores_same_state_pings_and_updates_on_rejoin(
         now=entered.replace(minute=21),
         previous=still_away,
     )
-    assert rejoined["person-tym"]["last_status_changed_at"] == (
-        "2026-09-11T02:21:00+00:00"
-    )
+    assert rejoined["person-tym"]["last_status_changed_at"] == ("2026-09-11T02:21:00+00:00")
 
 
 def test_tracker_macs_supports_private_ha_nmap_identifiers() -> None:

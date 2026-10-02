@@ -102,9 +102,7 @@ class PostgresEventJournal:
             correlation_id=(
                 str(row["correlation_id"]) if row["correlation_id"] is not None else None
             ),
-            causation_id=(
-                str(row["causation_id"]) if row["causation_id"] is not None else None
-            ),
+            causation_id=(str(row["causation_id"]) if row["causation_id"] is not None else None),
             confidence=row["confidence"],
             evidence_kind=EvidenceKind(str(row["evidence_kind"])),
             importance=EventImportance(str(row["importance"])),
@@ -115,9 +113,12 @@ class PostgresEventJournal:
 
     def get(self, event_id: str) -> EventEnvelope | None:
         """Load one immutable event for an internal, source-scoped dispatcher."""
-        with psycopg.connect(
-            self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
-        ) as connection, connection.cursor() as cursor:
+        with (
+            psycopg.connect(
+                self.database_url, connect_timeout=self.connect_timeout, row_factory=dict_row
+            ) as connection,
+            connection.cursor() as cursor,
+        ):
             cursor.execute(
                 """
                 SELECT event_id, schema_version, event_type, source, source_event_id,

@@ -9,15 +9,18 @@ from __future__ import annotations
 
 import argparse
 import base64
+import fcntl
 import hashlib
 import hmac
 import http.server
 import json
 import os
 import secrets
+import signal
 import socket
 import socketserver
 import stat
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -249,6 +252,30 @@ class PostgresSentryPrincipalRegistry:
             )
             return cursor.fetchone() is not None
 
+    def ensure_registered(self, principal: SentryServicePrincipal, token: str) -> None:
+        """Provision only an absent identity; restart cannot undo revocation/rotation."""
+        with psycopg.connect(self.database_url) as connection:
+            connection.execute(
+                """
+                INSERT INTO anima_sentry_service_principals
+                    (client_id, household_id, provider_id, credential_generation,
+                     token_digest, enabled, allowed_origins)
+                VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb)
+                ON CONFLICT (client_id) DO NOTHING
+                """,
+                (
+                    principal.client_id,
+                    principal.household_id,
+                    principal.provider_id,
+                    principal.credential_generation,
+                    principal.token_digest,
+                    principal.enabled,
+                    json.dumps(list(principal.allowed_origins)),
+                ),
+            )
+        if not self.active(principal, token):
+            raise ServiceAuthError("service principal is revoked or rotated")
+
     def resolve_active(self, token: str) -> SentryServicePrincipal | None:
         """Resolve the current bearer token to its durable service principal."""
         digest = hashlib.sha256(token.encode()).hexdigest()
@@ -378,6 +405,84 @@ class _UnixHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     address_family = socket.AF_UNIX
     daemon_threads = True
     service: CoreSentryHTTPService
+    _core_runtime: Any = None
+
+    def __init__(
+        self,
+        server_address: str,
+        RequestHandlerClass: type[socketserver.BaseRequestHandler],  # noqa: N803
+        bind_and_activate: bool = True,
+    ) -> None:
+        # HTTPServer's stubs describe TCP addresses; AF_UNIX accepts a path.
+        super().__init__(cast(Any, server_address), RequestHandlerClass, bind_and_activate)
+
+    def server_bind(self) -> None:
+        # A persistent lock inode serializes both local entry points. Never
+        # delete the lock file: replacing it would permit two independent locks.
+        path = Path(str(self.server_address))
+        self._owned_inode: tuple[int, int] | None = None
+        self._lock_fd: int | None = None
+        descriptor = os.open(str(path) + ".lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        try:
+            info = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_uid != os.geteuid()
+                or info.st_mode & 0o077
+            ):
+                raise RuntimeError("BOUNDARY_LOCK_UNSAFE")
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise RuntimeError("BOUNDARY_ALREADY_RUNNING") from None
+            self._lock_fd = descriptor
+            try:
+                prior = path.lstat()
+            except FileNotFoundError:
+                prior = None
+            if prior is not None:
+                if not stat.S_ISSOCK(prior.st_mode):
+                    raise RuntimeError("BOUNDARY_SOCKET_PATH_UNSAFE")
+                with socket.socket(socket.AF_UNIX) as probe:
+                    probe.settimeout(1)
+                    try:
+                        probe.connect(str(path))
+                    except ConnectionRefusedError:
+                        current = path.lstat()
+                        if (current.st_dev, current.st_ino) != (prior.st_dev, prior.st_ino):
+                            raise RuntimeError("BOUNDARY_SOCKET_CHANGED") from None
+                        path.unlink()
+                    else:
+                        raise RuntimeError("BOUNDARY_ALREADY_RUNNING")
+            # HTTPServer's TCP host/port metadata is inappropriate for a Unix path.
+            socketserver.TCPServer.server_bind(self)
+            bound = path.lstat()
+            self._owned_inode = (bound.st_dev, bound.st_ino)
+            self.server_name, self.server_port = "localhost", 0
+        except BaseException:
+            if self._lock_fd is None:
+                os.close(descriptor)
+            raise
+
+    def server_close(self) -> None:
+        super().server_close()
+        path = Path(str(self.server_address))
+        owned = getattr(self, "_owned_inode", None)
+        try:
+            if owned is not None:
+                try:
+                    current = path.lstat()
+                except FileNotFoundError:
+                    pass
+                else:
+                    if (current.st_dev, current.st_ino) == owned:
+                        path.unlink()
+        finally:
+            self._owned_inode = None
+            descriptor = getattr(self, "_lock_fd", None)
+            if descriptor is not None:
+                os.close(descriptor)
+                self._lock_fd = None
 
 
 class CoreSentryHTTPService:
@@ -900,7 +1005,33 @@ def _profile_mapping(raw: str) -> dict[str, UUID]:
     return result
 
 
-def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) -> None:
+def serve(
+    database_url: str,
+    socket_path: str,
+    token_path: str,
+    opa_url: str,
+    *,
+    stop_event: threading.Event | None = None,
+) -> None:
+    # Reserve ownership before migrations, watchers or registration. A duplicate
+    # process must not mutate the live owner's socket or durable binding.
+    with _UnixHTTPServer(str(socket_path), _Handler) as server:
+        os.chmod(socket_path, 0o600)
+        try:
+            _serve_owned(server, database_url, token_path, opa_url, stop_event)
+        finally:
+            watcher = getattr(server._core_runtime, "journal_event_watcher", None)
+            if watcher is not None:
+                watcher.stop()
+
+
+def _serve_owned(
+    server: _UnixHTTPServer,
+    database_url: str,
+    token_path: str,
+    opa_url: str,
+    stop_event: threading.Event | None,
+) -> None:
     def token_loader() -> str:
         return read_credential_file(token_path)
 
@@ -910,13 +1041,7 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
     # independent Wi-Fi observer; otherwise those events remain durable but
     # never reach Attention/SENTRY for the immediate owner-configured alert.
     core = build_postgres_core(database_url, opa_url=opa_url, watch_journal_events=True)
-    path = Path(socket_path)
-    if path.exists():
-        if not stat.S_ISSOCK(path.lstat().st_mode):
-            raise RuntimeError("ANIMA Core socket path is not a socket")
-        path.unlink()
-    server = _UnixHTTPServer(str(path), _Handler)  # type: ignore[arg-type]
-    os.chmod(path, 0o600)
+    server._core_runtime = core
     token = token_loader()
     client_id = os.environ.get("ANIMA_SENTRY_CLIENT_ID", "").strip()
     household_value = os.environ.get("ANIMA_SENTRY_HOUSEHOLD_ID", "").strip()
@@ -933,7 +1058,7 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         credential_generation=int(os.environ.get("ANIMA_SENTRY_CREDENTIAL_GENERATION", "1")),
     )
     principal_registry = PostgresSentryPrincipalRegistry(database_url)
-    principal_registry.register(principal)
+    principal_registry.ensure_registered(principal, token)
     profile_mapping = _profile_mapping(os.environ.get("ANIMA_SENTRY_PROFILE_PRINCIPAL_MAP", ""))
 
     def profile_principal_resolver(household_id: UUID, profile_id: str) -> UUID | None:
@@ -973,12 +1098,15 @@ def serve(database_url: str, socket_path: str, token_path: str, opa_url: str) ->
         # idempotent learning scheduler here rather than from the optional UI
         # boundary, which cannot bind a competing socket after Core starts.
         learning_runner = _start_learning_review_runner(core, principal.household_id)
-        server.serve_forever()
+        if stop_event is None:
+            server.serve_forever()
+        else:
+            server.timeout = 0.5
+            while not stop_event.is_set():
+                server.handle_request()
     finally:
         if learning_runner is not None:
             learning_runner.stop()
-        server.server_close()
-        path.unlink(missing_ok=True)
 
 
 def main() -> int:
@@ -996,7 +1124,10 @@ def main() -> int:
     args = parser.parse_args()
     if not args.database_url or not args.token_file:
         parser.error("ANIMA Core service requires database URL and service token file")
-    serve(args.database_url, args.socket, args.token_file, args.opa_url)
+    stop_event = threading.Event()
+    for signum in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(signum, lambda *_: stop_event.set())
+    serve(args.database_url, args.socket, args.token_file, args.opa_url, stop_event=stop_event)
     return 0
 
 

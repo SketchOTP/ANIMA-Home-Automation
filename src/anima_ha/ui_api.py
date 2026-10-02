@@ -2529,6 +2529,13 @@ class UIService:
         self.owner_boundary_status = "NOT_CONFIGURED"
 
     def start_owner_boundary(self) -> None:
+        if os.environ.get("ANIMA_OWNER_BOUNDARY_MODE") == "external":
+            # The PC's host Core is the sole provider. Container UID 10001 must
+            # not provision credentials, acquire UID 1000's lock or bind again.
+            # No shared secret is granted to the UI; do not imply authenticated
+            # readiness merely because another process has a listening socket.
+            self.owner_boundary_status = "EXTERNAL_UNVERIFIED"
+            return
         directory = os.environ.get("ANIMA_OWNER_BOUNDARY_DIR", "")
         if not directory or self._owner_boundary is not None or self.core_runtime is None:
             return

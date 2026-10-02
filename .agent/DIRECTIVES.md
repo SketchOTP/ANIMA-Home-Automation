@@ -694,3 +694,43 @@ Append new directives at the bottom; never rewrite an accepted historical direct
   session/container/relay-chain and both vendor-process restart slices pass;
   full-host reboot, genuine Tapo/Wansview receipt, owner wake tests and exact
   Tapo playback latency remain open gates.
+
+## Existing 027A / R5F — owner takeover BASELINE/GOVERNANCE assignment — 2026-10-01
+
+- Authority/provenance: owner role-transfer amendment in RECORD; primary Codex
+  Architect delegates one native Coder under parent execution generation4.
+- Purpose: reconcile current development routing and minimal state navigation,
+  preserve prior work, and independently check one important assessment finding.
+- Scope: root AGENTS, project-local Authority workflow/references, INDEX/PROFILE/
+  CURRENT and append-only role decisions/directive/outcomes; existing ANIMA 027A
+  packet only. No new packet/phase; parent owns GOAL-COVERAGE.md/Notion.
+- Criteria: owner-authorized primary Architect + one Coder with no self-acceptance;
+  short standing rules; current 027A/R5F pointer; state responsibility/update
+  navigation; required files verified; exact instruction loading evidence;
+  preserved tooling/history/protected product; independent startup observation.
+- Exclusions: product source, installed units, service/model calls, runtime data/
+  authority, commit/staging/push/Notion, global configuration, agents/threads.
+- Shared baseline: ANIMA main c8ea05efe8c5a6ae5def4a1c75834910aa519d44;
+  SENTRY feature/v0.4-personal-continuity e2ab3b75781ec293f8830d910cb7622f34bd82cb.
+- Result/evidence: ANIMA existing 027A EVIDENCE/HANDOFF dated subsection.
+  Coder report `PARTIAL — REVIEW_PENDING`; Architect disposition PENDING.
+  Parent review/direct follow-up precedes any Stage1 product assignment.
+
+
+## 027A / R5F — native Architect governance acceptance and Stage1 follow-up — 2026-10-02
+
+Governance disposition is ACCEPTED (bounded scope), by primary Architect's
+independent review in ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`, not by this Coder.
+That record supersedes earlier PENDING governance status while preserving its
+original result/evidence. Stage1 source/testing is authorized by direct follow-up;
+deployment/restarts/household mutations remain gated. Sole Coder under parent
+OWNED generation/fence4; no new directive, phase, goal or runtime brain.
+
+Stage1 implementation, exact changed paths, loading fingerprints, tests, source/
+installed boundary and negative checks are in ANIMA 027A `STAGE1-CODER-RESULT.md`.
+Product result is REVIEW_PENDING; actual recovery and whole goal remain unproven.
+The earlier enabled-only profile listing did not establish a missing ANIMA MCP
+binding: installed `anima_household` is present, disabled at rest, exact-prebound,
+and protected by existing denies/overrides. No resident profile change is made.
+ANIMA Graft ask's automatic cache refresh is an explicit preservation failure;
+no manual rebuild, further ask or speculative byte restoration was performed.

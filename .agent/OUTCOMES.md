@@ -1967,3 +1967,87 @@ decision.
 - No Notion connector was available for readback in this run; Notion status is
   therefore `NOT RUN`, not inferred from repository state. Phase 15 remains
   unauthorized.
+
+## OUTCOME-027A-OWNER-SYSTEM-ASSESSMENT — 2026-10-01
+
+- Status: assessment complete / system operational qualification PARTIAL.
+  Report: existing 027A packet `SYSTEM-ASSESSMENT-2026-10-01.md`.
+- Five specialists assessed learning, integrations, reasoning/authority,
+  architecture/UI and harnesses. Parent checks confirmed a current boot
+  dependency cycle discarded Core and Wi-Fi startup jobs; worker/voice are
+  also inactive. DB voice intent is awake/office, not the stale SLEEPING
+  display. The unavailable drawer does not demonstrate erased registrations.
+- Android readiness is fresh NOT_READY with incomplete boot/Binder forwarding,
+  while relay READY is only a heartbeat. Selected deployed learning/runtime
+  source hashes differ from local committed source. No runtime repair or
+  blanket operational pass is claimed.
+- Read-only learning aggregates: 49 packets, 27 completion records, 12 active
+  suggestions; six completion records link to FAILED requests. Retrieval is
+  evidenced, but measured predictive improvement and executable routine
+  promotion are not. Preserved 46 provider-started ambiguous/recovery requests
+  without reset/replay; no active provider-running claim was observed.
+- Focused checks passed with documented DB skips and overlapping coverage.
+  An initial SENTRY system-Python run had two missing-numpy errors; supported
+  Linux-venv rerun passed all 57 resident-event tests. Synthetic fixtures
+  reproduced combined-route context/follow-up suppression, episode-less UI
+  approval failure, limited replay comparison and old Wi-Fi baseline effects.
+  No full suites, hosted CI, physical/audible tests or model calls this turn.
+- Historical reboot PASS and owner-approved Sentry/century aliases remain
+  accepted; current Notion 027A-R5F supersedes older snapshot assumptions.
+  Notion was read, not edited. No Phase 15 or unrequested self-programming.
+- Only assessment/governance files changed. Application source, services,
+  production data and Graft tooling were preserved. No commit/push/deployment.
+
+## OUTCOME-027A-R5F-BASELINE-GOVERNANCE — 2026-10-01
+
+- Coder reported: role routing, project-local Authority contracts, INDEX file
+  responsibility/read/update navigation, companion PROFILE and CURRENT checkpoint
+  reconciled inside existing 027A. Required state files/directories exist; none
+  created. Standalone/adopted goal files and historical records preserved.
+- Independent Coder finding: installed stack After=default.target participates
+  in cycle with Core/Wi-Fi; current boot journal explicitly deleted their start
+  jobs. Correct actual names are anima-core.service and anima-wifi-presence.service.
+  Core/worker/Wi-Fi/voice inactive; supervisor active is not attachment evidence.
+- Detailed loading paths, baseline/dirty inventory, validation, scope and
+  limitations: ANIMA 027A EVIDENCE/HANDOFF dated governance subsection.
+- Parent-reported Notion/Goal/remote/store/Binder findings remain attributed
+  in CURRENT/task evidence; they are not a Coder recount or live vendor proof.
+- Classification: local governance IMPLEMENTED; static/startup observation
+  E1_OBSERVED; runtime recovery NOT RUN. Independent Architect review PENDING;
+  acceptance/goal completion NOT CLAIMED. No product or runtime mutations.
+- Next: primary Architect independently checks important finding and diff,
+  sends direct follow-up/disposition; Stage1 remains a separate later assignment.
+
+
+## 027A / R5F — native Architect governance acceptance and Stage1 follow-up — 2026-10-02
+
+Governance disposition is ACCEPTED (bounded scope), by primary Architect's
+independent review in ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`, not by this Coder.
+That record supersedes earlier PENDING governance status while preserving its
+original result/evidence. Stage1 source/testing is authorized by direct follow-up;
+deployment/restarts/household mutations remain gated. Sole Coder under parent
+OWNED generation/fence4; no new directive, phase, goal or runtime brain.
+
+Stage1 implementation, exact changed paths, loading fingerprints, tests, source/
+installed boundary and negative checks are in ANIMA 027A `STAGE1-CODER-RESULT.md`.
+Product result is REVIEW_PENDING; actual recovery and whole goal remain unproven.
+The earlier enabled-only profile listing did not establish a missing ANIMA MCP
+binding: installed `anima_household` is present, disabled at rest, exact-prebound,
+and protected by existing denies/overrides. No resident profile change is made.
+ANIMA Graft ask's automatic cache refresh is an explicit preservation failure;
+no manual rebuild, further ask or speculative byte restoration was performed.
+
+## 2026-10-01 — 027A/R5F Stage1 independent-review corrections — REVIEW_PENDING
+
+Direct Architect follow-up authorized equivalent native behavior/authority tests,
+full validation and bounded type/format debt reconciliation, not deployment.
+Original Stage1 negative result/history is preserved. Exact committed baseline:
+ANIMA40 strict-mypy errors/5 files,6 format failures; introduced Stage1 delta40
+errors/4 test files,3 format failures. Now full156-file mypy/format/lint pass;
+full ANIMA wrapper1229 passed/76 skipped plus pinned OPA9/9; full SENTRY567 pass.
+Actual native build/status authority and silent-chunk timestamp regressions pass;
+no comment injected or new heartbeat needed. Detailed canonical follow-up is
+appended to existing027A `STAGE1-CODER-RESULT.md`. No service/cache/profile/model/
+goal/household action, staging/commit/push or Notion write. Parent retains OWNED
+generation/fence4. Independent product review remains PENDING; recovery/root
+repair/whole-goal completion unproven. Parent-owned coverage/reviews untouched.

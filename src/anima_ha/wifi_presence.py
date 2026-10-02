@@ -31,12 +31,8 @@ from anima_ha.events import DeliveryClass, EventEnvelope, EventImportance, Evide
 from anima_ha.journal import PostgresEventJournal
 
 MAC_RE = re.compile(r"^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$")
-MAC_IN_TEXT_RE = re.compile(
-    r"(?i)(?<![0-9a-f])([0-9a-f]{2}(?:[:-][0-9a-f]{2}){5})(?![0-9a-f])"
-)
-MAC_UNDERSCORE_RE = re.compile(
-    r"(?i)(?<![0-9a-f])([0-9a-f]{2}(?:_[0-9a-f]{2}){5})(?!_[0-9a-f])"
-)
+MAC_IN_TEXT_RE = re.compile(r"(?i)(?<![0-9a-f])([0-9a-f]{2}(?:[:-][0-9a-f]{2}){5})(?![0-9a-f])")
+MAC_UNDERSCORE_RE = re.compile(r"(?i)(?<![0-9a-f])([0-9a-f]{2}(?:_[0-9a-f]{2}){5})(?!_[0-9a-f])")
 DEFAULT_STATUS_PATH = Path(
     os.environ.get(
         "ANIMA_WIFI_PRESENCE_STATUS_PATH",
@@ -147,9 +143,7 @@ def ipv4_network(output: str, *, interface: str) -> ipaddress.IPv4Network | None
     lines = output.splitlines()
     for line in lines:
         fields = line.split()
-        if "inet" not in fields or not any(
-            token.rstrip(":") == interface for token in fields
-        ):
+        if "inet" not in fields or not any(token.rstrip(":") == interface for token in fields):
             continue
         try:
             address = fields[fields.index("inet") + 1]
@@ -184,9 +178,7 @@ def project_wifi_presence(
 
     current = now.astimezone(UTC)
     observed = {
-        neighbor.mac: neighbor
-        for neighbor in neighbors
-        if neighbor.state in ACTIVE_NEIGHBOR_STATES
+        neighbor.mac: neighbor for neighbor in neighbors if neighbor.state in ACTIVE_NEIGHBOR_STATES
     }
     confirmed = router_presence or {}
     prior = previous or {}
@@ -200,10 +192,7 @@ def project_wifi_presence(
         last_status_changed = old.get("last_status_changed_at")
         previous_active = old.get("active")
         previous_absence_sweeps = old.get("absence_sweeps", 0)
-        if (
-            type(previous_absence_sweeps) is not int
-            or previous_absence_sweeps < 0
-        ):
+        if type(previous_absence_sweeps) is not int or previous_absence_sweeps < 0:
             previous_absence_sweeps = 0
         absence_sweeps = 0
         match = raw_match
@@ -405,13 +394,7 @@ class WifiPresenceMonitor:
                     if not isinstance(raw_macs, list):
                         continue
                     macs = tuple(
-                        sorted(
-                            {
-                                mac
-                                for value in raw_macs
-                                if (mac := normalize_mac(value))
-                            }
-                        )
+                        sorted({mac for value in raw_macs if (mac := normalize_mac(value))})
                     )
                     household_id = row["household_id"]
                     if macs and household_id is not None:
@@ -551,8 +534,7 @@ class WifiPresenceMonitor:
                     neighbors,
                     now=self.now(),
                     previous={
-                        person.person_id: previous_by_person[person.person_id]
-                        for person in members
+                        person.person_id: previous_by_person[person.person_id] for person in members
                     },
                     router_presence=router_presence,
                 )
@@ -584,9 +566,7 @@ class WifiPresenceMonitor:
             reason="LAN_NEIGHBOR_TABLE",
         )
 
-    def _write(
-        self, households: dict[str, Any], *, state: str, reason: str
-    ) -> dict[str, Any]:
+    def _write(self, households: dict[str, Any], *, state: str, reason: str) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "version": 1,
             "observed_at": self.now().astimezone(UTC).isoformat(),

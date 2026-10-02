@@ -1313,6 +1313,7 @@ class CoreRuntime:
 
         if self.intelligence_store is None:
             raise UICommandError("SENTRY_INTELLIGENCE_STORE_UNAVAILABLE")
+        initiative_context = self.initiative_context
         return CoreSentryBoundary(
             manager=self.plugins,
             policy_service=self.policy_service,
@@ -1322,8 +1323,8 @@ class CoreRuntime:
             action_verifier=self.action_verifier,
             context_loader=lambda trigger_id: self.context.load(trigger_id),
             notification_context_loader=(
-                (lambda request: self.initiative_context(request))
-                if self.initiative_context is not None
+                (lambda request: initiative_context(request))
+                if initiative_context is not None
                 else None
             ),
             reasoning_context_loader=lambda request: household_reasoning_context(

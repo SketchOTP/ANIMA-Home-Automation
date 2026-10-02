@@ -250,3 +250,58 @@ vendor receipt.
 
 Phase 15 was not started, and `ANIMA_HA_PROTOTYPE_GOAL_COMPLETE` is not
 claimed.
+
+## Current owner takeover handoff — 027A / R5F — 2026-10-01
+
+Supersedes older current-runtime/relay statements above without removing them.
+BASELINE/GOVERNANCE result is PARTIAL — REVIEW_PENDING; independent parent
+Architect verification, direct follow-up and disposition are still required.
+Detailed source/provenance, exact loading paths, contradictions, dirty inventory,
+independent startup finding and validation boundaries are in EVIDENCE's dated
+governance subsection. No new integration packet or phase was created.
+
+Parent Codex Architect holds execution generation/fence4 session
+01a052d8-2511-7382-a1ef-b0a080514788. Coder operates only as delegate and must
+revalidate canonical state before later mutations; never acquire/release it.
+Local ANIMA main c8ea05efe8c5a6ae5def4a1c75834910aa519d44 and SENTRY feature
+e2ab3b75781ec293f8830d910cb7622f34bd82cb are preserved. No reviewed/deployed pair
+or recovered runtime is established by this assignment.
+
+Parent owns GOAL-COVERAGE.md, full MO/A–O/security gap map, native Goal and Notion.
+Next product assignment is Stage1 startup/provider-readiness/truthful-status and
+actual affected recovery only after governance review/follow-up. Inspect provider
+socket collision ownership and 134 pending age/eligibility before restarting;
+preserve 33 RECOVERY_REQUIRED + 13 UNKNOWN_RESULT, saved awake/office intent and
+all stores. Parent-reported Binder/no-new-privileges gate remains explicit;
+inspect existing legitimate helpers/polkit, no privilege bypass or sudoers edits.
+Protected source/continuity/orb/persona/voice/memory and local tooling remain.
+Product/source/service edits, models, staging/commit/push and external writes
+were not performed by this first assignment. Do not mark goal complete.
+
+
+## 027A / R5F Stage1 native handoff — 2026-10-02
+
+Bounded BASELINE/GOVERNANCE disposition is ACCEPTED by independent primary
+Architect; see parent-owned `NATIVE-ARCHITECT-REVIEWS.md`. Original PENDING
+result/history remains intact, superseded by that review, not by Coder acceptance.
+Direct follow-up authorized only the Stage1 source/test bundle before deployment.
+Exact implementation, loading paths/fingerprints, baseline/dirty inventory,
+validation, source/installed boundary, corrected profile inference and root gate:
+[STAGE1-CODER-RESULT.md](STAGE1-CODER-RESULT.md).
+Product review is PENDING; no installation/restart/model/physical action or
+whole-goal completion. Parent owns full GOAL-COVERAGE and Notion records.
+ANIMA Graft ask automatically refreshed its internal cache; preservation FAILED,
+exact prefix/sort/no-final-newline recipe and unchanged tooling hashes are recorded.
+No manual rebuild or unsupported cache rollback. Android containment remains
+parent-owned; dynamic Binder candidate requires legitimate reviewed owner/root
+access. Shared Atlas mount and protected resident configuration are untouched.
+
+### 2026-10-01 — Stage1 correction returned for independent review
+
+Read the appended canonical follow-up in [STAGE1-CODER-RESULT.md](STAGE1-CODER-RESULT.md).
+Original failed/baseline evidence preserved. Full SENTRY567 PASS; ANIMA full
+validate1229/76 skips, OPA9/9, full156-file Ruff format/lint and strict mypy PASS.
+UI assertions execute actual native authority branches; existing silent PCM
+diagnostics protect freshness without adding a heartbeat. No service installation,
+restart/deploy, household/model/profile/goal/cache action. Product REVIEW_PENDING;
+parent must independently review and explicitly approve subsequent safe recovery.

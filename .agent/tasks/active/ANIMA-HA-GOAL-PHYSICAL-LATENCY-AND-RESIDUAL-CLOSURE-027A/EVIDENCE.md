@@ -435,3 +435,234 @@ readiness evidence only; vendor account and in-app setting state remain
   `2026-09-12T02:21:00Z`.
 - `NOT RUN`: Notion update/readback, because no Notion connector was available
   in this session. This is reported explicitly rather than inferred.
+
+## 027A / R5F BASELINE/GOVERNANCE — Coder evidence — 2026-10-01
+
+Status: `PARTIAL — REVIEW_PENDING`; independent Architect disposition PENDING.
+This is local governance work under the owner takeover, not product recovery,
+new phase acceptance, or whole-goal completion. Source/provenance: RECORD role
+amendment and the full owner directive fingerprint recorded there.
+
+### Loading and contradiction reconciliation
+
+Actually read from each local root:
+- `AGENTS.md`.
+- `.agents/skills/authority/SKILL.md` in full, and references
+  `directive-contract.md`, `result-contract.md`, `state-files.md`,
+  `evidence.md`, `safety.md` in that skill's references directory.
+- `.agent/INDEX.md` and current-state kernel `.agent/PROJECT_GOAL.md`,
+  `.agent/PROJECT_PROFILE.md`, `.agent/CURRENT.md`; relevant DIRECTIVES,
+  OUTCOMES, RECORD and `.agent/tasks/README.md`.
+Exact roots are `/home/sketch/Projects/ANIMA Home Automation` and
+`/home/sketch/Projects/SENTRY`. No ancestor AGENTS was present at /, /home,
+/home/sketch or /home/sketch/Projects, and repository enumeration found only
+root AGENTS in each checkout. ANIMA existing 027A DIRECTIVE, relevant
+EVIDENCE/HANDOFF and October 1 SYSTEM-ASSESSMENT were inspected.
+`.agent/ARCHITECT_STARTUP_PROMPT.md` was inspected as historical ChatGPT routing;
+its bytes are retained and INDEX/Authority explicitly supersede its role/relay
+assumptions for this owner-authorized loop.
+
+Detected contradictions:
+- Both root AGENTS and Authority skills named ChatGPT as development Architect.
+- Both Authority skills asserted the Architect cannot inspect the live tree.
+- Historical ANIMA Architect template required an owner copy/paste relay.
+- ANIMA INDEX still directed cold startup to R5C/September 10.
+- SENTRY INDEX/profile startup snapshots pointed to September 3/Atlas paths;
+  standalone office exclusion conflicted with authorized companion integration.
+- Generic task-close wording did not explicitly retain review-pending work.
+
+Owner's explicit transfer supersedes the first three; INDEX now points to
+027A/R5F and current native roles, and Authority retains review-pending work
+active. SENTRY's original PROJECT_GOAL is unchanged; PROFILE/INDEX cite the
+specific September 6/current owner companion integration amendments and shared
+ANIMA goal revision, rather than replacing its standalone goal. Owner final
+material decisions, independent review and full-goal success measures remain.
+
+These paths are explicit file-read evidence, not proof of client startup
+auto-discovery or automatic reload into an existing session. Post-edit reread
+and SHA-256 fingerprints are validation output available to the parent. Inherited
+model, reasoning, permissions, authentication and resident thread/profile were
+not inspected for secrets or changed.
+
+### Baseline and dirty inventory
+
+ANIMA: native local root above, main at
+`c8ea05efe8c5a6ae5def4a1c75834910aa519d44`, origin
+`git@github.com:SketchOTP/ANIMA-Home-Automation.git`.
+Initial tracked dirty: .agent/CURRENT.md, .agent/OUTCOMES.md, .gitignore, AGENTS.md.
+Initial untracked: .ignore and existing027A SYSTEM-ASSESSMENT-2026-10-01.md.
+SENTRY: native local root above, feature/v0.4-personal-continuity at
+`e2ab3b75781ec293f8830d910cb7622f34bd82cb`, origin
+`git@github.com:SketchOTP/SENTRY.git`.
+Initial tracked dirty: .agent/CURRENT.md, .agent/OUTCOMES.md, .gitignore.
+Initial untracked: .ignore. No index/staged mutation in this assignment.
+
+Protected pre-edit tooling inventory: ANIMA graft 274 files, aggregate SHA-256
+`8496a306fcc91927a67ce19c0df1b4a5a8146f99be441a8ac65dde589bd9ce97`;
+SENTRY graft 117 files, aggregate
+`a1d70a51c972dda89bb207ed53215523a7111412aa8314075f01ac4700fdf559`.
+Aggregate is sorted newline-joined path:sha256 entries. Preserve both .gitignore/
+.ignore, ANIMA AGENTS graft fence and graft trees byte-for-byte.
+No new worktree/reset, commit/push or staging. Existing assessment/dirty ledgers
+are retained; source/protected SENTRY product bytes are preserved.
+
+### Independent startup finding
+
+Commands: systemctl --user show (Id, FragmentPath, DropInPaths, After, Before,
+Requires, Wants, ActiveState, SubState) for default.target, anima-pc.service,
+anima-core.service, anima-household-worker.service, anima-wifi-presence.service,
+sentry-voice-supervisor.service and sentry-voice.service; selected ordering
+fields from installed files; journalctl --user -b filtered to cycle/deleted jobs.
+
+Installed `/home/sketch/.config/systemd/user/anima-pc.service:3`:
+After=default.target; :16 WantedBy=default.target. Installed
+`anima-core.service:3-4` and `anima-wifi-presence.service:3-4` require/order
+after anima-pc.service. Effective Core/Wi-Fi Before includes default.target.
+Thus default.target → Core/Wi-Fi → anima-pc → default.target is a cycle.
+Boot journal at Sep 30 10:26:43 EDT on atlas-desktop explicitly reports:
+- Job anima-core.service/start deleted to break ordering cycle.
+- Job anima-wifi-presence.service/start deleted to break ordering cycle.
+- Dependencies on anima-pc.service/start and default.target/start.
+This independently confirms one important October 1 assessment finding;
+it is evidence from the existing boot, not a new boot/recovery test.
+
+Observed Core/household-worker/Wi-Fi/voice inactive/dead, stack active/exited,
+voice supervisor active/running. Supervisor :3 also has After=default.target;
+voice effective ordering includes default.target and atlas-storage-mount.service.
+Voice drop-in actual path is
+`/home/sketch/.config/systemd/user/sentry-voice.service.d/10-atlas-storage.conf`,
+whose explicit field is After=local-fs.target. Historical storage naming alone
+does not prove an active laptop requirement. Initial guesses anima-pc-core.service
+and anima-wifi-observer.service resolved not-found; the actual names above were
+then verified. No service was started/restarted/edited.
+
+### State presence and scope
+
+Required existing in both repositories: AGENTS; .agent INDEX, PROJECT_GOAL,
+PROJECT_PROFILE, CURRENT, DIRECTIVES, OUTCOMES, LEARNINGS, RECORD, REPO_MAP,
+EXTERNAL; tasks/README plus active/ and completed/. None missing; none created.
+No .authority directory exists, but it is not in the owner's required state
+list and was not created. Reusable workflow remains .agents/skills/authority.
+
+Changed in each root: AGENTS; .agents/skills/authority/SKILL;
+references/directive-contract, result-contract, state-files;
+.agent/INDEX, PROJECT_PROFILE, CURRENT, DIRECTIVES, OUTCOMES, RECORD.
+Additionally ANIMA existing027A DIRECTIVE, EVIDENCE, HANDOFF receive append-only
+amendments. Parent owns GOAL-COVERAGE.md and external synchronization.
+
+### Parent evidence and later recovery limits
+
+Attributed parent reports, not independently recounted here: canonical
+sleep=false/office; 134 PENDING with no CLAIMED/PROVIDER_RUNNING; 33
+RECOVERY_REQUIRED + 13 UNKNOWN_RESULT preserved; remote ANIMA main 814e21a,
+SENTRY main 970d1c/feature 5e5ca6d; takeover Notion writes/readback; full
+MO-01–15/A–O plus HA_FRONTEND_REQUIRED=0; native Goal active; watchdog PAUSED.
+
+Parent source findings for later Stage1: sentry_service.serve unconditionally
+unlinks its socket unlike OwnerBoundary's live-listener probe; household worker
+excludes AUTONOMOUS_ATTENTION and resident autowake filters 120s. Check pending
+age/eligibility before recovery; do not reset/replay ambiguity or run models
+manually. These source assertions were not independently inspected by this
+governance worker. Graft context was retrieved first in both repositories via
+DO_NOT_TRACK=1 npx --yes @nanonets/graft ask "<startup question>" --source
+(exit0, lexical, no model call); unrelated truncated source hits were not used
+as complete-source proof and require exact-span reads in the later assignment.
+
+Parent additionally reports Waydroid1.6.2/systemd255, binder-control root:root0600,
+missing named Binder nodes, repeating PermissionError, and sudo blocked by
+no-new-privileges. Later Stage1 must inspect legitimate existing bounded helper/
+systemd-polkit paths, keep any root-required gate explicit and continue
+independent Core/UI/voice work. No privilege bypass/global sudoers edit is
+authorized. This assignment neither rechecked nor repaired that boundary.
+
+### Validation and disposition
+
+PASSED: local branch/head/remotes; pre-mutation parent ownership generation/
+fence4 with matching session and OWNED state; project skills/kernel/navigation
+reads; independent installed ordering and journal observation.
+Post-edit structural, diff, byte/prefix preservation and explicit reread checks
+are recorded in the Coder result/validation output; failures must remain visible.
+NOT RUN: product tests, deployment/recovery, physical/vendor/audio scenarios,
+model turns, remote CI, Coder Notion writes or native Goal activation.
+Parent verification/direct follow-up/disposition remains PENDING. Coverage is
+ADEQUATE for this local governance/startup finding, not full history or whole-goal
+runtime qualification. No full contract completion is claimed.
+
+### Final Coder verification — 2026-10-01
+
+- PASSED: both repositories' required files and task directories present.
+- PASSED: allowed governance-only change inventory (ANIMA14, SENTRY11);
+  no new file created by Coder; no product/protected-source inventory change.
+- PASSED: both HEADs and .git/index hashes equal pre-edit snapshots.
+- PASSED: both .gitignore/.ignore hashes, both graft aggregate trees and
+  ANIMA AGENTS graft fenced section exactly preserved.
+- PASSED: original DIRECTIVES/OUTCOMES/RECORD and existing027A task-file prefixes
+  retain pre-edit hashes; prior CURRENT assessment and PROFILE bytes remain
+  recoverable exactly beneath the new checkpoint sections.
+- PASSED: both PROJECT_GOAL files, October1 SYSTEM-ASSESSMENT, historical
+  ARCHITECT_STARTUP_PROMPT, task README, other state and product bytes unchanged.
+- PASSED: explicit reread/fingerprints of edited routing/skill/reference/navigation
+  files, diff review and git diff --check in both repositories.
+- PASSED: final canonical lock directory + session/owner/OWNED/generation4/fence4
+  revalidation. Parent ownership neither acquired nor released by Coder.
+- NOT RUN: full product/regression tests, client startup auto-loading, service
+  recovery/reboot, vendor/audio/physical qualification, model invocations, GitHub
+  writes/CI, Notion writes. Parent external verification is attributed separately.
+- Review disposition PENDING; evidence level E1_OBSERVED for local governance
+  and existing boot journal. No recovery success or self-acceptance.
+
+Exact Coder-changed absolute paths:
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/CURRENT.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/DIRECTIVES.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/INDEX.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/OUTCOMES.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/PROJECT_PROFILE.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/RECORD.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/DIRECTIVE.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/EVIDENCE.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/HANDOFF.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agents/skills/authority/SKILL.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agents/skills/authority/references/directive-contract.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agents/skills/authority/references/result-contract.md`
+- `/home/sketch/Projects/ANIMA Home Automation/.agents/skills/authority/references/state-files.md`
+- `/home/sketch/Projects/ANIMA Home Automation/AGENTS.md`
+- `/home/sketch/Projects/SENTRY/.agent/CURRENT.md`
+- `/home/sketch/Projects/SENTRY/.agent/DIRECTIVES.md`
+- `/home/sketch/Projects/SENTRY/.agent/INDEX.md`
+- `/home/sketch/Projects/SENTRY/.agent/OUTCOMES.md`
+- `/home/sketch/Projects/SENTRY/.agent/PROJECT_PROFILE.md`
+- `/home/sketch/Projects/SENTRY/.agent/RECORD.md`
+- `/home/sketch/Projects/SENTRY/.agents/skills/authority/SKILL.md`
+- `/home/sketch/Projects/SENTRY/.agents/skills/authority/references/directive-contract.md`
+- `/home/sketch/Projects/SENTRY/.agents/skills/authority/references/result-contract.md`
+- `/home/sketch/Projects/SENTRY/.agents/skills/authority/references/state-files.md`
+- `/home/sketch/Projects/SENTRY/AGENTS.md`
+
+
+## 027A / R5F Stage1 native handoff — 2026-10-02
+
+Bounded BASELINE/GOVERNANCE disposition is ACCEPTED by independent primary
+Architect; see parent-owned `NATIVE-ARCHITECT-REVIEWS.md`. Original PENDING
+result/history remains intact, superseded by that review, not by Coder acceptance.
+Direct follow-up authorized only the Stage1 source/test bundle before deployment.
+Exact implementation, loading paths/fingerprints, baseline/dirty inventory,
+validation, source/installed boundary, corrected profile inference and root gate:
+[STAGE1-CODER-RESULT.md](STAGE1-CODER-RESULT.md).
+Product review is PENDING; no installation/restart/model/physical action or
+whole-goal completion. Parent owns full GOAL-COVERAGE and Notion records.
+ANIMA Graft ask automatically refreshed its internal cache; preservation FAILED,
+exact prefix/sort/no-final-newline recipe and unchanged tooling hashes are recorded.
+No manual rebuild or unsupported cache rollback. Android containment remains
+parent-owned; dynamic Binder candidate requires legitimate reviewed owner/root
+access. Shared Atlas mount and protected resident configuration are untouched.
+
+### 2026-10-01 — Stage1 independent-review validation correction — REVIEW_PENDING
+
+Canonical follow-up appended to [STAGE1-CODER-RESULT.md](STAGE1-CODER-RESULT.md):
+real headless native build/status authority checks replace the comment assertion;
+silent-chunk freshness passes across four TTLs with no added heartbeat. Baseline
+ANIMA40 mypy errors/5 files plus6 format failures and introduced40 errors/4 files
+plus3 format failures are independently reproduced and preserved, then bounded
+types/formatting reconciled. Full SENTRY567 PASS; full ANIMA validate1229/76 skips,
+OPA9/9, full156-file strict mypy and Ruff format/lint PASS. Original negative
+result remains intact; parent review PENDING; no deployment/restart/cache writes.

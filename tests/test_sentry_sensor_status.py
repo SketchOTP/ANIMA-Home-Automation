@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
+from typing import Any
+from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
 
 from anima_ha.graph import CanonicalNode, NodeKind
+from anima_ha.intelligence import IntelligenceStore
+from anima_ha.plugins import PluginManager
 from anima_ha.sentry_boundary import CoreSentryBoundary, SentryBoundaryError
 from anima_ha.sentry_sensor_status import build_sensor_status
 from anima_ha.truth import TruthResolution, TruthStatus
@@ -48,16 +52,22 @@ class Graph:
         ]
         self.people = [CanonicalNode(TYM, NodeKind.PERSON, "Tym")]
 
-    def resources_in_place(self, household_id, recursive=True):
+    def resources_in_place(self, household_id: UUID, recursive: bool = True) -> list[CanonicalNode]:
         assert household_id == HOUSEHOLD
         assert recursive is True
         return self.resources
 
-    def members_of_household(self, household_id):
+    def members_of_household(self, household_id: UUID) -> list[CanonicalNode]:
         assert household_id == HOUSEHOLD
         return self.people
 
-    def truth_for_node(self, target_id, truth, *, now):
+    def truth_for_node(
+        self,
+        target_id: UUID,
+        truth: object,
+        *,
+        now: datetime,
+    ) -> list[tuple[SimpleNamespace, TruthResolution]]:
         assert truth is not None
         assert target_id == TYM
         return [
@@ -74,23 +84,35 @@ class Graph:
 
 
 class Journal:
-    def __init__(self, events):
+    def __init__(self, events: list[dict[str, Any]]) -> None:
         self.events = events
 
-    def list_recent_events(self, *, limit):
+    def list_recent_events(self, *, limit: int) -> list[dict[str, Any]]:
         assert limit == 500
         return self.events
 
 
 class FilteredJournal(Journal):
-    def list_recent_events(self, *, limit, event_type=None):
+    def list_recent_events(
+        self,
+        *,
+        limit: int,
+        event_type: str | None = None,
+    ) -> list[dict[str, Any]]:
         assert limit == 500
         if event_type is None:
             return self.events
         return [item for item in self.events if item.get("event_type") == event_type]
 
 
-def event(event_type, source, subject_key, occurred_at, resource_id=None, **payload):
+def event(
+    event_type: str,
+    source: str,
+    subject_key: str,
+    occurred_at: datetime,
+    resource_id: UUID | None = None,
+    **payload: Any,
+) -> dict[str, Any]:
     if resource_id:
         payload.setdefault("resource_id", str(resource_id))
     return {
@@ -103,7 +125,7 @@ def event(event_type, source, subject_key, occurred_at, resource_id=None, **payl
     }
 
 
-def test_build_sensor_status_maps_qualified_events_and_current_presence():
+def test_build_sensor_status_maps_qualified_events_and_current_presence() -> None:
     now = datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
     payload = build_sensor_status(
         HOUSEHOLD,
@@ -161,7 +183,7 @@ def test_build_sensor_status_maps_qualified_events_and_current_presence():
     assert all("mac" not in key.casefold() for row in payload["items"] for key in row)
 
 
-def test_build_sensor_status_expires_event_glow_and_ignores_closing_event():
+def test_build_sensor_status_expires_event_glow_and_ignores_closing_event() -> None:
     now = datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
     payload = build_sensor_status(
         HOUSEHOLD,
@@ -192,7 +214,7 @@ def test_build_sensor_status_expires_event_glow_and_ignores_closing_event():
     assert rows["senseguard_basement"]["last_event_at"] is None
 
 
-def test_build_sensor_status_uses_status_transition_not_router_last_seen():
+def test_build_sensor_status_uses_status_transition_not_router_last_seen() -> None:
     now = datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
     payload = build_sensor_status(
         HOUSEHOLD,
@@ -211,9 +233,7 @@ def test_build_sensor_status_uses_status_transition_not_router_last_seen():
                             "active": True,
                             "status": "HOME",
                             "last_seen_at": (now + timedelta(minutes=3)).isoformat(),
-                            "last_status_changed_at": (
-                                now - timedelta(minutes=8)
-                            ).isoformat(),
+                            "last_status_changed_at": (now - timedelta(minutes=8)).isoformat(),
                             "source": "LOCAL_ROUTER_MAC",
                         }
                     }
@@ -228,7 +248,7 @@ def test_build_sensor_status_uses_status_transition_not_router_last_seen():
     assert "mac" not in str(row).casefold()
 
 
-def test_build_sensor_status_does_not_turn_missing_wifi_transition_into_a_ping():
+def test_build_sensor_status_does_not_turn_missing_wifi_transition_into_a_ping() -> None:
     now = datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
     payload = build_sensor_status(
         HOUSEHOLD,
@@ -258,7 +278,7 @@ def test_build_sensor_status_does_not_turn_missing_wifi_transition_into_a_ping()
     assert row["last_event_at"] is None
 
 
-def test_build_sensor_status_keeps_sensor_history_outside_global_journal_window():
+def test_build_sensor_status_keeps_sensor_history_outside_global_journal_window() -> None:
     now = datetime(2026, 9, 10, 12, 0, tzinfo=UTC)
     tapo_event = event(
         "external.android.lock_reported",
@@ -290,20 +310,25 @@ def test_build_sensor_status_keeps_sensor_history_outside_global_journal_window(
     assert row["last_event_at"] == tapo_event["occurred_at"].isoformat()
 
 
-def test_sentry_boundary_exposes_status_only_through_scoped_loader():
-    seen = []
+def test_sentry_boundary_exposes_status_only_through_scoped_loader() -> None:
+    seen: list[UUID] = []
     payload = {"status": "CURRENT", "items": []}
+
+    def load_status(household_id: UUID) -> dict[str, Any]:
+        seen.append(household_id)
+        return payload
+
     boundary = CoreSentryBoundary(
+        Mock(spec=PluginManager),
         object(),
-        object(),
-        object(),
-        sensor_status_loader=lambda household_id: seen.append(household_id) or payload,
+        Mock(spec=IntelligenceStore),
+        sensor_status_loader=load_status,
     )
     assert boundary.sensor_status(HOUSEHOLD) == payload
     assert seen == [HOUSEHOLD]
 
 
-def test_sentry_boundary_fails_closed_when_status_loader_is_missing():
-    boundary = CoreSentryBoundary(object(), object(), object())
+def test_sentry_boundary_fails_closed_when_status_loader_is_missing() -> None:
+    boundary = CoreSentryBoundary(Mock(spec=PluginManager), object(), Mock(spec=IntelligenceStore))
     with pytest.raises(SentryBoundaryError, match="SENSOR_STATUS_UNAVAILABLE"):
         boundary.sensor_status(HOUSEHOLD)

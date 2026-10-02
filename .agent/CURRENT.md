@@ -1,6 +1,114 @@
 # Current Project State
 
-Last updated: 2026-09-10
+Last updated: 2026-10-01
+
+## Current owner takeover checkpoint — 027A / R5F — 2026-10-01
+
+BASELINE/GOVERNANCE: `ACCEPTED` by primary Architect; exact bounded disposition
+and next Stage1 scope are linked in ANIMA 027A `NATIVE-ARCHITECT-REVIEWS.md`.
+Primary Codex `01a052d8-2511-7382-a1ef-b0a080514788` independently reviews one native
+development Coder. Parent holds ANIMA execution lock/state generation/fence 4;
+Coder is delegated and does not acquire/release it. Result detail is in ANIMA
+027A EVIDENCE and HANDOFF; older current-stage statements below are historical.
+
+Local pair independently read: ANIMA main
+`c8ea05efe8c5a6ae5def4a1c75834910aa519d44`; SENTRY preserved
+feature/v0.4-personal-continuity
+`e2ab3b75781ec293f8830d910cb7622f34bd82cb`. Both heads and initial dirty
+assessment/tooling state are preserved. No accepted/reviewed deployed pair is
+established by this assignment. Source/deployed drift remains open assessment
+evidence. ANIMA's adopted full goal/success measures and SENTRY's standalone
+office goal are unchanged; companion integration responsibilities are in PROFILE.
+
+Coder independently observed installed stack/default.target cycle and the boot
+journal's deleted Core/Wi-Fi jobs; Core, Wi-Fi, household worker and voice were
+inactive. No startup repair or runtime recovery is claimed. Parent reports
+awake/office settings, 134 PENDING, no CLAIMED/PROVIDER_RUNNING, and 33
+RECOVERY_REQUIRED + 13 UNKNOWN_RESULT; these are parent-observed aggregates,
+not a Coder database recount. Preserve ambiguous work; inspect pending age and
+eligibility before any later worker restart to prevent historical model storms.
+
+Parent reports verified remote heads (ANIMA main `814e21a`, SENTRY main
+`970d1c` and feature `5e5ca6d`), Notion takeover writes/readback on ANIMA,
+completion contract and SENTRY, full MO-01–15/A–O plus
+`HA_FRONTEND_REQUIRED=0`, and active native Goal. Coder did not perform those
+external checks. Parent owns full-goal coverage/GOAL-COVERAGE.md and Notion.
+Watchdog is parent-reported PAUSED; prior RELEASED state is historical and does
+not supersede current generation4 ownership.
+
+Current assignment: Stage1 startup/provider ownership/truthful status source
+bundle, under the same generation/fence4. Implementation and regression evidence
+are in ANIMA 027A `STAGE1-CODER-RESULT.md`; independent product review is PENDING.
+No deployment, installed-unit edits/restarts, provider/model turn, physical action,
+commit/push or Notion write by Coder. Parent-reported Android containment stops
+only session/supervisor to prevent Binder retry/mount growth; root repair is gated.
+Existing configured `anima_household` is disabled at rest intentionally, has the
+prebound tools/paths/denies, and is activated by qualified per-turn overrides.
+The earlier enabled-only listing did NOT prove a missing binding. No profile,
+thread, model, permission or persona edit is required or performed.
+ANIMA Graft ask auto-refreshed six source entries during Stage1; byte preservation
+of its internal cache FAILED. SENTRY Graft and both ignore files remain unchanged;
+no further Graft commands or attempted cache reconstruction. Detailed reproducible
+digest recipe and exception are in the Stage1 result. Whole goal remains active.
+
+Stage1 independent-review correction: source/comment-only UI assertion replaced
+by actual headless native build/status authority checks; existing silent-chunk
+voice freshness regression passes without a new heartbeat. Full SENTRY567 tests
+pass. ANIMA full validation wrapper passes1229 tests/76 skips and OPA9/9;
+all156 src/tests files pass full Ruff format/lint and strict mypy. Committed
+baseline40 errors/5 files and6 format failures, plus introduced40 errors/4 files
+and3 format failures, are preserved in the result and now reconciled by bounded
+annotations/narrowing/mechanical formatting. Original negative result unchanged;
+current corrected product remains REVIEW_PENDING, not deployed or accepted.
+Parent reports latest SQL134 old PENDING, zero under120s/active claims/provider
+runs,46 ambiguity unchanged. No Coder SQL replay, service action or cache write.
+
+
+## Owner requested system assessment — 2026-10-01
+
+Five read-only agents assessed learning, integrations, operational reasoning,
+architecture/UI and the evaluation harness. The consolidated source-linked
+report and system maps are in the existing 027A packet:
+`tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/SYSTEM-ASSESSMENT-2026-10-01.md`.
+No application code, services, household state, model turns or external records
+were changed; no commit/push/deployment was performed.
+
+The current host boot has a confirmed startup regression. The installed
+`anima-pc.service` orders itself after `default.target`; boot journal records
+an ordering cycle and deleted Core/Wi-Fi start jobs. Core, household worker
+and Wi-Fi observer are inactive while UI/DB/OPA containers remain healthy.
+Canonical voice settings are awake/office, but retained voice JSON reports
+SLEEPING from September 30. The signal helper returns UNAVAILABLE; the drawer
+incorrectly labels empty unavailable rows as absent registrations. This does
+not demonstrate data loss. Android independently reports NOT_READY, boot not
+completed and Binder forwarding unavailable, despite a running relay heartbeat.
+
+Local ANIMA HEAD is `c8ea05efe8c5a6ae5def4a1c75834910aa519d44`;
+GitHub main still resolves to `814e21a698d4107cc92c286fb5877d63670f1311`.
+The current UI image is
+`sha256:44f8bf6baf75c7ae465799a267def4140a76234f390d76c26cc3b02aa570cc35`.
+Selected deployed learning, review-runner, runtime-composition and service
+files differ from local source. Local tests do not certify that deployment.
+Both repositories retain separately authorized Graft tooling changes.
+
+Learning has 49 review packets, 27 completion records and 12 active suggestions
+(two learned, five tentative, five insufficient); six completion records link
+to subsequently FAILED requests. Learned context appears in later persisted
+packets, but useful prediction/behavior improvement is not demonstrated.
+Acknowledgement and the 65% evidence-strength threshold do not create
+executable routines. Review schedules are overdue; Core owns the stopped
+scheduler. Delivery retries, combined-route context/follow-up, episode-less
+confirmation, feedback synchronization and evaluation denominators need the
+bounded dispositions in the report.
+
+Current Notion authority continues 027A-R5F and accepts both Sentry/century wake
+aliases and historical reboot PASS. Preserve those historical results; the
+current boot failure is new regression evidence. No Phase 15 or general
+Phase 14 reopening occurred. The next proposed package is coherent runtime
+recovery plus measurable delivery/learning outcomes, followed by a governed
+improvement loop. Runtime self-programming/policy mutation remains outside
+the adopted authority boundary. Assessment confidence is ADEQUATE for
+inspected source/runtime metadata, partial for physical and owner journeys.
 
 ## 027A R5D alert-route compatibility correction — 2026-09-10
 

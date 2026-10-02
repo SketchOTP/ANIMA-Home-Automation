@@ -26,6 +26,7 @@ Environment=ANIMA_SENTRY_AGENT_MEMORY=true
 Environment=ANIMA_KNOWLEDGE_OWNER_UID=10001
 Environment=ANIMA_KNOWLEDGE_GROUP_ID=1000
 ExecStart=/bin/sh -c 'ANIMA_DATABASE_URL="postgresql://${ANIMA_DB_USER}:${ANIMA_DB_PASSWORD}@127.0.0.1:55434/${ANIMA_DB_NAME}"; export ANIMA_DATABASE_URL; unset ANIMA_DB_PASSWORD; exec "/home/sketch/Projects/ANIMA Home Automation/.venv/bin/anima-core-service"'
+ExecStartPost="/home/sketch/Projects/ANIMA Home Automation/.venv/bin/python" scripts/check_pc_readiness.py --core
 Restart=on-failure
 RestartSec=5
 TimeoutStartSec=120

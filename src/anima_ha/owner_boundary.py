@@ -14,8 +14,6 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-import psycopg
-
 
 class OwnerBoundaryError(RuntimeError):
     pass
@@ -44,17 +42,11 @@ class OwnerBoundary:
         socket_group: int | None = None,
     ) -> None:
         # Late import avoids eagerly composing another UI from module imports.
-        from anima_ha.live_results import PostgresSentryLivePublisher
         from anima_ha.sentry_autowake import PostgresAutoWakeClaims, aware_timestamp
-        from anima_ha.sentry_personality import SentryPersonalityStore
         from anima_ha.sentry_service import (
-            CoreSentryHTTPService,
-            PostgresSentryPrincipalRegistry,
-            SentryServicePrincipal,
             _Handler,
             _UnixHTTPServer,
         )
-        from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore
 
         if core.intelligence_provider.value != "sentry":
             raise OwnerBoundaryError("SENTRY_MODE_REQUIRED")
@@ -73,6 +65,37 @@ class OwnerBoundary:
                 raise OwnerBoundaryError("BOUNDARY_SOCKET_GROUP_UNAVAILABLE")
             os.chown(directory, -1, socket_group)
             os.chmod(directory, 0o750)
+        self.socket_path = directory / "core.sock"
+        try:
+            self.server = _UnixHTTPServer(str(self.socket_path), _Handler)
+        except RuntimeError as exc:
+            raise OwnerBoundaryError(str(exc)) from exc
+        try:
+            self._configure(
+                core, household_id, database_url, directory, socket_group, auto_wake_claims
+            )
+        except BaseException:
+            self.server.server_close()
+            raise
+
+    def _configure(
+        self,
+        core: Any,
+        household_id: UUID,
+        database_url: str,
+        directory: Path,
+        socket_group: int | None,
+        auto_wake_claims: Any,
+    ) -> None:
+        from anima_ha.live_results import PostgresSentryLivePublisher
+        from anima_ha.sentry_personality import SentryPersonalityStore
+        from anima_ha.sentry_service import (
+            CoreSentryHTTPService,
+            PostgresSentryPrincipalRegistry,
+            SentryServicePrincipal,
+        )
+        from anima_ha.sentry_voice_settings import SentryVoiceSettingsStore
+
         token_path = directory / "client.token"
         token = private_client_token(token_path)
         client_id = f"owner-household-{household_id}"
@@ -83,33 +106,12 @@ class OwnerBoundary:
             token=token,
         )
         registry = PostgresSentryPrincipalRegistry(database_url)
-        # Restart never re-enables a revoked client or silently rotates its scope.
-        with psycopg.connect(database_url) as connection:
-            exists = connection.execute(
-                "SELECT 1 FROM anima_sentry_service_principals WHERE client_id=%s",
-                (client_id,),
-            ).fetchone()
-        if exists:
-            if not registry.active(principal, token):
-                raise OwnerBoundaryError("OWNER_CLIENT_REVOKED_OR_ROTATED")
-        else:
-            registry.register(principal)
-        self.socket_path = directory / "core.sock"
-        if self.socket_path.exists():
-            if not stat.S_ISSOCK(self.socket_path.lstat().st_mode):
-                raise OwnerBoundaryError("BOUNDARY_SOCKET_PATH_UNSAFE")
-            # Uvicorn owns one Core/listener; this is an old process's socket.
-            import socket
+        from anima_ha.sentry_service import ServiceAuthError
 
-            with socket.socket(socket.AF_UNIX) as probe:
-                probe.settimeout(1)
-                try:
-                    probe.connect(str(self.socket_path))
-                except (ConnectionRefusedError, FileNotFoundError):
-                    self.socket_path.unlink(missing_ok=True)
-                else:
-                    raise OwnerBoundaryError("BOUNDARY_ALREADY_RUNNING")
-        self.server = _UnixHTTPServer(str(self.socket_path), _Handler)  # type: ignore[arg-type]
+        try:
+            registry.ensure_registered(principal, token)
+        except ServiceAuthError as exc:
+            raise OwnerBoundaryError("OWNER_CLIENT_REVOKED_OR_ROTATED") from exc
         os.chmod(self.socket_path, 0o600)
         if socket_group is not None:
             os.chown(self.socket_path, -1, socket_group)
@@ -143,4 +145,3 @@ class OwnerBoundary:
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=3)
-        self.socket_path.unlink(missing_ok=True)

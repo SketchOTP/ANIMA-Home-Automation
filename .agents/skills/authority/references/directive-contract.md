@@ -53,3 +53,11 @@ Strategic escalation conditions.
 Canonical `CODEX RESULT`.
 
 If a directive lacks a detail but the missing information can be safely established from current project/repository evidence without changing strategic intent, establish it. If the missing information materially affects scope, acceptance, safety, or strategic direction, return the ambiguity instead of guessing.
+
+## Current development routing
+
+The primary Codex Architect issues assignments and independent dispositions
+directly to one native Coder. Reuse the existing integration packet and record
+baseline, scope, review criteria and compatible repository pair. The owner retains
+material goal/authority decisions. Historical directives remain unchanged;
+append a sourced amendment when owner instructions supersede old role routing.

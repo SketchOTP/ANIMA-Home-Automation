@@ -1,0 +1,18 @@
+[Unit]
+Description=ANIMA PC-local household authority stack
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/sketch/Projects/ANIMA Home Automation
+Environment=ANIMA_PC_UI_PORT=18090
+ExecStart=/usr/bin/docker compose -p anima-pc -f compose.yaml -f compose.pc.yaml up -d --no-build --wait --wait-timeout 90
+ExecStartPost="/home/sketch/Projects/ANIMA Home Automation/.venv/bin/python" scripts/check_pc_readiness.py --stack
+ExecStop=/usr/bin/docker compose -p anima-pc -f compose.yaml -f compose.pc.yaml stop
+TimeoutStartSec=120
+TimeoutStopSec=90
+
+[Install]
+WantedBy=default.target
