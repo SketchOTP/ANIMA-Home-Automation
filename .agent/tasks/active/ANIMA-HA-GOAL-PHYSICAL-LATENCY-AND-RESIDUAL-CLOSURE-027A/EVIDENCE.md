@@ -678,3 +678,28 @@ fingerprints/modes preserved. Two configured reviews NO_ACTION; historical134
 pending/46 ambiguity unchanged, zero autonomous transitions. Growth recorded.
 Android/Wi-Fi held; root/Stage3/browser/physical/reboot/goal gates remain open.
 Runtime observed PARTIAL, independent recovery disposition PENDING.
+
+### 2026-10-02T05:15Z — Stage2 deployment evidence / review pending
+
+Canonical [STAGE2-CODER-RESULT.md](STAGE2-CODER-RESULT.md) deployment append carries
+exact pair/CI/image/source/lock equality, authenticated Core, fresh idle voice,
+conservative restored Wi-Fi/unchanged352 events and retained4 transition histories.
+Private11+extras/infrastructure/historical134+46 compare exact; growth explicit.
+Runtime negatives remain: relay root-directory PermissionError/retry loop stopped,
+no outbox; Core Journal handoff NOT_CONFIGURED/installed binding absent. Two exact
+Android guards stopped/root gate retained. Wi-Fi diagnostic sequencing failure
+retained, then corrected actual Graph/source/Journal checks. No physical sound/
+3s, vendor end-to-end, owner browser, Stage2/full-goal acceptance. Parent reviews.
+
+### 2026-10-02T07:21Z — isolated Stage3 final / independent review pending
+
+[STAGE3-CODER-RESULT.md](STAGE3-CODER-RESULT.md) latest append carries final27
+changed paths/byte manifests, actual reads/fingerprints, realPG13/unchangedOPA,
+relay namespace sandbox2, full ANIMA1266/76/strict164/Ruff/OPA9 and SENTRY580/
+security56/compile/private CLI4, UI54+14/type/Vite evidence. Earlier source snapshot
+and all negatives retained, including ineffective backend toggle diagnostic;
+final SENTRY6 supersedes4. No runtime install/model/physical/owner-store fixture.
+Credential-named host HA path prepared ONLY; provisioning/loaded denies/vendor
+binding/Binder/duplicate HA consumer and outcome gates remain. Parent independent
+Stage2 bounded recovery acceptance does not accept accountable delivery. E4
+software, not E5 operational/full Goal; native final and parent review required.

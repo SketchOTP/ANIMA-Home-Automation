@@ -1,5 +1,127 @@
 # Current Project State
 
+## Stage3 actual native review — 2026-10-02T07:30Z — SOURCE ACCEPTED
+
+Primary collected sole-Coder Laplace's actual completed native return and
+independently accepts exact ANIMA21/SENTRY6 source for publication/controlled
+deployment. Final source aggregates d7d88a3e/1b72cc4d match. Independent real
+PG/currentOPA13, relay actualsystemd2, effective private sandbox and targeted
+SENTRY66/skipped2 pass. Detailed boundaries/negative loader command in027A
+NATIVE-ARCHITECT-REVIEWS; full final report in STAGE3-CODER-RESULT.
+No new deployed/physical/vendor/audible/whole-goal acceptance follows.
+
+Published/loaded pair remains081f1198/380422df. Parent checkpoints the accepted
+source before next same-Coder Stage4 assignment; existing root/custody/consumer
+operational gates stay explicit. Prepared scope is STAGE4-ASSIGNMENT.md, not a
+new directive/agent. Full permanent MO/A–O and native Goal remain ACTIVE.
+
+## Sole Coder final — 2026-10-02T07:21Z — Stage3 source frozen / REVIEW_PENDING
+
+Same027A/R5F isolated Stage2 runtime-correction/Stage3 context/incident bundle
+returned READY_FOR_REVIEW/PARTIAL; no product acceptance/deployment. Exact ANIMA21
+manifestd7d88a3e04810a72f7b0c38587f3bfddefe050824c0de45c22d639a4540e553d;
+SENTRY6 manifest1b72cc4dd5da69ff4c9b9052d182eae3ba675c46c8b0f570d224b52bcf1f6b82.
+Full ANIMA1266/76skips, Ruff/strict164/OPA9; real PG13, relay sandbox2;
+SENTRY580/security56/compile, private actual CLI4; UI54+14/type/Vite PASS.
+Lint debt explicit: ANIMA relay script1 inherited; SENTRY277 full-scope inherited,
+introduced0. Proposed per-turn private denies preserve ordinary ability and
+autonomous readonly; supported standalone bridge now tool-free/curated env.
+Main ask is resident agent, proactive unit inactive: no observed bridge leak.
+
+Product edits ONLY parent worktrees /tmp/anima-stage3-development.LEYDTy and
+/tmp/sentry-stage3-development.3VulQV. Live main081f1198/380422df remains loaded
+Stage2 bounded recovery, relay STOPPED/Core handoff NOT_CONFIGURED: those delivery
+failures are NOT operationally repaired by source tests. Parent-controlled planned
+host HAConnectionStore path ~/.config/anima/home-assistant-credential.json requires
+published/loaded/qualified denies before provisioning; no credential copied here.
+Vendor binding custody/duplicate HA consumer ownership/Binder root/physical
+Away and full MO/A–O/Stage4 stay open. Parent owns generation/fence4, coverage,
+reviews, publication and Notion; no Coder commit/push/CI/install/model/physical turn.
+Canonical final exact paths/manifests/commands/negatives/evidence boundaries:
+027A STAGE3-CODER-RESULT.md, latest credential-bridge qualification superseding
+earlier07:03 snapshot. Original records remain history, no automatic reload claim.
+
+## Independent Stage3 review checkpoint — 2026-10-02T07:15Z
+
+Sole Coder report now records READY_FOR_REVIEW with21 ANIMA/4 SENTRY product
+files frozen, but the actual native final is not yet collected; no acceptance
+or deployment follows from the report alone. Parent independently reran13
+isolated real-PostgreSQL/current-OPA context/composition tests and2 actual user
+systemd relay-sandbox tests: PASS. Exact per-file hashes match the reported
+manifest. Prior actual installed-profile per-turn privacy sandbox proof remains
+separate from loaded-runtime qualification. Existing resident ordinary ask uses
+the current agent, while the standalone legacy/proactivity bridge has separately
+scoped reachability; no observed bridge exfiltration is claimed. Parent returned
+that conditional boundary to the SAME Coder for a bounded final disposition.
+
+Published/loaded pair remains081f1198/380422df; host Core HA credential and
+vendor binding custody remain unprovisioned, Android root gate remains, and no
+owner/model/physical action was performed. Stage4 honest review completion,
+correction propagation, prospective evaluation, replay and call accounting plus
+the full MO/A–O map remain open. Detailed independent review is in027A
+NATIVE-ARCHITECT-REVIEWS. Goal ACTIVE, ownership generation/fence4 preserved.
+
+## Architect delta — 2026-10-02T06:14Z — bounded credential-isolation correction added
+
+Installed resident sandbox can open the external ANIMA server .env; parent
+opened/closed only and read no contents. Ordinary saved-profile host reads are
+in scope; autonomous native-tool restrictions are a separate defense, not proof
+of filesystem denial. SAME Coder inspecting minimal per-turn/source correction
+in existing isolated Stage3 bundle, preserving live private profile/model/thread.
+Core HA credential remains UI-volume-only; do not relocate it to the exposed
+environment. No product acceptance/deployment or observed exfiltration claimed.
+Canonical finding in NATIVE-ARCHITECT-REVIEWS; Notion updated and normalized
+content readback verified at2026-10-02T06:15:48.188Z. Full Goal stays ACTIVE.
+
+## Primary Architect checkpoint — 2026-10-02T05:34Z — bounded recovery accepted; delivery failures remain
+
+Primary collected the actual sole-Coder deployment terminal and independently
+accepts only the proven UI/image/source/Core/private-state/idle-voice/Wi-Fi scope.
+ANIMA081f1198d47bfcf920af52e2782970c59ef2d387 and
+SENTRY380422df61cf90a517347b719f60c073430f8663 have exact hosted CI PASS;
+live UI imagef20a28974ccbaacf5fb317c8a0bad05facd45226ab363fe76231b48015444f19.
+Accountable event delivery is NOT accepted: relay startup PermissionError was
+contained after109 retries; relay is STOPPED and old heartbeat is stale. Core
+Journal handoff is NOT_CONFIGURED despite authenticated Core readiness. Root
+Android Binder owner-action gate is separate and remains unresolved. No actual
+vendor receipt, mandatory speech or3-second physical proof has been obtained.
+
+Same sole native Coder Laplace now implements Stage2 runtime correction plus
+Stage3 maintained-context/Away/incident vertical bundle in isolated same-Git
+worktrees /tmp/anima-stage3-development.LEYDTy and
+/tmp/sentry-stage3-development.3VulQV, based on the published pair. Live main
+product code stays frozen; no deploy/restart/root/model/physical action/commit
+or push delegated in this assignment. Native final result and independent
+review precede publication. Parent retains generation/fence4 and full Goal;
+Stage4 truthful correction/prospective evaluation and full MO-01–MO-15/A–O
+remain open under027A/R5F. See NATIVE-ARCHITECT-REVIEWS and STAGE3-CODER-RESULT.
+
+## Stage2 controlled deployment — 2026-10-02T05:15Z — PARTIAL / REVIEW_PENDING
+
+Published/loaded ANIMA081f1198d47bfcf920af52e2782970c59ef2d387 /
+SENTRY380422df61cf90a517347b719f60c073430f8663; exact-head CI36965605349 /
+36965606205 independently completed/success. Approved imagef20a28974ccb...
+UI-only replaced/healthy/external owner,104 source files/46 dependencies exact.
+Single-owner authenticated Core, worker/native UI/voice/supervisor running;
+idle voice fresh beyond60s awake/office. Wi-Fi restored:4 retained bindings/
+history,3 HOME/1 UNKNOWN,352 presence events unchanged/no fabricated transition.
+Relay FAILED at hardened outbox os.open("/") PermissionError; contained stopped
+after109 retries/no outbox. Core health Journal handoff NOT_CONFIGURED: actual
+installed connection/secret and vendor binding absent; no frozen-source/private
+repair improvised. Two exact rootless Android guard units installed/stopped,
+passive BINDER_PERMISSION/root gate retained;8247 mounts. Diagnostic Wi-Fi
+precheck sequencing negative preserved, subsequent actual binding/Journal checks
+pass. Historical134 pending/46 ambiguity, private11+session/relay extras and
+DB/OPA/searxng identities/mounts intact. Zero active/managedspeech/newrequests/
+newactions; Journal58062->58200 normal composition growth, memory254 unchanged.
+Canonical result/commands/manifests/gates in ANIMA027A STAGE2-CODER-RESULT.md.
+Parent independent deployment review pending; earlier source-only/held-Wi-Fi
+entries below are historical. Parent owns generation/fence4, coverage/reviews/
+publication; no source edits, root/model/physical turn, cache write, Stage3/4 or
+whole-goal acceptance.
+
+
+
 ## Stage2 independent source acceptance — 2026-10-02T04:41Z
 
 Primary Architect collected the sole native Coder's final corrected result and

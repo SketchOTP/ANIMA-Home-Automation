@@ -1,5 +1,46 @@
 # Permanent goal coverage — native takeover baseline
 
+Latest scoped delta — 2026-10-02T07:34Z: actual Stage3 native final collected
+and exact27-file SOURCE independently accepted. Local implementation checkpoints
+ANIMA f44e99caa067f29ff798edc693ab8ce3c950f02f / SENTRY
+3e521a10c64344a834d0a72786216fb8ad1337ef are NOT yet published/deployed.
+Real isolated PostgreSQL/currentOPA, actual systemd relay and effective private
+CLI restrictions pass; maintained context/explicit mode/incident inspection are
+IMPLEMENTED_NOT_DEPLOYED, not useful live incident reasoning or whole-house
+coverage. Published/loaded pair remains081f1198/380422df. Host HA/binding custody,
+duplicate-consumer ownership, Android root repair and physical/audible evidence
+remain explicit gates. No permanent outcome is silently promoted to COMPLETE.
+
+SAME Coder Stage4 ISSUED_NATIVE, existing027A/R5F only, in isolated same-Git
+worktrees /tmp/anima-stage4-development.TzlWpj and
+/tmp/sentry-stage4-development.cXfgZb. Scope: honest terminal review completion,
+full pagination/cursors, correction propagation, frozen future shadow evaluation,
+stronger replay, all model-call costs and existing owner learning inspection.
+See STAGE4-ASSIGNMENT.md. Six FAILED historical completion negatives persist;
+NO_ACTION is not automatically failed. No future accuracy or improvement claim.
+The full MO/A–O rows below retain earlier checkpoints and open acceptance.
+
+Latest scoped delta — 2026-10-02T06:19:33Z: published pair081f1198/380422df
+and exact CI remain current; isolated Stage3 corrections are not yet accepted.
+New actual resident server-environment read-denial gap is tracked in CURRENT/
+NATIVE-ARCHITECT-REVIEWS and Notion. No secret content was read by the probe.
+The full outcome map below retains its baseline/historical checkpoints; current
+Stage2 partial deployment and Stage3 assignment supersede old startup states.
+
+Independent commissioned-household READ ONLY query through existing UI runtime
+returned51 active review packets,29 active completion records,13 active and140
+superseded suggestions. Of those29 completions,6 refer to FAILED provider
+requests and23 to NO_ACTION requests. Active suggestion decisions are4
+ACKNOWLEDGED/9 PENDING. No raw content or owner-store mutation. A NO_ACTION
+provider terminal can be a legitimate non-speaking learning result; do not
+misclassify all29 as failed or require new speech to prove completion. Stage4
+must derive honest review milestones from authoritative terminal status AND
+qualified persisted outcomes, preserve the6 negative records, correct UUID-order/
+LIMIT50 status/cursor semantics, and propagate owner correction to projections.
+Initial host diagnostic stopped before DB connection because python-dotenv is
+not installed; corrected use of existing container psycopg/env succeeded. No
+dependency installation or credential output occurred.
+
 Checkpoint: 2026-10-02 UTC. Primary Codex Architect independently reconstructed
 this baseline. This is a coverage/gap map, not acceptance or a narrowed goal.
 Active packet remains 027A / existing R5F continuation.
@@ -305,3 +346,51 @@ Root Android/vendor readiness, browser/voice/action owner evidence, Stage3 expli
 Away/coverage/incident context, Stage4 honest review/correction/prospective
 opportunity-baseline evaluation/all-model costs and wider support journeys remain
 open. Same native Coder, full native Goal ACTIVE; no adjacent scope invented.
+
+## Post-deployment coverage correction — 2026-10-02T05:34Z
+
+Published pair081f1198/380422df and exact hosted CI are accepted E4. Exact live
+UI imagef20a2897, authenticated Core and fresh idle voice/private preservation/
+Wi-Fi baseline recovery are accepted only for their bounded observed scope.
+Relay startup fails in the installed sandbox and is STOPPED; Core canonical
+Journal handoff is NOT_CONFIGURED. Therefore Stage2 accountable delivery is
+an IMPLEMENTATION/COMPOSITION GAP, not COMPLETE. No actual vendor receipt or
+mandatory audible speech was observed. Android owner-root Binder repair remains
+an independent OWNER-ACTION GATE; root fix alone will not fix the relay defect.
+
+The same sole native Coder is correcting these actual failures and implementing
+Stage3 household-scoped maintained context/coverage, explicit owner HOME/AWAY/
+UNSET and source-linked incident reasoning controls in isolated same-Git
+worktrees. Live product sources stay frozen. No owner mode/configuration is
+changed, no new model/physical turn is initiated, no self-acceptance/publication
+occurs. Contextual controls cannot suppress required factual speech or enable
+reasoning under immediate-only. Stage4 measurable prospective learning and
+correction/all-model accounting, broader owner workflows and full MO/A–O remain
+open. Trial elapsed time alone is not acceptance and history is never reset.
+
+## Commissioned-household inventory — parent read-only — 2026-10-02T05:45:07Z
+
+Unlike earlier all-store aggregates spanning two household roots, this bounded
+read used the current authenticated Core service household only. Existing Graph
+readers report4 PERSON members,6 ROOM/2 ZONE places and13 recursively scoped
+resources. Existing qualified evidence reader returns1113 observations over28
+days, truncated=false. No names/MACs, raw vendor bodies or household contents
+are included in this engineering evidence; no store mutation occurred.
+
+| Qualified canonical family | Count | Distinct local source days | Latest recorded occurrence UTC |
+| --- | ---: | ---: | --- |
+| external.android.lock_reported | 89 | 4 | 2026-09-12T03:09:28.585647Z |
+| external.android.motion_reported | 60 | 5 | 2026-09-12T00:51:57.949047Z |
+| household.presence.connection_changed | 352 | 19 | 2026-09-30T13:32:58.449541Z |
+| household.ring.motion | 327 | 24 | 2026-10-01T21:43:30.303Z |
+| senseguard.event | 14 | 4 | 2026-09-26T06:13:26.110919Z |
+| senseguard.opened | 271 | 26 | 2026-10-01T23:57:13.793495Z |
+
+Counts are qualified consumer observations, not physical opportunity denominators
+or delivery success rates. Presence transitions need not advance while current
+Wi-Fi readings are stable; last transition is not last source-health heartbeat.
+Android source silence aligns with known current NOT_READY/root/relay failures,
+not evidence of no motion or unlocks. Existing source projection's generic
+SOURCE_OBSERVATION label cannot turn Android receipt time into physical time;
+the Stage3 correction must retain an honest distinct timestamp basis. No
+household mode or device policy changed and no model/physical turn occurred.

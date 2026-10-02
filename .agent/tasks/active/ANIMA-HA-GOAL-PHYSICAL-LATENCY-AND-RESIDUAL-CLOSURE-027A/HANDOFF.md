@@ -316,3 +316,30 @@ READY and fresh awake/office standby. Historical134 pending/46 ambiguity and
 private11/11 fingerprints preserved; two configured reviews NO_ACTION; growth
 explicit. Android/Wi-Fi held. Runtime PARTIAL/review-pending, no whole-goal closure;
 next material/root/Stage3 assignment belongs to primary. No product source edits.
+
+### 2026-10-02T05:15Z — Stage2 controlled deployment return
+
+Read latest canonical [STAGE2-CODER-RESULT.md](STAGE2-CODER-RESULT.md) append.
+Published081f1198/380422df exact CI PASS; imagef20a28974ccb UI-only replaced,
+104 imports/46 deps exact. Core authenticated/idle voice fresh; Wi-Fi conservative
+history/no synthetic edges proven. Relay stopped after outbox startup PermissionError;
+Core handoff NOT_CONFIGURED/installed connection-secret/vendor binding absent.
+Android guard2 exact/stopped/root gate retained. Historical134/46, private11+extras/infra
+preservation and explicit growth/diagnostic negatives recorded. Runtime PARTIAL,
+review pending; parent assigns bounded correction before delivery-ready claims.
+No frozen source/private binding workaround or next-stage work by Coder.
+
+### 2026-10-02T07:21Z — Stage3 source handoff / REVIEW_PENDING
+
+Review latest [STAGE3-CODER-RESULT.md](STAGE3-CODER-RESULT.md), especially final
+credential-bridge appendix superseding07:03 snapshot. Exact ANIMA21d7d88a3e... /
+SENTRY6 1b72cc4dd5... in parent-created isolated same-Git worktrees, complete
+regressions/actual CLI+systemd fixtures/negative limits recorded. Main published
+081f1198/380422df product/private/runtime remains unchanged by this assignment;
+source is uncommitted, not installed/accepted. Parent retains generation/fence4.
+Credential-named host HAConnectionStore provisioning only after actual loaded
+deny/broker qualification; vendor private binding and duplicate consumer ownership
+need bounded parent decision/check. Root Android/physical outcome remain gated.
+No relay/Journal delivery/whole-goal closure claim; parent reviews/publishes one
+coherent bundle before controlled deployment or further assignment. No Stage4
+implementation/coverage/review/Notion edits by Coder.

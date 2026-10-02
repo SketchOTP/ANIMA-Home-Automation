@@ -611,3 +611,261 @@ Recommendation: independently review the final frozen pair and bounded CI change
 then parent performs its single compatible publication/deployment cycle if
 accepted. Original Stage2 result/evidence plus this supersession is the coherent
 canonical handoff; acceptance and whole-goal disposition remain parent-owned.
+
+## 2026-10-02T05:15Z — controlled Stage2 deployment return — PARTIAL / REVIEW_PENDING
+
+Supersedes earlier source-only/unpublished/held-Wi-Fi statements for current
+runtime only; original results and negative evidence remain unchanged. Source
+acceptance remains primary-owned in NATIVE-ARCHITECT-REVIEWS.md. This Coder
+reports observed deployment, not acceptance, Stage2 closure or whole-goal success.
+
+### Authority / exact identities / mutation gate
+
+Same sole native Coder, no descendants; primary owns OWNED generation4/fence4,
+session01a052d8-2511-7382-a1ef-b0a080514788. State was validated before unit
+installation and UI/Core mutations; no independent lock acquire/release.
+Root AGENTS, both actual .agents/skills/authority/SKILL.md and relevant kernel/
+active027A result/procedure were explicitly reread, not claimed auto-reloaded.
+Loading roots: /home/sketch/Projects/ANIMA Home Automation and
+/home/sketch/Projects/SENTRY. CURRENT's relevant current sections were read,
+not its entire historical body. These actual instruction fingerprints remain:
+
+- ANIMA AGENTS988796145f52244a3290c7668db535e2885fc9e3ccfb05af0ce8edd93016d5b6;
+  Authoritye3f979d47b7d2b1b5a324bb3120e599fea296e9900dcc3818d1530df0f0bfdf7.
+- SENTRY AGENTS1b294f894ea0fba4f2a9fb828d21eaf529a3b6fc47eda36f8030461f9dfffe0f;
+  Authorityae6c3b75a99b7aec4d89eb43c6524595392da09e340e016344b7b408b8079ad6.
+- Goals/profiles retained exact pre-cutover hashes; no goal/profile mutation.
+  Native Architect review supersedes historical ChatGPT relay; inherited model,
+  resident profile/thread/personality and household authority unchanged.
+
+Independently gh run view --json headSha,status,conclusion:
+ANIMA36965605349 completed/success exact081f1198d47bfcf920af52e2782970c59ef2d387;
+SENTRY36965606205 completed/success exact380422df61cf90a517347b719f60c073430f8663.
+Parent conditional GO therefore satisfied before first application cutover.
+Branches unchanged: ANIMA main; SENTRY feature/v0.4-personal-continuity.
+Candidate sha256:f20a28974ccbaacf5fb317c8a0bad05facd45226ab363fe76231b48015444f19
+promoted to anima-pc-ui:owner-local. UI started2026-10-02T05:07:11.127618861Z,
+healthy, external owner mode. No image rebuild, source edits, commit, push or CI
+run by Coder. Accepted source manifests ANIMA18 0dc074ef... / SENTRY8 d16cfb23...
+remain the exact final identities listed above.
+
+### Commands / installed amendments / effective processes
+
+Stopped sentry-voice-supervisor first, then sentry-voice, anima-household-worker,
+sentry-ui. Preserved Android session/supervisor already stopped. Rendered ONLY
+the two existing reviewed write_unit template expressions from
+scripts/install_waydroid_vendor_runtime.py using AST; did not execute installer
+main, config/token writes, sudo, vendor provisioning or other unit templates.
+Applied these two files using existing scripts.install_pc_runtime.install_files:
+
+- /home/sketch/.config/systemd/user/anima-android-session.service mode600 SHA256
+  6bc7cb668a4b1aaf3dee4e03b40b63e601c020809fed1efab764783dcb319923.
+- /home/sketch/.config/systemd/user/anima-android-notification-supervisor.service
+  mode600 SHA256 a9ccf88749fcc266d4169490b332cb993ba87a85df71dbd8c4bc1efc482c3bcd.
+
+systemctl --user daemon-reload and systemd-analyze --user verify these two files
+PASS. Effective session StartLimitInterval5min/burst1; ExecCondition existing
+waydroid_notification_supervisor.py --check-access. Supervisor Wants ONLY
+anima-vendor-notification-relay.service, no Wants session. Both remain inactive,
+PID0, NRestarts0. Pure passive binder_access_fault() => BINDER_PERMISSION.
+Did NOT invoke privileged check-access/getprop/root helper. No root/container
+mutation or mount cleanup; read-only binder mount count8247 remains contained.
+
+Exact UI command:
+docker compose -p anima-pc -f compose.yaml -f compose.pc.yaml up -d --no-deps --no-build ui.
+No anima-pc restart, stack down, DB/OPA/searxng restart.
+.venv/bin/python scripts/check_pc_readiness.py --stack --timeout 2 => STACK_READY.
+systemctl --user restart anima-core.service; authenticated ExecStartPost and
+explicit check_pc_readiness.py --core --timeout2 => AUTHENTICATED_CORE_READY.
+Token read from existing client.token, not printed or rotated.
+
+Restarted relay, then started worker/voice, supervisor/native UI. Observed Core
+PID1047797, worker1048242, voice1048244, voice-supervisor1048246, native UI1048249;
+all active/running with NRestarts0. anima-pc remains active/exited PID0.
+One core.sock LISTEN listener: Core PID1047797 fd4; UI external owner mode
+does not own duplicate provider. Authenticated health stateavailable.
+Android bus2870 and compositor2871 remain active, unchanged PIDs.
+Shared Atlas storage ordering preserved, not asserted Linux-only independent.
+
+NEGATIVE: Type=simple relay start initially returned success but process then
+failed. Existing unit loads exact current scripts/waydroid_vendor_relay.py.
+Journal traceback at Relay.__init__ line289: os.open("/", O_RDONLY|O_DIRECTORY)
+PermissionError errno13 under its installed sandbox. Host root mode755 and
+ordinary /usr/bin/python3 read-only root directory open succeeds; precise sandbox
+cause is not yet proven. No outbox file created. Relay incurred109 on-failure
+retries; Coder stopped ONLY relay at05:11:21UTC to contain the loop. Final relay
+inactive/dead PID0. No speculative permission widening, unit workaround or source
+patch. Old relay diagnostic heartbeat05:07:13 is STALE and NOT delivery-ready.
+Persistent proposed path /home/sketch/.config/anima/vendor-relay-outbox.json
+is ext4, not /run; private parent mode700 uid1000, existing unit bounded writable
+root includes this path. This is filesystem-location evidence, NOT successful
+outbox runtime readiness. Review/source correction required before relay restore.
+
+NEGATIVE: Authenticated Core /v1/health journal_handoff_state NOT_CONFIGURED.
+Actual Core environment has HA instance/provider scope and SENTRY household
+binding, but no HA_ACCESS_TOKEN/ANIMA_HA_ACCESS_TOKEN and no
+ANIMA_HA_CONNECTION_FILE. ANIMA_VENDOR_RELAY_CONFIG also absent from Core.
+Source build_postgres_core activates watcher inside commissioned HA-adapter
+branch; absent secret/connection composition leaves watcher unconfigured.
+UI environment has vendor-config path; presence of that UI binding does not
+prove Core binding. UI-created durable handoff checkpoints observed:
+main position63742/HISTORICAL_PREFIX_NOT_REPLAYED, managed watermark63910;
+these alone do NOT establish live Core consumer. No credentials/private bindings
+were edited to repair this. Parent review/reassignment is required for exact
+deployment-binding reconciliation. Authenticated health is not handoff success.
+
+### Wi-Fi conservative recovery and retained history
+
+Before cutover, actual stale status observed2026-09-30T14:24:38.233048Z.
+Pure accepted _read_previous(now) returned all4 activeNone/statusUNKNOWN/
+baseline_usableFalse while retaining timestamps/fingerprints. No status reset/
+deletion or synthetic arrival/departure. Accepted source file SHA256
+a04e4080738d6dd1f066cb6e105f7f2afdde003a6f12838473aef643af45541e,
+byte-equal committed HEAD. Actual Graph PERSON/MEMBER_OF MAC bindings were
+read privately; all4 normalized binding fingerprints match preserved history.
+No MAC output or new person bindings.
+
+DEPLOYMENT NEGATIVE: an additional diagnostic tried absent optional dotenv
+module; shell lacked set-e and continued to start Wi-Fi at05:08:09UTC before
+that added binding check completed. Coder stopped Wi-Fi, completed read-only
+binding/source/Journal checks, then restored with fail-closed set-e command
+at05:09:44UTC (PID1056865, active/running NRestarts0). Earlier pure stale baseline
+check had succeeded, but this command-order defect is explicitly not claimed
+an all-prechecks-pass sequence. Subsequent SQL verified first sweep added ZERO
+presence events (352 before/after) and no fabricated transition. Another
+diagnostic used wrong journal table name, failed read-only, then was corrected
+to actual anima_event_journal; no guessed schema write.
+
+Historical last_status_changed_at remains unchanged for all4:
+2450a591... 2026-09-30T13:32:58.449541Z;
+38c41020... 2026-09-30T10:16:22.091889Z;
+d7a57843... 2026-09-30T09:41:29.375955Z;
+d9edab86... 2026-09-28T10:45:55.972438Z.
+At05:12:41 actual fresh observer READY/LAN_NEIGHBOR_TABLE, three HOME and one
+UNKNOWN; last_seen advances for three genuinely observed bound devices and
+remains09-28T10:44 for unobserved device. UNKNOWN is not verified departure.
+Binding hashes and original transition history retained. Presence Journal
+count352 at05:14:36, no restart artificial arrival/departure. Authenticated sensor
+surface CURRENT/10 items: 6 QUIET event rows +3 HOME/1 UNKNOWN presence rows.
+No owner identity, physical home/away, lock or alarm qualification inferred.
+
+### Running source / locked dependencies / idle voice
+
+Read-only docker exec image Python import/metadata walk:104 installed .py/.sql
+files exactly equal git show081f119:src/anima_ha/... including no extras.
+Manifest path relative anima_ha + ':' + SHA256(bytes), sort/join LF no finalLF:
+81ea67f85c76094ce996b0b9fc24511796bd54765af83210b3a6d28718d7a105.
+Actual importlib.metadata runtime graph == uv.lock marker/extras traversal:
+46 dependencies plus anima-ha project, no extra/version mismatch.
+Dependency name:version sorted/LF/no finalLF aggregate
+cebacae1d1f9bcfdc96973ff4da8687c3a168ba77ff6129079aef209f63a24af.
+Dockerfile qualified uv0.12.7, source/lock exact; no full OS byte-reproducibility
+claim. First diagnostic assumed packaging was installed in runtime image and
+failed; corrected read-only probe uses installed stdlib metadata plus host
+packaging marker evaluator, image Python/platform reported, no image mutation.
+11 affected ANIMA runtime source paths and5 SENTRY runtime product paths match
+respective committed HEAD; services relaunched from those qualified checkouts.
+
+Voice started05:07:16UTC; fresh LISTENING/VADhealthy awake/office at05:10:49,
+05:13:25 and05:14:36UTC (>7min idle, beyond60s TTL), age0.080266s at final sample.
+required_alert_delivery_status NOT_ATTEMPTED, managed obligations0: no positive
+speech/delivery test. Native UI restarted to load accepted voice/status code;
+no owner browser workflow or visual physical-orb acceptance claimed.
+No manual model/TTS/action turns, no historical replay. Actual audible-start
+timestamp NULL/not observed; no new process-start/completion speech sample.
+Popen/invocation timing is not actual audible start; no physical3s PASS.
+
+### Exact preservation / effects / no-blind-replay
+
+Pre snapshot 2026-10-02T05:00:42.942152+00:00; final 2026-10-02T05:14:36.793536+00:00.
+134 historical autonomous PENDING,33RECOVERY_REQUIRED+13UNKNOWN_RESULT unchanged;
+fresh120s0, active claims/provider runs0, active consequential0; no new request/
+action, managed_delivery0. Entire lifecycle populations unchanged:
+FAILED129/PENDING134/CANCELLED89/COMPLETED677/NO_ACTION277/UNKNOWN13/RECOVERY33.
+Parent-reported original46 digest26e5f371d3e767d2235130e6960b7238 retained as
+parent evidence; algorithm not supplied, not falsely equated to independent hash.
+Independent pre/post MD5:
+pending fa31c007536c698d4ab76c5a14088cf7, over request_id:lifecycle:provider_started
+comma-joined sorted by request_id for AUTONOMOUS_ATTENTION/PENDING.
+ambiguity1f3453c5ce88d3d3b46f119bb4a24462, over request_id:lifecycle comma-joined
+sorted by request_id for RECOVERY_REQUIRED/UNKNOWN_RESULT. Same46 also matches
+original Stage1 independently recorded ID/lifecycle digest.
+
+No currently due ACTIVE tasks; existing2 REASONING_DUE retain last_runOct1
+07:37/07:38UTC and nextOct3/Oct5 02:29:56.813867UTC. No catchup claim/replay.
+Actions SUCCEEDED3/POLICY_DENIED1 unchanged. Memory254, graph95nodes/101relations.
+Journal58062 ->58200 (+138): after preposition63745 grouped event types:
+home_assistant.reconciled1, plugin.healthy59, plugin.registered62,
+truth.observation16. Growth is explicit normal runtime composition/reconciliation,
+not global unchanged claim. No new model/action request in this interval.
+
+Private11 hashes/modes/owners/symlink targets unchanged, plus resident session,
+relay config/token3 extras exact. Sanitized manifest (all target mode600 uid/gid1000;
+anima-project.env remains its existing symlink, others regular):
+/home/sketch/.config/anima/anima-project.env: a03843f90ed6bdee77dd675429825406948e0f6da5a6bdaa02b5f16a21364673
+/home/sketch/Projects/ANIMA Home Automation/.env: a03843f90ed6bdee77dd675429825406948e0f6da5a6bdaa02b5f16a21364673
+/home/sketch/.config/sentry/anima.json: e0eceb7ac212eed21a91f5a7c2cd3ffc7ed186f6c081a6d55b9d23cc6ce58ce5
+/home/sketch/.config/sentry/config.json: 74cd117e66165e9a4bf6d34ac4c22c882eeb9063129800fa22c4ee118eb9cc9a
+/home/sketch/.config/sentry/ui-display.env: cfdf277606c762fc5968dd0597006119b2c1c36a0a1b3dadf0ba217fe8be5c8c
+/home/sketch/.config/sentry/anima-identity.token: 46b4b9b45ffdf578b73af52c383b45e5dbf301021e9cb4c1cf8cad9889bfe512
+/home/sketch/.config/sentry/projection.token: 95564ef8a89754bd022560cb1bf52482ebffcd0e44b0c208a05642f2f283af74
+/home/sketch/.local/share/anima-household-client/client.token: 0c3b8be9b33dbd3c5ea958a7068010792c780bade28256db824942e7ee2ec520
+/home/sketch/.local/share/sentry/codex-home/config.toml: 1640aaee23dca66ecd7bc2b704cea0416e9ef14ecaacd2a4f101064e56f10004
+/home/sketch/.local/share/sentry/codex-home/sentry-resident.config.toml: 04b2d03d19356a628c03d84ff7d69e88f7898ab9b6cdc1118b438c7dde0b12ee
+/home/sketch/.local/share/sentry/codex-home/sentry-resident.pre-anima-026a.config.toml: 8840bc59f3f2090328eea6b9b3307349bf484100bf01377e61115f70b8a62d33
+/home/sketch/.local/state/sentry/codex-agent-session.json: 20f95c15914d3f9da3a37917eb95108ac7880341b7c576f63c5ad998ba9153c3
+/home/sketch/.config/anima/waydroid-vendor-relay.json: 1d5139e20bd050bfb69d7636177fe5b70770abf8ee426970e6e22b7f90b99a2d
+/home/sketch/.config/anima/waydroid-vendor-relay.token: 1901de1a57c07d919ff7858d422a01c94ea17ad2bcf1d9cc9dae71ba490fa7af
+
+DB principals/voice/personality/preferences content-only MD5, same pre/post:
+d2bcd229d6900bd8bd72546eec6cd1a4 /45fd765acb3c04d0bc54f95a78753645 /
+2abe012ded27fd970890df39ff7e9b86 /3bb5636491fed9335ccb8f3c67b107ad.
+Algorithm md5 coalesced string_agg(to_jsonb(row)::text,'', ordered by rowtext).
+Desired sleepfalse, selectedoffice preserved. Resident profile/model/thread,
+voice/persona/orb settings unedited. No token rotation/client re-enable.
+
+DB/OPA/searxng IDs, images, original start times and complete mount arrays compare
+exact pre/post. Sanitized immutable deployment anchors:
+/anima-pc-db-1 id80cabad6b9b9c9662103b6fd259f55316f2f780d747b0a0cb2e00cb580a1d3a7
+imagesha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b; started2026-09-30T21:05:40.531580313Z
+mounts [{"type":"volume","name":"anima-pc_anima_ha_postgres_data","source":"/var/lib/docker/volumes/anima-pc_anima_ha_postgres_data/_data","destination":"/var/lib/postgresql/data","rw":true}]
+/anima-pc-opa-1 id7bc42222d93fbc899a174d622fed89a12bc975240303bed69a7fec9855931376
+imagesha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff; started2026-09-30T21:05:40.533630835Z
+mounts [{"type":"bind","source":"/home/sketch/Projects/ANIMA Home Automation/policy/phase4","destination":"/policies","rw":false}]
+/anima-pc-searxng-1 id061f9e6cdbf9ea59f45cc92424ee52f6d94b33752764c26a0a5166b3b5eaa3ce
+imagesha256:b36af7984b87191b595bc5301418ed6432c047668a4547ab531a7439b816fac3; started2026-09-30T21:05:40.5294465Z
+mounts [{"type":"volume","name":"f9c1df7f27b946aefeb713eeb9db953cb18dc5bedd8b14719ca68d21d4f89f58","source":"/var/lib/docker/volumes/f9c1df7f27b946aefeb713eeb9db953cb18dc5bedd8b14719ca68d21d4f89f58/_data","destination":"/etc/searxng","rw":true},{"type":"bind","source":"/home/sketch/Projects/ANIMA Home Automation/infra/searxng/settings.yml","destination":"/etc/searxng/settings.yml","rw":false},{"type":"volume","name":"0182c94ebd12662a1b058c72a1142b497cf136314ae3ca09e28db362a6588026","source":"/var/lib/docker/volumes/0182c94ebd12662a1b058c72a1142b497cf136314ae3ca09e28db362a6588026/_data","destination":"/var/cache/searxng","rw":true}]
+No volume/database reset, account change, HA permissions expansion or vendor reset.
+
+Graft caches unchanged ANIMA274 f032acd05f22e3c6bc184987d2331c1852d26c0a73de7fceef4a1a7c6fed0d87;
+SENTRY117 a1d70a51c972dda89bb207ed53215523a7111412aa8314075f01ac4700fdf559.
+Exact repo-relative graft/... + ':' + fileSHA, JavaScript sort, LF/no finalLF;
+recursive regular files inclhidden, excludes symlinks. No ask/rebuild/cache writes.
+.gitignore/.ignore hashes unchanged as prior canonical baselines; fenced AGENTS
+unchanged. Preexisting dirty ANIMA review record, AGENTS/.gitignore, untracked
+assessment/.ignore and SENTRY .gitignore/.ignore preserved; no staging.
+Parent-owned GOAL-COVERAGE/reviews/Notion not edited by Coder.
+
+### Changed paths / remaining gates / handoff
+
+Runtime writes: owner-local image tag/UI replacement; exactly2 Android guard
+unit files; user daemon-reload and only named application service operations;
+ordinary service status/Journal/Wi-Fi state refreshes. No product source edit.
+Authorized record changes ONLY: this STAGE2-CODER-RESULT.md append; ANIMA+SENTRY
+.agent/CURRENT.md, INDEX.md, OUTCOMES.md; this packet EVIDENCE.md and HANDOFF.md.
+PROJECT_PROFILE/goals/directives/reviews/coverage/ignore/cache not edited.
+
+Controlled deployment is PARTIAL / REVIEW_PENDING. UI/Core authenticated health,
+source/lock equality, private/history preservation and conservative Wi-Fi
+observations are distinct from failed relay startup and unconfigured Core handoff.
+Next action belongs to parent: independently review runtime negatives and assign
+bounded corrections before claiming accountable vendor/Journal delivery ready.
+Android owner-root Binder gate remains separate; no repeated owner root request.
+No Stage3/4, physical sound/3s, end-to-end vendor notification, authenticated owner
+browser workflow, whole Stage2/Stage1 or MO/A–O completion asserted.
+
+Final record checks: both git diff --check PASS; append-only OUTCOMES/result/
+EVIDENCE/HANDOFF retain complete committed-HEAD byte prefixes. Both Git indexes
+remain unstaged; parent review/assessment/tooling dirt preserved. Final named
+services remain as listed; relay/Android inactive, all restored consumers and
+Wi-Fi active NRestarts0. Execution state still OWNED generation/fence4.

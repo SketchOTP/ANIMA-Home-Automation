@@ -5,9 +5,12 @@
 Owner transfer: primary Codex Architect plus one native development Coder with
 independent review; see RECORD and the existing 027A / R5F packet. Actual local
 root is `/home/sketch/Projects/ANIMA Home Automation`, main at
-`949804dc9f07487868664d2b1508eceb9f44cc6c` before Stage2 publication; SENTRY companion is
+`081f1198d47bfcf920af52e2782970c59ef2d387`; SENTRY companion is
 `/home/sketch/Projects/SENTRY`, feature/v0.4-personal-continuity at
-`23fb216250d646451c47e8d3ea8c63cd7f289d18` before Stage2 publication.
+`380422df61cf90a517347b719f60c073430f8663`. Exact-head hosted CI36965605349
+and36965606205 PASS. Isolated same-Git Stage3 development worktrees are
+`/tmp/anima-stage3-development.LEYDTy` and
+`/tmp/sentry-stage3-development.3VulQV`; running main product sources stay frozen.
 
 ANIMA owns canonical Journal/Truth/Graph/operational memory, household settings,
 identity/OPA, typed tools/tasks, execution/verification, audit and recovery.
@@ -21,11 +24,18 @@ they do not instruct changes to the inherited development model or separately
 configured resident profile. Local source is not deployed-byte identity. The
 historical startup failure is preserved in the packet; bounded Stage1 recovery
 and exact-head CI were independently accepted. Stage2 source is independently
-accepted for publication/controlled deployment, not yet loaded operational proof.
+accepted and published, with bounded controlled recovery independently reviewed.
+Live UI imagef20a28974ccbaacf5fb317c8a0bad05facd45226ab363fe76231b48015444f19
+matches104 source files and46 unchanged-lock dependencies. Authenticated Core,
+fresh awake/office idle voice and conservative Wi-Fi baseline recovery are
+observed, not complete event-delivery proof. Actual relay startup PermissionError
+is contained STOPPED; Core Journal handoff reports NOT_CONFIGURED. Those concrete
+failures are being corrected with the same sole Coder in the Stage3 bundle.
 It adds durable minimized relay outbox, independent fenced required speech,
 Journal-to-Attention recovery, episode-less approval and conservative presence
 baseline recovery. Docker Python dependencies now resolve from unchanged uv.lock;
-apt/image bit reproducibility is not claimed. Android remains owner-root gated.
+apt/image bit reproducibility is not claimed. Android remains owner-root gated;
+no vendor receipt or playback-owned3-second physical latency is claimed.
 Full MO-01–MO-15/A–O qualification remains parent-owned open work in 027A/R5F.
 
 

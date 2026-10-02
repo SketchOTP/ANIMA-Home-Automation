@@ -1,5 +1,12 @@
 # Authority Project-State Index
 
+Current native checkpoint — 2026-10-02T07:34Z: Stage3 source independently
+ACCEPTED after actual native final, local implementation f44e99caa067f29ff798edc693ab8ce3c950f02f
+and SENTRY3e521a10c64344a834d0a72786216fb8ad1337ef. Publication/deployment pending.
+Same sole Coder now has Stage4 in same027A/R5F; see STAGE4-ASSIGNMENT and
+STAGE3-CODER-RESULT/NATIVE-ARCHITECT-REVIEWS. Parent handles publication/custody;
+full Goal and operational evidence remain open. Prior pointers below are history.
+
 ## Project identity
 
 - Project: ANIMA HA (Home Automation)
@@ -17,13 +24,20 @@
   and bounded controlled recovery are independently ACCEPTED, not whole Stage1
   or physical/full-goal acceptance. Both published-head CI runs passed.
   Stage2 accountable delivery/presence SOURCE is independently ACCEPTED FOR
-  PUBLICATION / CONTROLLED DEPLOYMENT; hosted CI/deployment pending. See ANIMA 027A
+  PUBLICATION / CONTROLLED DEPLOYMENT; both exact-head CI PASS. Controlled Stage2
+  bounded Stage2 UI/Core/source/private/idle-voice/Wi-Fi recovery independently
+  ACCEPTED by parent; accountable relay/Journal delivery NOT accepted. Relay
+  stopped after startup fault, Core handoff NOT_CONFIGURED, Android root gate
+  retained. Current Stage2 runtime correction + Stage3 context/incident/privacy
+  bundle SOURCE FROZEN/REVIEW_PENDING in isolated parent worktrees, ANIMA21 +
+  SENTRY6, not deployed. Canonical final STAGE3-CODER-RESULT.md latest append
+  supersedes earlier four-file SENTRY snapshot. Runtime negatives/evidence in027A
   `NATIVE-ARCHITECT-REVIEWS.md`, `STAGE1-CODER-RESULT.md` and
-  `STAGE2-CODER-RESULT.md`. Parent owns reviews/coverage/publication.
+  `STAGE2-CODER-RESULT.md` and `STAGE3-CODER-RESULT.md`. Parent owns reviews/coverage/publication.
 - Canonical packet: ANIMA `.agent/tasks/active/ANIMA-HA-GOAL-PHYSICAL-LATENCY-AND-RESIDUAL-CLOSURE-027A/`.
-- ANIMA local/published: `main` / `949804dc9f07487868664d2b1508eceb9f44cc6c`.
+- ANIMA local/published/loaded: `main` / `081f1198d47bfcf920af52e2782970c59ef2d387`.
 - SENTRY local: `feature/v0.4-personal-continuity` /
-  `23fb216250d646451c47e8d3ea8c63cd7f289d18` (parent-published).
+  `380422df61cf90a517347b719f60c073430f8663` (parent-published, relaunched).
 - Parent owns ANIMA execution lock/state, generation/fence 4; Coder is delegate.
 - Integration goal authority: ANIMA `.agent/PROJECT_GOAL.md` adopted 2026-08-28,
   [completion contract](https://app.notion.com/p/3d2833cb27ff8154a7b2dd259b4d5250),

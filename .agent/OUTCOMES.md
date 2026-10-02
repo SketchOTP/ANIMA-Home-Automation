@@ -2092,3 +2092,48 @@ debt and earlier disproven counts retained. Isolated PG11/ingress45 now required
 by existing hosted CI/artifact workflow. Source acceptance is not live delivery,
 audible3s proof, vendor readiness, Stage3/4 or full-goal completion. Graft excluded;
 same sole native Coder has preflight-only scope until explicit IMAGE_READY/GO.
+
+## 2026-10-02T05:15Z — Stage2 controlled deployment returned PARTIAL / REVIEW_PENDING
+
+Exact published081f1198/380422df and both CI PASS verified before conditional GO.
+Approvedf20a28974ccb UI-only replacement healthy,104 imports/46 deps exact.
+Authenticated single-owner Core, idle voice fresh awake/office; conservative
+Wi-Fi restored without synthetic edges, historical4 bindings/timestamps retained.
+Two reviewed Android guard units installed/exact/stopped, root gate retained.
+Relay failed outbox root-directory open/109 retries, contained stopped; Core
+Journal handoff NOT_CONFIGURED/actual connection-secret/vendor binding absent.
+Wi-Fi diagnostic sequencing failure and corrected read-only checks are retained
+as negative evidence, not an all-prechecks-pass claim. Historical134/46 and
+private11+extras/infrastructure exact; zero new requests/actions, Journal growth
+explicit. Canonical appended ANIMA027A STAGE2-CODER-RESULT.md; parent reviews
+before bounded follow-up. No source/root/model/physical/newCI/publication/Stage3/4.
+
+## 2026-10-02T07:21Z — 027A/R5F Stage3 source frozen / review pending
+
+Parent bounded Stage2 recovery acceptance excludes actual relay/Core handoff
+failures; those negatives remain. Sole Coder source-only correction/context/
+owner-declared mode/incident/credential-isolation bundle frozen in existing
+parent-created isolated worktrees: ANIMA21d7d88a3e... / SENTRY6 1b72cc4dd5...
+Full ANIMA1266/76, strict164/Ruff/OPA9/realPG13/relay sandbox2; SENTRY580/
+security56/compile/private CLI4; UI54+14/type/Vite passed. Inherited script1/
+full SENTRY277 lint debt retained, introduced0. Standalone bridge bounded tool-
+free/env correction is source, not observed live leak; backend flag diagnostic
+and prior07:03 four-file snapshot retained/superseded in canonical Stage3 result.
+Main source/private/services/Graft/goals untouched, no deployment/model/physical
+turn/commit/push/newCI. Planned credential-named host HA file remains absent and
+parent-provisioning gated after actual denies; vendor custody/duplicate consumers/
+Binder/physical/Stage4/full MO/A–O remain open. E4 software, review PENDING;
+Coder does not accept own work or close Goal. Exact manifest/commands/limits in
+existing027A STAGE3-CODER-RESULT.md latest append. Parent owns disposition.
+
+## 2026-10-02T07:34Z — native Stage3 source accepted; Stage4 issued
+
+Primary independently collected sole-Coder final and accepted exact27-file
+Stage3 source for publication/controlled deployment, not operational/goal closure.
+Local implementation f44e99caa067f29ff798edc693ab8ce3c950f02f / SENTRY
+3e521a10c64344a834d0a72786216fb8ad1337ef; exact manifests/validation/negative
+commands in027A STAGE3-CODER-RESULT and NATIVE-ARCHITECT-REVIEWS. Published/loaded
+pair still081f1198/380422df. Same sole Coder received Stage4 learning-outcomes
+vertical bundle in isolated same-Git worktrees through native tools; owner/root/
+physical/prospective gates remain, full MO/A–O retained. No developer powers
+transferred to household runtime, no future evidence invented or goal accepted.

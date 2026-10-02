@@ -349,3 +349,337 @@ owner-root Binder repair remains separate. No privileged bypass, vendor reset,
 old134 pending/46 ambiguity replay, Graft staging, new packet or Phase15.
 Stage3 context/incident and Stage4 truthful continuous evaluation remain genuine
 goal gaps; broader MO-01–MO-15/A–O acceptance remains open.
+
+## 2026-10-02T04:59Z — Stage2 compatible publication/CI/image gate accepted
+
+Ordinary commits/pushes preserve history: ANIMA main
+081f1198d47bfcf920af52e2782970c59ef2d387, exact-head CI36965605349 PASS;
+SENTRY feature/v0.4-personal-continuity380422df61cf90a517347b719f60c073430f8663,
+exact-head CI36965606205 PASS. Graft/ignore/AGENTS and the preserved historical
+assessment remain outside staging. Full hosted workflow passed, including the
+new restricted isolated Postgres delivery/ingress step, ARM64 and owner-browser
+CI fixtures. Such fixtures do not certify the owner's current browser/physical
+devices. Artifact11210545111 native GitHub digest
+sha256:e8c99978fc3ebf70cffed750b3ff499adb18f835ccd0f2561b10c4756b37136f.
+Downloaded artifact includes both Stage2 JUnit documents; parent parsed11 and45
+tests respectively, failures0/errors0/skipped0. This is hosted E4 evidence.
+
+Parent built from git archive081f119, not dirty/Graft context. Candidate image
+sha256:f20a28974ccbaacf5fb317c8a0bad05facd45226ab363fe76231b48015444f19,
+revision label081f119. Independent comparison104 source Python/SQL files:
+missing0/extra0/mismatch0; all46 runtime dependencies match unchanged uv.lock.
+Manifestc3601bc0316090f01ffd27583257760d63e3b80cce8531b738586df507b96b44.
+Non-editable package path /app/.venv/lib/python3.12/site-packages/anima_ha;
+UID10001 verified in prior same-source image. apt/bit-identical builds unclaimed.
+
+Preflight accepted. Compose hardcodes owner-local still pointing to Stage1:
+sole Coder explicitly authorized to promote ONLY this image and replace UI
+without DB/OPA/searxng restart. Conditional GO satisfied by exact CI success.
+Named application-consumer quiesce/recovery, private/state comparisons and two
+stopped rootless Android guards allowed. Conservative Wi-Fi observer recovery
+explicitly included only after safe baseline; Android root repair remains gated.
+No source edits, broad Android installer, manual model/physical turn, host reboot,
+vendor reset, profile/orb/model change or historical work replay authorized.
+Runtime result/independent deployment review still pending.
+
+Parent read-only queue baseline:134 PENDING,33 RECOVERY_REQUIRED,13 UNKNOWN_RESULT,
+active0 and new required-delivery0;46 ambiguity identity digest
+26e5f371d3e767d2235130e6960b7238. Initial diagnostic guessed status/metadata
+columns, failed and rolled back; corrected lifecycle/request_metadata query above
+passed. No owner DB write occurred. Current Graph aggregate has two household
+roots; it is not a commissioned-owner-only inventory. Stage3 must scope graph,
+context, evidence and incidents to the authenticated commissioned household.
+
+Full Goal remains ACTIVE. Next substantial source assignment follows actual
+deployment acceptance: maintained context/Away/incident controls, then truthful
+review/correction/prospective evaluation and all-model accounting. Broader MO/A–O
+journeys remain required; no prototype completion or new parallel packet.
+
+## 2026-10-02T05:34Z — bounded Stage2 recovery accepted; actual delivery failures returned
+
+Primary collected the actual native deployment terminal at05:21:52 and read its
+complete615-end canonical appendix. Accept only demonstrated source/image/UI/
+authenticated single-owner Core/private-state/fresh idle voice/conservative
+Wi-Fi observations. Parent post-check confirms exact UI image, Core readiness,
+134 pending/46 ambiguity unchanged and zero new managed delivery; it does not
+establish complete accountable delivery. Historical negative diagnostics and
+Wi-Fi precheck sequencing are preserved, not converted into clean-pass claims.
+
+Relay failed opening root / with O_RDONLY|O_DIRECTORY under the actual installed
+user sandbox, then retried109 times until contained STOPPED. Outbox was not
+created and earlier heartbeat is stale. Core journal_handoff_state is
+NOT_CONFIGURED: composition currently gates the canonical consumer behind an
+optional HA credential/adapter branch. Those are concrete implementation/
+composition failures, not external vendor gates and not accepted as operational.
+Owner-root Binder remains a separate unresolved gate; two exact guard units
+are installed/stopped, mounts stable8247, no credential/account reset or bypass.
+No audible_start_at, vendor receipt, owner wake or physical latency pass claimed.
+
+At05:28:39 primary directly assigned the SAME sole native Coder a coherent
+Stage2 runtime correction + Stage3 context/Away/incident bundle. Product edits
+are isolated from running services in parent-created same-Git detached worktrees
+/tmp/anima-stage3-development.LEYDTy (ANIMA081f119) and
+/tmp/sentry-stage3-development.3VulQV (SENTRY380422df). Main product code stays
+frozen; canonical evidence remains in original027A. No new project, agent,
+packet, broker, database or runtime developer authority. Coder must empirically
+prove sandbox cause/minimal secure correction and canonical Journal consumption
+independent of optional HA adapter, inspect actual Core capability readiness,
+then implement household-scoped maintained coverage/context, explicit persisted
+owner HOME/AWAY/UNSET and source-linked bounded incident controls. Immediate-only
+remains zero model; no invented identity or inference-based authority; no owner
+config mutation/model/physical turn, deployment, privileged repair or publication
+delegated. Exact manifests/regressions/native final required before parent review.
+
+Full Goal remains ACTIVE. Stage4 review-completion honesty, correction propagation,
+prospective hypotheses/windows/opportunity denominator/baseline/shadow evaluation
+and all-model costs remain required, as do broader MO-01–MO-15/A–O workflows.
+Independent physical/time/owner gates do not block unrelated safe software work.
+
+### 2026-10-02T05:36Z — independent sandbox reproduction and Notion readback
+
+Parent used one transient read-only user-systemd probe with the installed relay's
+NoNewPrivileges/PrivateTmp/ProtectSystem=strict/ProtectHome=read-only settings.
+Root O_RDONLY|O_DIRECTORY fails errno13; O_PATH|O_DIRECTORY|O_NOFOLLOW succeeds
+and root fstat uid65534. This independently reproduces the bounded sandbox
+behavior, not an authorization to widen it or start the failed relay. Secure
+ancestor/final-directory/flock/fsync regression remains the Coder's obligation.
+
+Canonical Notion ANIMA page3c9833cb27ff81759597cdc69c59176c now has the current
+exact publication/partial-deployment/actual failure/Stage3 assignment checkpoint.
+Primary refetched it; exact full checkpoint and preserved earlier checkpoint
+both match. Page edited2026-10-02T05:36:29.902Z. No permanent goal or operational
+delivery completion was asserted; full MO/A–O and Stage4 requirements remain.
+
+### 2026-10-02T05:41Z — actual Core composition corroborated; existing discovery endpoint mismatch
+
+Parent read actual Core1047797 configuration presence only, never credential
+contents: commissioned HA instance/scope/websocket present; token aliases,
+HA connection-file and vendor-relay-config absent. Authenticated health remains
+available/NOT_CONFIGURED. Actual same PID/restarts0 plus source conditional
+independently establish missing HA adapter/refresh composition; this does not
+license a request claim or unrestricted unfrozen catalogue route. Coder must
+qualify resulting typed availability in isolated/current-identity conditions.
+
+Same read-only probe establishes Core's existing discovery default searxng:8080
+is not resolvable from the Linux host; configured URL absent. Existing container
+is exposed127.0.0.1:18888 and compose.pc.yaml already uses that qualified
+loopback URL/host for UI. Parent returned this bounded configuration defect to
+the SAME Coder as part of its assigned Core-capability composition reconciliation:
+align the existing PC Core environment to that existing provider, not a new
+capability/credential/stack. No live query, model turn or service change occurred.
+
+### 2026-10-02T05:51Z — early Stage3 draft review feedback, not source acceptance
+
+Parent inspected the sole Coder's changing isolated situation projection and
+returned two concrete corrections before final test freeze: public/model
+incident context must allowlist required-delivery state/timestamps/fixed reasons
+rather than disclose the internal client/credential/lease/token-digest ledger;
+provider-supplied references to arbitrary historical same-household actions must
+not be presented as this incident's authorized response. Require ANIMA-owned
+request/action provenance and independently authoritative outcome semantics.
+Cross-household and same-household/unrelated-action regressions are required.
+
+Parent clarified the actual existing source immediately: SENTRY consequential
+actions are intentionally episode-less and use a frozen request-derived action
+idempotency namespace. Link through that existing namespace/approval/tool ledger,
+not a fabricated mandatory episode or new store/schema. No parent product edits,
+live mutation, model/action turn or source acceptance occurred during draft review.
+
+### 2026-10-02T05:59Z — notification critical path and actual autonomy-gate review
+
+Parent returned further concrete integration corrections to the same Coder:
+new incident writer must pass the real frozen-boundary/PluginManager/current OPA
+path using only existing exact builtin non-authoritative agent-memory autonomy,
+not merely succeed through a direct service test. Explicit owner mode remains
+separately authenticated/authorized. Existing OPA is unchanged.
+
+Draft situation-reader loading was inserted into the shared initiative callable
+used by required-delivery initialization/notification policy before first speech.
+Parent requires rich inventory/incident/coverage loading only in the dedicated
+optional reasoning path. A failing/latched context reader must not gate first
+canonical speech on either immediate-only or combined route. This is protection
+against an introduced dependency, not speculative optimization or a3-second
+physical claim. Final source is still changing and not accepted/deployed.
+
+SENTRY companion Notion checkpoint was also updated and refetched; exact current
+source/runtime boundaries and preserved earlier takeover history both match,
+edited2026-10-02T05:58:32.545Z. No personality/model/thread/orb change or wake
+alias rejection, root repair, physical qualification or whole-goal claim occurred.
+
+### 2026-10-02T06:14Z — actual resident credential-read gap; no secret contents read
+
+Parent invoked the installed launcher and named sentry-resident sandbox without
+a model turn. Opening then immediately closing the external ANIMA repository
+.env with O_RDONLY|O_NOFOLLOW succeeded. Its contents were NOT read, printed,
+copied or sent to a model. A second probe independently reproduced that result;
+the existing owner-boundary client token was denied and the tested vendor-relay
+token path was not present. The project's environment is a0600 owner file; the
+ANIMA environment-file symlink resolves to it. Permission mode alone is not
+resident isolation when host and runtime share an account.
+
+Source corroborates the scope: the ordinary resident invocation uses this saved
+profile with host tools; credential-name glob denies are workspace-scoped while
+the external project environment remains generally readable. Autonomous turns
+disable native host tools and make the same filesystem map read-only; this
+reduces their tool surface but is not an independent secret read-denial proof.
+No credential leak or malicious runtime invocation has been observed. Existing
+private paths whose denial was actually verified remain separately qualified.
+
+Parent returned the concrete boundary to the SAME Coder for bounded inspection,
+source-only minimum deny merge and actual no-model sandbox regressions within
+the current Stage3 correction bundle. Installed owner profile, thread, model,
+persona, voice and global Codex configuration must remain unchanged; prefer
+validated per-turn restrictions where sufficient. Do not relocate HA credentials
+into the readable project environment. No deployment/source acceptance follows
+from this finding; actual corrected effective sandbox must be independently
+verified before restoring broader product authority.
+
+Separately, current HA connection exists only in the UI's named Docker volume,
+not the host owner-boundary directory. Core therefore cannot gain its existing
+typed HA adapter by naming an imaginary host file. Credential location/ownership
+must be reconciled within ANIMA's accepted server boundary, never copied to
+SENTRY or inferred from UI health. Unaffected Stage3/Stage4/full-goal work continues.
+
+ANIMA Notion authority page was updated and refetched, edited
+2026-10-02T06:15:48.188Z. Added finding matches after whitespace normalization;
+Notion removes the inserted blank paragraph boundary. Prior exact Stage2
+publication/partial-deployment checkpoint is preserved. No acceptance gate was
+closed by this update.
+
+### 2026-10-02T06:30Z — changing privacy draft ordering correction, not acceptance
+
+Parent read the changing per-turn privacy merge and returned a concrete
+last-wins ordering defect: privacy_overrides after autonomous_turn_overrides
+would restore the saved workspace WRITE map over its intended read-only map.
+Require a composed effective CLI restriction (privacy first, autonomous last or
+equivalent) and actual sandbox/final-table regression. This is an introduced
+draft regression caught before review freeze, publication or deployment; no
+running private profile was changed. Ordinary workspace permissions and saved
+model/personality/thread remain protected separately from autonomous restrictions.
+
+Parent also verified existing UI HA connection through the server's own reader:
+present, regular/private0600/same effective owner, instance/base URL and bound
+commissioned household match. Only Boolean metadata emitted. No token value,
+private copy, host provisioning, config update or HA action occurred. This
+establishes an existing valid ANIMA-side credential source, not host Core adapter
+readiness; accepted custody/restriction reconciliation remains necessary.
+
+### 2026-10-02T06:50Z — independent proposed effective privacy restriction qualification
+
+Parent ran isolated test_stage3_private_turn.py with the original qualified
+SENTRY interpreter/PYTHONPATH and explicit no-model sandbox opt-in:3 PASS,
+63.085s. Fixture-only private contents are placeholders, not owner credentials.
+Parent then composed the corrected privacy-first/autonomous-last overrides
+using the actual installed resident TOML and launcher: external ANIMA .env open
+DENIED, resident workspace write-access false, exit0, saved TOML byte equality
+true. No model, secret-content read, owner-store write or installed-profile edit.
+This is independent proposed-code/effective-sandbox evidence, NOT source freeze,
+complete regression, publication or changed running runtime.
+
+Through the existing UI server reader and its accepted HA credential, one
+bounded read-only /api/config request returned200 and matched the configured
+qualified HA version. No credential value, response body, private copy or
+physical action was output/performed. Existing ANIMA credential source is valid;
+restoring host Core control still requires preserving single ingest ownership,
+safe ANIMA-only custody and actual deployment qualification. Do not claim that
+UI credential validity alone configured host Core.
+
+### 2026-10-02T06:55Z — existing ANIMA credential custody decision, deployment pending
+
+Primary selected reuse of the existing strict HAConnectionStore for a declared
+ANIMA-only host file under .config/anima/home-assistant.json. This is existing
+broker/adapter commissioning, not a new API, credential platform, service
+identity or source of authority. Same Coder may add the narrow Core environment
+path and matching missing-file/matching-instance contracts; no credential
+provisioning is delegated. Existing UI-volume credential and household are
+preserved, no rotation or SENTRY exposure. Parent-controlled provisioning may
+occur only after corrected SENTRY private-path restrictions are published,
+loaded and effectively qualified; duplicate observation/request ownership and
+current canonical handoff must also be checked. No file has yet been provisioned
+and host HA availability remains NOT_CONFIGURED. A concrete custody conflict
+requires an evidenced challenge, not silently relaxing owner/mode checks.
+
+At06:57:58 primary refined the unprovisioned planned filename to
+.config/anima/home-assistant-credential.json. Existing SENTRY host artifact
+broker rejects credential-bearing filenames, independently of native filesystem
+denies; a bland JSON filename would not receive that existing guard. An isolated
+authority instance directly rejected the planned path with PermissionError;
+no private credential file, model call or owner authority state was created.
+This supersedes the earlier planned filename only, not custody or activation
+gates. Same Coder received the refinement before any provisioning.
+
+### 2026-10-02T07:15Z — independent Stage3 source review, native final still pending
+
+Parent reran13 tests in test_stage3_household_situation.py and
+test_stage3_core_composition.py against the existing isolated PostgreSQL test
+database and unchanged actual OPA endpoint: PASS. Parent separately reran2
+test_stage3_relay_sandbox.py tests using explicit local systemd sandbox opt-in:
+PASS. Sandbox evidence includes namespace root read denial, O_PATH anchoring,
+single lifetime lock, private durable fsync/reopen and bounded startup fault.
+This is isolated regression evidence, not installed relay recovery/vendor receipt.
+Per-file SHA256 comparison matches all21 ANIMA and4 SENTRY frozen report entries.
+Report's global READY_FOR_REVIEW paragraph supersedes its initial IN_PROGRESS
+history, but actual native Coder final has not yet been collected; acceptance,
+publication and source installation remain pending.
+
+Parent source review confirmed rich situation context is outside required
+speech initialization, household mode stays explicit owner/versioned/current
+policy, incident writer uses the exact non-authoritative frozen tool/current
+OPA path, private delivery fields are allowlisted, and response actions require
+the existing request-owned namespace even when episode-less. Unknown physical
+time/audible start/identity/coverage remain unknown. Frontend reviewer checked
+authentication/CSRF composition, stale response generation and no-blind-retry
+optimistic concurrency; fixture browser tests are not owner workflow proof.
+
+Alternate Codex bridge review: ordinary sentry_ask.ask delegates the current
+resident agent; standalone grounded/planner/synthesis/proactive paths remain in
+source. The installed sentry-proactive.service is inactive/dead. That scopes
+this unit, not every possible caller. Existing bridge read-only sandbox alone
+does not demonstrate secret-read denial; parent asked SAME Coder for narrow
+reachable-path correction or evidenced deferred classification, no new stack
+or claim of observed leak. Root Android repair, ANIMA-only host HA/binding
+custody, loaded production privacy qualification and Stage4/full-goal work remain
+open. No owner record, live secret/profile, model or physical action changed.
+
+### 2026-10-02T07:30Z — actual native final collected; Stage3 source accepted
+
+Primary collected Laplace's actual completed native return using wait_agent.
+Final27-file bundle independently reviewed: ANIMA21 aggregate
+d7d88a3e04810a72f7b0c38587f3bfddefe050824c0de45c22d639a4540e553d;
+SENTRY6 aggregate1b72cc4dd5da69ff4c9b9052d182eae3ba675c46c8b0f570d224b52bcf1f6b82.
+Both independently recomputed aggregates match; final bridge addendum supersedes
+the earlier4-file SENTRY return. Native result records ANIMA1266 passed/76
+skipped, strict mypy164/Ruff/OPA9, frontend unit14/browser54/type/Vite; SENTRY580
+tests/security56/compile and opt-in actual sandbox4 passed. Parent parsed the
+full ANIMA JUnit:1342 tests,76 skipped,0 errors/failures,1266 passed. Skips and
+inherited lint remain explicit, not silently accepted as passes.
+
+Parent directly qualified PG/currentOPA13, actual relay systemd sandbox2,
+prior private-path CLI3 plus installed-profile denial, final bridge actual CLI
+feature test1 and final targeted SENTRY suite66/skipped2. Parent's first targeted
+command wrongly named a nonexistent unittest method:63 ran,1 loader error;
+corrected full-module invocation66/skipped2 PASS. This diagnostic failure was
+not a product failure or passing test. Both final diff checks pass.
+
+Disposition: ACCEPTED SOURCE FOR PUBLICATION / CONTROLLED DEPLOYMENT, E4 bounded
+regression protection. Not full Stage3 operational acceptance, useful live
+incident quality, vendor receipt, audible latency or prototype completion.
+The current published/loaded pair remains081f1198/380422df until later exact
+publication and installation are independently qualified. Root Binder, ANIMA
+HA credential/vendor-binding custody and duplicate consumer ownership remain
+specific deployment gates; no owner source/media/model/physical fixture ran.
+
+Legacy bridge source now has curated child env and qualified host-tool feature
+disable semantics; main ask delegates current resident agent and proactive unit
+is inactive. Unified execution backend still reports enabled in this CLI build,
+while actual shell/code-host gates are disabled; no universal unobserved model
+tool-catalogue or exfiltration assertion. Existing presentation/classifier guards
+and full per-call cost accounting remain Stage4 targets, not erased by this
+acceptance. Privacy correction does not rewrite installed saved owner profile.
+
+Next largest coherent increment is the prepared Stage4 learning-outcomes/
+correction/prospective-shadow/replay/cost bundle in this same027A/R5F, assigned
+only through native follow-up to the SAME sole Coder after accepted source
+checkpointing. Parent handles publication/runtime custody and independent review
+without enabling owner contextual policies or inventing future outcomes. Full
+MO-01–MO-15/A–O remains active; no new packet or development schedule.
