@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import Any
 
 import pytest
 
@@ -137,6 +138,34 @@ def test_ledger_is_append_only_and_secret_free() -> None:
     encoded = ledger.to_json()
     assert "secret_free" not in encoded
     assert ledger.digest in encoded
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("status", EvidenceStatus.FAILED),
+        ("trace", ({"policy": "DENIED", "verified": False},)),
+        ("evidence_level", "PHYSICAL_UNOBSERVED"),
+        ("verified_outcome", {"verified": False}),
+    ],
+)
+def test_replay_detects_evidence_divergence(field: str, value: Any) -> None:
+    item = scenario()
+    expected = execute(item, TestFaultInjector.for_tests())
+    comparison = ReplayRunner(lambda *_: replace(expected, **{field: value})).compare(
+        item, expected
+    )
+    assert comparison.to_payload()["matched"] is False
+    assert field in comparison.differences
+
+
+def test_replay_ignores_only_explicit_runtime_envelope() -> None:
+    expected = replace(
+        execute(scenario(), TestFaultInjector.for_tests()),
+        trace=({"verified": True, "runtime_artifacts": {"pid": 1}},),
+    )
+    replayed = replace(expected, trace=({"verified": True, "runtime_artifacts": {"pid": 2}},))
+    assert ReplayRunner(lambda *_: replayed).compare(scenario(), expected).matched
 
 
 def test_backup_manifest_forces_safe_restore_semantics() -> None:

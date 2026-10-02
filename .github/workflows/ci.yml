@@ -92,6 +92,8 @@ jobs:
             --junitxml=/tmp/anima-owner-evidence/stage2-vendor-ingress.xml
           uv run --locked pytest -q tests/test_stage3_household_situation.py tests/test_stage3_core_composition.py \
             --junitxml=/tmp/anima-owner-evidence/stage3-context-composition.xml
+          uv run --locked pytest -q tests/test_stage4_learning_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/stage4-learning-postgres.xml
       - name: Qualify late device entities against isolated PostgreSQL
         env:
           ANIMA_DB_PASSWORD: anima_dev_only

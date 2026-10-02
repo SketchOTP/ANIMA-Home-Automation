@@ -444,17 +444,36 @@ class PostgresContextSource:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT * FROM anima_memory_records
+                SELECT m.* FROM anima_memory_records m
                 WHERE household_id = %s AND status = 'ACTIVE'
                   AND (expires_at IS NULL OR expires_at > %s)
                   AND (valid_from IS NULL OR valid_from <= %s)
                   AND (valid_until IS NULL OR valid_until >= %s)
-                  AND COALESCE(metadata->>'review_status', 'PENDING') <> 'DISMISSED'
+                  AND COALESCE(metadata->>'review_status', 'PENDING')
+                      NOT IN ('DISMISSED','RETRACTED')
+                  AND (metadata->>'record_kind' IS DISTINCT FROM 'household_learning_suggestion'
+                    OR (provenance_kind='EXPLICIT_INPUT'
+                        AND metadata->>'conclusion'='OWNER_CORRECTION') OR EXISTS (
+                      SELECT 1 FROM anima_intelligence_requests r
+                      WHERE r.household_id=m.household_id
+                      AND r.request_id::text=COALESCE(m.metadata->>'request_id',
+                          replace(m.source_ref,'anima:request:',''))
+                      AND r.lifecycle IN ('COMPLETED','NO_ACTION')
+                      AND r.result_status IN ('RESPONSE','NO_ACTION','TOOL_ACTIVITY_COMPLETED')
+                      AND r.provider_invocation_started
+                      AND (m.metadata->>'review_id' IS NULL OR EXISTS (
+                          SELECT 1 FROM anima_memory_records c
+                          WHERE c.household_id=m.household_id AND c.status='ACTIVE'
+                          AND c.metadata->>'record_kind'='household_learning_review_completion'
+                          AND c.metadata->>'review_id'=m.metadata->>'review_id'
+                          AND c.metadata->>'candidate_count'=c.metadata->>'outcome_count'))
+                    ))
                   AND COALESCE(metadata->>'conclusion', 'SUPPORTED') NOT IN
                       ('INSUFFICIENT_EVIDENCE', 'CONTRADICTED', 'REJECTED', 'SUPERSEDED')
                   AND COALESCE(metadata->>'record_kind', '') NOT IN
                       ('household_learning_review_packet',
                        'household_learning_review_completion',
+                       'household_learning_shadow',
                        'household_initiative_config')
                   AND (
                     graph_refs ?| %s

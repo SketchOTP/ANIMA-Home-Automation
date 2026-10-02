@@ -82,6 +82,69 @@ async function ring(page: Page, getStatus = () => ringStatus()) {
 }
 async function noOverflow(page: Page) { expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true); }
 
+test("owner correction is authenticated versioned feedback, not model confidence or execution", async ({ page }) => {
+  await initiative(page);
+  let item = { ...suggestion(), projection_status: "FAILED" };
+  const writes: unknown[] = [];
+  await page.route("**/api/v1/initiative/suggestions?**", route => route.fulfill({ json: { status: "SUCCEEDED", items: [item], next_cursor: null } }));
+  await page.route("**/api/v1/initiative/review", route => {
+    expect(route.request().headers()["x-anima-csrf"]).toBe("synthetic-test-csrf");
+    const body = route.request().postDataJSON(); writes.push(body);
+    item = { ...item, suggestion_id: laterVersion, content: body.payload.content, classification: "OWNER_CORRECTION", review_status: "CORRECTED", conclusion: "OWNER_CORRECTION", projection_status: "PENDING" };
+    return route.fulfill({ json: { status: "SUCCEEDED", result: { status: "SUCCEEDED" } } });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Correct suggestion", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Confirm review" })).toBeDisabled();
+  await page.getByRole("textbox", { name: "Owner correction" }).fill("Synthetic explicit correction, not a household action.");
+  await page.getByRole("button", { name: "Confirm review" }).click();
+  await expect(page.getByText("Explicit owner correction · not model confidence or execution authority.")).toBeVisible();
+  expect(writes).toEqual([{ payload: { suggestion_id: version, decision: "CORRECTED", content: "Synthetic explicit correction, not a household action." } }]);
+  await expect(page.locator(".initiative-suggestion-list")).toContainText("Projection: PENDING");
+  await expect(page.locator(".initiative-suggestion-list")).not.toContainText("Model-reported confidence");
+  await noOverflow(page);
+});
+
+test("freeze binds exact hypothesis/source before future observations and displays unknown denominators", async ({ page }) => {
+  const item = suggestion(); const writes: unknown[] = [];
+  let evaluations: unknown[] = [];
+  await initiative(page, () => ({ ...status(), learning: { ...status().learning, failed_review_count: 6, last_attempt: { review_status: "FAILED", projection_status: "PENDING", terminal_success: false }, shadow_evaluations: { items: evaluations, next_cursor: null } } }));
+  await page.route("**/api/v1/initiative/suggestions?**", route => route.fulfill({ json: { status: "SUCCEEDED", items: [item], next_cursor: null } }));
+  await page.route("**/api/v1/initiative/freeze_shadow", route => {
+    expect(route.request().headers()["x-anima-csrf"]).toBe("synthetic-test-csrf");
+    const body = route.request().postDataJSON(); writes.push(body);
+    evaluations = [{ evaluation_id: version, frozen_at: new Date().toISOString(), disposition: "EVIDENCE_PENDING", baseline: "PREDICT_NO_OCCURRENCE", prediction: body.payload, planned_opportunities: 2, closed_opportunities: 0, covered_opportunities: 0, unknown_opportunities: 0, misses: 0, prediction_correct: 0, baseline_correct: 0, authority: "NONE" }];
+    return route.fulfill({ json: { status: "SUCCEEDED", result: { status: "SUCCEEDED" } } });
+  });
+  await page.goto("/");
+  await expect(page.getByText("FAILED · projection PENDING", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Evaluate future window" }).click();
+  const future = new Date(Date.now() + 86_400_000); future.setSeconds(0, 0);
+  const local = new Date(future.getTime() - future.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  await page.getByLabel("Future start").fill(local);
+  await page.getByLabel("Opportunity count").fill("2");
+  await page.getByRole("button", { name: "Freeze shadow only" }).click();
+  await expect(page.getByText("EVIDENCE PENDING", { exact: true })).toBeVisible();
+  expect(writes).toEqual([{ payload: { suggestion_id: version, canonical_id: item.source_refs[0].canonical_id, event_type: item.source_refs[0].event_type, predicts_occurrence: true, starts_at: future.toISOString(), window_seconds: 3600, window_count: 2 } }]);
+  await expect(page.getByText("Baseline: PREDICT NO OCCURRENCE", { exact: false })).toContainText("complete interval covered 0");
+  await expect(page.getByText("Baseline: PREDICT NO OCCURRENCE", { exact: false })).toContainText("unknown 0 · misses 0");
+  await noOverflow(page);
+});
+
+test("stale feedback and expired authentication never report accepted correction or replay", async ({ page }) => {
+  await initiative(page); let writes = 0;
+  await page.route("**/api/v1/initiative/suggestions?**", route => route.fulfill({ json: { status: "SUCCEEDED", items: [suggestion()], next_cursor: null } }));
+  await page.route("**/api/v1/initiative/review", route => { writes++; return route.fulfill({ json: { status: "FAILED" } }); });
+  await page.goto("/"); await page.getByRole("button", { name: "Retract suggestion" }).click();
+  await page.getByRole("button", { name: "Confirm review" }).click();
+  await expect(page.getByRole("alert")).toContainText("Change not confirmed"); expect(writes).toBe(1);
+  await page.route("**/api/v1/initiative", route => route.fulfill({ status: 401 }));
+  await page.getByRole("button", { name: "Refresh initiative", exact: true }).click();
+  await expect(page.getByText("Fixture session expired")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retract suggestion" })).toHaveCount(0);
+  expect(writes).toBe(1);
+});
+
 test("initiative renders honest empty evidence and accessible controls without browser errors", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   await initiative(page); await page.goto("/");

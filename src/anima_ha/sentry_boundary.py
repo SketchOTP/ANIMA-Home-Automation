@@ -762,6 +762,16 @@ class CoreSentryBoundary:
         recorded = self.intelligence_store.record_result(
             request.request_id, worker_id, request.fencing_generation, result
         )
+        if recorded and self.learning_service is not None:
+            # Terminal evidence remains authoritative if reconciliation fails.
+            try:
+                packet = self.learning_service.review_packet(
+                    request.household_id, request.request_id
+                )
+                if packet is not None:
+                    self.learning_service._complete_review(request.household_id, packet)
+            except Exception:
+                permission = {**permission, "learning_reconciliation": "PENDING"}
         return recorded, result, permission
 
 

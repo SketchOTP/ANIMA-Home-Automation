@@ -150,7 +150,7 @@ class HouseholdInitiativeContext:
                 or source["payload"].get("resource_id")
                 or ""
             )
-            status = self.learning.status(household_id)
+            status = self.learning.status(household_id, include_learning=False)
             if source["event_type"] in status.get("config", {}).get("always_notify", []):
                 # A server-owned always-notify event has already made its
                 # alert decision. Keep the first factual announcement off the
@@ -183,7 +183,7 @@ class HouseholdInitiativeContext:
             request_id=request.request_id, event_type=None, config={}, ready=False, now=at
         )
         try:
-            status = self.learning.status(request.household_id)
+            status = self.learning.status(request.household_id, include_learning=False)
             result: dict[str, Any] = {"status": "AVAILABLE", **status, "notification": closed}
             result["status"] = "AVAILABLE"
             packet = self.learning.ensure_review_packet(request)

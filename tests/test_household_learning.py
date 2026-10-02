@@ -82,7 +82,7 @@ NOW = datetime(2026, 9, 7, 12, tzinfo=UTC)
 class LearningMemory(Memory):
     def execute(self, sql: str, parameters: dict[str, Any]) -> None:
         assert "m.metadata->>'record_kind' = %(kind)s" in sql
-        assert "ORDER BY m.memory_id ASC LIMIT" in sql
+        assert "ORDER BY m.created_at ASC,m.memory_id ASC LIMIT" in sql
         self.parameters = parameters
 
     def fetchall(self) -> list[MemoryRecord]:
@@ -94,10 +94,13 @@ class LearningMemory(Memory):
                 if row.household_id == p["household_id"]
                 and row.status == MemoryStatus.ACTIVE
                 and row.metadata.get("record_kind") == p["kind"]
-                and (p["after"] is None or row.memory_id > p["after"])
+                and (
+                    p["after"] is None
+                    or (row.created_at, row.memory_id) > (p["after_time"], p["after"])
+                )
                 and (row.expires_at is None or row.expires_at > p["now"])
             ],
-            key=lambda row: row.memory_id,
+            key=lambda row: (row.created_at, row.memory_id),
         )[: p["limit"]]
 
     def create(self, memory: MemoryRecord) -> MemoryRecord:
@@ -147,6 +150,11 @@ def fixture() -> tuple[HouseholdLearningService, Graph, LearningMemory, Evidence
         task_service=TaskService(InMemoryTaskStore()),
         timezone="America/New_York",
         clock=lambda: NOW,
+        request_state_reader=lambda *_: {
+            "lifecycle": "NO_ACTION",
+            "result_status": "NO_ACTION",
+            "provider_invocation_started": True,
+        },
     )
     return service, graph, memory, evidence
 
@@ -165,8 +173,13 @@ def proposal(ids: list[str], **changes: Any) -> dict[str, Any]:
     }
 
 
-def test_qualified_learning_record_projects_as_non_executable_routine_context() -> None:
-    household = uuid4()
+def test_qualified_learning_record_projects_as_non_executable_routine_context(fixture: Any) -> None:
+    service, graph, memory, _ = fixture
+    household = graph.household.canonical_id
+    request_id = uuid4()
+    packet = service.create_review_packet(
+        household, request_id, review_kind="ROUTINE", source_event_id=str(uuid4())
+    )
     row = MemoryRecord.create(
         household_id=household,
         memory_type=MemoryType.INFERRED_PATTERN,
@@ -185,16 +198,19 @@ def test_qualified_learning_record_projects_as_non_executable_routine_context() 
             "maturity": "LEARNED_ROUTINE_ELIGIBLE",
             "evidence_score": ROUTINE_EVIDENCE_THRESHOLD,
             "source_refs": [],
+            "request_id": str(request_id),
+            "review_id": packet["review_id"],
         },
     )
-    routine = HouseholdLearningService._learned_routine(row)
+    memory.create(row)
+    routine = service._learned_routine(row)
     assert routine is not None
     assert routine["classification"] == "INFERRED_LEARNED_ROUTINE"
     assert routine["executable"] is False
     assert routine["authority"] == "NONE"
 
     dismissed = replace(row, metadata={**row.metadata, "review_status": "DISMISSED"})
-    assert HouseholdLearningService._learned_routine(dismissed) is None
+    assert service._learned_routine(dismissed) is None
 
 
 def structured_proposal(candidate: dict[str, Any], **changes: Any) -> dict[str, Any]:
@@ -913,6 +929,8 @@ def test_native_schema_blocks_extra_scope_and_owner_mutations(fixture: Any) -> N
     assert {tool["name"] for tool in plugin.list_tools()} == {
         "get_status",
         "get_situation",
+        "evaluations",
+        "freeze_shadow",
         "record_incident_assessment",
         "set_household_mode",
         "configure",

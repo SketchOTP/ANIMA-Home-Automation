@@ -167,6 +167,7 @@ class ScenarioResult:
     detail: str = ""
     trace: tuple[Mapping[str, Any], ...] = ()
     evidence_level: str = "DETERMINISTIC_CONTRACT"
+    verified_outcome: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.side_effect_count < 0:
@@ -183,6 +184,7 @@ class ScenarioResult:
             "detail": self.detail,
             "trace": [dict(item) for item in self.trace],
             "evidence_level": self.evidence_level,
+            **({"verified_outcome": dict(self.verified_outcome)} if self.verified_outcome else {}),
         }
 
     @property
@@ -264,6 +266,23 @@ class ReplayRunner:
     ) -> ReplayComparison:
         replayed = self.run(scenario, faults=faults)
         differences: list[str] = []
+        if replayed.status != expected.status:
+            differences.append("status")
+        if replayed.evidence_level != expected.evidence_level:
+            differences.append("evidence_level")
+        if replayed.verified_outcome != expected.verified_outcome:
+            differences.append("verified_outcome")
+
+        # Only explicitly named execution envelopes are volatile. Policy,
+        # observation times, authority and verification evidence stay compared.
+        def evidence_trace(result: ScenarioResult) -> list[dict[str, Any]]:
+            return [
+                {key: value for key, value in item.items() if key != "runtime_artifacts"}
+                for item in result.trace
+            ]
+
+        if evidence_trace(replayed) != evidence_trace(expected):
+            differences.append("trace")
         if replayed.terminal_state != expected.terminal_state:
             differences.append("terminal_state")
         if replayed.side_effect_count != expected.side_effect_count:

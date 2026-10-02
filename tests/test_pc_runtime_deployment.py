@@ -1,4 +1,7 @@
 import importlib.util
+import json
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -38,6 +41,13 @@ def test_deployment_is_exact_bounded_copy_with_no_credentials_or_graft(tmp_path:
     assert "--wait --wait-timeout 90" in unit
     assert "ExecStartPost=" in unit
     assert "ExecStartPost=" in (tmp_path / ".config/systemd/user/anima-core.service").read_text()
+    core = (tmp_path / ".config/systemd/user/anima-core.service").read_text()
+    assert "EnvironmentFile=" in core  # commissioned operator override, still loader-validated
+    assert "ANIMA_VENDOR_RELAY_CONFIG=%h/.config/anima/vendor-relay-credential.json" in core
+    assert (
+        "ANIMA_VENDOR_RELAY_CONFIG=%h/.local/share/anima-owner-boundary/vendor-relay.json"
+        not in core
+    )
 
 
 def test_preflight_symlink_blocks_all_writes(tmp_path: Path) -> None:
@@ -77,3 +87,77 @@ def test_binder_candidate_is_only_dynamic_binder_allow() -> None:
     )
     lines = [line for line in path.read_text().splitlines() if line and not line.startswith("#")]
     assert lines == ["[Service]", "DeviceAllow=char-binder rw"]
+
+
+def test_core_launch_preserves_operator_ha_instance_and_drops_only_db_password() -> None:
+    from uuid import uuid4
+
+    unit = (Path(__file__).parents[1] / "deploy/systemd/user/anima-core.service").read_text()
+    assert "Environment=ANIMA_HA_INSTANCE_ID=" not in unit
+    assert "EnvironmentFile=/home/sketch/.config/anima/anima-project.env" in unit
+    start = next(
+        line.removeprefix("ExecStart=")
+        for line in unit.splitlines()
+        if line.startswith("ExecStart=")
+    )
+    argv = shlex.split(start)
+    assert argv[:2] == ["/bin/sh", "-c"]
+    script = (
+        "import os,json; print(json.dumps({"
+        "'instance':os.environ.get('ANIMA_HA_INSTANCE_ID'),"
+        "'db_password_present':'ANIMA_DB_PASSWORD' in os.environ}))"
+    )
+    # Isolated shell composition only; no Core process or database connection.
+    argv[2] = (
+        argv[2].split("exec ", 1)[0]
+        + f"exec {shlex.quote(sys.executable)} -c {shlex.quote(script)}"
+    )
+    identifier = str(uuid4())
+    result = subprocess.run(
+        argv,
+        env={
+            "PATH": "/usr/bin:/bin",
+            "ANIMA_HA_INSTANCE_ID": identifier,
+            "ANIMA_DB_USER": "fixture",
+            "ANIMA_DB_PASSWORD": "test-only",
+            "ANIMA_DB_NAME": "fixture",
+        },
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=True,
+    )
+    assert json.loads(result.stdout) == {"instance": identifier, "db_password_present": False}
+
+
+def test_later_operator_environment_file_overrides_stale_endpoints_not_identity() -> None:
+    from uuid import uuid4
+
+    # Test-only values. Systemd EnvironmentFile values override Environment;
+    # later files override earlier files. Parent separately measured this with
+    # systemd-run; this fixture tests the launch shell's preservation, not PID1.
+    instance = str(uuid4())
+    unit_defaults = {"ANIMA_HA_BASE_URL": "http://127.0.0.1:8123"}
+    retained_project_file = {
+        "ANIMA_HA_INSTANCE_ID": instance,
+        "ANIMA_HA_BASE_URL": "http://obsolete.invalid",
+        "ANIMA_HA_WEBSOCKET_URL": "ws://obsolete.invalid/api/websocket",
+    }
+    operator_file = {
+        "ANIMA_HA_INSTANCE_ID": instance,
+        "ANIMA_HA_BASE_URL": "http://127.0.0.1:8123",
+        "ANIMA_HA_WEBSOCKET_URL": "ws://127.0.0.1:8123/api/websocket",
+        "ANIMA_HA_EXPECTED_VERSION": "fixture-version",
+    }
+    effective = {**unit_defaults, **retained_project_file, **operator_file}
+    result = subprocess.run(
+        [sys.executable, "-c", "import os,json; print(json.dumps(dict(os.environ)))"],
+        env=effective,
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=True,
+    )
+    loaded = json.loads(result.stdout)
+    assert all(loaded[key] == value for key, value in operator_file.items())
+    assert retained_project_file["ANIMA_HA_BASE_URL"] == "http://obsolete.invalid"

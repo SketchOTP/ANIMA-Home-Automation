@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid5
 from zoneinfo import ZoneInfo
 
@@ -62,6 +62,7 @@ INCIDENT_KIND = "household_incident_assessment"
 SUGGESTION_KIND = "household_learning_suggestion"
 REVIEW_PACKET_KIND = "household_learning_review_packet"
 REVIEW_COMPLETION_KIND = "household_learning_review_completion"
+SHADOW_KIND = "household_learning_shadow"
 MAX_EVIDENCE = 2000
 EVIDENCE_WINDOW_DAYS = 28
 # Knowledge notes have a deliberately small filesystem/API body limit. Keep
@@ -351,6 +352,8 @@ class HouseholdLearningService:
         timezone: str = "UTC",
         clock: Callable[[], datetime] | None = None,
         situation_reader: Callable[[UUID], dict[str, Any]] | None = None,
+        request_state_reader: Callable[[UUID, UUID], dict[str, Any]] | None = None,
+        coverage_reader: Callable[..., dict[str, Any]] | None = None,
     ) -> None:
         self.memory, self.graph, self.journal = memory_service, graph, journal
         if evidence_reader is not None and evidence_read is not None:
@@ -362,6 +365,8 @@ class HouseholdLearningService:
         self.zone = ZoneInfo(timezone)
         self.clock = clock or (lambda: datetime.now(UTC))
         self.situation_reader = situation_reader
+        self.request_state_reader = request_state_reader
+        self.coverage_reader = coverage_reader
 
     def _now(self) -> datetime:
         return _time(self.clock())
@@ -384,16 +389,181 @@ class HouseholdLearningService:
             graph_ref=None,
             now=self._now(),
         )
-        params.update(kind=kind, after=cursor, limit=limit)
+        anchor = self.memory.get(cursor) if cursor is not None else None
+        if cursor is not None and (
+            anchor is None
+            or anchor.household_id != household_id
+            or anchor.metadata.get("record_kind") != kind
+        ):
+            raise HouseholdLearningError("invalid household learning cursor")
+        params.update(
+            kind=kind, after=cursor, after_time=anchor.created_at if anchor else None, limit=limit
+        )
         with self.memory._connect() as connection, connection.cursor() as sql:
             sql.execute(
                 f"""SELECT m.* FROM anima_memory_records m WHERE {where}
                 AND m.metadata->>'record_kind' = %(kind)s
-                AND (%(after)s::uuid IS NULL OR m.memory_id > %(after)s::uuid)
-                ORDER BY m.memory_id ASC LIMIT %(limit)s""",
+                AND (%(after)s::uuid IS NULL OR
+                    (m.created_at,m.memory_id) > (%(after_time)s::timestamptz,%(after)s::uuid))
+                ORDER BY m.created_at ASC,m.memory_id ASC LIMIT %(limit)s""",
                 params,
             )
             return [self.memory._memory(row) for row in sql.fetchall()]
+
+    def _all_records(self, household_id: UUID, kind: str) -> list[MemoryRecord]:
+        """Bounded keyset traversal; never silently report a first page as a total."""
+        result: list[MemoryRecord] = []
+        cursor = None
+        for _ in range(64):
+            page = self._records(household_id, kind, limit=256, cursor=cursor)
+            result.extend(page)
+            if len(page) < 256:
+                return result
+            cursor = page[-1].memory_id
+        raise HouseholdLearningError("learning enumeration exceeds bound; continuation required")
+
+    def review_state(
+        self,
+        household_id: UUID,
+        packet: dict[str, Any],
+        *,
+        outcomes: list[MemoryRecord] | None = None,
+        previous: MemoryRecord | None = None,
+    ) -> dict[str, Any]:
+        state = (
+            self.request_state_reader(household_id, _uuid(packet["request_id"]))
+            if self.request_state_reader
+            else {}
+        )
+        lifecycle = state.get("lifecycle", "NOT_CONFIGURED")
+        if outcomes is None:
+            outcomes = [
+                row
+                for row in self._all_records(household_id, SUGGESTION_KIND)
+                if row.metadata.get("review_id") == packet["review_id"]
+            ]
+        required = {item["candidate_id"] for item in packet["candidates"]}
+        materialized = {row.metadata.get("candidate_id") for row in outcomes}
+        if previous is None:
+            previous = next(
+                (
+                    row
+                    for row in self._all_records(household_id, REVIEW_COMPLETION_KIND)
+                    if row.metadata.get("review_id") == packet["review_id"]
+                ),
+                None,
+            )
+        complete = required == materialized
+        # Old completion records retain their bounded materialization receipt
+        # after a later candidate version supersedes the original suggestions.
+        if previous and previous.metadata.get("candidate_digest") == packet["candidate_digest"]:
+            complete |= previous.metadata.get("outcome_count") == len(required)
+        successful = (
+            lifecycle in {"COMPLETED", "NO_ACTION"}
+            and state.get("result_status") in {"RESPONSE", "NO_ACTION", "TOOL_ACTIVITY_COMPLETED"}
+            and state.get("provider_invocation_started") is True
+            and complete
+        )
+        return {
+            "schema_version": 2,
+            "lifecycle": lifecycle,
+            "terminal_at": state.get("completed_at"),
+            "provider_started": state.get("provider_invocation_started") is True,
+            "candidate_materialized": complete,
+            "terminal_success": successful,
+            "review_status": "COMPLETED"
+            if successful
+            else "INCOMPLETE"
+            if lifecycle in {"COMPLETED", "NO_ACTION"}
+            else lifecycle,
+            "projection_status": "FAILED"
+            if any(row.metadata.get("projection_status") == "FAILED" for row in outcomes)
+            else "PENDING"
+            if any(row.metadata.get("projection_status") == "PENDING" for row in outcomes)
+            else "SYNCHRONIZED"
+            if outcomes and all(row.metadata.get("knowledge_note") for row in outcomes)
+            else "NOT_CONFIGURED",
+        }
+
+    def reconcile_reviews(self, household_id: UUID) -> None:
+        """Reconcile durable outcomes, not provider requests; never invoke/replay a model."""
+        suggestions = self._all_records(household_id, SUGGESTION_KIND)
+        completions = self._all_records(household_id, REVIEW_COMPLETION_KIND)
+        for row in self._all_records(household_id, REVIEW_PACKET_KIND):
+            packet = dict(row.metadata["packet"])
+            outcomes = [
+                item
+                for item in suggestions
+                if item.metadata.get("review_id") == packet["review_id"]
+            ]
+            previous = next(
+                (
+                    item
+                    for item in completions
+                    if item.metadata.get("review_id") == packet["review_id"]
+                ),
+                None,
+            )
+            self._complete_review(household_id, packet, outcomes=outcomes, previous=previous)
+        # Notes are projections of already qualified Memory, never provider
+        # work. Bounded retries cannot replay a model or a household action.
+        attempted = 0
+        for row in self._all_records(household_id, SUGGESTION_KIND):
+            request_value = row.metadata.get("request_id") or (
+                row.provenance.source_ref.removeprefix("anima:request:")
+                if row.provenance.source_ref.startswith("anima:request:")
+                else None
+            )
+            if row.metadata.get("knowledge_note") and request_value and self.request_state_reader:
+                state = self.request_state_reader(household_id, _uuid(request_value))
+                if (
+                    state.get("lifecycle")
+                    in {
+                        "FAILED",
+                        "UNKNOWN_RESULT",
+                        "RECOVERY_REQUIRED",
+                        "CANCELLED",
+                    }
+                    and not row.metadata.get("projection_quarantined")
+                    and not (
+                        row.provenance.kind == ProvenanceKind.EXPLICIT_INPUT
+                        and row.metadata.get("conclusion") == "OWNER_CORRECTION"
+                    )
+                ):
+                    updated = {
+                        **row.metadata,
+                        "projection_quarantined": True,
+                        "projection_status": "PENDING",
+                        "request_id": request_value,
+                        "projection_retry_at": None,
+                    }
+                    # Historical notes retain their receipt; disabling them is a
+                    # versioned projection correction, not a provider replay.
+                    candidate = updated.get("projection_candidate") or {
+                        "candidate_key": updated.get("candidate_key", str(row.memory_id)),
+                        "title": updated.get("candidate_title", "Historical learning record"),
+                        "maturity_evidence": updated.get("maturity_evidence", {}),
+                    }
+                    updated["projection_candidate"] = candidate
+                    row = self.memory.correct(
+                        row.memory_id,
+                        replace(
+                            row,
+                            memory_id=uuid5(NAMESPACE, f"quarantine:{row.memory_id}"),
+                            created_at=self._now(),
+                            metadata=updated,
+                            supersedes_memory_id=None,
+                        ),
+                    )
+            retry = row.metadata.get("projection_retry_at")
+            if (
+                attempted < 256
+                and row.metadata.get("projection_status") in {"PENDING", "FAILED"}
+                and (not retry or _time(retry) <= self._now())
+            ):
+                synced = self._sync_projection(row)
+                attempted += synced.memory_id != row.memory_id
+        self.evaluate_shadows(household_id)
 
     def _config(self, household_id: UUID) -> tuple[InitiativeConfig, MemoryRecord | None]:
         rows = self._records(household_id, CONFIG_KIND, limit=2)
@@ -778,19 +948,54 @@ class HouseholdLearningService:
             "coverage": "BOUNDED_OBSERVATIONS_NOT_COMPLETE_HOUSEHOLD_HISTORY",
         }
 
-    def status(self, household_id: UUID) -> dict[str, Any]:
+    def status(self, household_id: UUID, *, include_learning: bool = True) -> dict[str, Any]:
         config, row = self._config(household_id)
         evidence = self.evidence(household_id, MAX_EVIDENCE)
         readiness = self._readiness(config, evidence)
         candidates = extract_pattern_candidates(
             evidence["items"], household_id=household_id, timezone=self.zone
         )
-        completions = self._records(household_id, REVIEW_COMPLETION_KIND, limit=50)
-        packets = self._records(household_id, REVIEW_PACKET_KIND, limit=50)
+        completions = (
+            self._all_records(household_id, REVIEW_COMPLETION_KIND) if include_learning else []
+        )
+        packets = self._all_records(household_id, REVIEW_PACKET_KIND) if include_learning else []
+        suggestions = self._all_records(household_id, SUGGESTION_KIND) if include_learning else []
+        states = [
+            self.review_state(
+                household_id,
+                dict(item.metadata["packet"]),
+                outcomes=[
+                    row
+                    for row in suggestions
+                    if row.metadata.get("review_id") == item.metadata["packet"]["review_id"]
+                ],
+                previous=next(
+                    (
+                        row
+                        for row in completions
+                        if row.metadata.get("review_id") == item.metadata["packet"]["review_id"]
+                    ),
+                    None,
+                ),
+            )
+            for item in packets
+        ]
+        successful_ids = {
+            item.metadata["packet"]["review_id"]
+            for item, state in zip(packets, states, strict=True)
+            if state["terminal_success"]
+        }
+        successful = sorted(
+            (item for item in completions if item.metadata.get("review_id") in successful_ids),
+            key=lambda item: (
+                _time(item.metadata["terminal_at"])
+                if item.metadata.get("terminal_at")
+                else item.created_at,
+                str(item.memory_id),
+            ),
+        )
         learned_routines = [
-            routine
-            for row in self._records(household_id, SUGGESTION_KIND, limit=MAX_EVIDENCE)
-            if (routine := self._learned_routine(row)) is not None
+            routine for row in suggestions if (routine := self._learned_routine(row)) is not None
         ]
         return {
             "status": "SUCCEEDED",
@@ -807,11 +1012,36 @@ class HouseholdLearningService:
                 "candidate_count": len(candidates),
                 "candidate_types": sorted({item.candidate_class for item in candidates}),
                 "candidates": [item.to_payload() for item in candidates],
-                "last_review": self._review_summary(completions[-1]) if completions else None,
-                "review_count": len(completions),
-                "pending_review_count": max(0, len(packets) - len(completions)),
+                "last_review": self._review_summary(successful[-1]) if successful else None,
+                "last_attempt": {**dict(packets[-1].metadata["packet"]), **states[-1]}
+                if packets
+                else None,
+                "review_count": sum(item["terminal_success"] for item in states),
+                "failed_review_count": sum(
+                    item["review_status"]
+                    in {"FAILED", "UNKNOWN_RESULT", "RECOVERY_REQUIRED", "CANCELLED", "INCOMPLETE"}
+                    for item in states
+                ),
+                "pending_review_count": sum(
+                    not item["terminal_success"]
+                    and item["review_status"]
+                    not in {
+                        "FAILED",
+                        "UNKNOWN_RESULT",
+                        "RECOVERY_REQUIRED",
+                        "CANCELLED",
+                        "INCOMPLETE",
+                    }
+                    for item in states
+                ),
+                "packet_count": len(packets),
+                "completion_record_count": len(completions),
+                "enumeration": "COMPLETE" if include_learning else "NOT_REQUESTED",
                 "gaps": self._learning_gaps(evidence, candidates),
                 "learned_routines": learned_routines,
+                "shadow_evaluations": self.evaluations(household_id)
+                if include_learning
+                else {"status": "NOT_REQUESTED", "items": []},
             },
             "authority": "NONE",
         }
@@ -838,7 +1068,7 @@ class HouseholdLearningService:
         return {
             "review_id": metadata.get("review_id"),
             "review_kind": metadata.get("review_kind"),
-            "completed_at": row.created_at.isoformat(),
+            "completed_at": metadata.get("terminal_at") or row.created_at.isoformat(),
             "candidate_count": metadata.get("candidate_count", 0),
             "outcome_count": metadata.get("outcome_count", 0),
             "evidence_start": metadata.get("evidence_start"),
@@ -864,7 +1094,7 @@ class HouseholdLearningService:
             page["items"], household_id=household_id, timezone=self.zone
         )
         if review_kind == "DAILY":
-            completions = self._records(household_id, REVIEW_COMPLETION_KIND, limit=50)
+            completions = self._all_records(household_id, REVIEW_COMPLETION_KIND)
             incorporated: set[str] = set()
             for completion in completions:
                 request_value = completion.metadata.get("request_id")
@@ -872,6 +1102,8 @@ class HouseholdLearningService:
                     continue
                 packet = self.review_packet(household_id, _uuid(request_value))
                 if packet is None:
+                    continue
+                if not self.review_state(household_id, packet)["terminal_success"]:
                     continue
                 incorporated.update(
                     str(event_id)
@@ -1042,15 +1274,24 @@ class HouseholdLearningService:
             consistency = float(temporal["ratio"])
         return evidence_score(int(count), int(days), float(elapsed), consistency)
 
-    @classmethod
-    def _learned_routine(cls, row: MemoryRecord) -> dict[str, Any] | None:
+    def _learned_routine(self, row: MemoryRecord) -> dict[str, Any] | None:
         metadata = row.metadata
         if (
-            metadata.get("review_status") == "DISMISSED"
+            metadata.get("review_status") in {"DISMISSED", "CORRECTED", "RETRACTED"}
             or metadata.get("conclusion") != "LEARNED_ROUTINE_SUGGESTION"
         ):
             return None
-        score = cls._evidence_score_from_metadata(metadata)
+        request_value = metadata.get("request_id") or (
+            row.provenance.source_ref.removeprefix("anima:request:")
+            if row.provenance.source_ref.startswith("anima:request:")
+            else None
+        )
+        packet = (
+            self.review_packet(row.household_id, _uuid(request_value)) if request_value else None
+        )
+        if packet is None or not self.review_state(row.household_id, packet)["terminal_success"]:
+            return None
+        score = self._evidence_score_from_metadata(metadata)
         if score is None or score < ROUTINE_EVIDENCE_THRESHOLD:
             return None
         candidate_key = metadata.get("candidate_key")
@@ -1075,16 +1316,18 @@ class HouseholdLearningService:
             "authority": "NONE",
         }
 
-    @classmethod
-    def _suggestion(cls, row: MemoryRecord) -> dict[str, Any]:
-        learned_routine = cls._learned_routine(row)
+    def _suggestion(self, row: MemoryRecord) -> dict[str, Any]:
+        learned_routine = self._learned_routine(row)
         return {
             "suggestion_id": str(row.memory_id),
             "kind": row.metadata["kind"],
             "content": row.content,
             "confidence": row.confidence,
-            "evidence_score": cls._evidence_score_from_metadata(row.metadata),
-            "classification": "INFERRED",
+            "evidence_score": self._evidence_score_from_metadata(row.metadata),
+            "classification": "OWNER_CORRECTION"
+            if row.provenance.kind == ProvenanceKind.EXPLICIT_INPUT
+            and row.metadata.get("conclusion") == "OWNER_CORRECTION"
+            else "INFERRED",
             "review_status": row.metadata["review_status"],
             "source_refs": row.metadata["source_refs"],
             "created_at": row.created_at.isoformat(),
@@ -1099,6 +1342,7 @@ class HouseholdLearningService:
             "missing_information": row.metadata.get("missing_information", []),
             "rejected_alternatives": row.metadata.get("rejected_alternatives", []),
             "knowledge_note": row.metadata.get("knowledge_note"),
+            "projection_status": row.metadata.get("projection_status", "NOT_CONFIGURED"),
             "learned_routine": learned_routine,
         }
 
@@ -1253,14 +1497,14 @@ class HouseholdLearningService:
             current = next(
                 (
                     row
-                    for row in self._records(household_id, SUGGESTION_KIND, limit=MAX_EVIDENCE)
+                    for row in self._all_records(household_id, SUGGESTION_KIND)
                     if row.metadata.get("candidate_key") == candidate["candidate_key"]
                 ),
                 None,
             )
         memory_id = uuid5(
             NAMESPACE,
-            f"suggestion:{household_id}:{candidate['candidate_key']}:{signature}"
+            f"suggestion:{household_id}:{request_id}:{candidate['candidate_key']}:{signature}"
             if candidate is not None
             else f"suggestion:{household_id}:{invocation_id or request_id}",
         )
@@ -1271,7 +1515,10 @@ class HouseholdLearningService:
                 or existing.metadata.get("signature") != signature
             ):
                 raise HouseholdLearningError("request reused for different suggestion")
-            return {"status": "SUCCEEDED", "suggestion": self._suggestion(existing)}
+            return {
+                "status": "SUCCEEDED",
+                "suggestion": self._suggestion(self._projection_receipt(existing)),
+            }
         review_packet = self.review_packet(household_id, request_id) if candidate else None
         metadata: dict[str, Any] = {
             "record_kind": SUGGESTION_KIND,
@@ -1279,6 +1526,7 @@ class HouseholdLearningService:
             "review_status": "PENDING",
             "source_refs": refs,
             "signature": signature,
+            "request_id": str(request_id),
             "conclusion": conclusion,
         }
         if candidate is not None and review_packet is not None:
@@ -1308,20 +1556,14 @@ class HouseholdLearningService:
                 review_id=review_packet["review_id"],
                 review_kind=review_packet["review_kind"],
             )
-        note_receipt = self._sync_knowledge(
-            household_id,
-            request_id,
-            invocation_context,
-            current,
-            candidate,
-            conclusion,
-            content,
-            refs,
-            metadata,
-            signature,
-        )
-        if note_receipt:
-            metadata["knowledge_note"] = note_receipt
+        if self.knowledge_plugin is not None and invocation_context is not None and candidate:
+            metadata.update(
+                projection_status="PENDING",
+                projection_candidate=candidate,
+                projection_origin=invocation_context.origin.value,
+            )
+            if current and current.metadata.get("knowledge_note"):
+                metadata["knowledge_note"] = current.metadata["knowledge_note"]
         row = MemoryRecord.create(
             memory_id=memory_id,
             household_id=household_id,
@@ -1349,7 +1591,128 @@ class HouseholdLearningService:
                 raise HouseholdLearningError("request reused for different suggestion") from None
         if review_packet is not None:
             self._complete_review(household_id, review_packet)
+        saved = self._sync_projection(saved)
         return {"status": "SUCCEEDED", "suggestion": self._suggestion(saved)}
+
+    def _projection_receipt(self, row: MemoryRecord) -> MemoryRecord:
+        """Follow only projection receipts, never attribute later owner/model edits to retry."""
+        for _ in range(64):
+            if row.status != MemoryStatus.SUPERSEDED or not row.superseded_by_memory_id:
+                return row
+            following = self.memory.get(row.superseded_by_memory_id)
+            if (
+                following is None
+                or following.household_id != row.household_id
+                or following.metadata.get("record_kind") != SUGGESTION_KIND
+                or following.content != row.content
+                or any(
+                    following.metadata.get(key) != row.metadata.get(key)
+                    for key in ("signature", "review_status", "review_request_id", "request_id")
+                )
+            ):
+                return row
+            row = following
+        raise HouseholdLearningError("projection receipt chain exceeds bound")
+
+    def _sync_projection(self, row: MemoryRecord) -> MemoryRecord:
+        """Retry the exact qualified projection, never a provider request."""
+        metadata = row.metadata
+        candidate = metadata.get("projection_candidate")
+        if self.knowledge_plugin is None or not isinstance(candidate, dict):
+            return row
+        if metadata.get("projection_status") == "SYNCHRONIZED":
+            return row
+        if (
+            metadata.get("projection_retry_at")
+            and _time(metadata["projection_retry_at"]) > self._now()
+        ):
+            return row
+        request_id = _uuid(metadata["request_id"])
+        packet = self.review_packet(row.household_id, request_id)
+        if (
+            not metadata.get("projection_quarantined")
+            and not (
+                row.provenance.kind == ProvenanceKind.EXPLICIT_INPUT
+                and metadata.get("conclusion") == "OWNER_CORRECTION"
+            )
+            and metadata.get("review_status")
+            not in {
+                "DISMISSED",
+                "CORRECTED",
+                "RETRACTED",
+            }
+            and (
+                packet is None
+                or not self.review_state(row.household_id, packet)["terminal_success"]
+            )
+        ):
+            return row
+        attempt = int(metadata.get("projection_attempts", 0)) + 1
+        context = InvocationContext(
+            household_id=row.household_id,
+            principal_id=None,
+            episode_id=request_id,
+            tool_request_id=row.memory_id,
+            ordinal=1,
+            system_idempotency_key=f"learning-projection:{row.memory_id}",
+            origin=RequestOrigin(
+                metadata.get("projection_origin", RequestOrigin.AUTONOMOUS_AGENT.value)
+            ),
+        )
+        try:
+            receipt = self._sync_knowledge(
+                row.household_id,
+                request_id,
+                context,
+                row,
+                candidate,
+                metadata["conclusion"],
+                row.content,
+                metadata["source_refs"],
+                metadata,
+                hashlib.sha256(
+                    json.dumps(
+                        {
+                            "signature": metadata["signature"],
+                            "review_status": metadata["review_status"],
+                            "request_id": metadata.get("request_id"),
+                            "review_request_id": metadata.get("review_request_id"),
+                            "content": row.content,
+                            "quarantined": metadata.get("projection_quarantined", False),
+                        },
+                        sort_keys=True,
+                    ).encode()
+                ).hexdigest(),
+            )
+            updated = {
+                **metadata,
+                "knowledge_note": receipt,
+                "projection_status": "SYNCHRONIZED",
+                "projection_failure": None,
+                "projection_retry_at": None,
+            }
+        except (HouseholdLearningError, OSError, RuntimeError):
+            updated = {
+                **metadata,
+                "projection_status": "FAILED",
+                "projection_failure": "KNOWLEDGE_SYNC_FAILED",
+                "projection_retry_at": (
+                    self._now() + timedelta(seconds=min(3600, 30 * 2 ** min(attempt, 7)))
+                ).isoformat(),
+            }
+        updated["projection_attempts"] = attempt
+        updated["projection_updated_at"] = self._now().isoformat()
+        replacement = replace(
+            row,
+            memory_id=uuid5(NAMESPACE, f"projection:{row.memory_id}:{attempt}"),
+            created_at=self._now(),
+            metadata=updated,
+            supersedes_memory_id=None,
+        )
+        try:
+            return cast(MemoryRecord, self.memory.correct(row.memory_id, replacement))
+        except UniqueViolation:
+            return cast(MemoryRecord, self.memory.get(replacement.memory_id) or row)
 
     def _sync_knowledge(
         self,
@@ -1374,6 +1737,7 @@ class HouseholdLearningService:
             "CONTRADICTED": ("rejected_hypothesis", "300.5"),
             "REJECTED": ("rejected_hypothesis", "300.5"),
             "SUPERSEDED": ("rejected_hypothesis", "300.5"),
+            "OWNER_CORRECTION": ("household_model", "300.1"),
         }[conclusion]
         source_refs = [
             {
@@ -1390,6 +1754,15 @@ class HouseholdLearningService:
                 for ref in refs[:11]
             ],
         ]
+        if metadata.get("review_request_id"):
+            source_refs = [
+                {
+                    "kind": "request",
+                    "source_id": metadata["review_request_id"],
+                    "meaning": "Explicit owner review/correction, not execution authority.",
+                },
+                *source_refs[:11],
+            ]
         maturity = (
             candidate["maturity_evidence"]
             if "maturity_evidence" in candidate
@@ -1423,16 +1796,21 @@ class HouseholdLearningService:
             "This is inferred context, not Truth, identity, policy, authentication, "
             "or an executable routine."
         )
+        review_status = metadata.get("review_status", "PENDING")
+        body += f"\n\nOwner review: {review_status}. ACK is review, never execution approval."
         arguments: dict[str, Any] = {
             "title": candidate["title"],
             "body": body,
             "note_type": note_type,
             "classifier": classifier,
-            "classification": "SENTRY_INFERENCE",
+            "classification": "USER_STATED"
+            if conclusion == "OWNER_CORRECTION"
+            else "SENTRY_INFERENCE",
             "confidence": 0.5 if metadata.get("maturity") == "LEARNED_ROUTINE_ELIGIBLE" else 0.35,
             "source_refs": source_refs,
             "observed_at": None,
-            "enabled": True,
+            "enabled": review_status not in {"DISMISSED", "RETRACTED"}
+            and not metadata.get("projection_quarantined", False),
             "retention_days": None,
             "person_refs": [],
         }
@@ -1471,19 +1849,37 @@ class HouseholdLearningService:
             raise HouseholdLearningError("knowledge synchronization failed")
         return {"note_id": str(note["note_id"]), "digest": str(note["digest"])}
 
-    def _complete_review(self, household_id: UUID, packet: dict[str, Any]) -> None:
+    def _complete_review(
+        self,
+        household_id: UUID,
+        packet: dict[str, Any],
+        *,
+        outcomes: list[MemoryRecord] | None = None,
+        previous: MemoryRecord | None = None,
+    ) -> None:
         candidate_ids = {item["candidate_id"] for item in packet["candidates"]}
-        outcomes = [
-            row
-            for row in self._records(household_id, SUGGESTION_KIND, limit=MAX_EVIDENCE)
-            if row.metadata.get("review_id") == packet["review_id"]
-        ]
-        if (
-            candidate_ids
-            and {row.metadata.get("candidate_id") for row in outcomes} != candidate_ids
+        if outcomes is None:
+            outcomes = [
+                row
+                for row in self._all_records(household_id, SUGGESTION_KIND)
+                if row.metadata.get("review_id") == packet["review_id"]
+            ]
+        if previous is None:
+            previous = next(
+                (
+                    row
+                    for row in self._all_records(household_id, REVIEW_COMPLETION_KIND)
+                    if row.metadata.get("review_id") == packet["review_id"]
+                ),
+                None,
+            )
+        state = self.review_state(household_id, packet, outcomes=outcomes, previous=previous)
+        if previous is not None and all(
+            previous.metadata.get(key) == value for key, value in state.items()
         ):
             return
-        completion_id = uuid5(NAMESPACE, f"review-complete:{packet['review_id']}")
+        signature = hashlib.sha256(json.dumps(state, sort_keys=True).encode()).hexdigest()
+        completion_id = uuid5(NAMESPACE, f"review-disposition:{packet['review_id']}:{signature}")
         if self.memory.get(completion_id) is not None:
             return
         counts = Counter(str(row.metadata.get("conclusion")) for row in outcomes)
@@ -1492,7 +1888,7 @@ class HouseholdLearningService:
             household_id=household_id,
             memory_type=MemoryType.OBSERVED_CONTEXT,
             content=(
-                f"{packet['review_kind']} learning review completed for "
+                f"{packet['review_kind']} learning review {state['review_status']} for "
                 f"{len(outcomes)} bounded candidate(s)."
             ),
             provenance=MemoryProvenance(
@@ -1502,12 +1898,16 @@ class HouseholdLearningService:
             created_at=self._now(),
             confidence=1.0,
             metadata={
+                **state,
+                "reconciles_memory_id": str(previous.memory_id) if previous else None,
                 "record_kind": REVIEW_COMPLETION_KIND,
                 "review_id": packet["review_id"],
                 "request_id": packet["request_id"],
                 "review_kind": packet["review_kind"],
                 "candidate_count": len(candidate_ids),
-                "outcome_count": len(outcomes),
+                "outcome_count": previous.metadata["outcome_count"]
+                if previous and not outcomes
+                else len(outcomes),
                 "outcomes": dict(counts),
                 "evidence_start": packet["evidence_start"],
                 "evidence_end": packet["evidence_end"],
@@ -1515,7 +1915,9 @@ class HouseholdLearningService:
             },
         )
         try:
-            self.memory.create(completion)
+            self.memory.correct(previous.memory_id, completion) if previous else self.memory.create(
+                completion
+            )
         except UniqueViolation:
             pass
 
@@ -1527,10 +1929,19 @@ class HouseholdLearningService:
         request_id: UUID,
     ) -> dict[str, Any]:
         self._owner(household_id, principal_id)
-        if set(payload) != {"suggestion_id", "decision"} or payload["decision"] not in {
-            "ACKNOWLEDGED",
-            "DISMISSED",
-        }:
+        if (payload.get("decision") == "CORRECTED") != ("content" in payload):
+            raise HouseholdLearningError("only correction requires content")
+        if (
+            set(payload) - {"suggestion_id", "decision", "content"}
+            or not {"suggestion_id", "decision"} <= set(payload)
+            or payload["decision"]
+            not in {
+                "ACKNOWLEDGED",
+                "DISMISSED",
+                "CORRECTED",
+                "RETRACTED",
+            }
+        ):
             raise HouseholdLearningError(
                 "review requires suggestion version and supported decision"
             )
@@ -1541,9 +1952,16 @@ class HouseholdLearningService:
                 existing.household_id != household_id
                 or str(existing.supersedes_memory_id) != payload["suggestion_id"]
                 or existing.metadata.get("review_status") != payload["decision"]
+                or (
+                    payload["decision"] == "CORRECTED"
+                    and existing.content != _text(payload["content"], 1000)
+                )
             ):
                 raise HouseholdLearningError("review request reused with different arguments")
-            return {"status": "SUCCEEDED", "suggestion": self._suggestion(existing)}
+            return {
+                "status": "SUCCEEDED",
+                "suggestion": self._suggestion(self._projection_receipt(existing)),
+            }
         row = self.memory.get(_uuid(payload["suggestion_id"]))
         if (
             row is None
@@ -1556,21 +1974,318 @@ class HouseholdLearningService:
         replacement = MemoryRecord.create(
             memory_id=version,
             household_id=household_id,
-            memory_type=row.memory_type,
-            content=row.content,
-            provenance=row.provenance,
+            memory_type=MemoryType.EXPLICIT_FACT
+            if payload["decision"] == "CORRECTED"
+            else row.memory_type,
+            content=_text(payload.get("content"), 1000)
+            if payload["decision"] == "CORRECTED"
+            else row.content,
+            provenance=MemoryProvenance(ProvenanceKind.EXPLICIT_INPUT, f"owner:{principal_id}")
+            if payload["decision"] == "CORRECTED"
+            else row.provenance,
             confidence=row.confidence,
             graph_refs=row.graph_refs,
             created_at=self._now(),
             metadata={
                 **row.metadata,
                 "review_status": payload["decision"],
+                "conclusion": "OWNER_CORRECTION"
+                if payload["decision"] == "CORRECTED"
+                else row.metadata["conclusion"],
                 "reviewed_by": str(principal_id),
                 "reviewed_at": self._now().isoformat(),
+                "review_request_id": str(request_id),
+                "projection_origin": RequestOrigin.DIRECT_USER.value,
+                "projection_quarantined": False
+                if payload["decision"] == "CORRECTED"
+                else row.metadata.get("projection_quarantined", False),
+                "projection_status": "PENDING"
+                if row.metadata.get("projection_candidate")
+                else "NOT_CONFIGURED",
+                "projection_retry_at": None,
             },
         )
         saved = self.memory.correct(row.memory_id, replacement)
+        saved = self._sync_projection(saved)
+        self.evaluate_shadows(household_id)
         return {"status": "SUCCEEDED", "suggestion": self._suggestion(saved)}
+
+    def freeze_shadow(
+        self, household_id: UUID, principal_id: UUID, payload: dict[str, Any], request_id: UUID
+    ) -> dict[str, Any]:
+        """Explicit owner-selected shadow only. Freeze before any future outcomes."""
+        self._owner(household_id, principal_id)
+        fields = {
+            "suggestion_id",
+            "canonical_id",
+            "event_type",
+            "predicts_occurrence",
+            "starts_at",
+            "window_seconds",
+            "window_count",
+        }
+        if set(payload) != fields or type(payload["predicts_occurrence"]) is not bool:
+            raise HouseholdLearningError("exact shadow fields required")
+        starts = _time(payload["starts_at"])
+        normalized = {**payload, "starts_at": starts.isoformat()}
+        signature = hashlib.sha256(json.dumps(normalized, sort_keys=True).encode()).hexdigest()
+        identifier = uuid5(NAMESPACE, f"shadow:{household_id}:{request_id}")
+        existing = self.memory.get(identifier)
+        if existing:
+            if (
+                existing.household_id != household_id
+                or existing.metadata.get("input_digest") != signature
+            ):
+                raise HouseholdLearningError("shadow request reused")
+            return {
+                "status": "SUCCEEDED",
+                "evaluation": self._shadow_public(self._shadow_receipt(existing)),
+            }
+        source = self.memory.get(_uuid(payload["suggestion_id"]))
+        if (
+            source is None
+            or source.household_id != household_id
+            or source.status != MemoryStatus.ACTIVE
+            or source.metadata.get("record_kind") != SUGGESTION_KIND
+            or source.metadata.get("review_status") in {"DISMISSED", "RETRACTED"}
+        ):
+            raise HouseholdLearningError("active household hypothesis version required")
+        packet = self.review_packet(household_id, _uuid(source.metadata["request_id"]))
+        if packet is None or not self.review_state(household_id, packet)["terminal_success"]:
+            raise HouseholdLearningError("qualified review outcome required")
+        canonical_id = str(_uuid(payload["canonical_id"]))
+        current_ids = {
+            str(node.canonical_id)
+            for node in [
+                *self.graph.resources_in_place(household_id),
+                *self.graph.members_of_household(household_id),
+            ]
+        }
+        if canonical_id not in current_ids:
+            raise HouseholdLearningError(
+                "prediction source is not a current household member/resource"
+            )
+        event_type = payload["event_type"]
+        if event_type not in LEARNING_EVENT_TYPES or not any(
+            ref["canonical_id"] == canonical_id and ref["event_type"] == event_type
+            for ref in source.metadata["source_refs"]
+        ):
+            raise HouseholdLearningError("prediction must match qualified source references")
+        seconds, count = payload["window_seconds"], payload["window_count"]
+        if (
+            type(seconds) is not int
+            or not 300 <= seconds <= 86400
+            or type(count) is not int
+            or not 1 <= count <= 48
+        ):
+            raise HouseholdLearningError("shadow opportunity bounds exceeded")
+        frozen_at = self._now()
+        if not frozen_at < starts <= frozen_at + timedelta(days=7) or starts + timedelta(
+            seconds=seconds * count
+        ) > frozen_at + timedelta(days=28):
+            raise HouseholdLearningError("future bounded window required")
+        row = MemoryRecord.create(
+            memory_id=identifier,
+            household_id=household_id,
+            memory_type=MemoryType.TEMPORARY_EPISODIC,
+            created_at=frozen_at,
+            content="Owner-selected prospective shadow evaluation; no executable authority.",
+            provenance=MemoryProvenance(ProvenanceKind.EXPLICIT_INPUT, f"owner:{principal_id}"),
+            metadata={
+                "record_kind": SHADOW_KIND,
+                "input_digest": signature,
+                "evaluation_id": str(identifier),
+                "frozen_at": frozen_at.isoformat(),
+                "hypothesis_version": str(source.memory_id),
+                "hypothesis_signature": source.metadata["signature"],
+                "hypothesis_content_digest": hashlib.sha256(source.content.encode()).hexdigest(),
+                "prediction": normalized,
+                "baseline": "PREDICT_NO_OCCURRENCE",
+                "required_coverage": "QUALIFIED_SOURCE_INTERVAL",
+                "late_grace_seconds": 60,
+                "disposition": "EVIDENCE_PENDING",
+                "windows": [],
+            },
+        )
+        self.memory.create(row)
+        return {"status": "SUCCEEDED", "evaluation": self._shadow_public(row)}
+
+    def _shadow_receipt(self, row: MemoryRecord) -> MemoryRecord:
+        for _ in range(64):
+            if row.status != MemoryStatus.SUPERSEDED or not row.superseded_by_memory_id:
+                return row
+            following = self.memory.get(row.superseded_by_memory_id)
+            if (
+                following is None
+                or following.household_id != row.household_id
+                or following.metadata.get("input_digest") != row.metadata.get("input_digest")
+            ):
+                raise HouseholdLearningError("invalid shadow receipt chain")
+            row = following
+        raise HouseholdLearningError("shadow receipt chain exceeds bound")
+
+    @staticmethod
+    def _shadow_public(row: MemoryRecord) -> dict[str, Any]:
+        value = row.metadata
+        windows = value["windows"]
+        qualified = [item for item in windows if not item["unknown"]]
+        return {
+            key: value[key]
+            for key in (
+                "evaluation_id",
+                "frozen_at",
+                "hypothesis_version",
+                "prediction",
+                "baseline",
+                "required_coverage",
+                "disposition",
+            )
+        } | {
+            "windows": windows,
+            "planned_opportunities": value["prediction"]["window_count"],
+            "closed_opportunities": len(windows),
+            "covered_opportunities": sum(item["coverage"] == "QUALIFIED" for item in windows),
+            "known_opportunities": len(qualified),
+            "observed_positive_opportunities": sum(
+                item.get("outcome_basis") == "QUALIFIED_POSITIVE_SOURCE_RECEIPT" for item in windows
+            ),
+            "unknown_opportunities": len(windows) - len(qualified),
+            "misses": sum(item["miss"] is True for item in qualified),
+            "prediction_correct": sum(item["prediction_correct"] is True for item in qualified),
+            "baseline_correct": sum(item["baseline_correct"] is True for item in qualified),
+            "real_future_evidence": "PENDING"
+            if value["disposition"] == "EVIDENCE_PENDING"
+            else "SOURCE_WINDOW_ONLY_NOT_PHYSICAL",
+            "authority": "NONE",
+        }
+
+    def evaluations(
+        self, household_id: UUID, limit: int = 20, cursor: str | None = None
+    ) -> dict[str, Any]:
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise HouseholdLearningError("evaluation limit must be 1..20")
+        rows = self._records(
+            household_id, SHADOW_KIND, limit=limit + 1, cursor=_uuid(cursor) if cursor else None
+        )
+        return {
+            "status": "SUCCEEDED",
+            "items": [self._shadow_public(row) for row in rows[:limit]],
+            "next_cursor": str(rows[limit - 1].memory_id) if len(rows) > limit else None,
+        }
+
+    def evaluate_shadows(self, household_id: UUID) -> None:
+        from anima_ha.household_shadow import score_window
+
+        for row in self._all_records(household_id, SHADOW_KIND):
+            metadata = row.metadata
+            if metadata["disposition"] == "SUPERSEDED_HYPOTHESIS":
+                continue
+            source = self.memory.get(_uuid(metadata["hypothesis_version"]))
+            for _ in range(64):
+                if source is None or source.status != MemoryStatus.SUPERSEDED:
+                    break
+                source = self.memory.get(source.superseded_by_memory_id)
+            valid = bool(
+                source
+                and source.household_id == household_id
+                and source.status == MemoryStatus.ACTIVE
+                and source.metadata.get("signature") == metadata["hypothesis_signature"]
+                and hashlib.sha256(source.content.encode()).hexdigest()
+                == metadata["hypothesis_content_digest"]
+                and source.metadata.get("review_status") not in {"DISMISSED", "RETRACTED"}
+            )
+            updated = dict(metadata)
+            if not valid:
+                updated["disposition"] = "SUPERSEDED_HYPOTHESIS"
+                updated["invalidated_at"] = self._now().isoformat()
+            else:
+                prediction = metadata["prediction"]
+                windows = list(metadata["windows"])
+                page = self.evidence(household_id, MAX_EVIDENCE)
+                # Closed receipts stay immutable versions. Late Journal arrivals
+                # may only reduce confidence, not retroactively fill a coverage gap.
+                for index, window in enumerate(windows):
+                    check = score_window(
+                        start=_time(window["start"]),
+                        end=_time(window["end"]),
+                        frozen_at=_time(metadata["frozen_at"]),
+                        closed_at=_time(window["end"])
+                        + timedelta(seconds=metadata["late_grace_seconds"]),
+                        event_type=prediction["event_type"],
+                        canonical_id=prediction["canonical_id"],
+                        predicts_occurrence=prediction["predicts_occurrence"],
+                        events=page["items"],
+                        coverage={"status": "UNKNOWN"},
+                        truncated=False,
+                    )
+                    if (
+                        check["late_records"] > window["late_records"]
+                        and window.get("outcome_basis") != "QUALIFIED_POSITIVE_SOURCE_RECEIPT"
+                    ):
+                        windows[index] = {
+                            **window,
+                            "late_records": check["late_records"],
+                            "coverage": "UNKNOWN",
+                            "unknown": True,
+                            "observed_occurrence": None,
+                            "prediction_correct": None,
+                            "miss": None,
+                            "baseline_correct": None,
+                        }
+                for index in range(len(windows), prediction["window_count"]):
+                    start = _time(prediction["starts_at"]) + timedelta(
+                        seconds=prediction["window_seconds"] * index
+                    )
+                    end = start + timedelta(seconds=prediction["window_seconds"])
+                    closed = end + timedelta(seconds=metadata["late_grace_seconds"])
+                    if closed > self._now():
+                        break
+                    coverage = (
+                        self.coverage_reader(
+                            household_id,
+                            prediction["canonical_id"],
+                            prediction["event_type"],
+                            start,
+                            end,
+                        )
+                        if self.coverage_reader
+                        else {"status": "UNKNOWN"}
+                    )
+                    windows.append(
+                        score_window(
+                            start=start,
+                            end=end,
+                            frozen_at=_time(metadata["frozen_at"]),
+                            closed_at=closed,
+                            event_type=prediction["event_type"],
+                            canonical_id=prediction["canonical_id"],
+                            predicts_occurrence=prediction["predicts_occurrence"],
+                            events=page["items"],
+                            coverage=coverage,
+                            truncated=bool(page["truncated"] or page["status"] != "SUCCEEDED"),
+                        )
+                    )
+                updated["windows"] = windows
+                if len(windows) == prediction["window_count"]:
+                    updated["disposition"] = (
+                        "WINDOW_CLOSED_UNKNOWN_COVERAGE"
+                        if any(item["unknown"] for item in windows)
+                        else "WINDOW_SCORED"
+                    )
+            if updated == metadata:
+                continue
+            digest = hashlib.sha256(json.dumps(updated, sort_keys=True).encode()).hexdigest()
+            replacement = replace(
+                row,
+                memory_id=uuid5(NAMESPACE, f"shadow-result:{metadata['evaluation_id']}:{digest}"),
+                created_at=self._now(),
+                metadata=updated,
+                supersedes_memory_id=None,
+            )
+            try:
+                self.memory.correct(row.memory_id, replacement)
+            except UniqueViolation:
+                pass
 
     @staticmethod
     def _task_keys(
@@ -1765,6 +2480,36 @@ HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
         _tool("get_status", {}, []),
         _tool("get_situation", {}, []),
         _tool(
+            "evaluations",
+            {
+                "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+                "cursor": {"type": "string", "format": "uuid"},
+            },
+            [],
+        ),
+        _tool(
+            "freeze_shadow",
+            {
+                "suggestion_id": {"type": "string", "format": "uuid"},
+                "canonical_id": {"type": "string", "format": "uuid"},
+                "event_type": {"type": "string", "enum": list(LEARNING_EVENT_TYPES)},
+                "predicts_occurrence": {"type": "boolean"},
+                "starts_at": {"type": "string", "format": "date-time"},
+                "window_seconds": {"type": "integer", "minimum": 300, "maximum": 86400},
+                "window_count": {"type": "integer", "minimum": 1, "maximum": 48},
+            },
+            [
+                "suggestion_id",
+                "canonical_id",
+                "event_type",
+                "predicts_occurrence",
+                "starts_at",
+                "window_seconds",
+                "window_count",
+            ],
+            read=False,
+        ),
+        _tool(
             "set_household_mode",
             {
                 "mode": {"type": "string", "enum": ["HOME", "AWAY", "UNSET"]},
@@ -1883,7 +2628,11 @@ HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
             "review",
             {
                 "suggestion_id": {"type": "string", "format": "uuid"},
-                "decision": {"type": "string", "enum": ["ACKNOWLEDGED", "DISMISSED"]},
+                "decision": {
+                    "type": "string",
+                    "enum": ["ACKNOWLEDGED", "DISMISSED", "CORRECTED", "RETRACTED"],
+                },
+                "content": {"type": "string", "minLength": 1, "maxLength": 1000},
             },
             ["suggestion_id", "decision"],
             read=False,
@@ -1935,9 +2684,9 @@ class HouseholdLearningNativePlugin:
             return self.service.set_household_mode(
                 context.household_id, context.principal_id, arguments
             )
-        if name in {"evidence", "suggestions"}:
+        if name in {"evidence", "suggestions", "evaluations"}:
             return getattr(self.service, name)(context.household_id, **arguments)
-        if name in {"configure", "set_device_notification", "review"} and (
+        if name in {"configure", "set_device_notification", "review", "freeze_shadow"} and (
             context.origin != RequestOrigin.DIRECT_USER or context.principal_id is None
         ):
             raise HouseholdLearningError("direct commissioned owner request required")

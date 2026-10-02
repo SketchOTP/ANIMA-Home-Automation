@@ -536,6 +536,33 @@ class MemoryService:
             graph_ref=graph_ref,
             now=now,
         )
+        # A materialized provider draft is inspectable in the learning surface,
+        # but cannot enter general learned context before a qualified terminal
+        # outcome. Historical premature completion receipts do not override it.
+        where += """ AND COALESCE(m.metadata->>'record_kind','') NOT IN
+            ('household_learning_review_packet','household_learning_review_completion',
+             'household_learning_shadow','household_initiative_config')
+            AND COALESCE(m.metadata->>'conclusion','SUPPORTED') NOT IN
+                ('INSUFFICIENT_EVIDENCE','CONTRADICTED','REJECTED','SUPERSEDED') """
+        where += """ AND (m.metadata->>'record_kind' IS DISTINCT FROM
+            'household_learning_suggestion' OR (
+            COALESCE(m.metadata->>'review_status','PENDING') NOT IN ('DISMISSED','RETRACTED')
+            AND ((m.provenance_kind='EXPLICIT_INPUT'
+                AND m.metadata->>'conclusion'='OWNER_CORRECTION') OR EXISTS (
+                SELECT 1 FROM anima_intelligence_requests r
+                WHERE r.household_id=m.household_id
+                AND r.request_id::text=COALESCE(m.metadata->>'request_id',
+                    replace(m.source_ref,'anima:request:',''))
+                AND r.lifecycle IN ('COMPLETED','NO_ACTION')
+                AND r.result_status IN ('RESPONSE','NO_ACTION','TOOL_ACTIVITY_COMPLETED')
+                AND r.provider_invocation_started
+                AND (m.metadata->>'review_id' IS NULL OR EXISTS (
+                    SELECT 1 FROM anima_memory_records c
+                    WHERE c.household_id=m.household_id AND c.status='ACTIVE'
+                    AND c.metadata->>'record_kind'='household_learning_review_completion'
+                    AND c.metadata->>'review_id'=m.metadata->>'review_id'
+                    AND c.metadata->>'candidate_count'=c.metadata->>'outcome_count'))
+            )))) """
         try:
             if self.index_enabled:
                 with self._connect() as connection:

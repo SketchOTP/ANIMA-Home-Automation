@@ -23,7 +23,7 @@ Environment=ANIMA_HA_WEBSOCKET_URL=ws://127.0.0.1:8123/api/websocket
 Environment=ANIMA_HA_CONNECTION_FILE=%h/.config/anima/home-assistant-credential.json
 Environment=ANIMA_HA_EXPECTED_VERSION=2026.9.0
 Environment=ANIMA_OWNER_BOUNDARY_DIR=%h/.local/share/anima-owner-boundary
-Environment=ANIMA_VENDOR_RELAY_CONFIG=%h/.local/share/anima-owner-boundary/vendor-relay.json
+Environment=ANIMA_VENDOR_RELAY_CONFIG=%h/.config/anima/vendor-relay-credential.json
 Environment=ANIMA_OWNER_BOUNDARY_GROUP=1000
 Environment=ANIMA_KNOWLEDGE_ROOT=%h/Documents/MEMORY/ANIMA
 Environment=ANIMA_SENTRY_AGENT_MEMORY=true

@@ -200,3 +200,65 @@ under `/home/sketch/.venvs/sentry-ubuntu/bin/python`.
   presence conclusions are inferred from that missing evidence.
 
 No permanent-Goal completion is claimed by this increment.
+
+## Stage4 source amendment — qualification and prospective limits
+
+Historical R3 operational results above remain history. A dispatched request,
+candidate materialization or old completion receipt is not a successful review.
+Current Core request lifecycle must be COMPLETED/NO_ACTION with a qualified
+terminal result, durable provider start and the bounded candidate outcomes.
+Failed/ambiguous/incomplete requests remain visible and are not replayed.
+Chronological keyset pages use (created_at, memory_id), not UUID-only order;
+bounded enumeration fails explicitly instead of presenting a first50 as totals.
+
+The existing owner Initiative panel and typed household-learning tools expose
+review outcome and projection status, correction/retraction and prospective
+shadow windows. ACK is only review, never execution approval. CORRECTED stores
+explicit owner provenance; dismissal/retraction remove active retrieval and
+disable the corresponding digest-checked note. Projection faults remain durable
+and retry in the existing review worker with bounded backoff, not a model replay.
+An owner correction remains authoritative even when its original provider review
+failed. Reconciliation and later acknowledgement preserve its explicit provenance,
+enabled note and retrieval; retraction still disables it. This does not qualify
+the original failed review or grant executable authority.
+
+Owner-only `freeze_shadow` requires the exact current suggestion version and a
+qualified source reference. It freezes future timer opportunities, the predicted
+occurrence/non-occurrence and a no-occurrence baseline in existing Memory.
+Window closure is idempotent; correction invalidates dependent future windows.
+Source receipts are not physical occurrence timestamps or independent trials.
+Missing, stale, conflicting or truncated interval coverage cannot certify a
+negative opportunity; quiet heartbeat alone is insufficient. Production does
+have qualified household-scoped Journal receipts. An on-time positive receipt
+evaluates a frozen source-occurrence prediction without asserting completeness
+or a physical occurrence timestamp. Known-positive opportunities and complete
+interval-covered opportunities are exposed separately. Unknown negatives never
+improve measured accuracy. The production service has no qualified complete
+interval coverage reader, so a quiet window stays UNKNOWN; a future negative
+commissioning path must qualify end-to-end source continuity before supplying
+the existing server-owned coverage callback. No new sensor/coverage claim is
+created. Isolated complete-coverage fixtures are not household trial outcomes.
+Actual future evidence remains pending until the frozen windows really elapse.
+
+Host Core's relay configuration default is private host custody at
+`~/.config/anima/vendor-relay-credential.json`. The original Compose/UI shared
+UID10001 relay file is unchanged; the host loader's ownership check is unchanged.
+Provisioning is parent-controlled and is not performed by this source change.
+HA instance identity remains operator configuration from the existing
+EnvironmentFile, not a tracked UUID or invented default. A bounded shell
+regression verifies the unit launch preserves the operator-provided instance
+and removes only the database password after constructing its URL. This is not
+proof of effective systemd EnvironmentFile ordering. Systemd applies
+EnvironmentFile values after Environment directives; a later operator
+EnvironmentFile can intentionally override stale project-file endpoints without
+changing the project file. The parent verified that the retained project file
+already contains the commissioned instance, but its HA base/websocket values
+conflict with the saved/UI loopback connection. The parent-controlled later
+`core-ha-connection.env` must carry the existing instance, qualified endpoints
+and version together; this source does not seed or auto-trust any connection.
+With a
+configured connection file, a missing/mismatched instance or base URL remains
+HA_CONNECTION_CONFIGURATION_MISMATCH; parent controls actual provisioning and
+installed-environment reconciliation. No new identity or credential is created.
+No model, credential, private profile, unit installation or runtime mutation is
+authorized by these source-only inspection features.

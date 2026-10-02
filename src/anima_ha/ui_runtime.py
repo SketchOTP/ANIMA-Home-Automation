@@ -714,7 +714,7 @@ class CoreUICommandGateway:
     def learning_operation(
         self, identity: UIIdentity, name: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        if name not in {"configure", "review", "set_household_mode"}:
+        if name not in {"configure", "review", "set_household_mode", "freeze_shadow"}:
             raise UICommandError("UNKNOWN_LEARNING_OPERATION")
         return self._invoke(identity, HOUSEHOLD_LEARNING_MANIFEST.plugin_id, name, payload)
 
@@ -1880,6 +1880,7 @@ def build_postgres_core(
         os.environ.get("ANIMA_INTELLIGENCE_PROVIDER", "embedded_reference").strip()
     )
     intelligence_store = PostgresIntelligenceStore(database_url)
+    learning_service.request_state_reader = intelligence_store.learning_state
 
     def refresh(resources: tuple[UUID, ...]) -> Any:
         from anima_ha.action import TruthSnapshot

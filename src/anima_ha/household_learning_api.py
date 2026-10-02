@@ -97,7 +97,13 @@ def install_household_learning_api(
     ) -> dict[str, Any]:
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)
-        if operation not in {"configure", "review", "catch-up", "set_household_mode"}:
+        if operation not in {
+            "configure",
+            "review",
+            "catch-up",
+            "set_household_mode",
+            "freeze_shadow",
+        }:
             raise HTTPException(404, "UNKNOWN_LEARNING_OPERATION")
         if operation == "catch-up":
             if body.payload:

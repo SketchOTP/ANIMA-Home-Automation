@@ -309,6 +309,7 @@ class LearningReviewRunner:
         if not self._tick_lock.acquire(blocking=False):
             return self._report("BUSY")
         try:
+            self.learning.reconcile_reviews(self.household_id)
             if not self._provider_ready():
                 report = self._report("DISABLED", error="SENTRY_UNAVAILABLE")
             else:

@@ -640,6 +640,23 @@ class PostgresIntelligenceStore:
             row = cursor.fetchone()
         return _request_from_row(row) if row else None
 
+    def learning_state(self, household_id: UUID, request_id: UUID) -> dict[str, Any]:
+        """Content-free terminal evidence scoped by Core, never provider assertions."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT lifecycle,result_status,provider_invocation_started,completed_at "
+                "FROM anima_intelligence_requests WHERE household_id=%s AND request_id=%s",
+                (household_id, request_id),
+            )
+            row = cursor.fetchone()
+            if row:
+                result = dict(row)
+                result["completed_at"] = (
+                    row["completed_at"].isoformat() if row["completed_at"] else None
+                )
+                return result
+            return {}
+
     def claim_specific(
         self,
         request_id: UUID,
