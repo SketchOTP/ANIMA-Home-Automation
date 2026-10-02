@@ -110,8 +110,15 @@ def notification_disposition(
 
 
 class HouseholdInitiativeContext:
-    def __init__(self, database_url: str, learning: Any, evidence: HouseholdEventEvidence) -> None:
+    def __init__(
+        self,
+        database_url: str,
+        learning: Any,
+        evidence: HouseholdEventEvidence,
+        owner_tasks: Any | None = None,
+    ) -> None:
         self.database_url, self.learning, self.evidence = database_url, learning, evidence
+        self.owner_tasks = owner_tasks
 
     def resolve_event_path(self, household_id: UUID, trigger: Any) -> SentryEventPath | None:
         """Resolve the owner-selected cognition route before request creation.
@@ -184,15 +191,16 @@ class HouseholdInitiativeContext:
             request_id=request.request_id, event_type=None, config={}, ready=False, now=at
         )
         try:
+            if self.owner_tasks is not None:
+                owner = self.owner_tasks.notification(request)
+                if owner is not None:
+                    return dict(owner)
             status = self.learning.status(request.household_id, include_learning=False)
             result: dict[str, Any] = {"status": "AVAILABLE", **status, "notification": closed}
             result["status"] = "AVAILABLE"
             packet = self.learning.ensure_review_packet(request)
             if packet is not None:
                 result["learning_review"] = packet
-            result["nearby_events"] = self.evidence.recent_household_evidence(
-                request.household_id, limit=24, now=at
-            )
             if request.origin not in {
                 IntelligenceOrigin.AUTONOMOUS_ATTENTION,
                 IntelligenceOrigin.DURABLE_TASK,
@@ -219,8 +227,10 @@ class HouseholdInitiativeContext:
                 review = (
                     source["event_type"] == "scheduled_reasoning_due"
                     and source["source"] == "anima:durable-task"
+                    and packet is not None
                 )
                 explicit_alert = False
+                explicit_revoked = False
                 if (
                     source["source"] == "anima:senseguard-policy"
                     and source["metadata"].get("provenance") == "anima.senseguard.alert_policy"
@@ -231,24 +241,33 @@ class HouseholdInitiativeContext:
                     except (TypeError, ValueError):
                         policy_uuid = None
                     if policy_uuid:
+                        current_policy = connection.execute(
+                            "SELECT enabled,guaranteed_attention,delivery_mode,"
+                            "event_type,resource_ids "
+                            "FROM anima_senseguard_alert_policies "
+                            "WHERE policy_id=%s AND household_id=%s",
+                            (
+                                policy_uuid,
+                                request.household_id,
+                            ),
+                        ).fetchone()
                         explicit_alert = bool(
-                            connection.execute(
-                                "SELECT 1 FROM anima_senseguard_alert_policies "
-                                "WHERE policy_id=%s AND household_id=%s AND enabled "
-                                "AND guaranteed_attention AND delivery_mode='SENTRY_COGNITION' "
-                                "AND event_type=%s AND resource_ids ? %s",
-                                (
-                                    policy_uuid,
-                                    request.household_id,
-                                    source["event_type"],
-                                    str(source["payload"].get("canonical_resource_id", "")),
-                                ),
-                            ).fetchone()
+                            current_policy
+                            and current_policy["enabled"]
+                            and current_policy["guaranteed_attention"]
+                            and current_policy["delivery_mode"] == "SENTRY_COGNITION"
+                            and current_policy["event_type"] == source["event_type"]
+                            and str(source["payload"].get("canonical_resource_id", ""))
+                            in current_policy["resource_ids"]
                         )
-            valid_source = any(
-                item["event_id"] == request.causation_id
-                for item in result["nearby_events"]["items"]
+                        explicit_revoked = current_policy is not None and not explicit_alert
+            # Current source qualification is exact, not membership in an
+            # optional, truncated correlation window. This uses the existing
+            # household/source/trust/clock projection, never raw vendor prose.
+            exact = self.evidence.recent_household_evidence(
+                request.household_id, event_ids=(str(request.causation_id),), limit=1, now=at
             )
+            valid_source = any(item["event_id"] == request.causation_id for item in exact["items"])
             # Delay/absence never authorizes a stale greeting. Reviews remain silent.
             managed = request.request_metadata.get("required_delivery", {})
             freshness_seconds = 600 if managed.get("version") == 1 else 120
@@ -282,6 +301,11 @@ class HouseholdInitiativeContext:
                 sentry_event_path=request.request_metadata.get("sentry_event_path"),
                 now=at,
             )
+            result["notification"]["revocation_confirmed"] = bool(
+                valid_source
+                and fresh
+                and (explicit_revoked or (device_rule and device_rule.get("mode") == "NEVER"))
+            )
             if (
                 result["notification"]["allowed"] is True
                 and result["notification"]["required"] is True
@@ -295,6 +319,13 @@ class HouseholdInitiativeContext:
             return result
         except Exception:
             return {"status": "UNAVAILABLE", "notification": closed, "authority": "NONE"}
+
+    def correlation_context(self, request: IntelligenceRequest) -> dict[str, Any]:
+        """Optional rich history; not canonical first-speech authority."""
+        try:
+            return self.evidence.recent_household_evidence(request.household_id, limit=24)
+        except Exception:
+            return {"status": "UNAVAILABLE", "items": [], "authority": "NONE"}
 
     def prospective_feedback_context(self, request: IntelligenceRequest) -> dict[str, Any]:
         """Optional rich reasoning history, never a compact notification dependency."""

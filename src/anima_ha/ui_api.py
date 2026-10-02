@@ -1491,8 +1491,23 @@ class PostgresHouseholdReadModel:
         with self._connect() as connection, connection.cursor() as db_cursor:
             db_cursor.execute(
                 f"""
-                SELECT task_id, title, status, next_run_at
-                FROM anima_durable_tasks
+                SELECT task_id, title, status, next_run_at,
+                    (SELECT jsonb_build_object(
+                        'run_id',run.run_id,'dispatch_status',run.status,
+                        'scheduled_for',run.scheduled_for,'claimed_at',run.claimed_at,
+                        'request_id',r.request_id,'lifecycle',r.lifecycle,'result_status',r.result_status,
+                        'provider_started',r.provider_invocation_started,
+                        'delivery','NOT_OBSERVED_BY_TASK_DISPATCH',
+                        'clock_quality',CASE WHEN run.claimed_at>now() OR run.started_at>now()
+                            THEN 'FUTURE_DATED_HISTORICAL_RECORD'
+                            ELSE 'CURRENT_INTERVAL_REQUIRED' END)
+                     FROM anima_durable_task_runs run
+                     LEFT JOIN anima_intelligence_requests r ON r.causation_id=run.source_event_id
+                        AND r.household_id=task.household_id
+                        AND r.request_metadata->'owner_task'->>'run_id'=run.run_id::text
+                     WHERE run.task_id=task.task_id ORDER BY run.scheduled_for DESC LIMIT 1
+                    ) AS latest_run
+                FROM anima_durable_tasks task
                 WHERE {where}
                 ORDER BY next_run_at, task_id
                 LIMIT %s
@@ -1508,6 +1523,7 @@ class PostgresHouseholdReadModel:
                 "title": str(row["title"]),
                 "status": str(row["status"]),
                 "next_run_at": row["next_run_at"].isoformat(),
+                "latest_run": row["latest_run"],
             }
             for row in rows
         ]
@@ -1711,7 +1727,7 @@ class PostgresHouseholdReadModel:
                 rows = cursor.fetchall()
         except psycopg.Error:
             return []
-        return [
+        return self._owner_task_activity(identity)[:6] + [
             {
                 "notification_id": f"event:{row['event_type']}:{row['occurred_at'].isoformat()}",
                 "summary": (
@@ -1723,6 +1739,29 @@ class PostgresHouseholdReadModel:
             }
             for row in rows
         ]
+
+    def _owner_task_activity(self, identity: UIIdentity) -> list[dict[str, Any]]:
+        """Bounded durable state, not private response prose or delivery proof."""
+        return [
+            {
+                "kind": "owner_task",
+                "notification_id": f"task-result:{task['latest_run']['run_id']}",
+                "summary": (
+                    f"Saved task {task['title']}: "
+                    + str(
+                        task["latest_run"]["result_status"]
+                        or task["latest_run"]["lifecycle"]
+                        or "DUE"
+                    )
+                    + "; delivery not observed by dispatch"
+                ),
+                "status": task["latest_run"]["lifecycle"] or "PENDING",
+                "occurred_at": task["latest_run"]["scheduled_for"],
+                "importance": "IMPORTANT",
+            }
+            for task in self.tasks_page(identity, limit=20)["items"]
+            if task.get("latest_run") and task["latest_run"].get("request_id")
+        ][:10]
 
     def _reports(self, identity: UIIdentity) -> list[dict[str, Any]]:
         try:
@@ -1823,7 +1862,7 @@ class PostgresHouseholdReadModel:
                 (str(identity.household_id),),
             )
             rows = cursor.fetchall()
-        return [
+        return self._owner_task_activity(identity) + [
             {
                 "kind": "event",
                 "summary": f"Anima recorded {row['event_type']}",
@@ -2643,8 +2682,27 @@ class UIService:
             raise UICommandError("CONVERSATION_RESULT_NOT_FOUND") from exc
         store = getattr(self.core_runtime, "intelligence_store", None)
         request = store.get(request_uuid) if store is not None else None
-        if request is None or request.household_id != identity.household_id:
+        if (
+            request is None
+            or request.household_id != identity.household_id
+            or (request.principal_id is not None and request.principal_id != identity.principal_id)
+        ):
             raise UICommandError("CONVERSATION_RESULT_NOT_FOUND")
+        approval_results = getattr(self.core_runtime, "approval_results", None)
+        if approval_results is not None:
+            outcome = approval_results.outcome(
+                request_uuid, identity.household_id, identity.principal_id
+            )
+            if outcome is not None:
+                from anima_ha.approval_results import approval_presentation
+
+                return {
+                    "request_id": request_id,
+                    "lifecycle": request.lifecycle.value,
+                    **approval_presentation(outcome),
+                    "available": True,
+                    "outcome_source": "CORE_VERIFIED_ACTION_RECORD_NOT_TRANSCRIPT",
+                }
         live = (
             self.sentry_results.get(request_uuid, identity.household_id)
             if self.sentry_results is not None
@@ -2668,9 +2726,15 @@ class UIService:
             "RECOVERY_REQUIRED",
             "CANCELLED",
         }
+        # Request objects intentionally omit result metadata. Reuse the
+        # existing household-scoped content-free store projection, never text.
+        result_state = getattr(store, "learning_state", None)
+        recorded = (
+            result_state(identity.household_id, request_uuid) if callable(result_state) else {}
+        )
         return {
             "request_id": request_id,
-            "status": request.lifecycle.value,
+            "status": recorded.get("result_status") or request.lifecycle.value,
             "lifecycle": request.lifecycle.value,
             "response": None,
             "detail": (
@@ -3016,6 +3080,9 @@ def create_app(
     app.router.add_event_handler("startup", svc.start_owner_boundary)
     app.router.add_event_handler("shutdown", svc.close_owner_boundary)
     if svc.sentry_results is not None:
+        # The existing ephemeral subscriber must invalidate already-mounted
+        # owner consumers too, not only answer their next manual read.
+        svc.sentry_results.on_result = lambda: svc.events.publish("conversation.completed")
         app.router.add_event_handler("shutdown", svc.sentry_results.close)
 
     @app.middleware("http")
@@ -3047,7 +3114,10 @@ def create_app(
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
     def current_identity(request: Request) -> UIIdentity:
-        return svc.identity_from_session(current_session(request))
+        try:
+            return svc.identity_from_session(current_session(request))
+        except UIAuthError as exc:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
     def require_mutation(
         request: Request, x_anima_csrf: str | None, session: SessionRecord

@@ -19,6 +19,69 @@ import psycopg
 from psycopg.rows import dict_row
 
 from anima_ha.intelligence import IntelligenceOrigin, IntelligenceRequest, _request_from_row
+from anima_ha.sentry_autowake import aware_timestamp
+
+
+def playback_evidence(
+    evidence: Any, *, invalid: str = "INVALID_PLAYBACK_EVIDENCE"
+) -> dict[str, Any]:
+    """Bounded callback tokens and nullable UTC process times, never prose."""
+    if not isinstance(evidence, dict) or set(evidence) - {
+        "playback_state",
+        "timing_source",
+        "playback_process_started_at",
+        "playback_completed_at",
+        "actual_audible_start_at",
+    }:
+        raise ValueError(invalid)
+    result = dict(evidence)
+    state = result.get("playback_state")
+    if state is not None and (
+        type(state) is not str
+        or state
+        not in {
+            "UNSTARTED",
+            "STARTED",
+            "DELIVERED",
+            "UNKNOWN",
+        }
+    ):
+        raise ValueError(invalid)
+    source = result.get("timing_source")
+    if source is not None and (
+        type(source) is not str
+        or source
+        not in {
+            "LOCAL_PLAYBACK_PROCESS",
+            "PROJECTION_PLAYBACK_PROCESS",
+            "SYNTHETIC_CALLBACK",
+        }
+    ):
+        raise ValueError(invalid)
+    if result.get("actual_audible_start_at") is not None:
+        raise ValueError(invalid)
+    for key in ("playback_process_started_at", "playback_completed_at"):
+        value = result.get(key)
+        if value is not None:
+            if type(value) is not str or len(value) > 64:
+                raise ValueError(invalid)
+            try:
+                result[key] = aware_timestamp(value).isoformat()
+            except ValueError:
+                raise ValueError(invalid) from None
+    return result
+
+
+def playback_not_started(evidence: dict[str, Any]) -> bool:
+    """Explicit playback-owner no-start proof; absent evidence is not proof."""
+    return (
+        evidence.get("playback_state") == "UNSTARTED"
+        and "playback_process_started_at" in evidence
+        and evidence["playback_process_started_at"] is None
+        and evidence.get("playback_completed_at") is None
+        and evidence.get("actual_audible_start_at") is None
+        and evidence.get("timing_source") is None
+    )
 
 
 def initialize_required_delivery(
@@ -234,7 +297,10 @@ class PostgresRequiredDelivery:
                         continue
                     if saved.get("retry_at") and datetime.fromisoformat(saved["retry_at"]) > at:
                         continue
-                    policy = disposition(request)
+                    try:
+                        policy = disposition(request)
+                    except Exception:
+                        policy = {"allowed": False, "required": False}
                     announcement = policy.get("announcement")
                     if not (
                         policy.get("allowed") is True
@@ -243,9 +309,19 @@ class PostgresRequiredDelivery:
                         and isinstance(announcement, dict)
                         and isinstance(announcement.get("text"), str)
                     ):
-                        # A revoked/changed policy cannot acquire delivery authority.
+                        # Missing policy/source/name/channel cannot revoke a
+                        # retained obligation, and that obligation cannot grant
+                        # speech. Recheck only unstarted work, with existing
+                        # bounded expiry; never replay possibly-started playback.
                         if saved:
-                            saved.update(state="CANCELLED", reason="CURRENT_POLICY_NOT_REQUIRED")
+                            if policy.get("revocation_confirmed") is True:
+                                saved.update(state="CANCELLED", reason="CURRENT_POLICY_REVOKED")
+                            else:
+                                saved.update(
+                                    state="PENDING",
+                                    reason="CURRENT_AUTHORITY_OR_ANNOUNCEMENT_UNAVAILABLE",
+                                    retry_at=(at + timedelta(seconds=10)).isoformat(),
+                                )
                             self._save(cursor, request.request_id, root)
                         continue
                     occurred = datetime.fromisoformat(str(announcement["occurred_at"]))
@@ -308,6 +384,7 @@ class PostgresRequiredDelivery:
         phase: str = "CANONICAL",
     ) -> dict[str, Any]:
         at = now or datetime.now(UTC)
+        evidence = playback_evidence({} if evidence is None else evidence)
         if outcome not in {
             "PLAYBACK_INTENT",
             "DELIVERED",
@@ -353,12 +430,24 @@ class PostgresRequiredDelivery:
                         raise ValueError("ALERT_AUTHORITY_CHANGED")
                     saved["state"] = outcome
                 elif outcome == "UNSTARTED" and state in {"CLAIMED", "PLAYBACK_INTENT"}:
-                    saved.update(
-                        state="PENDING",
-                        retry_at=(
-                            at + timedelta(seconds=min(60, 2 ** min(int(saved["attempts"]), 6)))
-                        ).isoformat(),
-                    )
+                    if state == "PLAYBACK_INTENT" and not playback_not_started(evidence):
+                        saved.update(
+                            state="UNKNOWN",
+                            reason="POST_INTENT_NO_START_NOT_ESTABLISHED",
+                            receipt_at=at.isoformat(),
+                            evidence=evidence,
+                        )
+                        if phase == "CANONICAL" and "followup" in root:
+                            root["followup"].update(
+                                state="ESCALATED", reason="CANONICAL_DELIVERY_UNKNOWN"
+                            )
+                    else:
+                        saved.update(
+                            state="PENDING",
+                            retry_at=(
+                                at + timedelta(seconds=min(60, 2 ** min(int(saved["attempts"]), 6)))
+                            ).isoformat(),
+                        )
                 elif state == "PLAYBACK_INTENT" and outcome in {"DELIVERED", "UNKNOWN"}:
                     if outcome == "DELIVERED" and not (
                         evidence
@@ -369,7 +458,7 @@ class PostgresRequiredDelivery:
                     ):
                         raise ValueError("PLAYBACK_COMPLETION_EVIDENCE_REQUIRED")
                     saved.update(state=outcome, receipt_at=at.isoformat(), evidence=evidence or {})
-                    if outcome == "UNKNOWN" and "followup" in root:
+                    if outcome == "UNKNOWN" and phase == "CANONICAL" and "followup" in root:
                         root["followup"].update(
                             state="ESCALATED", reason="CANONICAL_DELIVERY_UNKNOWN"
                         )

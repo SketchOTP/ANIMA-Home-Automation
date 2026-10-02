@@ -2403,3 +2403,321 @@ household commissioning remain unproven. Detailed native review16:05Z and
 canonical final retain exact hashes/commands/counts/limits. SENTRY unchanged,
 Graft excluded, no owner fixture/model/physical/ambiguous replay. Stage8 next
 coherent owner-result scope remains prepared; full Goal/027A ACTIVE.
+
+## 2026-10-02T16:16Z — Stage7 published candidate and parallel Stage8 continuation
+
+Normal ANIMA main/origin9ee8128c0536771fa852b8f6ddec8b35b4b81b61 published;
+exactCI37031786052 IN_PROGRESS. Clean build at /tmp/anima-stage7-published.Rv5Yoc
+candidate image sha256:4259b74a2bd03b71eaba8b759a7667c99608f49c5d1808ff9696f0567be6bd14,
+110installedPython/SQL bytes match committed source, source-map digest
+83f77cb3069b21e5e2eb87882a6c1f412cddb4853801900125ef1bb0207782c9
+(json.dumps(sort_keys=True) default separators);47packages match unchanged lock.
+No owner mounts/network in candidate diagnostic; NOT deployed pending exactCI.
+Installed liveStage6/image7966cae9 remains independently observed unchanged.
+Original Graft hashes unchanged. A clean-export hash probe found .ignore absent
+as expected and tracked instructions different from separate local tooling;
+that exit1 probe was not a preservation failure. Original main hashes rechecked.
+
+Three Notion authority/reference source-publication/nextscope sections updated
+and entire readbacks MATCH after formatting-only normalization, not title-only
+verification. Same Coder Stage8 assigned new compatible worktrees; canonical
+IN_PROGRESS result confirms actual instruction/lock reads. Planck resumed
+disjoint read-only effective permission audit, no competing implementation.
+
+Read-only16:15:15 household predeployment snapshot activeprovider/action0;
+17tasks/1profile/314Memory/5calendar/46ambiguous full-row digests unchanged from
+last deployment. One natural additional NO_ACTION exists (284vs283), no origin/
+model cause inferred. Required-delivery14CANCELLED,0CLAIMED/PLAYBACK_INTENT.
+Core/voice/relay/WiFi active0restarts. These are readiness/snapshot evidence, not
+post-deployment preservation or recovery proof. No model/audio/root/owner-setting
+change/replay/physical operation. Full Goal/027A ACTIVE; candidate/publication
+not owner-result or actual future improvement acceptance.
+
+## Stage7 hosted qualification and controlled deployment — 2026-10-02T16:42Z
+
+Exact published9ee8128c0536771fa852b8f6ddec8b35b4b81b61 CI37031786052
+SUCCESS, GitHub updated16:23:52Z. Native artifact11237773633 digest
+sha256:ebc322d177799eff6d28d7ab39f6fab4a05103ade515f65e82175f12a6930b63;
+actual download /tmp/anima-stage7-green-artifact.vyXWc7 target Stage7 realPG4/
+desktop+phone2 PASS0skip/failure/error, retained Stage6 andStage5 PG4/browser2
+also PASS. Source acceptance and hosted qualification are distinct from owner
+future learning, source coverage, physical playback and full Goal acceptance.
+
+Clean accepted-source image4259b74a2bd03b71eaba8b759a7667c99608f49c5d1808ff9696f0567be6bd14
+deployed by application-only replacement at16:37:50.506Z; UI container
+ff6c32892faacfd6dcc48260b584ac4215a45eb5bb306fb7185765f6d799d597.
+All110 installed Python/SQL files match clean9ee, source-map SHA256
+83f77cb3069b21e5e2eb87882a6c1f412cddb4853801900125ef1bb0207782c9;
+all47 package versions match unchanged lock and11 installed client/unit files
+match tracked templates. Core authenticatedREADY/stackREADY, UIhealth200,
+sessionlessbootstrap401; Core/helper/WiFi/relay/voice/supervisor/nativeUI
+active0restarts after controlled recovery. PostgreSQL/OPA/HA/searx container
+IDs/start times unchanged. No host/root/Android/database restart or source edit.
+
+Aligned16:37:00 and16:39:02 read-only snapshots preserve exact17tasks/1profile/
+5calendar/46ambiguities full-row digests; activeprovider/action0. Memory314→365
+is accounted-for existing-review reconciliation:51 new versioned completion
+records,31 terminal-unsuccessful/20 successful, ALL automatic_evaluation
+NOT_ELIGIBLE. All51 old→new and new→old links are intact. Reconstructing the
+prior314 rows by their pre-supersession status/link exactly returns digest
+c7218a748d877610a76431b804041579. These are not51 new learned conclusions or
+automatic forecasts, and no historical model/action was replayed by the parent.
+
+A natural new AUTONOMOUS_ATTENTION request at16:38:53 endedFAILED with
+required-delivery CANCELLED/CURRENT_POLICY_NOT_REQUIRED; source-of-past-failure
+cause is not proven. It is not a passing alert outcome or a new ambiguity.
+Existing Stage8 correction remains required; no historical request reset/replay.
+Before stop89CANCELLED/677COMPLETED/145FAILED/285NO_ACTION/134PENDING/
+33RECOVERY_REQUIRED/13UNKNOWN_RESULT; after146FAILED with other counts unchanged.
+Only historical actions3SUCCEEDED/1POLICY_DENIED; requiredspeechclaims0.
+
+Ten private configuration/profile/credential hashes and separate original
+Graft bytes unchanged. A transient comparison used genericconfig.toml instead
+of actual sentry-resident.config.toml; correct resident hash04b2d03d matches
+prior preservation baseline. No private file was restored/edited. Initial
+package comparison failed because expectedpydantic_core and normalized
+pydantic-core keys differed; symmetric normalization passes47/47 with no
+version changes. First heredoc read lacked docker -i and executed no SQL;
+corrected version-linked preservation query produced the actual proof above.
+These probe negatives are retained, not product regressions or silent passes.
+
+Independent effective-permission sidecar actualfinal collected and unchanged
+pure guard/argv audit independently rerunexit0:
+ /tmp/anima027a-effective-permission-audit.Au5xAVuW/EVIDENCE.md
+ /tmp/anima027a-effective-permission-audit.Au5xAVuW/audit.py
+E1 direct household-bound resident voice retains Office host executors unlike
+autonomous turns; E2 guard admits engineering/policy/user-unit/.codex/bare.env
+targets and inert synthetic command text. No target opened/executor invoked,
+private runtime profile contents inspected or live exploit demonstrated.
+Installed parent permission/copy metadata is not model-child isolation proof.
+Disposition GAP_ACCEPTED/E1–E2, effective production qualification PARTIAL.
+Next coherent runtime-boundary correction remains required by owner takeover
+sec9, preserving legitimate standalone Office/persona/audio use and developer
+separation; no new brain/store/dependency or profile/model change.
+
+Same sole Coder Stage8 remains ACTIVE only in assigned isolated worktrees;
+actualfinal pending. Planck reused READ-ONLY for disjoint minimal interface/
+regression mapping, nativeinput01a0fd7a-48ef-7dd0-8757-12de961d7269.
+Parent retains ownership/review/main/CI/deploy/Notion. Android session and
+supervisor remain NOT_READY/rootBinder-gated; no vendor receipt/owner wake/
+audible latency/actual future improvement or full MO01–15/A–O completion claimed.
+
+## 2026-10-02T17:47:13Z — Stage8 independent approval-delivery negative evidence
+
+Actual Planck native final collected; primary inspected complete report/current
+source and reran unchanged verifier21 assertions exit0. This means three draft
+defects reproduced, not product PASS: empty post-intent UNSTARTED permits reclaim;
+autonomous opt-out disables ordinary approval result drain; approval transport
+outage returns EMPTY. Anonymous get_status policy probes do not qualify current
+originating principal/request presentation authority. Evidence/fingerprints and
+retained negatives: /tmp/anima027a-stage8-approval-audit.7lSK1hpa/REPORT.md and
+027A NATIVE-ARCHITECT-REVIEWS17:39:13Z. E1/E2 selected exact AST methods, scripted
+SQL/policy/playback; no PG concurrency/currentOPA/model/audio/production exploit.
+Same Coder corrective input01a0fdb2-38cd-74e1-9588-a6cdd657e07d, with exact intended
+scheduled-result delivery and supported current resident/limited presentation
+qualification clarified afterward. New disjoint read-only consumer audit active.
+Stage8 evolving/unaccepted, Stage9 not issued. Accepted main9ee/live4259 and
+SENTRY4909/private bytes unchanged. Current SENTRY voice supervisor correctly
+identified as sentry-voice-supervisor.service and active; a probe of nonexistent
+sentry-supervisor.service was diagnostic path error, not runtime failure. Android
+session/notification supervisor still inactive/rootBinder-gated. Full Goal ACTIVE.
+
+## 2026-10-02T18:05:59Z — Stage8 connected draft check and visible consumer gap
+
+Parent29 real isolated PG/currentOPA target cases pass, but selected source
+changed during run, wrapperexit3: not final-source acceptance. Both temporary
+containers removed; XML8fbdb795...f822b1 and before/after manifests retained in
+/tmp/anima-stage8-architect-current.qui2SbnA. Actual Planck task-consumer final
+independently reproduced5Python+3Node E2 checks: current saved tasks have a lane
+under autonomous opt-out, while mounted Tasks snapshots and late text retrieval
+remain stale. Exact fake hooks are not real browser/media proof. Same sole Coder
+assigned existing UI invalidation/bounded retry/desktop-phone regression; no
+source accepted, committed or deployed, no owner effect/model invocation.
+See same-time native review for exact sources/limitations. Goal remains full
+MO01–15/A–O ACTIVE; Android owner-root and Stage9 authority gap remain separate.
+## 2026-10-02T18:16:27Z — Parallel verification preserved single-Coder ownership
+
+PROGRESS, not Stage8 acceptance. Same native Leibniz implementation handle is
+live; read-only Planck result-scope/privacy audit is live, actual final pending
+for both. Parent inspected the mounted-task revision refresh and exact-request
+15-read/28-second late-result retry draft; these reads do not replay work. The
+connected browser fixture uses real Core/PG/OPA and scripted model/delayed
+ephemeral publication; current fixture PLAN_VALIDATE diagnostics are retained
+negative synthetic evidence, not a real provider outage or browser PASS.
+Independent frozen-check wrapper syntax and both evolving worktree diff checks
+pass; wrapper now covers whole product/test/policy/UI source custody and must
+use a fresh tag. No duplicate run against still-changing source was counted.
+Main9ee and accepted live Stage7 remain unchanged. Full Goal ACTIVE; Stage9
+prepared only. No product commit/deployment, private profile modification,
+owner-store action, LLM invocation or playback performed by primary here.
+## 2026-10-02T18:26:11Z — Two narrow privacy/current-identity gaps confirmed
+
+PROGRESS / CORRECTION REQUIRED. Actual read-only Planck final collected through
+native wait, fully read, then unchanged verifier independently rerun exit0:
+/tmp/anima027a-stage8-disclosure-audit.ecMyRb0u/verify.py,
+SHA61d4eb326b701bf4223f67d6a07f35a288ba409b463f615d32e7cb207ff61728.
+Twelve E2 selected-exact-method/synthetic-driver groups reproduce retired-person
+UI disclosure and arbitrary receipt value retention; negative tenant/principal/
+edge/household/unknown-key controls remain distinct. Six whole-file before/after
+hashes match final test, prior inspection drift retained. No actual owner
+disclosure, database persistence, production exploit, cookie-auth, PostgreSQL,
+OPA or audible evidence claimed. Report and original verifier preserved.
+
+Same sole Coder correction01a0fddd-bd13-7bc0-a1ae-2081b65881ed requires current
+commissioned identity retirement rejection while preserving historical Graph
+reads, current due-creator authority, typed content-free receipt values before
+durable persistence, connected regression and honest valid callback controls.
+Read-only agent closed after actual result; no competing source ownership.
+
+Primary separately reproduced current SentryChat terminal-before-live-prose
+early exit at E2, exact-loop source fingerprint unchanged, one synthetic read,
+zero model/store/media calls. Same Coder fixes within originating-result contract.
+Current evolving browser-sixth desktop PASS/phone FAIL and two new final-gate
+fixture failures are not final qualification. Safety-spec risk mismatch and
+already-satisfied device preconditions must be fixed in fixtures, not bypassed
+in production guards. Hosted Stage8 target binding remains required. Stage8 not
+accepted/published/deployed; Stage9 prepared only. Full Goal ACTIVE; root Android,
+actual owner/vendor/playback and prospective outcomes gates remain.
+## 2026-10-02T18:30:00Z — Chat retrieval correction independently checked
+
+Separate unchanged fixed-source verifier
+/tmp/anima-stage8-chat-terminal-audit.bYx4DG/verify-fixed.mjs exits0 with four
+E2 exact-loop synthetic controls: delayed reply on second GET, bounded honest
+unavailability, UNKNOWN_RESULT one-read stop and401 one-read authentication
+expiry. Actual corrected source SHAe56b72dd484151bc99603d957c9a8f00fdbc45d42c928925a1068ee59639f399
+matches before/after. Original failed-loop evidence preserved separately.
+Exact request-only GETs, zero product-model/store/media calls, no authority or
+operational replay. Same Coder notified; no full Stage8 acceptance.
+
+Independent target wrapper now selects all six Stage8 modules; isolated
+collection finds47 parent cases (4+24+6+3+3+7), not47 tests executed/passed.
+Source/tests remain evolving, target must refreeze and run with whole-source
+custody. Initial ANIMA full suite has one old synthetic request fixture missing
+principal_id; SENTRY evolving full report594 run/7skip, not594 independent PASS.
+No final-source promotion of these interim logs. Exact full regression, receipt/
+retirement corrections, target browser, hosted binding and actual native final
+remain pending. Main/deployed/private state unchanged; full Goal ACTIVE.
+## 2026-10-02T18:41:30Z — Same-contract receipt/no-replay correction retained
+
+PROGRESS. Separate primary corrected-method verification passes active
+identity3/retired denials3/callback sources4/malformed receipt negatives11,
+all exact selected source with unchanged before/after hashes. Actual PC/Pi
+callback token/state source inspected and compatible. E2 only, not final
+connected/frozen/browser/production acceptance. The chat correction likewise
+has four independent exact-loop controls; original negative evidence preserved.
+
+Actual existing required-alert transition/_save then independently reproduced
+three same-contract defects via owned SQL driver: empty post-intent UNSTARTED
+reclaim; arbitrary UNKNOWN receipt values in UPDATE; non-timestamp DELIVERED
+completion in UPDATE. Source7e56aa5bbc0069f7638d3c21efcc096229cba4cee812349c7183204b5b325916,
+exit0, no during-check drift, zero real store/model/media calls. Same sole Coder
+correction01a0fdeb-e3c1-7323-a7c5-5f0c5f02c84a requires consistent typed content-
+free receipts and no ambiguous post-intent reclaim while preserving safe busy
+retry, canonical first speech, OPA/fences/expiry. This is not evidence an actual
+owner alert was replayed or private content retained. Same full Goal/027A;
+Stage9 prepared only, no new architecture or product scope. Source qualification,
+actual native final and publication/deployment remain pending.
+
+## 2026-10-02T18:55Z — Connected result retrieval corrected; independent receipts
+
+PROGRESS, not acceptance. Actual browser-eighth500 was independently traced to
+conversation_result reading nonexistent IntelligenceRequest.result_status.
+Same Coder correction01a0fdf3-dac7-7dc1-a706-55b12b4fa67e; draft now reads
+existing content-free durable store projection. Browser-ninth desktop/phone
+both PASS with real Core/PG/currentOPA and scripted model/HA fixture, no owner
+audio/model/physical operation. Before-freeze result, not final-source proof.
+
+Primary corrected required-alert exact helper/transition/_save independently
+passes14 synthetic SQL-driver controls with before/after source hashes equal:
+empty post-intent no-start→UNKNOWN; pre-intent busy and explicit consistent
+no-start→PENDING; contradictory receipts→UNKNOWN; malformed/private values
+rejected without UPDATE; local/Pi completion accepted; synthetic callback not
+actual delivery. Separate verify-required-fixed.py preserves original negative
+reproducer. This is E2, not real playback or connected final acceptance.
+Planck resumed READ-ONLY hosted-target discovery/coverage review, actual final
+pending. Parent seven-module independent frozen PG/currentOPA target prepared.
+Same sole Coder final/freeze/full regression pending; Stage9 prepared only.
+Accepted published/deployed pair and private/Graft state remain unchanged.
+
+## 2026-10-02T19:01:11Z — Independent connected74 and hosted-target review
+
+PROGRESS. Primary seven-module corrected candidate run completed203.051s,
+74 testcase parents PASS0skip/failure/error. Fresh pinned PG/currentOPA,
+stage2 NOSUPERUSER/NOCREATEDB/NOCREATEROLE; explicit paired SENTRY source,
+synthetic model/HTTP/playback only. XML SHA256
+0dac7be8ffeb9768e234806749ffa6db25bfeeb0b0e156d7298df94f90e56238.
+Whole selected source custody before/after equal and33-file manifest
+d4aad50574e7e6bf9a32aa13b51bf9ecd793b0385596e73061d22b6caff57858
+matches. Owned labeled containers cleaned; zero owner store/model/media calls.
+
+Actual Planck hosted-coverage final collected/fully read and unchanged script
+cfe497110145b62d201c648bac61584e878467ac78fab4aba0508781a671a4ac
+rerunexit0. E1 mapping/E2 synthetic guards, not hosted acceptance. Six PG
+modules70 runtime cases reconcile with parent74 including four generic alert
+cases. Cross-repo env/checkout and zero-skip guards are present; parent still
+must pin actual immutable accepted published SENTRY head, not placeholder.
+Browser two-project workflow preserved alongside Stage2–7 targets. PG guard's
+lack of positive/per-module count is an explicit limitation; current populated
+target reconciles70, not a demonstrated empty-target pass. Reviewer closed.
+
+Full-story verification traced mounted UI→authenticated API→Core/durable state→
+ephemeral subscriber→UI. Both current synthetic screenshots inspected; fixed
+verified outcome and late ordinary response rendered. Approval is API-submitted,
+not Approve-button usability or real owner speech proof. No cosmetic changes.
+Same sole Coder actual final/full frozen regression pending. No source acceptance,
+commit/push/deploy/model/owner action; Stage9 prepared/full Goal remains open.
+
+## 2026-10-02T19:11Z — Frozen broad regression exposes weather precondition failure
+
+CONTINUE/CORRECT. Primary parsed full-frozen.xml:1607 testcase parents,
+1522PASS/81SKIP/4FAILED/0ERROR;43 subtests are separately reported, not added
+to parent counts. Whole377-file source fingerprint before/after unchanged
+2c5e651178310a8f8073ecd9ebda399c581685d7c2dcc548984d5b1dabfc4a14.
+Owner future-weather case fails TOOL_NOT_BOUND_TO_REQUEST. Resident actual
+consumer three cases return UNKNOWN_RESULT/NOT_ATTEMPTED. No live owner
+incident or production cause inferred. Independent isolated74 pass remains
+bounded, cannot outweigh broad regression. Coder's order-disabled-before log
+reproduces all4; commission/isolation cause still under investigation.
+Same Coder direct correction01a0fe05-a92b-7e31-9966-a39e8a7cbbb8 forbids
+weakening frozen catalogue, post-freeze binding mutation or omitted tests.
+Preserve negatives and require corrected coherent freeze/full/native final.
+No product acceptance, commit/push/deployment or new owner/model/media action.
+
+## 2026-10-02T19:18Z — Corrected independent74 source-frozen target
+
+PROGRESS. Fresh restricted-role PG/currentOPA run corrected-2 completedexit0,
+74PASS0skip/failure/error in208.587s. XML
+fe8050b396d677bcf62804786b0f7a1d60a19fb942f0102050dd054589568620.
+Whole selected before/after custody equal; wrapperdigest
+bc6e4174483848bfd600da9eedd1e0c9c01a893ea00c6df194bbc4d9ae91d904.
+Exact module counts alert4/owner3/delivery22/approval33/privacy2/task7/resident3.
+Owned labeled containers stopped/absent.33-file corrected manifest23ec2 differs
+only in two weather qualification fixtures; production frozen binding untouched.
+Independent existing requiredreceipt14 E2 and delayedchat4 E2 unchanged scripts
+rerunexit0. React checklist review verifies primitive dependencies, abort/bounded
+result reads and parallel task/calendar fetching; no redesign/source edits.
+Coder order-sequence-corrected6PASS; intermediateorder-disabled-corrected
+1FAILED4PASS remains negative evidence, not blanket correction success.
+Full-refrozen/native result still pending; this is target E3, not final source
+acceptance/publication/deployment. Read-only deployment preflight active,
+same sole implementation Coder retained; Stage9 prepared only/fullGoal open.
+
+## 2026-10-02T19:34Z — Stage8 actual final independently source accepted
+
+SOURCE ACCEPTED bounded E4. Actual native final collected, complete canonical
+result/refinement read; all33 original integrated source hashes equal corrected
+manifest23ec2. Full ANIMA1526PASS/81SKIP/43successful subreports, full SENTRY
+587PASS/7SKIP; parent fresh restrictedPG/currentOPA74PASS0skip/sourceunchanged,
+mounteddesktop/phone2, OPA9/9, static/frontend/current custody pass. Exact XML/
+log/evidence index and retained negatives: STAGE8-ARCHITECT-ACCEPTANCE.md.
+Only two fixture commissioning corrections; no catalogue/policy relaxation.
+Old full4fail/browser/static/OPA/nmp-script diagnostics remain honestly failed;
+unexpected npm diagnostic disclosed, no blanket zero-side-effect claim.
+
+Read-only actual deployment preflight collected/closed; parent checked actual
+global ExecStop and supervisor recovery. Never restart anima-pc.service; planned
+matched app-only replacement holds supervisor then voice/helper/Core, restores
+supervisor LAST. Source integration is not hosted CI/deployment/owner outcome.
+Publish SENTRY FIRST then immutable ANIMA paired-source pin. Graft/private state
+preserved; live remains accepted Stage7. Stage9 effective-authority gap prepared
+until compatible issuance; full MO01–15/A–O/027A/root/vendor/owner/future open.

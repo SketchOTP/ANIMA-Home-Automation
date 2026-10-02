@@ -247,6 +247,7 @@ class JournalEventWatcher:
                    AND (%s::text IS NULL OR metadata->>'household_id'=%s)
                    AND ((source='anima.household_presence'
                          AND event_type='household.presence.connection_changed')
+                        OR (source='anima:durable-task' AND event_type='scheduled_reasoning_due')
                         OR (source='anima.ring' AND event_type IN
                             ('household.ring.motion','household.ring.doorbell'))
                         OR (source='anima:senseguard-policy'
@@ -272,7 +273,8 @@ class JournalEventWatcher:
                 event = self.journal.get(str(item["event_id"]))
                 position = int(item["journal_position"])
                 if event is not None and (
-                    timedelta(0) <= self.clock() - event.occurred_at <= timedelta(seconds=600)
+                    (event.source == "anima:durable-task" and event.occurred_at <= self.clock())
+                    or timedelta(0) <= self.clock() - event.occurred_at <= timedelta(seconds=600)
                 ):
                     try:
                         self.dispatch(event, position)
@@ -516,6 +518,7 @@ class CoreUICommandGateway:
     household_graph: PostgresHouseholdGraph | None = None
     sentry_identity_profiles: SentryIdentityProfileClient | None = None
     scene_application: SceneApplication | None = None
+    approval_results: Any | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -1145,6 +1148,10 @@ class CoreUICommandGateway:
                 raise UICommandError("APPROVAL_NOT_ACTIONABLE")
             result = _safe_action_result(execution, pending.tool_id)
         action = self.action_executor.store.get(pending.action_id)
+        if action is not None and self.approval_results is not None:
+            origin_result = self.approval_results.resolve(pending, action, choice)
+            if origin_result is not None:
+                result["originating_result"] = origin_result
         result = _safe_confirmation_result(
             result,
             decision=choice,
@@ -1369,6 +1376,8 @@ class CoreRuntime:
     event_dispatcher: Callable[[EventEnvelope, int], Any] | None = None
     journal_event_watcher: JournalEventWatcher | None = None
     scene_application: SceneApplication | None = None
+    owner_task_results: Any | None = None
+    approval_results: Any | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -1417,6 +1426,7 @@ class CoreRuntime:
             household_graph=self.graph,
             sentry_identity_profiles=SentryIdentityProfileClient.from_environment(),
             scene_application=self.scene_application,
+            approval_results=self.approval_results,
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -1456,6 +1466,10 @@ class CoreRuntime:
             agent_memory_enabled=os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true",
             learning_service=self.learning_service,
             scene_application=self.scene_application,
+            owner_task_guard=(
+                self.owner_task_results.validate_request if self.owner_task_results else None
+            ),
+            approval_results=self.approval_results,
         )
 
     def sentry_sensor_status(self, household_id: UUID) -> dict[str, Any]:
@@ -1492,6 +1506,8 @@ class PostgresCommissionedIdentityResolver:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         if len(targets) != 1 or targets[0].kind != NodeKind.PERSON:
             raise PrincipalMappingConflict("PRINCIPAL_MAPPING_CONFLICT")
+        if targets[0].retired_at is not None:
+            raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         households = self.graph.households_for_member(targets[0].canonical_id)
         if not households:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
@@ -1504,7 +1520,7 @@ class PostgresCommissionedIdentityResolver:
 
     def resolve_principal(self, principal_id: UUID) -> tuple[UUID, UUID, str | None]:
         person = self.graph.get_node(principal_id)
-        if person is None or person.kind != NodeKind.PERSON:
+        if person is None or person.kind != NodeKind.PERSON or person.retired_at is not None:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         households = self.graph.households_for_member(principal_id)
         if not households:
@@ -1528,14 +1544,14 @@ class PostgresCommissionedIdentityResolver:
 
     def resolve_role(self, principal_id: UUID) -> str | None:
         person = self.graph.get_node(principal_id)
-        if person is None or person.kind != NodeKind.PERSON:
+        if person is None or person.kind != NodeKind.PERSON or person.retired_at is not None:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         role = person.metadata.get("semantic_role")
         return role.strip() if isinstance(role, str) and role.strip() else None
 
     def resolve_access_level(self, principal_id: UUID) -> str:
         person = self.graph.get_node(principal_id)
-        if person is None or person.kind != NodeKind.PERSON:
+        if person is None or person.kind != NodeKind.PERSON or person.retired_at is not None:
             raise PrincipalMappingRequired("PRINCIPAL_MAPPING_REQUIRED")
         value = str(person.metadata.get("sentry_access", "LIMITED")).strip().upper()
         if value not in {"LIMITED", "UNRESTRICTED"}:
@@ -1917,6 +1933,11 @@ def build_postgres_core(
         automation_store,
         memory_service,
     )
+    from anima_ha.approval_results import ApprovalResults
+
+    runtime.approval_results = ApprovalResults(
+        intelligence_store, action_executor.store, action_executor.pending_approvals
+    )
 
     def scene_authority(identity: IdentityContext) -> bool:
         if identity.principal_id is None:
@@ -2007,8 +2028,16 @@ def build_postgres_core(
         household_evidence,
         situation_coverage,
     )
+    from anima_ha.owner_task_results import OwnerTaskResults
+
+    assert isinstance(task_service.store, PostgresTaskStore)
+    runtime.owner_task_results = (
+        OwnerTaskResults(runtime, task_service.store, UUID(household_value))
+        if household_value and intelligence_provider == IntelligenceProviderMode.SENTRY
+        else None
+    )
     initiative_context = HouseholdInitiativeContext(
-        database_url, learning_service, household_evidence
+        database_url, learning_service, household_evidence, runtime.owner_task_results
     )
     runtime.initiative_context = initiative_context
     from anima_ha.alert_delivery import initialize_required_delivery
@@ -2204,6 +2233,23 @@ def build_postgres_core(
         def dispatch_journal_event(event: EventEnvelope, position: int) -> None:
             from anima_ha.household_event_context import project_event
 
+            if (
+                event.source == "anima:durable-task"
+                and event.event_type == "scheduled_reasoning_due"
+            ):
+                from anima_ha.learning_review_runner import LearningReviewRunner
+
+                # Saved learning reviews keep their own consent/catalogue and
+                # idempotent exact handoff. They are not ordinary owner work.
+                task = learning_service.task_service.store.get(UUID(event.payload["task_id"]))
+                if task.provenance.get("kind") == "HOUSEHOLD_REVIEW":
+                    runner = LearningReviewRunner(runtime, learning_service, household_id)
+                    runner._append_review(event)
+                    return
+                if runtime.owner_task_results is not None:
+                    runtime.owner_task_results.handoff(event, position)
+                    return
+                raise ValueError("OWNER_TASK_CURRENT_SCOPE_UNAVAILABLE")
             projected = project_event(
                 {
                     "event_id": event.event_id,

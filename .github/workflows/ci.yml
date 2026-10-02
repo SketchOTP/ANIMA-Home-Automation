@@ -11,6 +11,10 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      # Architect must pin the published accepted Stage8 SENTRY commit before
+      # publication. Never substitute mutable main or the pre-Stage8 baseline.
+      SENTRY_STAGE8_QUALIFICATION_REF: 6eafe70dcf0674ca66a8df866105965705dff841
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -73,7 +77,17 @@ jobs:
           docker compose exec -T db pg_isready -U anima -d anima
           curl --fail --silent http://127.0.0.1:18181/health >/dev/null
           uv run --locked --group dev anima-migrate
-      - name: Qualify Stage2–7 delivery, owner workflows and learning against isolated PostgreSQL
+      - name: Validate immutable Stage8 second-source custody
+        run: |
+          python -c 'import os,re; assert re.fullmatch(r"[0-9a-f]{40}", os.environ["SENTRY_STAGE8_QUALIFICATION_REF"]), "Architect must pin the accepted immutable Stage8 SENTRY commit"'
+      - name: Check out accepted immutable Stage8 SENTRY qualification source
+        uses: actions/checkout@v5
+        with:
+          repository: SketchOTP/SENTRY
+          ref: ${{ env.SENTRY_STAGE8_QUALIFICATION_REF }}
+          path: .stage8-sentry-source
+          persist-credentials: false
+      - name: Qualify Stage2–8 delivery, owner workflows and learning against isolated PostgreSQL
         env:
           PYTHONPATH: src
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -81,6 +95,7 @@ jobs:
           ANIMA_STAGE2_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
           ANIMA_VENDOR_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
           ANIMA_STAGE3_TEST_OPA_URL: http://127.0.0.1:18181
+          ANIMA_INTELLIGENCE_PROVIDER: sentry
         run: |
           set -euo pipefail
           docker compose exec -T db psql -U anima -d postgres -v ON_ERROR_STOP=1 \
@@ -106,6 +121,17 @@ jobs:
             --junitxml=/tmp/anima-owner-evidence/stage6-owner-postgres.xml
           uv run --locked pytest -q tests/test_stage7_learning_postgres.py \
             --junitxml=/tmp/anima-owner-evidence/stage7-learning-postgres.xml
+          export SENTRY_STAGE8_QUALIFICATION_SOURCE="$GITHUB_WORKSPACE/.stage8-sentry-source"
+          test "$(git -C "$SENTRY_STAGE8_QUALIFICATION_SOURCE" rev-parse HEAD)" = "$SENTRY_STAGE8_QUALIFICATION_REF"
+          .venv/bin/python -c 'import anima_ha,os; from pathlib import Path; assert Path(str(anima_ha.__file__)).resolve().is_relative_to(Path.cwd()/"src"); print(anima_ha.__file__, os.environ["SENTRY_STAGE8_QUALIFICATION_SOURCE"])' \
+            > /tmp/anima-owner-evidence/stage8-source-binding.txt
+          printf '%s\n' "$SENTRY_STAGE8_QUALIFICATION_REF" > /tmp/anima-owner-evidence/stage8-sentry-commit.txt
+          uv run --locked pytest -q tests/test_stage8_owner_postgres.py \
+            tests/test_stage8_task_result_postgres.py tests/test_stage8_approval_postgres.py \
+            tests/test_stage8_delivery_postgres.py tests/test_stage8_resident_task_postgres.py \
+            tests/test_stage8_privacy_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/stage8-owner-results-postgres.xml
+          .venv/bin/python -c 'import xml.etree.ElementTree as E; r=E.parse("/tmp/anima-owner-evidence/stage8-owner-results-postgres.xml").getroot(); assert all(int(s.get(k,"0"))==0 for s in r.iter("testsuite") for k in ("skipped","failures","errors")), "Stage8 target qualification cannot skip"'
       - name: Qualify late device entities against isolated PostgreSQL
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -570,6 +596,48 @@ jobs:
           done
           (cd ui && ./node_modules/.bin/playwright test -c playwright.stage7.config.ts \
             --reporter=line,junit --output=/tmp/anima-owner-evidence/stage7-browser)
+      - name: Qualify Stage8 mounted owner task and originating results on desktop and phone
+        env:
+          PYTHONPATH: src
+          ANIMA_STAGE2_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
+          ANIMA_STAGE3_TEST_OPA_URL: http://127.0.0.1:18181
+          ANIMA_INTELLIGENCE_PROVIDER: sentry
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: /tmp/anima-owner-evidence/stage8-browser.xml
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/anima-owner-evidence
+          task_isolation="$(mktemp -d /tmp/anima-stage8-ci-browser.XXXXXX)"
+          export SENTRY_AUTHORITY_ROOT="$task_isolation/authority"
+          export SENTRY_AGENT_WORKSPACE="$task_isolation/workspace"
+          export XDG_STATE_HOME="$task_isolation/state" CODEX_HOME="$task_isolation/codex"
+          export XDG_CONFIG_HOME="$task_isolation/config"
+          unset SENTRY_CODEX_HOME
+          .venv/bin/python -c 'import anima_ha; from pathlib import Path; assert Path(str(anima_ha.__file__)).resolve().is_relative_to(Path.cwd()/"src"); import socket; p=socket.socket(); p.bind(("127.0.0.1",18338)); p.close()'
+          .venv/bin/python tests/serve_stage8_owner_results.py \
+            > /tmp/anima-owner-evidence/stage8-browser-fixture.log 2>&1 &
+          fixture_pid=$!
+          cleanup() {
+            fixture_status=$?
+            trap - EXIT
+            kill -TERM "$fixture_pid" 2>/dev/null || true
+            for attempt in {1..10}; do
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then break; fi
+              sleep 1
+            done
+            if kill -0 "$fixture_pid" 2>/dev/null; then kill -KILL "$fixture_pid"; fi
+            wait "$fixture_pid" 2>/dev/null || true
+            exit "$fixture_status"
+          }
+          trap cleanup EXIT
+          for attempt in {1..30}; do
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then exit 1; fi
+            if curl --fail --silent http://127.0.0.1:18338/healthz >/dev/null; then break; fi
+            if [[ "$attempt" == 30 ]]; then exit 1; fi
+            sleep 1
+          done
+          (cd ui && ./node_modules/.bin/playwright test -c playwright.stage8.config.ts \
+            --reporter=line,junit --output=/tmp/anima-owner-evidence/stage8-browser)
+          .venv/bin/python -c 'import xml.etree.ElementTree as E; r=E.parse("/tmp/anima-owner-evidence/stage8-browser.xml").getroot(); assert sum(int(s.get("tests","0")) for s in r.iter("testsuite"))==2; assert all(int(s.get(k,"0"))==0 for s in r.iter("testsuite") for k in ("skipped","failures","errors"))'
       - name: Publish Phase 12 H5 evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,39 @@
 # Authority Project-State Index
 
+Current19:34Z: Stage8 actual native final independently SOURCE ACCEPTED; all33
+integrated source hashes match corrected manifest. CURRENT and existing027A
+STAGE8-ARCHITECT-ACCEPTANCE retain exact suites/custody/negatives and deployment
+runbook. Immutable paired-source publication/hostedCI pending; live Stage7
+unchanged. Stage9 prepared until compatible issuance; full Goal active.
+
+
+Current19:11Z: Stage8 frozen broad regression4 failures retained; isolated74
+pass is not full acceptance. Same sole Coder resolving request-bound weather
+preconditions/isolation; native final/corrected full regression pending.
+Read-only hosted coverage final independently checked and reviewer closed.
+CURRENT/native reviews retain exact negatives and immutable live baseline;
+Stage9 prepared only/full Goal remains active.
+
+Current18:51Z: Stage8 same sole Coder active, native final/freeze pending.
+Browser-eighth actual route500 cause independently identified and assigned;
+draft correction is not acceptance. Planck READ-ONLY hosted-target coverage
+review active; parent independently checks source/receipt/current-scope and
+frozen realPG/currentOPA. CURRENT/native reviews preserve negative evidence.
+Accepted9ee/live4259/SENTRY4909 unchanged; Stage9 prepared only/full Goal open.
+
+Current16:42Z: Stage7 exact9ee CI37031786052 PASS/artifact11237773633;
+controlled image4259/source110/lock47/installed11 live verified. CURRENT and
+native reviews retain version-linked Memory preservation, probe negatives,
+private/infrastructure continuity and independent direct-voice permission gap.
+Same sole Coder Stage8 active; Planck read-only minimal boundary mapping.
+Full MO01–15/A–O Goal/027A active, no physical/future/completion acceptance.
+
+Current continuation — 2026-10-02T16:13Z: Stage7 published9ee8128/CI37031786052
+pending, clean candidate110source/47packages matched/notdeployed; actual live
+Stage6 unchanged. Same Coder issued canonical STAGE8-ASSIGNMENT in new compatible
+worktrees; read-only verifier effective-permission audit disjoint. Three Notion
+page complete checkpoint readbacks MATCH. CURRENT has exact identities/gates.
+
 Latest disposition — 2026-10-02T16:05Z: Stage7 actual native final independently
 SOURCE ACCEPTED,17-file freeze integrated; publication/exact-headCI/deployment
 pending. Native review/CURRENT/canonical result retain full counts and negatives.

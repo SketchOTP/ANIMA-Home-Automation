@@ -31,6 +31,7 @@ from uuid import UUID
 import psycopg
 
 from anima_ha.alert_delivery import PostgresRequiredDelivery
+from anima_ha.approval_results import originating_playback_evidence
 from anima_ha.db.migrate import migrate
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
@@ -545,6 +546,10 @@ class CoreSentryHTTPService:
                     household_id=request.household_id,
                     semantic_action="notifications.send",
                     origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+                    # Same externally observable operation/risk as the
+                    # registered notification tools. UNKNOWN cannot exercise
+                    # the existing configured-alert OPA rule.
+                    graph_metadata={"external_side_effect": True},
                     correlation_id=str(request.request_id),
                 ),
                 IdentityContext(request.household_id, None, Assurance.ANONYMOUS),
@@ -557,7 +562,16 @@ class CoreSentryHTTPService:
                 ),
             )
             if decision.decision != Decision.ALLOW:
-                result.update(allowed=False, required=False, reason="CURRENT_OPA_NOT_ALLOWED")
+                result.update(
+                    allowed=False,
+                    required=False,
+                    reason="CURRENT_OPA_NOT_ALLOWED",
+                    revocation_confirmed=(
+                        decision.decision == Decision.DENY
+                        and decision.reason_code
+                        not in {"POLICY_UNAVAILABLE", "POLICY_INVALID_RESULT"}
+                    ),
+                )
         return result
 
     def required_alert(
@@ -573,7 +587,9 @@ class CoreSentryHTTPService:
         if operation == "next":
             if set(body) != {"origin", "not_before", "max_age_seconds", "active_instance_id"}:
                 raise ValueError("INVALID_ALERT_FILTERS")
-            window = self.auto_wake_claims.window(body)
+            window = self.auto_wake_claims.window(body, deterministic_delivery=True)
+            if window.not_before is None:
+                raise ValueError("INVALID_ALERT_FILTERS")
             if (
                 self.voice_settings_store is None
                 or self.voice_settings_store.get(principal.household_id)["active_instance_id"]
@@ -634,6 +650,9 @@ class CoreSentryHTTPService:
             or evidence.get("actual_audible_start_at") is not None
         ):
             raise ValueError("INVALID_PLAYBACK_EVIDENCE")
+        from anima_ha.alert_delivery import playback_evidence
+
+        evidence = playback_evidence(evidence)
         return self.required_delivery.transition(
             UUID(str(body["request_id"])),
             household_id=principal.household_id,
@@ -647,6 +666,85 @@ class CoreSentryHTTPService:
             evidence=evidence,
             phase=str(body["phase"]),
         )
+
+    def approval_reply(
+        self, body: dict[str, Any], principal: SentryServicePrincipal | None, *, operation: str
+    ) -> dict[str, Any]:
+        """Read/present this registered client's verified originating result.
+
+        No execution binding, provider lease, model text or action continuation
+        is issued. Current credentials/household, exact Core association and
+        selected voice destination remain mandatory.
+        """
+        if (
+            principal is None
+            or "DIRECT_SENTRY_INTERACTION" not in principal.allowed_origins
+            or self.boundary.approval_results is None
+            or self.voice_settings_store is None
+        ):
+            raise ServiceAuthError("originating reply service unavailable")
+        if operation == "next":
+            if set(body) != {"active_instance_id"}:
+                raise ValueError("INVALID_ORIGINATING_REPLY_FILTERS")
+        else:
+            if (
+                set(body)
+                != {
+                    "request_id",
+                    "generation",
+                    "delivery_token",
+                    "active_instance_id",
+                    "phase",
+                    "outcome",
+                    "evidence",
+                }
+                or body["phase"] != "APPROVAL"
+                or type(body["generation"]) is not int
+                or not isinstance(body["delivery_token"], str)
+                or not isinstance(body["evidence"], dict)
+                or set(body["evidence"])
+                - {
+                    "playback_state",
+                    "timing_source",
+                    "playback_process_started_at",
+                    "playback_completed_at",
+                    "actual_audible_start_at",
+                }
+                or len(json.dumps(body["evidence"])) > 2048
+                or body["evidence"].get("actual_audible_start_at") is not None
+            ):
+                raise ValueError("INVALID_ORIGINATING_REPLY_RECEIPT")
+            evidence = originating_playback_evidence(body["evidence"])
+            body = {**body, "evidence": evidence}
+            if body["outcome"] == "DELIVERED" and evidence.get("playback_state") != "DELIVERED":
+                raise ValueError("INVALID_ORIGINATING_REPLY_RECEIPT")
+            if (
+                body["outcome"] == "UNSTARTED"
+                and evidence
+                and evidence.get("playback_state") != "UNSTARTED"
+            ):
+                raise ValueError("INVALID_ORIGINATING_REPLY_RECEIPT")
+        settings = self.voice_settings_store.get(principal.household_id)
+        if operation == "next" or body.get("outcome") == "PLAYBACK_INTENT":
+            if (
+                settings["sleep_enabled"]
+                or settings["active_instance_id"] != body["active_instance_id"]
+            ):
+                return {"status": "EMPTY", "reason": "CURRENT_DESTINATION_UNAVAILABLE"}
+        response: dict[str, Any] = self.boundary.approval_results.delivery(
+            principal.household_id,
+            principal.client_id,
+            principal.credential_generation,
+            str(body["active_instance_id"]),
+            body,
+            operation=operation,
+            authorize=lambda request, action, pending: (
+                self.boundary.approval_presentation_authority(
+                    request, action, pending, instance=str(body["active_instance_id"])
+                )
+            ),
+        )
+        return response
 
     def authenticate(self, headers: Any) -> SentryServicePrincipal | None:
         # Reloading on every request gives rotation/revocation semantics. A
@@ -686,6 +784,8 @@ class CoreSentryHTTPService:
         request_id: str,
         body: dict[str, Any],
         principal: SentryServicePrincipal | None = None,
+        *,
+        owner_guard: bool = True,
     ) -> Any:
         request = self.boundary.intelligence_store.get(UUID(request_id))
         if request is None:
@@ -696,7 +796,7 @@ class CoreSentryHTTPService:
         if principal is not None and request.household_id != principal.household_id:
             raise ServiceAuthError("service principal household mismatch")
         self.bindings.verify(binding, request, principal)
-        self.boundary._assert_active(request)
+        self.boundary._assert_active(request, owner_guard=owner_guard)
         return request
 
     @staticmethod
@@ -1003,6 +1103,13 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                     body, principal, operation=self.path.rsplit("/", 1)[-1]
                 )
             elif self.path in {
+                "/v1/provider/approval-results/next",
+                "/v1/provider/approval-results/receipt",
+            }:
+                response = service.approval_reply(
+                    body, principal, operation=self.path.rsplit("/", 1)[-1]
+                )
+            elif self.path in {
                 "/v1/provider/requests/eligible",
                 "/v1/provider/requests/wait",
                 "/v1/provider/claims/exact",
@@ -1059,8 +1166,10 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 if len(parts) != 4 or parts[:2] != ["v1", "requests"]:
                     self._write(404, {"error": "NOT_FOUND"})
                     return
-                request = service._request(parts[2], body, principal)
                 operation = parts[3]
+                request = service._request(
+                    parts[2], body, principal, owner_guard=operation != "result"
+                )
                 if operation == "context":
                     response = service.boundary.request_context(request)
                 elif operation == "notification":
@@ -1263,13 +1372,13 @@ def _serve_owned(
         voice_settings_store=SentryVoiceSettingsStore(database_url),
         personality_store=SentryPersonalityStore(database_url),
         required_delivery=PostgresRequiredDelivery(database_url),
-        auto_wake_claims=(
-            PostgresAutoWakeClaims(
-                database_url,
-                enabled_at=aware_timestamp(os.environ["ANIMA_SENTRY_AUTOWAKE_ENABLED_AT"]),
-            )
-            if os.environ.get("ANIMA_SENTRY_AUTOWAKE_ENABLED_AT", "").strip()
-            else None
+        auto_wake_claims=PostgresAutoWakeClaims(
+            database_url,
+            enabled_at=(
+                aware_timestamp(os.environ["ANIMA_SENTRY_AUTOWAKE_ENABLED_AT"])
+                if os.environ.get("ANIMA_SENTRY_AUTOWAKE_ENABLED_AT", "").strip()
+                else None
+            ),
         ),
     )
     learning_runner = None

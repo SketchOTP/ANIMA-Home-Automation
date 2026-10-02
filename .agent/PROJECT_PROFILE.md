@@ -1,5 +1,16 @@
 # Project Profile
 
+Current deployment16:42Z: accepted Stage7 9ee8128/image4259b74a live, source110/
+lock47/installed11 exact; authenticated Core/stack ready, application recovery
+active0restarts. Prospective automatic commissioning is now deployed only for
+future consent-frozen qualified successful reviews; historical51 completion
+versions are NOT_ELIGIBLE, not measured future improvement. State/private/
+infrastructure preservation verified; detailed proof in CURRENT/native reviews.
+Direct household Office-host permission gap independently E1/E2 accepted and
+unresolved; effective production isolation remains PARTIAL. Sole Coder Stage8
+active, read-only sidecar mapping the next bounded runtime correction. Android/
+owner/vendor/playback/future/fullGoal gates remain. Earlier pointers are history.
+
 Stage7 source profile — 2026-10-02T16:05Z: accepted17-file prospective feedback
 composition reuses saved review tasks, canonical qualified source features and
 terminal frozen SENTRY reviews to commission future nonexecuting comparisons.

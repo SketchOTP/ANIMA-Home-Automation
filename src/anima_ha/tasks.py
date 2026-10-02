@@ -1031,7 +1031,20 @@ class PostgresTaskStore:
             cursor.execute(
                 """
                 UPDATE anima_durable_tasks SET status='CANCELLED', updated_at=%s
-                WHERE task_id=%s AND status IN ('ACTIVE','PAUSED') RETURNING *
+                WHERE task_id=%s AND (status IN ('ACTIVE','PAUSED') OR (
+                    status='COMPLETED' AND provenance->>'created_via'='tasks.schedule'
+                    AND provenance->>'origin'='DIRECT_USER'
+                    AND provenance->'owner_result_contract'='1'::jsonb AND EXISTS (
+                        SELECT 1 FROM anima_intelligence_requests request
+                        WHERE request.household_id=anima_durable_tasks.household_id
+                          AND request.principal_id=anima_durable_tasks.creator_principal_id
+                          AND request.request_metadata->'owner_task'->>'task_id'
+                              =anima_durable_tasks.task_id::text
+                          AND request.request_metadata->'owner_task'->>'fingerprint'
+                              =anima_durable_tasks.creation_fingerprint
+                          AND request.origin='DURABLE_TASK' AND request.lifecycle='PENDING'
+                          AND NOT request.provider_invocation_started
+                    ))) RETURNING *
                 """,
                 (at, task_id),
             )
@@ -1041,6 +1054,18 @@ class PostgresTaskStore:
                 row = cursor.fetchone()
             if row is None:
                 raise TaskNotFound(task_id)
+            if row["status"] == "CANCELLED":
+                # Cancelling saved future cognition cannot replay or rewrite a
+                # started provider. Pending exact owner requests are fenced
+                # off in this same transaction; dispatch is not the result.
+                cursor.execute(
+                    "UPDATE anima_intelligence_requests SET lifecycle='CANCELLED',"
+                    "completed_at=%s,updated_at=%s WHERE household_id=%s AND principal_id=%s "
+                    "AND origin='DURABLE_TASK' AND lifecycle='PENDING' "
+                    "AND NOT provider_invocation_started "
+                    "AND request_metadata->'owner_task'->>'task_id'=%s",
+                    (at, at, row["household_id"], row["creator_principal_id"], str(task_id)),
+                )
             cursor.execute(
                 """
                 UPDATE anima_durable_task_runs
@@ -1415,6 +1440,7 @@ class DurableTaskDispatcher:
             "task_id": str(task.task_id),
             "run_id": str(run.run_id),
             "task_type": task.task_type.value,
+            "task_fingerprint": task.fingerprint,
             "summary": task.title,
             "objective": task.payload.get("objective")
             or task.payload.get("question")
@@ -1656,6 +1682,7 @@ class TaskNativePlugin:
                     "origin": invocation_context.origin.value,
                     "tool_request_id": str(invocation_context.tool_request_id),
                     "invocation_ordinal": invocation_context.ordinal,
+                    "owner_result_contract": 1,
                 },
             )
             return {"task": task.to_payload()}

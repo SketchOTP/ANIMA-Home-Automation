@@ -309,6 +309,16 @@ class LearningReviewRunner:
         if not self._tick_lock.acquire(blocking=False):
             return self._report("BUSY")
         try:
+            owner_tasks = getattr(self.core, "owner_task_results", None)
+            owner_report = None
+            if self._provider_ready() and owner_tasks is not None:
+                try:
+                    owner_report = owner_tasks.run_once(now=now)
+                except Exception:
+                    owner_report = {
+                        "status": "FAILED",
+                        "error_category": "OWNER_TASK_DISPATCH_FAILED",
+                    }
             self.learning.reconcile_reviews(self.household_id)
             if not self._provider_ready():
                 report = self._report("DISABLED", error="SENTRY_UNAVAILABLE")
@@ -348,6 +358,8 @@ class LearningReviewRunner:
                         dispatched=dispatched.dispatched,
                         failed=dispatched.failed,
                     )
+            if owner_report is not None:
+                report["owner_tasks"] = owner_report
             self.last_report = report
         except Exception as exc:
             # Never log DB exception strings, payloads, objectives or credentials.

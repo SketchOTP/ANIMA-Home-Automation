@@ -72,6 +72,9 @@ def household_reasoning_context(
     }
     if initiative is not None:
         result["initiative"] = initiative(request)
+        correlation = getattr(initiative, "correlation_context", None)
+        if callable(correlation):
+            result["initiative"]["nearby_events"] = correlation(request)
         feedback = getattr(initiative, "prospective_feedback_context", None)
         if callable(feedback):
             result["prospective_feedback"] = feedback(request)

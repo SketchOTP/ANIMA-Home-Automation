@@ -922,6 +922,7 @@ class SentryAttentionBridge:
         consumer_name: str = "sentry-attention",
         limit: int = 100,
         source_event_id: str | None = None,
+        request_metadata: dict[str, Any] | None = None,
     ) -> list[IntelligenceRequest]:
         if source_event_id is not None and (not source_event_id or limit != 1):
             raise ValueError("event-scoped Attention requires a source event and limit=1")
@@ -1002,6 +1003,7 @@ class SentryAttentionBridge:
                 correlation_id=trigger.correlation_id,
                 causation_id=trigger.source_event_ids[0] if trigger.source_event_ids else None,
                 metadata={
+                    **(request_metadata or {}),
                     "trigger_type": trigger.trigger_type,
                     "priority": trigger.priority,
                     "sentry_event_path": route.value,

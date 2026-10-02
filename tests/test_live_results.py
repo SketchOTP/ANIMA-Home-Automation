@@ -55,12 +55,17 @@ def test_ui_reads_only_live_result_for_the_request_household() -> None:
     request = SimpleNamespace(
         request_id=request_id,
         household_id=HOUSEHOLD,
+        principal_id=PRINCIPAL,
         lifecycle=IntelligenceLifecycle.COMPLETED,
     )
 
     class Store:
         def get(self, value: UUID) -> SimpleNamespace | None:
             return request if value == request_id else None
+
+        def learning_state(self, household_id: UUID, value: UUID) -> dict[str, object]:
+            assert household_id == HOUSEHOLD and value == request_id
+            return {"result_status": "RESPONSE"}
 
     class Bus:
         def get(self, value: UUID, household_id: UUID) -> dict[str, object] | None:
@@ -87,3 +92,7 @@ def test_ui_reads_only_live_result_for_the_request_household() -> None:
     assert result["status"] == "RESPONSE"
     assert result["response"] == "The basement is clear."
     assert result["available"] is True
+    service.sentry_results = None
+    pending_text = service.conversation_result(_identity(), str(request_id))
+    assert pending_text["status"] == "RESPONSE" and pending_text["lifecycle"] == "COMPLETED"
+    assert not pending_text["available"] and pending_text["response"] is None

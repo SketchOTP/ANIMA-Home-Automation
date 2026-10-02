@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from uuid import UUID, uuid5
 
-from anima_ha.action import ActionRequest, resolve_action_safety_spec
+from anima_ha.action import ActionRecord, ActionRequest, PendingApproval, resolve_action_safety_spec
 from anima_ha.intelligence import (
     IntelligenceLifecycle,
     IntelligenceOrigin,
@@ -37,7 +37,9 @@ from anima_ha.plugins import (
     public_invocation_status,
 )
 from anima_ha.policy import (
+    ActionIntent,
     Assurance,
+    Decision,
     EvidenceType,
     IdentityAggregator,
     IdentityContext,
@@ -170,6 +172,8 @@ class CoreSentryBoundary:
     sensor_status_loader: Callable[[UUID], dict[str, Any]] | None = None
     journal_handoff_status_loader: Callable[[], str] | None = None
     scene_application: SceneApplication | None = None
+    owner_task_guard: Callable[[IntelligenceRequest], Any] | None = None
+    approval_results: Any | None = None
 
     def health(self) -> SentryBoundaryHealth:
         return SentryBoundaryHealth(
@@ -440,7 +444,12 @@ class CoreSentryBoundary:
                 result.append(unavailable)
         return result
 
-    def _assert_active(self, request: IntelligenceRequest) -> None:
+    def _assert_active(self, request: IntelligenceRequest, *, owner_guard: bool = True) -> None:
+        if owner_guard and self.owner_task_guard is not None:
+            try:
+                self.owner_task_guard(request)
+            except Exception:
+                raise SentryBoundaryError("OWNER_TASK_CURRENT_SCOPE_UNAVAILABLE") from None
         current = self.intelligence_store.get(request.request_id)
         if current is None or current.claim_owner is None:
             raise SentryBoundaryError("INTELLIGENCE_REQUEST_NOT_FOUND")
@@ -498,6 +507,92 @@ class CoreSentryBoundary:
         if value not in {"LIMITED", "UNRESTRICTED"}:
             raise SentryBoundaryError("ACCESS_LEVEL_INVALID")
         return value
+
+    def approval_presentation_authority(
+        self,
+        request: IntelligenceRequest,
+        action: ActionRecord,
+        pending: PendingApproval,
+        *,
+        instance: str,
+    ) -> dict[str, Any]:
+        """Authorize only presentation of this principal's verified direct result.
+
+        The caller has locked and checked the exact Core request/action/approval
+        and current membership. Reuse the configured notification policy, not
+        an anonymous status probe or the action's execution permission. LIMITED
+        may receive its own fixed outcome; this grants no household tools.
+        """
+        if (
+            request.origin != IntelligenceOrigin.DIRECT_SENTRY_INTERACTION
+            or request.principal_id is None
+            or request.principal_id != pending.principal_id
+            or request.household_id != action.household_id
+            or request.household_id != pending.household_id
+            or action.action_id != pending.action_id
+            or self.policy_role_resolver is None
+            or self.access_level_resolver is None
+        ):
+            return {"allowed": False, "reason": "CURRENT_ORIGINATING_SCOPE_UNAVAILABLE"}
+        role = self.policy_role_resolver(request.principal_id)
+        access = self._access_level(request)
+        # Graph person-management calls household residents 'member'; retain
+        # the actual label in OPA rather than remapping execution permissions.
+        if role not in {"owner", "member", "resident"}:
+            return {"allowed": False, "reason": "CURRENT_ORIGINATING_PRINCIPAL_NOT_ALLOWED"}
+        identity = _identity(request)
+        recorded = request.request_metadata.get("identity_context", {})
+        if recorded:
+            if (
+                recorded.get("household_id") != str(request.household_id)
+                or recorded.get("principal_id") != str(request.principal_id)
+                or recorded.get("conflicting_principals") is not False
+            ):
+                return {"allowed": False, "reason": "ORIGINATING_IDENTITY_PROVENANCE_UNAVAILABLE"}
+            identity = IdentityContext(
+                request.household_id,
+                request.principal_id,
+                Assurance(recorded["assurance"]),
+                tuple(UUID(str(value)) for value in recorded.get("evidence_ids", [])),
+                explanation="Core-recorded originating identity, no approval-derived upgrade",
+            )
+        decision = self.policy_service.evaluate(
+            ActionIntent.create(
+                household_id=request.household_id,
+                principal_id=request.principal_id,
+                semantic_action="notifications.send",
+                origin=RequestOrigin.DURABLE_SYSTEM_TASK,
+                graph_metadata={"external_side_effect": True},
+                correlation_id=str(request.request_id),
+                causation_id=str(action.action_id),
+            ),
+            identity,
+            PolicyContext(
+                principal_role=role,
+                graph_metadata={
+                    # Derived only from the exact current verified Core association,
+                    # never supplied by a service/model or an autonomous opt-in.
+                    "notification_alert_authorized": True,
+                    "notification_route_id": f"sentry-originating-result:{instance}",
+                    "alert_policy_id": str(pending.approval_id),
+                    "originating_request_id": str(request.request_id),
+                    "verified_action_id": str(action.action_id),
+                    "originating_principal_id": str(request.principal_id),
+                    "sentry_access": access,
+                },
+            ),
+        )
+        return {
+            "allowed": decision.decision == Decision.ALLOW,
+            "reason": decision.reason_code,
+            "policy": {
+                "decision": decision.decision.value,
+                "policy_version": decision.policy_version,
+                "assurance": identity.assurance.value,
+                "principal_role": role,
+                "sentry_access": access,
+            },
+        }
 
     @staticmethod
     def _limited_tool_allowed(
@@ -643,13 +738,16 @@ class CoreSentryBoundary:
                 self._request_tool(request, tool.tool_id)
                 self._request_tool(request, "anima.provider.home-assistant.set_power")
 
-            return self.scene_application.apply(
+            scene_result = self.scene_application.apply(
                 dict(arguments),
                 identity=identity,
                 origin=origin,
                 idempotency_key=invocation_context.system_idempotency_key,
                 guard=scene_guard,
             )
+            if self.approval_results is not None and scene_result.get("action_id"):
+                self.approval_results.associate(request, UUID(scene_result["action_id"]))
+            return scene_result
         if tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL:
             if self.action_executor is None:
                 raise SentryBoundaryError("ACTION_COORDINATOR_UNAVAILABLE")
@@ -671,8 +769,11 @@ class CoreSentryBoundary:
                     safety_spec=safety_spec,
                 )
             )
+            if self.approval_results is not None:
+                self.approval_results.associate(request, execution.record.action_id)
             return {
                 "status": execution.record.status.value,
+                "action_id": str(execution.record.action_id),
                 "operation": tool.tool_id,
                 "detail": execution.record.detail,
                 "result": execution.record.result,
@@ -744,7 +845,10 @@ class CoreSentryBoundary:
     def finalize_result(
         self, request: IntelligenceRequest, worker_id: str, result: IntelligenceResult
     ) -> tuple[bool, IntelligenceResult, dict[str, Any]]:
-        self._assert_active(request)
+        # A valid active provider must account for its actual outcome even if
+        # the saved task expired or authority changed while it was running.
+        # Current delivery eligibility below still withholds any response.
+        self._assert_active(request, owner_guard=False)
         permission: dict[str, Any] = {"allowed": False, "reason": "NOT_UNSOLICITED_SPEECH"}
         if request.origin in {
             IntelligenceOrigin.AUTONOMOUS_ATTENTION,
@@ -786,6 +890,8 @@ class CoreSentryBoundary:
         recorded = self.intelligence_store.record_result(
             request.request_id, worker_id, request.fencing_generation, result
         )
+        if recorded and self.approval_results is not None:
+            self.approval_results.reconcile_request(request)
         if recorded and self.learning_service is not None:
             # Terminal evidence remains authoritative if reconciliation fails.
             try:

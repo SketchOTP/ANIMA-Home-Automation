@@ -18,6 +18,7 @@ class TaskView(OwnerRecord):
     title: str
     status: Literal["ACTIVE", "PAUSED", "CANCELLED", "COMPLETED", "FAILED"]
     next_run_at: str | None = None
+    latest_run: dict[str, Any] | None = None
 
 
 class CalendarView(OwnerRecord):

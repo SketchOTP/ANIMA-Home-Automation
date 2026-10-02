@@ -25,6 +25,7 @@ export function SentryChat({ csrfToken, suggestion, onAuthFailure }: Props) {
       const queued = await response.json() as { request_id: string; response?: string; disposition?: string };
       const sentryId = crypto.randomUUID();
       setMessages(current => [...current, { id: sentryId, role: "sentry", text: queued.response ?? "SENTRY received your request.", status: queued.disposition }]);
+      let terminalTextDeadline: number | null = null;
       for (let attempt = 0; attempt < 300; attempt += 1) {
         await new Promise(resolve => window.setTimeout(resolve, 1000));
         const resultResponse = await fetch(`/api/v1/conversation/${encodeURIComponent(queued.request_id)}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal, headers: { Accept: "application/json" } });
@@ -32,7 +33,18 @@ export function SentryChat({ csrfToken, suggestion, onAuthFailure }: Props) {
         if (!resultResponse.ok) continue;
         const result = await resultResponse.json() as { lifecycle: string; response?: string | null; detail?: string | null; status: string; available: boolean };
         setMessages(current => current.map(message => message.id === sentryId ? { ...message, text: result.response ?? result.detail ?? "SENTRY is still working…", status: result.status } : message));
-        if (result.available || terminal.has(result.lifecycle)) return;
+        // A confirmation/auth gate is an intermediate reply, not the owner's
+        // verified result. Keep this exact request observable without replay.
+        if (terminal.has(result.lifecycle)) {
+          // Completion metadata may beat the ephemeral text subscriber. Read
+          // only this request for another bounded 30s; never replay cognition.
+          if (result.lifecycle === "COMPLETED" && result.status === "RESPONSE" && !result.available) {
+            terminalTextDeadline ??= Date.now() + 30000;
+            if (Date.now() < terminalTextDeadline) continue;
+            setError("The operation completed, but its live response is unavailable. No work was replayed.");
+          }
+          return;
+        }
       }
       setError("SENTRY is still working. Keep this page open to receive the live result; the durable operation remains visible in Activity.");
     } catch (reason) {
