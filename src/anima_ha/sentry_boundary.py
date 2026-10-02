@@ -414,6 +414,7 @@ class CoreSentryBoundary:
                     "anima.knowledge.retract_note",
                     "anima.knowledge.purge_expired",
                     "anima.household-learning.propose",
+                    "anima.household-learning.record_incident_assessment",
                 }:
                     payload["availability"] = False
                     payload["unavailable_reason"] = "AGENT_MEMORY_NOT_ENABLED"
@@ -528,7 +529,10 @@ class CoreSentryBoundary:
         # Learning proposals are agent-maintained, source-bound memory. They
         # use the same explicit autonomy gate as knowledge notes, but belong
         # to the learning plugin and therefore need a separate source check.
-        learning_proposal = tool.tool_id == "anima.household-learning.propose"
+        learning_proposal = tool.tool_id in {
+            "anima.household-learning.propose",
+            "anima.household-learning.record_incident_assessment",
+        }
         agent_memory_tool = knowledge_tool or learning_proposal
         limited_allowed = self._limited_tool_allowed(tool, arguments, request.principal_id)
         # Exact agent-maintained knowledge remains non-authoritative even when
@@ -570,7 +574,7 @@ class CoreSentryBoundary:
                 }
         identity = _identity(request)
         origin = _origin(request.origin)
-        if tool.tool_id == "anima.household-learning.propose":
+        if learning_proposal:
             if not self.agent_memory_enabled or self.learning_service is None:
                 return {
                     "status": "DENIED",
@@ -660,6 +664,18 @@ class CoreSentryBoundary:
                 request.household_id,
                 (item["event_id"] for item in evidence["items"]),
                 packet.get("candidates", []) if packet else [],
+            )
+        elif tool.tool_id == "anima.household-learning.record_incident_assessment":
+            from anima_ha.household_learning import learning_request_scope
+
+            if self.learning_service is None or self.reasoning_context_loader is None:
+                raise SentryBoundaryError("INCIDENT_CONTEXT_UNAVAILABLE")
+            context = self.reasoning_context_loader(request)
+            evidence = context.get("initiative", {}).get("nearby_events", {}).get("items", [])
+            scope = learning_request_scope(
+                request.request_id,
+                request.household_id,
+                (item["event_id"] for item in evidence),
             )
         with scope:
             result = self.manager.invoke(

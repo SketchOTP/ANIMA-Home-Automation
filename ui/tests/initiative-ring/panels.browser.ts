@@ -4,6 +4,69 @@ import { test, expect, type Page } from "@playwright/test";
 // No request reaches Core, HA, Ring, a real household, or an owner account.
 const version = "00000000-0000-4000-8000-000000000001";
 const laterVersion = "00000000-0000-4000-8000-000000000002";
+const situation = () => ({ status: "SUCCEEDED", authority: "NONE", can_edit: true,
+  declared_mode: { mode: "UNSET", version: null as string | null, declared_at: null as string | null },
+  inventory: [], observations: { items: [], truncated: false },
+  source_coverage: { ha_bound_consumer: { status: "NOT_CONFIGURED", coverage: "UNVERIFIED_NOT_QUIET" }, android: { status: "NOT_READY", coverage: "UNVERIFIED_NOT_QUIET" }, handoff: { status: "HANDOFF_FAILED" } }, incidents: [] });
+
+test("declared mode saves one authenticated versioned intent and reloads without occupancy claims", async ({ page }) => {
+  let saved = situation(); let writes = 0;
+  await page.route("**/api/v1/initiative/situation", route => route.fulfill({ json: saved }));
+  await page.route("**/api/v1/initiative/set_household_mode", async route => {
+    writes++; expect(route.request().headers()["x-anima-csrf"]).toBe("synthetic-test-csrf");
+    expect(route.request().postDataJSON()).toEqual({ payload: { mode: "AWAY", expected_version: null } });
+    saved = { ...saved, declared_mode: { mode: "AWAY", version, declared_at: "2026-10-02T06:00:00Z" } };
+    await route.fulfill({ json: { status: "SUCCEEDED", result: { status: "SUCCEEDED" } } });
+  });
+  await page.goto("/?panel=situation");
+  await expect(page.getByText("Counts are not coverage uptime.", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Declare away", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Declare away", exact: true })).toHaveAttribute("aria-pressed", "true");
+  expect(writes).toBe(1); await page.reload();
+  await expect(page.getByRole("button", { name: "Declare away", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("NOT_READY", { exact: true })).toBeVisible(); await noOverflow(page);
+});
+
+test("mode inner failure and transport ambiguity require explicit reload without blind retry", async ({ page }) => {
+  let writes = 0;
+  await page.route("**/api/v1/initiative/situation", route => route.fulfill({ json: situation() }));
+  await page.route("**/api/v1/initiative/set_household_mode", async route => { writes++; if (writes === 1) await route.fulfill({ json: { status: "SUCCEEDED", result: { status: "FAILED" } } }); else await route.abort(); });
+  await page.goto("/?panel=situation"); await page.getByRole("button", { name: "Declare away" }).click();
+  await expect(page.getByRole("alert")).toContainText("not confirmed");
+  await expect(page.getByRole("button", { name: "Declare away" })).toBeDisabled(); expect(writes).toBe(1);
+  await page.getByRole("button", { name: "Refresh context" }).click();
+  await expect(page.getByRole("button", { name: "Declare away" })).toBeEnabled();
+  await page.getByRole("button", { name: "Declare away" }).click();
+  await expect(page.getByRole("button", { name: "Declare away" })).toBeDisabled(); expect(writes).toBe(2);
+});
+
+test("mode read-only, expired authentication and source outage have truthful boundaries", async ({ page }) => {
+  await page.route("**/api/v1/initiative/situation", route => route.fulfill({ json: situation() }));
+  await page.goto("/?panel=situation&readonly"); await expect(page.getByText("Owner-declared mode:", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Declare away" })).toHaveCount(0);
+  await page.unroute("**/api/v1/initiative/situation");
+  await page.route("**/api/v1/initiative/situation", route => route.fulfill({ status: 401 }));
+  await page.goto("/?panel=situation"); await expect(page.getByText("Fixture session expired")).toBeVisible();
+  await page.unroute("**/api/v1/initiative/situation");
+  await page.route("**/api/v1/initiative/situation", route => route.fulfill({ status: 503 }));
+  await page.reload(); await expect(page.getByRole("alert")).toContainText("quiet or occupancy cannot be inferred");
+});
+
+test("newest context generation wins a delayed obsolete response", async ({ page }) => {
+  let reads = 0; let release: (() => void) | undefined;
+  await page.route("**/api/v1/initiative/situation", async route => {
+    const ordinal = ++reads;
+    const snapshot = situation(); if (ordinal >= 3) snapshot.declared_mode = { mode: "AWAY", version, declared_at: "2026-10-02T06:00:00Z" };
+    else if (ordinal === 2) snapshot.declared_mode = { mode: "HOME", version, declared_at: "2026-10-02T05:00:00Z" };
+    if (ordinal === 2) await new Promise<void>(resolve => { release = resolve; });
+    await route.fulfill({ json: snapshot });
+  });
+  await page.goto("/?panel=situation"); await expect(page.getByRole("button", { name: "Declare unset" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Refresh context" }).click(); await expect.poll(() => reads).toBe(2);
+  await page.getByRole("button", { name: "Refresh context" }).click();
+  await expect(page.getByRole("button", { name: "Declare away" })).toHaveAttribute("aria-pressed", "true");
+  release?.(); await expect(page.getByRole("button", { name: "Declare away" })).toHaveAttribute("aria-pressed", "true");
+});
 const config = { learning_days: 3, routine_review_days: 3, daily_review_enabled: true, routine_review_enabled: true, proactive_enabled: false, always_notify: [] as string[], device_notifications: [] as object[] };
 const status = () => ({ status: "SUCCEEDED", config: structuredClone(config), config_version: null as string | null, timezone: "America/New_York", readiness: { ready: false, observed_local_days: 0, required_days: 3, first_observed_at: null as string | null, last_observed_at: null as string | null, elapsed_seconds: 0, required_elapsed_seconds: 259200, evidence_status: "SUCCEEDED", truncated: false }, proactive_eligible: false, scheduling: { status: "NOT_SCHEDULED", tasks: [] as unknown[] }, learning: { evidence_events: 0, candidate_count: 0, candidate_types: [] as string[], candidates: [] as unknown[], last_review: null, review_count: 0, pending_review_count: 0, gaps: ["No repeated qualified pattern meets the bounded candidate threshold."] }, authority: "NONE", can_edit: true });
 const suggestion = (id = version) => ({ suggestion_id: id, kind: "PATTERN", content: `Synthetic fixture inference ${id.slice(-1)}`, confidence: 0.4, classification: "INFERRED", review_status: "PENDING", conclusion: "TENTATIVE_HYPOTHESIS", candidate_class: "RESOURCE_RECURRENCE", maturity: "TENTATIVE_HYPOTHESIS", maturity_evidence: { observation_count: 4, distinct_day_count: 3, elapsed_hours: 48 }, rationale_summary: "Repeated qualified observations support a tentative synthetic pattern only.", missing_information: ["No qualified actor evidence."], rejected_alternatives: ["Timing does not establish causation."], knowledge_note: { digest: "a".repeat(64) }, source_refs: [{ event_id: "00000000-0000-4000-8000-000000000010", event_type: "household.ring.motion", occurred_at: "2026-09-01T10:00:00Z", recorded_at: "2026-09-01T10:05:00Z", canonical_id: "00000000-0000-4000-8000-000000000011" }], created_at: "2026-09-01T12:00:00Z", authority: "NONE" });

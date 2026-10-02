@@ -714,7 +714,7 @@ class CoreUICommandGateway:
     def learning_operation(
         self, identity: UIIdentity, name: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        if name not in {"configure", "review"}:
+        if name not in {"configure", "review", "set_household_mode"}:
             raise UICommandError("UNKNOWN_LEARNING_OPERATION")
         return self._invoke(identity, HOUSEHOLD_LEARNING_MANIFEST.plugin_id, name, payload)
 
@@ -1456,7 +1456,11 @@ class CoreRuntime:
                 else None
             ),
             reasoning_context_loader=lambda request: household_reasoning_context(
-                request, self.memory_service, self.graph, initiative=self.initiative_context
+                request,
+                self.memory_service,
+                self.graph,
+                initiative=self.initiative_context,
+                situation=self.learning_service.get_situation if self.learning_service else None,
             ),
             sensor_status_loader=self.sentry_sensor_status,
             journal_handoff_status_loader=lambda: (
@@ -1937,6 +1941,50 @@ def build_postgres_core(
         if owner_connection is not None:
             household_value = str(owner_connection["household_id"])
     runtime.learning_service = learning_service
+    from anima_ha.household_situation import HouseholdSituation, diagnostic_coverage
+
+    def situation_coverage(household_id: UUID) -> dict[str, Any]:
+        # This is the bound consumer's transport state, not an uptime estimate.
+        # Other ingest processes may exist; absent Core HA credentials do not
+        # establish that every household source is offline.
+        ha_status = ha_adapter.status.to_payload() if ha_adapter is not None else None
+        return {
+            "ha_bound_consumer": {
+                "status": "NOT_CONFIGURED" if ha_status is None else ha_status["health"],
+                "subscriptions_active": bool(ha_status and ha_status["subscriptions_active"]),
+                "coverage": "TRANSPORT_READY_NOT_PHYSICAL_VERIFICATION"
+                if ha_status
+                and ha_status["health"] == "ONLINE"
+                and ha_status["subscriptions_active"]
+                else "UNVERIFIED_NOT_QUIET",
+            },
+            "android": diagnostic_coverage(
+                Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+                / "anima-android-notification-readiness.json"
+            )
+            if str(household_id) == household_value
+            else {"status": "NOT_READY", "reason": "HOUSEHOLD_SOURCE_NOT_BOUND"},
+            "presence": {
+                "status": "OBSERVATION_PROJECTION",
+                "items": runtime.sentry_sensor_status(household_id)["items"],
+                "coverage": "LAST_TRANSITION_IS_NOT_OBSERVER_HEARTBEAT_OR_HUMAN_IDENTITY",
+            },
+            "handoff": {
+                "status": runtime.journal_event_watcher.delivery_state
+                if runtime.journal_event_watcher is not None
+                else "NOT_CONFIGURED"
+            },
+            "uptime": None,
+            "opportunity_denominator": None,
+            "authority": "NONE",
+        }
+
+    learning_service.situation_reader = HouseholdSituation(
+        database_url,
+        graph,
+        household_evidence,
+        situation_coverage,
+    )
     initiative_context = HouseholdInitiativeContext(
         database_url, learning_service, household_evidence
     )
@@ -1946,8 +1994,11 @@ def build_postgres_core(
     intelligence_store.delivery_initializer = lambda request: initialize_required_delivery(
         request, initiative_context(request).get("notification", {})
     )
-    if ha_adapter is not None and household_value and intelligence_store is not None:
+    if household_value and intelligence_store is not None:
         household_id = UUID(household_value)
+        household = graph.get_node(household_id)
+        if household is None or household.kind != NodeKind.HOUSEHOLD or household.retired_at:
+            raise ValueError("Canonical handoff requires an active commissioned household")
 
         def classify_presence_source(reference: ProviderReference) -> SignalKind | None:
             # HA's configured home zone and router association belong to this
@@ -1978,12 +2029,13 @@ def build_postgres_core(
         presence_service = HouseholdPresenceService(
             graph, truth.projection, classify_source=classify_presence_source
         )
-        register_and_enable(
-            HOUSEHOLD_PRESENCE_MANIFEST,
-            NativeRuntime(
-                HouseholdPresenceNativePlugin(presence_service, ha_adapter.config.instance_id)
-            ),
-        )
+        if ha_adapter is not None:
+            register_and_enable(
+                HOUSEHOLD_PRESENCE_MANIFEST,
+                NativeRuntime(
+                    HouseholdPresenceNativePlugin(presence_service, ha_adapter.config.instance_id)
+                ),
+            )
 
         def resolve_resource(external_id: str) -> UUID | None:
             return _resolve_ha_event_resource(graph, provider_scope, household_id, external_id)
@@ -2067,13 +2119,17 @@ def build_postgres_core(
                 source_event_id=event.event_id,
             )
 
-        presence_router = HouseholdPresenceEventRouter(
-            presence_service,
-            household_id,
-            ha_adapter.config.instance_id,
-            continuity=presence_continuity,
-            journal=journal,
-            dispatch=dispatch_presence_event,
+        presence_router = (
+            HouseholdPresenceEventRouter(
+                presence_service,
+                household_id,
+                ha_adapter.config.instance_id,
+                continuity=presence_continuity,
+                journal=journal,
+                dispatch=dispatch_presence_event,
+            )
+            if ha_adapter is not None
+            else None
         )
 
         from anima_ha.ring_events import RingEventRouter
@@ -2116,12 +2172,33 @@ def build_postgres_core(
         def handle_normalized_event(event: EventEnvelope) -> None:
             router.handle(event)
             automation_router.handle(event)
-            presence_router.handle(event)
+            if presence_router is not None:
+                presence_router.handle(event)
             ring_router.handle(event)
 
-        ha_adapter.set_normalized_event_callback(handle_normalized_event)
+        if ha_adapter is not None:
+            ha_adapter.set_normalized_event_callback(handle_normalized_event)
 
         def dispatch_journal_event(event: EventEnvelope, position: int) -> None:
+            from anima_ha.household_event_context import project_event
+
+            projected = project_event(
+                {
+                    "event_id": event.event_id,
+                    "event_type": event.event_type,
+                    "source": event.source,
+                    "source_event_id": event.source_event_id,
+                    "occurred_at": event.occurred_at,
+                    "recorded_at": event.recorded_at,
+                    "payload": event.payload,
+                    "metadata": event.metadata,
+                },
+                household_id,
+                {n.canonical_id for n in graph.resources_in_place(household_id)},
+                {n.canonical_id for n in graph.members_of_household(household_id)},
+            )
+            if projected is None:
+                raise ValueError("CANONICAL_HANDOFF_SOURCE_OR_MEMBERSHIP_UNQUALIFIED")
             if event.source == "anima.household_presence" and event.event_type == (
                 "household.presence.connection_changed"
             ):
@@ -2153,6 +2230,8 @@ def build_postgres_core(
                         plugins.list_tools,
                         initiative_context.resolve_event_path,
                     )(event, position)
+                else:
+                    raise ValueError("CANONICAL_HANDOFF_VENDOR_BINDING_UNAVAILABLE")
 
         runtime.event_dispatcher = dispatch_journal_event
         if watch_journal_events:

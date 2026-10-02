@@ -66,6 +66,28 @@ def install_household_learning_api(
         except ValueError:
             raise HTTPException(400, "INVALID_LEARNING_PAGE") from None
 
+    @app.get("/api/v1/initiative/situation")
+    def situation(request: Request) -> dict[str, Any]:
+        identity = current_identity(request)
+        try:
+            manager = learning()
+            result: dict[str, Any] = manager.get_situation(identity.household_id)
+            person = manager.graph.get_node(identity.principal_id)
+            return {
+                **result,
+                "can_edit": bool(
+                    person
+                    and person.retired_at is None
+                    and person.metadata.get("semantic_role") == "owner"
+                    and any(
+                        item.canonical_id == identity.principal_id
+                        for item in manager.graph.members_of_household(identity.household_id)
+                    )
+                ),
+            }
+        except Exception:
+            raise HTTPException(503, "HOUSEHOLD_CONTEXT_UNAVAILABLE") from None
+
     @app.post("/api/v1/initiative/{operation}")
     def mutate(
         operation: str,
@@ -75,7 +97,7 @@ def install_household_learning_api(
     ) -> dict[str, Any]:
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)
-        if operation not in {"configure", "review", "catch-up"}:
+        if operation not in {"configure", "review", "catch-up", "set_household_mode"}:
             raise HTTPException(404, "UNKNOWN_LEARNING_OPERATION")
         if operation == "catch-up":
             if body.payload:

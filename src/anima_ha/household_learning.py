@@ -57,6 +57,8 @@ from anima_ha.tasks import MisfirePolicy, ScheduleKind, TaskSchedule, TaskStatus
 
 NAMESPACE = UUID("d65d3386-54ae-4294-8d7b-fabcc1428438")
 CONFIG_KIND = "household_initiative_config"
+MODE_KIND = "household_declared_mode"
+INCIDENT_KIND = "household_incident_assessment"
 SUGGESTION_KIND = "household_learning_suggestion"
 REVIEW_PACKET_KIND = "household_learning_review_packet"
 REVIEW_COMPLETION_KIND = "household_learning_review_completion"
@@ -348,6 +350,7 @@ class HouseholdLearningService:
         knowledge_plugin: Any = None,
         timezone: str = "UTC",
         clock: Callable[[], datetime] | None = None,
+        situation_reader: Callable[[UUID], dict[str, Any]] | None = None,
     ) -> None:
         self.memory, self.graph, self.journal = memory_service, graph, journal
         if evidence_reader is not None and evidence_read is not None:
@@ -358,6 +361,7 @@ class HouseholdLearningService:
         self.knowledge_plugin = knowledge_plugin
         self.zone = ZoneInfo(timezone)
         self.clock = clock or (lambda: datetime.now(UTC))
+        self.situation_reader = situation_reader
 
     def _now(self) -> datetime:
         return _time(self.clock())
@@ -407,6 +411,194 @@ class HouseholdLearningService:
                 "initiative config is not an explicit household preference"
             )
         return InitiativeConfig.from_payload(row.metadata["config"]), row
+
+    def declared_mode(self, household_id: UUID) -> dict[str, Any]:
+        rows = self._records(household_id, MODE_KIND, limit=2)
+        if len(rows) > 1:
+            raise HouseholdLearningError("multiple household mode versions")
+        row = rows[0] if rows else None
+        if row is not None and (
+            row.memory_type != MemoryType.EXPLICIT_FACT
+            or row.provenance.kind != ProvenanceKind.EXPLICIT_INPUT
+            or row.metadata.get("mode") not in {"HOME", "AWAY", "UNSET"}
+        ):
+            raise HouseholdLearningError("invalid declared household mode provenance")
+        return {
+            "mode": row.metadata["mode"] if row else "UNSET",
+            "version": str(row.memory_id) if row else None,
+            "declared_at": row.created_at.isoformat() if row else None,
+            "source": row.provenance.source_ref if row else None,
+            "classification": "OWNER_DECLARED_NOT_OCCUPANCY",
+            "authority": "NONE",
+        }
+
+    def set_household_mode(
+        self, household_id: UUID, principal_id: UUID, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._owner(household_id, principal_id)
+        if set(payload) != {"mode", "expected_version"} or payload["mode"] not in {
+            "HOME",
+            "AWAY",
+            "UNSET",
+        }:
+            raise HouseholdLearningError("exact declared household mode required")
+        current = self.declared_mode(household_id)
+        if payload["expected_version"] != current["version"]:
+            raise HouseholdLearningError("household mode version changed; reload")
+        if current["version"] and payload["mode"] == current["mode"]:
+            return {"status": "SUCCEEDED", "declared_mode": current}
+        previous = UUID(current["version"]) if current["version"] else None
+        record = MemoryRecord.create(
+            memory_id=uuid5(NAMESPACE, f"mode:{household_id}:{previous or 'initial'}"),
+            household_id=household_id,
+            memory_type=MemoryType.EXPLICIT_FACT,
+            content=f"Owner-declared household mode: {payload['mode']}",
+            provenance=MemoryProvenance(
+                ProvenanceKind.EXPLICIT_INPUT, f"anima:principal:{principal_id}"
+            ),
+            created_at=self._now(),
+            confidence=1.0,
+            metadata={"record_kind": MODE_KIND, "mode": payload["mode"]},
+        )
+        try:
+            if previous:
+                self.memory.correct(previous, record)
+            else:
+                self.memory.create(record)
+        except UniqueViolation:
+            raise HouseholdLearningError("household mode version changed; reload") from None
+        return {"status": "SUCCEEDED", "declared_mode": self.declared_mode(household_id)}
+
+    def get_situation(self, household_id: UUID) -> dict[str, Any]:
+        _household(self.graph, household_id)
+        packet = (
+            self.situation_reader(household_id)
+            if self.situation_reader
+            else {"status": "UNAVAILABLE", "coverage": "CONTEXT_READER_UNAVAILABLE"}
+        )
+        return {**packet, "declared_mode": self.declared_mode(household_id), "authority": "NONE"}
+
+    def record_incident_assessment(
+        self, household_id: UUID, payload: dict[str, Any], request_id: UUID
+    ) -> dict[str, Any]:
+        scope = _REQUEST_SCOPE.get()
+        if scope is None or scope[:2] != (request_id, household_id):
+            raise HouseholdLearningError("active incident request scope required")
+        if set(payload) != {"event_ids", "assessment", "unknowns"}:
+            raise HouseholdLearningError("exact incident assessment fields required")
+        ids = payload["event_ids"]
+        if (
+            not isinstance(ids, list)
+            or not 1 <= len(ids) <= 12
+            or not all(isinstance(item, str) for item in ids)
+            or len(set(ids)) != len(ids)
+            or not set(ids) <= scope[2]
+        ):
+            raise HouseholdLearningError("incident evidence not bound to current request")
+        text = _text(payload["assessment"], 1000)
+        unknowns = payload["unknowns"]
+        if not isinstance(unknowns, list) or len(unknowns) > 8:
+            raise HouseholdLearningError("bounded incident unknowns required")
+        unknowns = [_text(item, 240) for item in unknowns]
+        version = uuid5(NAMESPACE, f"incident:{household_id}:{request_id}")
+        existing = self.memory.get(version)
+        if existing is not None:
+            if (
+                existing.household_id != household_id
+                or existing.metadata.get("record_kind") != INCIDENT_KIND
+                or existing.metadata.get("assessment") != text
+                or existing.metadata.get("unknowns") != unknowns
+                or {item["event_id"] for item in existing.metadata.get("source_refs", [])}
+                != set(ids)
+            ):
+                raise HouseholdLearningError("incident already recorded; no overwrite")
+            # Idempotent return is the original immutable assessment, not a
+            # fresh coverage/mode claim or a second model/action execution.
+            return {
+                "status": "SUCCEEDED",
+                "incident_id": str(version),
+                **existing.metadata,
+                "authority": "NONE",
+            }
+        current = self.get_situation(household_id)
+        observations = current.get("observations", {}).get("items", [])
+        refs = [item for item in observations if item["event_id"] in ids]
+        if {item["event_id"] for item in refs} != set(ids):
+            raise HouseholdLearningError("incident source freshness/qualification changed")
+        refs = [
+            {
+                key: item[key]
+                for key in (
+                    "event_id",
+                    "event_type",
+                    "canonical_id",
+                    "source_event_id",
+                    "occurred_at",
+                    "recorded_at",
+                    "time_basis",
+                    "physical_occurred_at",
+                    "event_kind",
+                    "transition",
+                    "source_occurred_at",
+                    "android_posted_at",
+                    "relay_received_at",
+                    "identity_verified",
+                    "source_family",
+                    "independence",
+                )
+                if key in item
+            }
+            for item in refs
+        ]
+        coverage = current.get("source_coverage", {})
+        # Memory deliberately forbids authority/permission metadata even when
+        # marked NONE. Persist only bounded source-state facts, not a copied
+        # rich packet or nested grants/credentials.
+        source_coverage = {
+            name: {
+                key: value
+                for key, value in state.items()
+                if key in {"status", "reason", "coverage", "subscriptions_active"}
+                and (isinstance(value, bool) or isinstance(value, str) and len(value) <= 128)
+            }
+            for name, state in coverage.items()
+            if name in {"ha_bound_consumer", "android", "presence", "handoff"}
+            and isinstance(state, dict)
+        }
+        metadata = {
+            "record_kind": INCIDENT_KIND,
+            "request_id": str(request_id),
+            "assessment": text,
+            "unknowns": unknowns,
+            "source_refs": refs,
+            "declared_mode": {
+                key: value
+                for key, value in current["declared_mode"].items()
+                if key in {"mode", "version", "declared_at", "source", "classification"}
+            },
+            "source_coverage": source_coverage,
+            "classification": "SENTRY_INFERRED_ASSESSMENT",
+            "disposition": "UNVERIFIED_NO_ACTION_AUTHORITY",
+        }
+        try:
+            self.memory.create(
+                MemoryRecord.create(
+                    memory_id=version,
+                    household_id=household_id,
+                    memory_type=MemoryType.TEMPORARY_EPISODIC,
+                    content=text,
+                    provenance=MemoryProvenance(
+                        ProvenanceKind.EVENT_JOURNAL, f"anima:request:{request_id}", ids[0]
+                    ),
+                    created_at=self._now(),
+                    expires_at=self._now() + timedelta(days=7),
+                    confidence=0.5,
+                    metadata=metadata,
+                )
+            )
+        except UniqueViolation:
+            return self.record_incident_assessment(household_id, payload, request_id)
+        return {"status": "SUCCEEDED", "incident_id": str(version), **metadata, "authority": "NONE"}
 
     def configure(
         self, household_id: UUID, principal_id: UUID, payload: dict[str, Any]
@@ -603,6 +795,7 @@ class HouseholdLearningService:
         return {
             "status": "SUCCEEDED",
             "config": config.to_payload(),
+            "declared_mode": self.declared_mode(household_id),
             "config_version": str(row.memory_id) if row else None,
             "timezone": self.zone.key,
             "readiness": readiness,
@@ -1559,7 +1752,7 @@ def _tool(
 
 HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
     plugin_id="anima.household-learning",
-    plugin_version="1.3.0",
+    plugin_version="1.4.0",
     manifest_version=MANIFEST_VERSION,
     requires_core=CORE_VERSION,
     name="Household learning",
@@ -1570,6 +1763,38 @@ HOUSEHOLD_LEARNING_MANIFEST = PluginManifest(
     source="builtin:anima_ha.household_learning",
     tools=(
         _tool("get_status", {}, []),
+        _tool("get_situation", {}, []),
+        _tool(
+            "set_household_mode",
+            {
+                "mode": {"type": "string", "enum": ["HOME", "AWAY", "UNSET"]},
+                "expected_version": {"type": ["string", "null"], "format": "uuid"},
+            },
+            ["mode", "expected_version"],
+            read=False,
+            description="Explicit owner declaration only; never infer Away or grant authority",
+        ),
+        _tool(
+            "record_incident_assessment",
+            {
+                "event_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "uniqueItems": True,
+                    "items": {"type": "string", "format": "uuid"},
+                },
+                "assessment": {"type": "string", "minLength": 1, "maxLength": 1000},
+                "unknowns": {
+                    "type": "array",
+                    "maxItems": 8,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 240},
+                },
+            },
+            ["event_ids", "assessment", "unknowns"],
+            read=False,
+            description="Record bounded SENTRY inference with current source references; no action",
+        ),
         _tool("configure", _CONFIG_SCHEMA, list(_CONFIG_SCHEMA), read=False),
         _tool(
             "set_device_notification",
@@ -1695,6 +1920,21 @@ class HouseholdLearningNativePlugin:
         validate_instance(tool["input_schema"], arguments)
         if name == "get_status":
             return self.service.status(context.household_id)
+        if name == "get_situation":
+            return self.service.get_situation(context.household_id)
+        if name == "record_incident_assessment":
+            scope = _REQUEST_SCOPE.get()
+            if scope is None or scope[1] != context.household_id:
+                raise HouseholdLearningError("active incident request scope required")
+            return self.service.record_incident_assessment(
+                context.household_id, arguments, scope[0]
+            )
+        if name == "set_household_mode":
+            if context.origin != RequestOrigin.DIRECT_USER or context.principal_id is None:
+                raise HouseholdLearningError("direct commissioned owner declaration required")
+            return self.service.set_household_mode(
+                context.household_id, context.principal_id, arguments
+            )
         if name in {"evidence", "suggestions"}:
             return getattr(self.service, name)(context.household_id, **arguments)
         if name in {"configure", "set_device_notification", "review"} and (

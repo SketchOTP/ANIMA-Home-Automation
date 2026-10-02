@@ -343,6 +343,8 @@ _TRUSTED_INTERNAL_TOOL_SOURCES = {
     "anima.household-learning.configure": "builtin:anima_ha.household_learning",
     "anima.household-learning.set_device_notification": "builtin:anima_ha.household_learning",
     "anima.household-learning.propose": "builtin:anima_ha.household_learning",
+    "anima.household-learning.record_incident_assessment": "builtin:anima_ha.household_learning",
+    "anima.household-learning.set_household_mode": "builtin:anima_ha.household_learning",
     "anima.household-learning.review": "builtin:anima_ha.household_learning",
     "anima.family-routines.create_routine": "builtin:anima_ha.family_routines",
     "anima.family-routines.add_member": "builtin:anima_ha.family_routines",

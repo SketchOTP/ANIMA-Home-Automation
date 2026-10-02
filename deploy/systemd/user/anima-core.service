@@ -14,12 +14,16 @@ Environment=ANIMA_SENTRY_CLIENT_ID=owner-household-7c809eb2-0492-5e03-8c94-a4f17
 Environment=ANIMA_SENTRY_HOUSEHOLD_ID=7c809eb2-0492-5e03-8c94-a4f178d87a20
 Environment=ANIMA_SENTRY_CREDENTIAL_GENERATION=1
 Environment=ANIMA_OPA_URL=http://127.0.0.1:18181
+Environment=ANIMA_SEARXNG_URL=http://127.0.0.1:18888
+Environment=ANIMA_SEARXNG_HOST=127.0.0.1
 Environment=ANIMA_INTELLIGENCE_PROVIDER=sentry
 Environment=ANIMA_HOUSEHOLD_TIMEZONE=America/New_York
 Environment=ANIMA_HA_BASE_URL=http://127.0.0.1:8123
 Environment=ANIMA_HA_WEBSOCKET_URL=ws://127.0.0.1:8123/api/websocket
+Environment=ANIMA_HA_CONNECTION_FILE=%h/.config/anima/home-assistant-credential.json
 Environment=ANIMA_HA_EXPECTED_VERSION=2026.9.0
 Environment=ANIMA_OWNER_BOUNDARY_DIR=%h/.local/share/anima-owner-boundary
+Environment=ANIMA_VENDOR_RELAY_CONFIG=%h/.local/share/anima-owner-boundary/vendor-relay.json
 Environment=ANIMA_OWNER_BOUNDARY_GROUP=1000
 Environment=ANIMA_KNOWLEDGE_ROOT=%h/Documents/MEMORY/ANIMA
 Environment=ANIMA_SENTRY_AGENT_MEMORY=true

@@ -9,6 +9,7 @@ import { FamilyRoutines } from "./FamilyRoutines";
 import { HouseholdPresencePanel } from "./HouseholdPresencePanel";
 import { VendorConnectionsPanel } from "./VendorConnectionsPanel";
 import { InitiativePanel } from "./InitiativePanel";
+import { HouseholdSituationPanel } from "./HouseholdSituationPanel";
 import { RingConnectionPanel } from "./RingConnectionPanel";
 import { UsersPanel } from "./UsersPanel";
 import { DeviceNotificationsPanel } from "./DeviceNotificationsPanel";
@@ -324,12 +325,12 @@ function App() {
       {tab === "Alerts" && <><AlertPoliciesView policies={alertPolicies} devices={devices} rooms={home.rooms} mutate={mutate} events={alertEvents} nextCursor={alertNextCursor} loading={alertLoading} loadOlder={loadOlderAlerts} /><NotificationRoutesView routes={notificationRoutes} mutate={mutate} /></>}
       {tab === "SENTRY" && <div ref={voicePanelRef} tabIndex={-1}><SentryChat csrfToken={bootstrap.csrf_token} suggestion={voiceSuggestion} onAuthFailure={expireSession} /></div>}
       {tab === "Tasks & Calendar" && <TaskCalendar mutate={mutate} />}
-      {tab === "Activity" && <Card title="Recent activity"><p className="muted">This is a bounded, read-only summary of recent observations and outcomes. Use the status shown with each entry; this view is not the complete audit journal and cannot prove notification receipt.</p><ul className="clean-list activity-timeline">{home.activity.length ? home.activity.map((item, index) => <li key={`${item.summary}-${index}`}><Icon name="Activity" /><span>{item.summary}</span><StatusPill status={item.status} /></li>) : <li className="empty-state">No household activity recorded.</li>}</ul></Card>}
+      {tab === "Activity" && <><HouseholdSituationPanel mutate={mutate} onAuthFailure={expireSession} readOnly /><Card title="Recent activity"><p className="muted">This is a bounded, read-only summary of recent observations and outcomes. Use the status shown with each entry; this view is not the complete audit journal and cannot prove notification receipt.</p><ul className="clean-list activity-timeline">{home.activity.length ? home.activity.map((item, index) => <li key={`${item.summary}-${index}`}><Icon name="Activity" /><span>{item.summary}</span><StatusPill status={item.status} /></li>) : <li className="empty-state">No household activity recorded.</li>}</ul></Card></>}
       {tab === "Connections" && <><RingConnectionPanel csrfToken={bootstrap.csrf_token} onAuthFailure={expireSession} /><VendorConnectionsPanel onAuthFailure={expireSession} /><ManagedIntegrationsView items={integrations} mutate={mutate} /><Capabilities items={capabilities} /></>}
       {tab === "Backups" && <BackupsView backups={backups} mutate={mutate} />}
       {tab === "Preferences" && <><PreferencesPanel mutate={mutate} onAuthFailure={expireSession} /><InitiativePanel mutate={mutate} onAuthFailure={expireSession} /><KnowledgePanel mutate={mutate} onAuthFailure={expireSession} /></>}
       {tab === "Users" && <UsersPanel mutate={mutate} onAuthFailure={expireSession} />}
-      {tab === "Settings" && <SettingsPanel value={settings} voice={voiceSettings} personalities={personalityProfiles} csrf={bootstrap.csrf_token} onSaved={setSettings} onVoiceSaved={setVoiceSettings} onPersonalitiesChanged={setPersonalityProfiles} setError={setError} setOutcome={setOutcome} />}
+      {tab === "Settings" && <><HouseholdSituationPanel mutate={mutate} onAuthFailure={expireSession} /><SettingsPanel value={settings} voice={voiceSettings} personalities={personalityProfiles} csrf={bootstrap.csrf_token} onSaved={setSettings} onVoiceSaved={setVoiceSettings} onPersonalitiesChanged={setPersonalityProfiles} setError={setError} setOutcome={setOutcome} /></>}
     </main>
   </div>;
 }

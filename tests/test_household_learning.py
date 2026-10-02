@@ -910,7 +910,18 @@ def test_native_schema_blocks_extra_scope_and_owner_mutations(fixture: Any) -> N
             "propose", proposal([event]), 1, replace(ctx, tool_request_id=uuid4())
         )
     assert one["suggestion"]["suggestion_id"] != two["suggestion"]["suggestion_id"]
-    assert len(plugin.list_tools()) == 7
+    assert {tool["name"] for tool in plugin.list_tools()} == {
+        "get_status",
+        "get_situation",
+        "record_incident_assessment",
+        "set_household_mode",
+        "configure",
+        "set_device_notification",
+        "evidence",
+        "suggestions",
+        "propose",
+        "review",
+    }
     assert not any(
         tool["read_only"]
         for tool in HOUSEHOLD_LEARNING_MANIFEST.tools

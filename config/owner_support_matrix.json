@@ -52,6 +52,7 @@
       "routes": [
         "GET /api/v1/initiative",
         "GET /api/v1/initiative/suggestions",
+        "GET /api/v1/initiative/situation",
         "POST /api/v1/initiative/{operation}"
       ]
     },

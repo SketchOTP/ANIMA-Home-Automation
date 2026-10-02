@@ -123,6 +123,9 @@ def project_event(
         "time_basis": "HA_EVENT_RECEIVED"
         if str(kind).startswith("household.ring.")
         else "SOURCE_OBSERVATION",
+        "physical_occurred_at": None,
+        "source_family": "ANDROID_NOTIFICATION" if vendor_source else str(source),
+        "independence": "NOT_ESTABLISHED",
     }
     if kind == "household.presence.connection_changed":
         projected["transition"] = payload["transition"]
@@ -130,6 +133,16 @@ def project_event(
         # Only the schema-qualified enum crosses the learning boundary. Raw
         # vendor notification prose remains excluded.
         projected["event_kind"] = str(payload["event_kind"]).upper()
+        projected["time_basis"] = (
+            "ANDROID_POST_TIME" if payload.get("android_posted_at") else "RELAY_RECEIPT_TIME"
+        )
+        # Keep clocks separate. Even a vendor-reported occurrence is unverified,
+        # never an observed physical endpoint or authenticated lock actor.
+        for key in ("source_occurred_at", "android_posted_at", "relay_received_at"):
+            try:
+                projected[key] = _time(payload[key]).isoformat() if payload.get(key) else None
+            except (ValueError, TypeError, KeyError):
+                projected[key] = None
     try:
         projected["source_event_id"] = str(
             UUID(str(row.get("source_event_id") or row.get("causation_id")))

@@ -118,12 +118,15 @@ WantedBy=default.target
 Description=ANIMA Tapo and Wansview notification relay
 After=anima-android-bus.service
 Requires=anima-android-bus.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
 
 [Service]
 Type=simple
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/anima-android-bus
 ExecStart=/usr/bin/python3 \"{quoted_project}/scripts/waydroid_vendor_relay.py\" --config \"{quoted_config}\"
 Restart=on-failure
+RestartPreventExitStatus=2
 RestartSec=2
 UMask=0077
 NoNewPrivileges=true

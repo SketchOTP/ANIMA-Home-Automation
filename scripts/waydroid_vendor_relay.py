@@ -286,13 +286,24 @@ class Relay:
         # database platform. Persistent minimized outbox is separate from the
         # volatile heartbeat AND from credentials, beside the private token.
         self.outbox_path = config.token_file.with_name("vendor-relay-outbox.json")
-        self._directory = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
-        for part in self.outbox_path.parent.parts[1:]:
-            following = os.open(
-                part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=self._directory
-            )
+        # Namespace confinement can forbid read-opening ancestors (Ubuntu's
+        # unprivileged_userns profile). Traversal needs path access, not directory
+        # enumeration. Keep the final directory readable for durable fsync.
+        self._directory = os.open("/", os.O_PATH | os.O_DIRECTORY | os.O_NOFOLLOW)
+        parts = self.outbox_path.parent.parts[1:]
+        try:
+            for index, part in enumerate(parts):
+                following = os.open(
+                    part,
+                    (os.O_RDONLY if index == len(parts) - 1 else os.O_PATH)
+                    | os.O_DIRECTORY | os.O_NOFOLLOW,
+                    dir_fd=self._directory,
+                )
+                os.close(self._directory)
+                self._directory = following
+        except OSError:
             os.close(self._directory)
-            self._directory = following
+            raise
         info = os.fstat(self._directory)
         if info.st_uid != os.geteuid() or info.st_mode & 0o022:
             os.close(self._directory)
@@ -736,10 +747,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     arguments = parser.parse_args(argv)
+    config: Config | None = None
     try:
-        serve(load_config(arguments.config))
-    except RelayConfigurationError:
-        print("vendor relay configuration rejected", file=sys.stderr)
+        config = load_config(arguments.config)
+        serve(config)
+    except (RelayConfigurationError, OSError) as exc:
+        if config is not None:
+            try:
+                _atomic_json(config.status_file, {
+                    "version": 1, "state": "NOT_READY", "transport_state": "UNAVAILABLE",
+                    "delivery_state": "FAULT", "fault": type(exc).__name__,
+                    "observed_at": datetime.now(UTC).isoformat(),
+                })
+            except OSError:
+                print("vendor relay diagnostic write unavailable", file=sys.stderr)
+        print("vendor relay startup/runtime unavailable", file=sys.stderr)
         return 2
     return 0
 

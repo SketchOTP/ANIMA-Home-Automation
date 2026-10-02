@@ -35,11 +35,26 @@ REASONING_GUIDANCE = (
     "announcements. Save observed routines as inferred suggestions with source references, "
     "never overwrite owner-declared expectations. Repeated work may justify a reusable "
     "workflow proposal; generated code must not execute or self-register as an authorized tool."
+    " The bounded household_situation separates inventory, observations and source coverage. "
+    "HOME/AWAY/UNSET is an explicit owner declaration, not inferred occupancy or permission. "
+    "When an already reasoning-eligible event warrants an incident assessment, distinguish "
+    "observed, inferred and unknown; consider legitimate arrivals, conflicting or stale "
+    "signals, source outages and tenant scope. Do not script an intruder conclusion. "
+    "Duplicate transport receipts are not independent corroboration, and familiarity must "
+    "not suppress required canonical speech. Record at most one bounded source-linked "
+    "assessment through the frozen record_incident_assessment tool when authorized; "
+    "its data is not action authority. Immediate-only routes remain zero-model and must "
+    "not gain commentary. Existing owner route selection is the contextual opt-in."
 )
 
 
 def household_reasoning_context(
-    request: IntelligenceRequest, memory: Any, graph: Any, *, initiative: Any = None
+    request: IntelligenceRequest,
+    memory: Any,
+    graph: Any,
+    *,
+    initiative: Any = None,
+    situation: Any = None,
 ) -> dict[str, Any]:
     """Refresh bounded preferences/expectations without mutating the stored packet.
 
@@ -57,6 +72,10 @@ def household_reasoning_context(
     }
     if initiative is not None:
         result["initiative"] = initiative(request)
+    if situation is not None:
+        # Rich context is an optional reasoning read, never notification policy
+        # or the durable canonical speech initializer/claim dependency.
+        result["household_situation"] = situation(request.household_id)
     preference_context: dict[str, Any] = {
         "status": "UNAVAILABLE",
         "household": {"status": "UNAVAILABLE"},
