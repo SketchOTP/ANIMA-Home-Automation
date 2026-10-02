@@ -1,5 +1,268 @@
 # Current Project State
 
+## Owner-authorized parallel audit — 2026-10-02T14:45Z
+
+Owner explicitly authorized additional native agents to multitask while primary
+continues orchestration/Architect review. Existing implementation Coder Leibniz
+01a0fc2d-54f3-7b81-ba44-919b8458db95 remains Stage7 in isolated worktrees.
+Added Planck01a0fd13-178c-7682-b438-3ee17b38ec47 READ-ONLY sidecar for remaining
+MO09/12/13/A–O owner workflow/source-evidence audit. No shared write scope,
+descendants, runtime authority or new packet. Primary publishes/qualifies Stage6
+and reviews both actual results. Planck is not another implementation Coder.
+
+## Stage6 source accepted / Stage7 same-Coder issued — 2026-10-02T14:42Z
+
+Actual Stage6 native final and evidence-only follow-up collected. All15 frozen
+files match manifestd9ebd5496197005531cc6ece33de0aaed64ed08f7fb76994b1a1452789c64450;
+6401-byte historical prefix9d6bedaf retained. Independent source/guard/CI review,
+32focused and4real isolated PG/currentOPA cases PASS0skip/failure/error.
+All6 primary JUnit hashes match. Full run has1506 parent testcases:1385PASS/
+121explicitSKIP, plus43successful unittest.subTest reports merged into8parents;
+1549 is the suite report counter, NOT1549 independent cases. Installed pytest
+reporter-only reproduction independently confirms the43difference, no rerun/
+source/test/assertion alteration. Browser2/generic115PASS14skip/H5V2, frontend/
+types/build/Ruff/mypy/OPA/support/MCP evidence retained with scoped limitations.
+
+Bounded Stage6 SOURCE ACCEPTED, normal product commit
+19fff47c812acd433a254255a6d62839f031becb integrated locally. Shared saved-scene
+UI/API/frozen-MCP apply now uses existing Phase9 coordinator, saved versions/
+stable attempts, current actual identity, locks/policy/verification and honest
+partial/unknown outcomes. Approval covers only existing child, not remaining
+sequence. Strict create/unknownHA/in-memory recovery corrections reproduced.
+No new executor/workflow/store/dependency; SENTRY4909e089 unchanged.
+Hosted qualification/publication/deployment pending; live remainsf783562/
+image4bba091. No owner/physical/voice/fullA–O usability claim.
+
+Same sole Leibniz issued STAGE7-ASSIGNMENT, native01a0fd10-6d89-7453-a041-a6c57abec46c,
+worktrees /tmp/anima-stage7-development.9b6KTQ@19fff47 and
+/tmp/sentry-stage7-development.5RKgvv@4909e089. Existing027A/R5F/full Goal only.
+Closes automatic prospective commissioning/evaluation/feedback inside saved
+learning consent/tasks/Memory/Journal/fenced SENTRY; not manual-only freezing,
+new brain/schedule or executable authority. Parent owns publication/deployment/
+Notion/full coverage. Android root/vendor/playback/real owner/future improvement
+and historical billing/clock limitations remain. Graft unchanged/uncommitted.
+
+
+## Learning-consent and outcome-measurement boundary — 2026-10-02T14:27Z
+
+Read-only live configuration confirms one ACTIVE explicit-owner learning config:
+daily/multi-day reviews enabled, proactive notifications disabled, both horizons
+3days. No owner setting changed. Production has no interval coverage reader;
+future quiet windows remain UNKNOWN, not correct predictions inferred from
+silence. Automatic prospective commissioning and useful measured improvement
+remain incomplete. Detailed prepared acceptance boundary in027A native review
+14:27Z; NOT a new/parallel assignment. Same sole Stage6 Coder still live,
+actual final requested natively; source/runtime f783562/4bba091 unchanged.
+
+## Full-goal residual correction — 2026-10-02T14:05Z
+
+Stage5 live/published f783562 remains verified healthy. Updated full MO table
+removes obsolete Stage5-pending defect labels without promoting owner/A–O proof.
+Independent current-household inventory13:58 shows13active suggestions but
+0frozen future evaluations. Existing scheduled reviews cannot commission shadows
+with their propose-only catalogue; current freeze path requires direct owner.
+This is a harness commissioning/integration gap before elapsed future evidence,
+not a finished automatic improvement loop or merely waiting another few days.
+Same sole Stage6 Coder actualfinal pending; prepared next selection remains in
+existing027A native reviews14:05Z, not a second assignment. No owner/model/
+physical/configuration/permission mutation. Full Goal remains active.
+
+Both existing Notion authority pages now carry this exact commissioning finding;
+full normalized sections refetched/MATCH. Product source/runtime remainsf783562/
+image4bba091, SENTRY4909e089; no product change or deployment this turn. Same
+Coder draft now preserves real approval_identity/assurance for scene children;
+actual final and independent acceptance still outstanding. Governing record
+publication remains pending the next coherent source/evidence checkpoint.
+
+## Stage5 hosted qualification and controlled deployment — 2026-10-02T13:49Z
+
+Exact f783562d69b13f565e219abe2c4f3e86cbcb222c CI37012005053 SUCCESS
+at13:37:39Z. Native artifact11229345939 digest
+sha256:112758ae0d1679b21e4649a9f84de5615cf4459c3a883cf5a8f5426598910fcc;
+actual downloaded PG4/dedicateddesktop+phone2 PASS0skip/failure/error.
+Previous0195/37008012204 failed discovery remains preserved.
+
+Controlled application-only deployment13:43Z now observed: live UI imageID
+4bba091d31e457462e50f70258b77c3ab29319de816a95d19afd4333316cd307,
+container27253520960cbbc4205295d020a1d9cbaa1dcfa35e0786ad83de5aa27400ba2c.
+All108 actually imported Python/SQL source files equal accepted f783562;
+47 installed distributions match unchanged uv.lock;11 installed units/client
+files exact. Authenticated Core/stack READY, UIhealth200/unauthbootstrap401.
+Core/helper/WiFi/relay/voice/supervisor/nativeUI active with0restarts.
+DB/OPA/HA/searx container IDs/starttimes unchanged.
+
+Pre/post aligned read-only snapshots13:43:19/13:44:46 retain17tasks,1profile,
+314Memory,5calendar and46ambiguous identities/generations/startflags by exact
+digests. Provider states unchanged, no active provider or PLANNED/EXECUTING
+action before restart; only3SUCCEEDED/1POLICY_DENIED historical actions.
+Nine private configuration/profile/credential hashes and Graft bytes unchanged.
+No historical ambiguity reset/replay, owner fixture/model/physical action,
+root bypass, host reboot or new dependency. Android still NOT_READY/
+BINDER_PERMISSION; session/supervisor inactive, no recovery attempted.
+
+Same sole Leibniz Stage6 continues in isolated f783562/4909e089 worktrees;
+actual final pending. Full MO-01–15/A–O, genuine vendor/owner/playback and
+prospective improvement remain open. This accepts bounded source/runtime
+deployment, not complete owner usability, all-call billing or full Goal.
+Notion checkpoint reconciliation follows in existing authority/reference pages.
+
+Synchronization completion: both existing Notion authority checkpoints and the
+code-derived architecture boundary updated/refetched; complete normalized
+section equality PASS, not only marker matching. Product main remains exact
+f783562/hosted PASS; local deployment/governance records await the next coherent
+publication checkpoint. Stage6 source is isolated IN_PROGRESS, not accepted.
+
+## Stage5 correction published / same-Coder Stage6 resumed — 2026-10-02T13:18Z
+
+Publication synchronization follow-through: exact corrected-source candidate
+image4bba091d31e457462e50f70258b77c3ab29319de816a95d19afd4333316cd307 built;
+all108 importedfiles equal clean f783562, NOT deployed. Both existing Notion
+authority acceptance/publication sections and architecture header fully
+refetched/matched. No passing hosted result, owner action or runtime upgrade.
+
+Actual native corrected final COLLECTED and bounded independently ACCEPTED.
+All27manifestc40614f3818da6110be927aadad1a695dcd086525c379a79eb7d3dd7774b2029
+match; prior26 exact; original64928-byte reportprefix3839b60 retained. Parent
+reviewed one testIgnore/comment delta and compared default discovery132→129:
+exactly3 misplaced Stage5 cases removed, all129 generic/H5V2/dedicated2 retained.
+All4 new JUnit digests/counts verified:115PASS14skip generic; H5V2,actualPG4,
+dedicateddesktop/phone2 PASS0fail/error/skip. Localprivileged fixture limitation
+retained; failed hosted actual4PG separately passed restricted-role step.
+
+Normal productconfig-only5f7f408 integrated/pushed f783562d69b13f565e219abe2c4f3e86cbcb222c;
+exactCI37012005053 IN_PROGRESS. Earlier0195/37008012204 FAILURE preserved. No
+Stage5 deploy yet; current UI remains02a42012. Graft hashes unchanged/uncommitted.
+Same sole Leibniz explicitly RESUMED native01a0fcc3 after parent-safe Stage6
+worktree fast-forward to f783562; all5 draft hashes before/after exact. No
+reset/second worker/new packet/owner operation. Stage6 actualfinal pending;
+its IN_PROGRESS report is not acceptance. Full MO/A–O Goal active. Root Android,
+real owner/vendor/audible/prospective and historical/billing limitations remain.
+
+## Stage5 hosted negative / bounded same-Coder correction — 2026-10-02T13:00Z
+
+Exact0195c52 CI37008012204 FAILED at generic interface browser discovery:
+115passed/14skipped/3fail. New real-store Stage5 test was inadvertently selected
+by default fixture config on desktop/tablet/phone; its Preference control is
+correctly disabled there. Dedicated Stage5 actual Core/PG browser step was
+SKIPPED, not failed. Earlier isolated PG, ARM64, container checks passed. No
+Stage5 deployment; candidate e7cf3e0f stays separate. Independent108 imported
+files and47 locked packages match clean source; not a hosted/full-owner PASS.
+
+Same sole Leibniz interrupted explicitly for this test-selection correction
+in frozen Stage5 worktree; Stage6 draft preserved/paused in separate worktrees.
+No assertion weakening, product/form/sleep change or new worker. Actual native
+corrected final/refreeze required before parent normal publication and exactCI.
+Read-only predeploy baseline:17tasks/1profile/314Memory/95Graph/5calendar,
+46ambiguous requests, no claimed/running provider. Android session/supervisor
+remain stopped behind Binder root gate; relay health is not vendor readiness.
+Architecture Notion adds three source-grounded Stage5 sections, complete
+readback after native filename-autolink normalization; header retains CI failure.
+Full Goal ACTIVE, no owner/physical/prospective proof or completion claimed.
+
+## Stage5 published / Stage6 same-Coder issued — 2026-10-02T12:43Z
+
+Actual final26-file native handoff independently accepted, manifest
+9e237ee031317d6e93c6d42e71879eff004f065467f2400f04d050ae5a1425e8;
+previous25 source hashes and original report prefix52dbd775 exact. Added hosted
+actualPG/desktop+phone checks reuse existing restricted fixture/dependencies and
+bounded child cleanup. Parent YAML/shell/JUnit/hash review PASS. Product commit
+48ba275e integrated normally onto governance0cc82c63 as
+0195c52a7935b6631d111e7c719f80488a076018, pushed main without history rewrite.
+Exact CI37008012204 IN_PROGRESS; no hosted PASS or new deployment claimed yet.
+SENTRY4909e089 unchanged, product862cc8ec, no ceremonial product commit.
+
+Candidate imagee7cf3e0f01618fe2bec5868dbeb74f4a13b4d5a440b12aadcfcf52b2e6d37d3b
+built from clean0195 worktree/unchanged lock, not installed. All108 imported
+Python/SQL files exact; fingerprintb1122f65fb7e045edf0a2a0fcb142bf66e1196eda77e90b2a6835a68806201e1.
+Current running UI retains image02a42012. Authenticated configured Core/stack
+PASS; unconfigured readiness failure is a diagnostic environment omission, not
+a reproduced service failure. Android still passive BINDER_PERMISSION.
+
+Same sole Leibniz now issued Stage6 supported household setup/scene/automation
+parity in distinct /tmp/anima-stage6-development.7fTrhs@0195c52 and
+/tmp/sentry-stage6-development.YR0zxj@4909e089. Actual completion MO03/MO05 says
+no normal operation UI-only/all relevant typed MCP tools; parent independently
+confirmed saved scene apply only in UI gateway despite verified control path.
+Reuse existing action/durable/OPA authority, not a new workflow engine. Full
+scope/limits STAGE6-ASSIGNMENT.md; no new packet/worker/Phase15. Real owner/vendor/
+playback/prospective/root/billing gates remain. Previous worktrees frozen.
+
+Both Notion authority Stage5 source-review sections fully refetched and match
+after native page-mention normalization. Source publication/Stage6 issuance
+sync pending. Graft tooling remains separate/uncommitted. Full Goal ACTIVE.
+
+## Stage5 actual native final and independent review — 2026-10-02T12:31Z
+
+Actual Leibniz native final COLLECTED, not a timeout/file-only handoff. Frozen
+25-file manifest7325f4e758a1a03768c84aec78ee3a73f03156ca3988c68d63374d8c715eb977
+and preserved original-report b1774aea match independently. Final JUnit1410:
+1293 passed/117 explicit skips/0 failures/errors, digest14c007322d69f71a8171a0520008242b782e4734e32a5cab88f97256c844620a.
+Parent independently passed31 focused cases and13 actual isolated PostgreSQL/
+currentOPA owner-contract/accounting/learning cases,0 skips,21.931s. Bounded
+SOURCE ACCEPTED for publication/controlled deployment, not full Goal or owner
+usability. SENTRY has0 Stage5 product changes; no ceremonial product commit.
+
+Final publication correction issued directly to SAME sole Coder: hosted workflow
+does not yet run new Stage5 opt-in PostgreSQL cases. Add to its existing isolated
+role/database step and reuse guarded browser infrastructure where safe; refreeze
+and return native final. No additional product scope or second worker. Existing
+25 source bytes frozen; runtime stays Stage4 until exact CI and controlled update.
+Root Android, actual owner/vendor/playback/prospective/billing evidence remain
+open. Earlier final-pending/draft pointers below are history.
+
+## Stage5 draft independent checks — 2026-10-02T12:10Z
+
+Correction follow-through — 2026-10-02T12:18Z: Coder added actual existing
+read-only descriptor/no-verifier UNKNOWN_RESULT+restart/replay regression;
+parent inspected and reran three focused files31 PASS. Coverage concern below
+is now resolved, not an implementation acceptance. Initial reported25-file
+manifest8b588b68 matched and all four JUnit hashes/counts were independently
+verified; that initial snapshot predates the new test and is NOT final corrected
+freeze. Actual native final/refrozen evidence remains pending. No live product
+or owner configuration changed. Full Goal active, same sole Coder.
+
+SAME sole Coder actual final remains outstanding; no Stage5 acceptance/deploy.
+Parent explicitly bound PYTHONPATH to Stage5/src and passed30 tests across
+dispatch, helper accounting and owner transport contracts. This is changing
+draft E3 evidence, not frozen-final qualification or actual owner operation.
+Shared editable .venv without an explicit worktree import path resolves main;
+preliminary apparent unchanged draft OpenAPI was a wrong-source diagnostic,
+not a Stage5 failure. Correct-bound draft yields52 free-form/7 referenced/
+6 declared-property/1 other200 schemas versus main65 free-form/1 other.
+Actual module.__file__ checked; final Coder checks must establish source binding.
+
+Read-only transport test's synthetic descriptor is read_only=False; parent
+requested same Coder confirm/cover the new actual read-only coordinator branch
+and replay without inventing an unsupported executor. Independent30 passes do
+not prove that branch. Native follow-ups01a0fc83/01a0fc84 retained. Current
+owner UIhealth200, sessionless bootstrap401 and authenticated Core readiness
+PASS. No enabled browser-control tool/CLI or existing CDP9222/9223 access: actual
+owner-browser evidence remains gated, not replaced with copied credentials or
+test authentication. No live model/physical/owner-data operation occurred.
+Full Goal remains ACTIVE; detailed draft limitations in027A native reviews.
+
+## Stage4 governance and architecture reconciled — 2026-10-02T11:52Z
+
+Current main/governance0cc82c63c234e34bb8d087f8997a5aa98d9c98c0 exact
+CI37001732712 PASS; SENTRY feature/governance4909e089888bc8d93e5d08f2f442ed1b677fb699
+exactCI37001733461 PASS. Both are governance-only descendants of accepted
+product7fe3c705/862cc8ec; deployed image02a42012/product bytes remain unchanged.
+Repository-local Graft modifications remain separate/uncommitted.
+
+Existing Notion code-derived architecture reference3e9833cb27ff8161a0eaf4bdc03dd38e
+updated against accepted source: eight narrow section replacements/refetch PASS,
+historical source/failed validation and ancestor placement preserved. Explains
+required delivery versus optional model work, actual installed helper accounting
+gap, review completion/quarantine/correction, prospective coverage and recovery.
+Both authority pages now record exact governance CI and documentation boundary;
+complete new section readbacks PASS at11:51Z. No new source/physical qualification.
+
+SAME sole native Coder Leibniz01a0fc2d-54f3-7b81-ba44-919b8458db95 continues
+Stage5 in separate worktrees; actual final/review pending. Current wait timeout
+is not termination or acceptance. Full MO-01–15/A–O Goal ACTIVE. Android owner
+root, vendor/playback, real owner journeys, actual helper accounting and
+prospective improvement remain explicit gates. See REPO_MAP and existing027A.
+
 Synchronization supersession — 2026-10-02T11:32Z: dual existing Notion authority
 deployment checkpoints fully refetched and complete section match PASS. Task
 after-only query4 is disproven as current activity by preexisting future dates;

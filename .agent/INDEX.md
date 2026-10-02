@@ -1,5 +1,42 @@
 # Authority Project-State Index
 
+Parallel-role pointer — 2026-10-02T14:45Z: owner authorized additional native
+agents. Primary Architect now coordinates one implementation Coder (Stage7
+Leibniz) plus one READ-ONLY product audit sidecar (Planck), with no overlapping
+writes or delegated acceptance. CURRENT/RECORD retain authorization and handles.
+
+Current pointer — 2026-10-02T14:42Z: Stage6 native final/correction independently
+SOURCE ACCEPTED and locally integrated19fff47; publication/hostedCI/deploy pending.
+Same sole Leibniz now issued Stage7 automatic prospective harness in existing027A.
+CURRENT/native reviews/coverage carry exact boundaries; runtime remains Stage5.
+
+
+Current superseding pointer — 2026-10-02T13:49Z: corrected Stage5 f783562
+exactCI37012005053 PASS and controlled live image4bba091/source108/package47/
+installed11 independently matched. CURRENT/profile/027A native reviews carry
+aligned state/private preservation and explicit root/owner/vendor/future gates.
+Same sole Leibniz Stage6 actualfinal pending; older CI/runtime pointers retained.
+
+Current superseding pointer — 2026-10-02T13:34Z: actual corrected Stage5 native
+final27 independently accepted/pushed f783562d69b13f565e219abe2c4f3e86cbcb222c;
+exactCI37012005053 pending. Failed0195/37008012204 retained; one fixture-discovery
+correction only. Candidate4bba091/source108 match, NOT deployed; liveUI02a42012.
+SAME sole Leibniz Stage6 resumed in preserved worktrees, current ANIMAbasef783562/
+SENTRY4909e089. CURRENT/027A native reviews and coverage distinguish source,
+deployment and full MO/A–O/root/owner/vendor/audible/prospective gates. Older
+dated worker/source/CI pointers below are history, not current acceptance.
+
+Current pointer — 2026-10-02T12:43Z: Stage5 final26 independently accepted/pushed
+0195c52, exactCI37008012204 pending, candidate built/notdeployed. SAME sole Coder
+issued Stage6 supported setup/scene/automation frozen-MCP parity in distinct
+worktrees. CURRENT and existing027A retain exact source/deployment/open gates.
+
+Current pointer — 2026-10-02T12:31Z: Stage5 actual native final collected and
+bounded25-file source independently accepted. SAME sole Coder receives final
+hosted-PG workflow coverage correction before refreeze/publication. Runtime
+remains Stage4; source acceptance is not actual owner/physical/fullGoal proof.
+See CURRENT and027A native reviews; older pending-result pointers are history.
+
 Current superseding pointer — 2026-10-02T11:30Z: Stage4 actual native final
 independently accepted, compatible7fe3c705/862cc8ec exact hosted PASS and loaded
 image02a42012/source106/package47. Bounded Core/voice recovery observed;

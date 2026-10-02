@@ -447,3 +447,17 @@ binding: installed `anima_household` is present, disabled at rest, exact-preboun
 and protected by existing denies/overrides. No resident profile change is made.
 ANIMA Graft ask's automatic cache refresh is an explicit preservation failure;
 no manual rebuild, further ask or speculative byte restoration was performed.
+
+## 2026-10-02 — Owner permits additional native development support agents
+
+Direct owner amendment: "spin up additona agents if needed to mutli task and
+speed up the work being done while you continue to orchestrate and architect
+them". This supersedes the earlier restriction against additional development
+support agents where useful; primary remains Architect/independent reviewer.
+Current least-conflicting use is one existing implementation Coder plus one
+READ-ONLY product audit sidecar, no overlapping files/services or descendants.
+Original role transfer, household-runtime/developer separation, preservation,
+fencing/privacy/full-goal/evidence/owner-decision boundaries remain unchanged.
+SENTRY resident thread is not a development agent. No new orchestration
+framework, schedule or external service. Authorization and actual handles are
+in CURRENT and existing027A DIRECTIVES; audit result is not self-acceptance.

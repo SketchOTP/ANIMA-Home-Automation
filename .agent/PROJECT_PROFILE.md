@@ -1,5 +1,49 @@
 # Project Profile
 
+## Stage6 supported scene composition — 2026-10-02T14:42Z
+
+Source19fff47 is independently accepted but not hosted/deployed. Existing saved
+scene UI and frozen SENTRY boundary share SceneApplication/Phase9, stable durable
+attempts, current actual approval identity, saved version/binding validation and
+truthful partial/unknown results. No new store/executor/workflow or raw HA batch.
+Reproduced create/unknown-state/recovery fixes retained. Current deployment stays
+f783562/image4bba091 until exact hostedCI/control update. Same sole Stage7 Coder
+implements automatic future learning evaluation, not yet accepted. See027A native
+review14:42Z for exact tests/count correction/remaining full Goal gates.
+
+
+## Stage5 hosted qualification and controlled deployment — 2026-10-02T13:49Z
+
+Exact f783562d69b13f565e219abe2c4f3e86cbcb222c CI37012005053 SUCCESS
+at13:37:39Z. Native artifact11229345939 digest
+sha256:112758ae0d1679b21e4649a9f84de5615cf4459c3a883cf5a8f5426598910fcc;
+actual downloaded PG4/dedicateddesktop+phone2 PASS0skip/failure/error.
+Previous0195/37008012204 failed discovery remains preserved.
+
+Controlled application-only deployment13:43Z now observed: live UI imageID
+4bba091d31e457462e50f70258b77c3ab29319de816a95d19afd4333316cd307,
+container27253520960cbbc4205295d020a1d9cbaa1dcfa35e0786ad83de5aa27400ba2c.
+All108 actually imported Python/SQL source files equal accepted f783562;
+47 installed distributions match unchanged uv.lock;11 installed units/client
+files exact. Authenticated Core/stack READY, UIhealth200/unauthbootstrap401.
+Core/helper/WiFi/relay/voice/supervisor/nativeUI active with0restarts.
+DB/OPA/HA/searx container IDs/starttimes unchanged.
+
+Pre/post aligned read-only snapshots13:43:19/13:44:46 retain17tasks,1profile,
+314Memory,5calendar and46ambiguous identities/generations/startflags by exact
+digests. Provider states unchanged, no active provider or PLANNED/EXECUTING
+action before restart; only3SUCCEEDED/1POLICY_DENIED historical actions.
+Nine private configuration/profile/credential hashes and Graft bytes unchanged.
+No historical ambiguity reset/replay, owner fixture/model/physical action,
+root bypass, host reboot or new dependency. Android still NOT_READY/
+BINDER_PERMISSION; session/supervisor inactive, no recovery attempted.
+
+Same sole Leibniz Stage6 continues in isolated f783562/4909e089 worktrees;
+actual final pending. Full MO-01–15/A–O, genuine vendor/owner/playback and
+prospective improvement remain open. This accepts bounded source/runtime
+deployment, not complete owner usability, all-call billing or full Goal.
+Notion checkpoint reconciliation follows in existing authority/reference pages.
+
 ## Verified Stage4 deployment supersession — 2026-10-02T11:32Z
 
 Live product pair7fe3c705/862cc8ec has exact hosted PASS and loaded UIimage

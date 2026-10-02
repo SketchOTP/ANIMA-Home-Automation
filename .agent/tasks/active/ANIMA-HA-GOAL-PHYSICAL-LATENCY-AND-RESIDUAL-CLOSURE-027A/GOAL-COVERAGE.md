@@ -1,5 +1,110 @@
 # Permanent goal coverage — native takeover baseline
 
+## Stage6 source accepted / Stage7 same-Coder issued — 2026-10-02T14:42Z
+
+Actual Stage6 native final and evidence-only follow-up collected. All15 frozen
+files match manifestd9ebd5496197005531cc6ece33de0aaed64ed08f7fb76994b1a1452789c64450;
+6401-byte historical prefix9d6bedaf retained. Independent source/guard/CI review,
+32focused and4real isolated PG/currentOPA cases PASS0skip/failure/error.
+All6 primary JUnit hashes match. Full run has1506 parent testcases:1385PASS/
+121explicitSKIP, plus43successful unittest.subTest reports merged into8parents;
+1549 is the suite report counter, NOT1549 independent cases. Installed pytest
+reporter-only reproduction independently confirms the43difference, no rerun/
+source/test/assertion alteration. Browser2/generic115PASS14skip/H5V2, frontend/
+types/build/Ruff/mypy/OPA/support/MCP evidence retained with scoped limitations.
+
+Bounded Stage6 SOURCE ACCEPTED, normal product commit
+19fff47c812acd433a254255a6d62839f031becb integrated locally. Shared saved-scene
+UI/API/frozen-MCP apply now uses existing Phase9 coordinator, saved versions/
+stable attempts, current actual identity, locks/policy/verification and honest
+partial/unknown outcomes. Approval covers only existing child, not remaining
+sequence. Strict create/unknownHA/in-memory recovery corrections reproduced.
+No new executor/workflow/store/dependency; SENTRY4909e089 unchanged.
+Hosted qualification/publication/deployment pending; live remainsf783562/
+image4bba091. No owner/physical/voice/fullA–O usability claim.
+
+Same sole Leibniz issued STAGE7-ASSIGNMENT, native01a0fd10-6d89-7453-a041-a6c57abec46c,
+worktrees /tmp/anima-stage7-development.9b6KTQ@19fff47 and
+/tmp/sentry-stage7-development.5RKgvv@4909e089. Existing027A/R5F/full Goal only.
+Closes automatic prospective commissioning/evaluation/feedback inside saved
+learning consent/tasks/Memory/Journal/fenced SENTRY; not manual-only freezing,
+new brain/schedule or executable authority. Parent owns publication/deployment/
+Notion/full coverage. Android root/vendor/playback/real owner/future improvement
+and historical billing/clock limitations remain. Graft unchanged/uncommitted.
+
+
+Prospective commissioning correction — 2026-10-02T14:05Z: current configured
+household has13ACTIVE suggestions and0frozen shadows; source only permits
+manual/direct-owner freezing and scheduled review catalogue onlypropose.
+Existing2review tasks are not a commissioned prediction trial. Future improvement
+is not a time-only gate until a legitimate future evaluation is frozen. Accepted
+Stage4 manual evaluation/feedback source stands; automatic commissioning and
+measured later use remain incomplete under the owner's existing harness intent.
+Details/source/next sequencing in native reviews14:05Z. Same Stage6 Coder live;
+no new parallel packet/agent, authority change or owner-store mutation.
+
+## Stage5 hosted qualification and controlled deployment — 2026-10-02T13:49Z
+
+Exact f783562d69b13f565e219abe2c4f3e86cbcb222c CI37012005053 SUCCESS
+at13:37:39Z. Native artifact11229345939 digest
+sha256:112758ae0d1679b21e4649a9f84de5615cf4459c3a883cf5a8f5426598910fcc;
+actual downloaded PG4/dedicateddesktop+phone2 PASS0skip/failure/error.
+Previous0195/37008012204 failed discovery remains preserved.
+
+Controlled application-only deployment13:43Z now observed: live UI imageID
+4bba091d31e457462e50f70258b77c3ab29319de816a95d19afd4333316cd307,
+container27253520960cbbc4205295d020a1d9cbaa1dcfa35e0786ad83de5aa27400ba2c.
+All108 actually imported Python/SQL source files equal accepted f783562;
+47 installed distributions match unchanged uv.lock;11 installed units/client
+files exact. Authenticated Core/stack READY, UIhealth200/unauthbootstrap401.
+Core/helper/WiFi/relay/voice/supervisor/nativeUI active with0restarts.
+DB/OPA/HA/searx container IDs/starttimes unchanged.
+
+Pre/post aligned read-only snapshots13:43:19/13:44:46 retain17tasks,1profile,
+314Memory,5calendar and46ambiguous identities/generations/startflags by exact
+digests. Provider states unchanged, no active provider or PLANNED/EXECUTING
+action before restart; only3SUCCEEDED/1POLICY_DENIED historical actions.
+Nine private configuration/profile/credential hashes and Graft bytes unchanged.
+No historical ambiguity reset/replay, owner fixture/model/physical action,
+root bypass, host reboot or new dependency. Android still NOT_READY/
+BINDER_PERMISSION; session/supervisor inactive, no recovery attempted.
+
+Same sole Leibniz Stage6 continues in isolated f783562/4909e089 worktrees;
+actual final pending. Full MO-01–15/A–O, genuine vendor/owner/playback and
+prospective improvement remain open. This accepts bounded source/runtime
+deployment, not complete owner usability, all-call billing or full Goal.
+Notion checkpoint reconciliation follows in existing authority/reference pages.
+
+Current superseding qualification boundary — 2026-10-02T13:14Z: Stage5 source
+0195c52 published but exactCI37008012204 FAILED default fixture discovery;
+dedicated browser qualification skipped. No Stage5 live/owner pass. Downloaded
+actual hosted Stage5 PG JUnit4PASS0skip/failure, SHA31232b64ef42e8b8e1a80c00de8be0135ca0e8107aa0e21bc82af60ba9965a3f;
+this does not promote the failed run. Same sole Coder preserves/pauses Stage6
+while correcting test selection. Parent independently proves129 generic cases
+retained, exactly3 misplaced real-store cases excluded; H5V2 and dedicated2
+still selected. Discovery is not run acceptance. New Stage6 result file is
+explicitly IN_PROGRESS, not a collected final. Source108/packages47 candidate
+verified but NOT deployed. Both authority and architecture correction sections
+complete readback; root/owner/vendor/audible/A–O/prospective gates persist.
+
+Current scoped delta — 2026-10-02T12:43Z: Stage5 actual26-file native final
+independently accepted/published0195c52, exactCI37008012204 pending; candidate
+imagee7cf3e0f/source108 matched, NOT deployed. Typed affected owner workflows,
+frozen output schemas, post-entry dispatch truth and actual helper accounting
+now source-qualified, not real owner/billing/physical proof. Same sole Coder
+Stage6 covers supported setup/scene/automation UI/API/frozen-MCP parity. Parent
+confirmed scene apply only in UI gateway; MO03/MO05 requires bounded equivalent
+operation. No new engine/executor or generic-schema cleanup campaign. Full MO/
+A–O remains binding; actual owner/root/vendor/playback/future gates persist.
+
+Current interpretation — 2026-10-02T11:58Z: current full-outcome table below is
+reconciled to accepted/deployed Stage4 and exact green governance0cc82c63/4909e089.
+Older dated deltas and initial takeover facts remain historical evidence. No
+Stage5 draft or code-derived documentation is promoted to live owner success.
+Root Android, real vendor/playback/owner scenarios and prospective improvement
+remain explicit. Main requirement states below are bounded PARTIAL, not a new
+declaration that accepted Phase14 or repaired source defects must be rebuilt.
+
 Controlled deployment delta — 2026-10-02T11:29Z: accepted7fe3c705/862cc8ec
 pair now hosted PASS and loaded, UI image02a42012/imported106/package47 matched.
 Authenticated Core/stack/health and bounded restart observed, not owner A–O/E5.
@@ -165,21 +270,21 @@ No goal completion is claimed.
 
 | Outcome | Current capability state | Evidence and exact next gap |
 | --- | --- | --- |
-| MO-01 resilience/recovery | PARTIAL, historical Phase 14 accepted | Preserve accepted destructive/backup/ARM64 evidence; current boot regression requires affected recovery qualification, not general reopening. |
-| MO-02 management plane | PARTIAL | Existing owner support matrix/UI source; current runtime and complete real workflows need integrated verification. |
-| MO-03 API coverage | PARTIAL | Local route verifier PASSED: 69 routes/27 domains, digest 9694d894b8923da3de6bf44f0aaf7a03b0de8cbbf2c5e52a0f6aec3a68070172; authentication/schema/results are not established by route equality alone. |
-| MO-04 owner UI | PARTIAL | Existing primary pages; real current browser workflows, degraded status and approval completion remain to qualify. Preserve owner design. |
-| MO-05 MCP coverage | PARTIAL | Typed/frozen authenticated package exists; authenticated Core/socket and sensor registry recovered. Complete support-to-tool coverage and actual supported turns still need runtime proof. |
-| MO-06 production SENTRY | PARTIAL | Reviewed feature pair deployed; authenticated Core/voice/worker recovered. Android/Wi-Fi coverage, accountable mandatory delivery and real voice/approval workflows still open. |
-| MO-07 onboarding | PARTIAL | Existing Zigbee/config-flow surfaces and historical commissioned devices; clean supported onboarding without HA UI requires exact deployed qualification. |
-| MO-08 settings ownership | PARTIAL | Settings/preferences/routines/personality source and durable voice intent present; persistence retained but full actual owner workflows not requalified. |
-| MO-09 external by intent | PARTIAL | Existing weather/search/recipes/tasks plugins and safety boundaries; final representative SENTRY workflows and bounded shopping/local-business behavior not freshly verified. |
-| MO-10 authority/exact results | PARTIAL | Historical OPA/fencing/verification accepted; episode-less confirmation counterexample and effective production process permissions require correction/inspection. |
-| MO-11 clean deployment/portability | PARTIAL | Reproduced startup cycle repaired, imported source correspondence and affected runtime recovered. Android host-admin gate, conservative Wi-Fi restart, build dependency reproducibility and broader clean deployment remain open. Historical portability/restore evidence preserved. |
-| MO-12 integrated A–O | PARTIAL | Historical phase scenarios are retained, not a simultaneous final deployed acceptance. Scenario map below. |
-| MO-13 voice/text household | PARTIAL | Fresh resident LISTENING agrees with awake/office; worker recovered. Actual voice/chat, approval, delivery and combined-context acceptance remain distinct and incomplete. |
-| MO-14 zero HA frontend | PARTIAL | Support matrix declares no raw frontend/provider route; declaration and route verifier do not prove every real supported journey. |
-| MO-15 simultaneous closure | PARTIAL | Requires all outcomes together, exact compatible versions/CI, actual runtime and truthful time/physical gates. Completion marker unclaimed. |
+| MO-01 resilience/recovery | PARTIAL for current integrated deployment; Phase14 accepted | Destructive/backup/ARM64 history remains accepted. Controlled Stage5 application restart preserves state/fencing; current Android owner-root recovery and genuine fresh observation remain gates, not general Phase14 reopening. |
+| MO-02 management plane | PARTIAL | Existing 70-route/27-domain matrix; Stage5 affected owner workflows are source/hosted/isolated-browser qualified and deployed. Stage6 connected saved-scene/setup source independently accepted19fff47 with actual isolated Core/PG/browser evidence; publication/deployment and real authenticated owner journeys remain unqualified. |
+| MO-03 API coverage | PARTIAL | Current support digest28928cba68cf96e6c04eb5a85ad58e87e07f93ece85014e5af2f44e65760afb9; route equality alone is not typing/auth/results. Stage5 affected transport/schema/dispatch corrections are accepted, exact CI PASS and deployed. Stage6 named-scene UI/API/frozen-MCP parity independently SOURCE ACCEPTED19fff47, not yet deployed; not all generic response objects are defects. |
+| MO-04 owner UI | PARTIAL | Current UI deployed/fingerprinted and stack/authenticated Core healthy; full supported real owner workflows/visual usability are not established by isolated browser fixtures. Preserve design. |
+| MO-05 MCP coverage | PARTIAL | Frozen household package and authenticated attachment tested; Stage6 named-scene typed workflow/real Core uncertainty/restart parity accepted at source19fff47, deployment pending. Complete supported tools and actual owner SENTRY results still need integrated evidence. Restricted product data is intentionally excluded from resident persistent MCP. |
+| MO-06 production SENTRY | PARTIAL | Compatible ANIMAf783562/SENTRYproduct862cc8ec (head4909e089) deployed; separate required-speech drain, bounded context/incident and actual copied-helper accounting paths qualified. Genuine current vendor/event-to-playback and useful contextual follow-up remain open; no embedded fallback. |
+| MO-07 onboarding | PARTIAL | Existing Zigbee/config-flow and historical commissioning retained. Exact current supported discovery/setup/repair without HA frontend still needs real owner/integration evidence. No surprise pairing/removal. |
+| MO-08 settings ownership | PARTIAL | Current profile/task/configuration persistence retained through controlled Stage5 deployment. Stage5 affected read/change/persist/reload paths pass actual isolated PG/OPA and desktop/phone qualification; real owner settings lifecycle remains distinct from tests. |
+| MO-09 external by intent | PARTIAL | Existing bounded weather, SearXNG/Overpass, recipes and product research adapters. Final owner SENTRY turns are unqualified. Persistent product MCP exclusion protects restricted retention; ephemeral helper path is distinct. Cart/checkout remain historically DEFERRED, not supplied by catalogue search; preserve contract's where-feasible qualifier rather than invent credentials/actions. |
+| MO-10 authority/exact results | PARTIAL | Episode-less continuation and private operational restrictions repaired/qualified; Stage5 post-invocation uncertainty/dispatch correction accepted and deployed, not an untreated source defect. Full actual owner approval/verification and integrated invariant evidence remain distinct. |
+| MO-11 clean deployment/portability | PARTIAL | Current image4bba091 matches108 imported files/47 lock packages/11 installed unit-client files; authenticated readiness and application-only restart pass. Historical portability/restore retained. Owner-root Android gate and complete clean owner installation/upgrade/rollback remain open; do not resurrect repaired unlocked dependency build. |
+| MO-12 integrated A–O | PARTIAL | Scenario map remains binding. Accepted source/isolated regressions and old physical history are not final simultaneous real SENTRY/owner/target qualification. |
+| MO-13 voice/text household | PARTIAL | Accepted resident source deployed and awake/office intent preserved. Sentry/century aliases follow current owner amendment. Full current voice/chat/approval/follow-up and audible delivery still require owner evidence. |
+| MO-14 zero HA frontend | PARTIAL | Supported matrix declares ANIMA-owned workflows; source and isolated browser qualification are not every actual owner journey. No production test-auth or HA-frontend shortcut to fake completion. |
+| MO-15 simultaneous closure | PARTIAL | Productf783562 exact CI37012005053 green and current deployment proven; local deployment/governance reconciliation awaits next coherent publication. Full MO/A–O, real physical/owner outcomes and prospective improvement are incomplete. Marker unclaimed. |
 
 ## Integrated scenario gap map
 
@@ -198,11 +303,13 @@ All rows retain existing evidence; none is promoted to final simultaneous PASS.
 
 ## Owner recovery/outcomes program and order
 
-1. Reproducible truthful deployment: startup graph, socket ownership, deployed
-   pair, Android forwarding and freshness. IMPLEMENTATION GAP reproduced.
+1. Reproducible truthful deployment: startup graph/socket ownership/current
+   pair repaired and bounded runtime verified; Android owner-root recovery and
+   actual vendor forwarding/coverage remain operational gates.
 2. Accountable delivery: stable-ID outbox, unfinished obligations, independent
    alerts despite ambiguous reasoning/busy speaker, combined context/follow-up,
-   approvals and timing provenance. IMPLEMENTATION GAP/source counterexamples.
+   approvals and timing provenance. Accepted source/isolated regressions and
+   installed composition, not genuine physical/vendor/audible qualification.
 3. Maintained context/incident assessment: coverage, conservative presence,
    Away scenario and controls. PARTIAL; real physical coverage remains limited.
 4. Demonstrated improvement: correct review completion, owner correction across

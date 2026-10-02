@@ -2211,3 +2211,139 @@ Both existing Notion authorities received meaningful deployment checkpoints at
 Markdown-escape normalization. No missing history/child moves/page replacement.
 Same sole-Coder Stage5 continues; full MO/A–O, helper cost accounting, owner/
 physical and future outcome gates remain. No overall prototype acceptance.
+
+## 2026-10-02T11:52Z — Governance CI and code-derived architecture readback
+
+Independent exact-head inspection: ANIMA governance0cc82c63 / CI37001732712
+PASS (completed11:48:27Z), SENTRY governance4909e089 / CI37001733461 PASS.
+Accepted product7fe3c705/862cc8ec and deployed image02a42012 remain unchanged.
+No source commit/deployment/model/owner fixture/physical action this checkpoint.
+
+Existing architecture Notion reference updated in eight narrow source-derived
+sections; complete normalized readbacks PASS and corrected exact governance
+review link verified. Original source snapshot, historical failed validation and
+ancestor placement preserved. Both authority pages updated11:51:33Z and complete
+new sections refetched/matched. Documentation is not runtime/owner proof.
+
+One sole Coder Leibniz continues Stage5; actual native final not collected.
+Full MO-01–15/A–O remains active with root/vendor/playback/owner/prospective gates,
+and actual installed helper accounting PARTIAL. Native wait timeout is not a
+terminal result. New documentation checkpoint may join next meaningful product
+publication; local Graft tooling remains separately authorized/uncommitted.
+
+## 2026-10-02T12:10Z — Independent Stage5 draft verification and direct correction
+
+Explicit worktree PYTHONPATH parent test30 PASS, draft E3 only. Actual helper
+usage caller, post-invocation dispatch classification and owner transport tests
+inspected; final Coder/native result still pending. Wrong initial editable-import
+OpenAPI probe corrected and preserved, actual draft13 newly structured responses
+with52 remaining free-form, not complete API coverage. Main70-route/27-domain
+support verifier remains PASS/digest28928cba. Parent sent source-binding warning
+and concrete read-only-branch test coverage concern directly to SAME sole Coder.
+No agent restart/descendant or primary product edit. Details in native reviews.
+
+Owner health200/Core attachment PASS, sessionless bootstrap401. Browser skill
+inspection confirmed no existing enabled control/CLI/CDP access; real owner UI
+not counterfeit qualified. Current runtime/source/CI remains Stage4, no live
+model or physical/owner mutation. Native Goal and full MO/A–O remain ACTIVE.
+
+## 2026-10-02T12:31Z — Stage5 actual native final independently reviewed
+
+Coder's actual final COLLECTED. Final25-file manifest7325f4e7, original embedded
+report hash b1774aea and final1410/1293passed/117explicit skips JUnit verified.
+Parent31 focused cases PASS and13 real disposable PostgreSQL/currentOPA cases
+PASS/0skip/21.931s, explicit detached imports and temporary authority bindings.
+Reviewed entered dispatch/UNKNOWN/verification, owner contract extension/default
+preservation, frozen output binding and authenticated fenced helper receipts.
+Bounded SOURCE ACCEPTED for publication/control deployment, not real owner/
+provider/physical/fullGoal. SAME Coder gets one publication correction to include
+new opt-in PG tests in hosted workflow and safely reuse current browser stack.
+No new architecture, source scope, parallel agent or owner test. Runtime stays
+Stage4 until exact hosted qualification and controlled installation.
+
+## 2026-10-02T13:14Z — Stage5 hosted negative preserved; discovery correction pending
+
+Published0195c52 CI37008012204 FAILED: default fixture suite115PASS14SKIP3FAIL,
+new real-store cases selected by wrong generic config. Dedicated actual browser
+step SKIPPED. Same sole native Coder correction01a0fcb2, Stage6 draft preserved/
+paused, no product/form/assertion change. Parent discovery comparison preserves
+129generic/H5V2/dedicated2; actual hosted4PG report downloaded and independently
+verified0failure/error/skip, SHA31232b64ef42e8b8e1a80c00de8be0135ca0e8107aa0e21bc82af60ba9965a3f.
+Failed artifact11227422161/nativecda6d884 retained, not passing whole-run proof.
+Candidate108source/47lockpackages exact, not deployed; liveUIhealth200 and
+sessionlessbootstrap401. Three source-grounded architecture edits and both
+authority failed-run sections fully refetched. Binder owner-root, real vendor/
+owner/audible/prospective gates remain; actual corrected native final pending.
+Stage6 report IN_PROGRESS is not completion. Full MO/A–O native Goal ACTIVE.
+
+## 2026-10-02T13:18Z — Stage5 corrected actual final independently accepted
+
+Actual27 nativefinal collected; manifestc40614f3/allfiles and priorreport64928-byte
+SHA3839b60 exact. Parent discovery/diff/JUnit review accepts bounded one-ignore
+correction;129generic/14existing skips,2H5V,4PG,2dedicated,0fail/error. Published
+f783562 exactCI37012005053 pending; failed0195/37008012204 retained. Candidate
+image4bba091d/source108 match, no deploy. Same sole Coder Stage6 explicitly
+resumed after safe test-only ff with5draft hashes retained. Both Notion authority
+and architecture updated/refetched complete match. Graft remains unchanged and
+uncommitted; no owner/model/physical/prospective or whole-goal acceptance.
+
+## 2026-10-02T13:49Z — Stage5 exact hosted PASS and controlled deployment accepted
+
+Exact f783562/CI37012005053 SUCCESS; native artifact11229345939/
+sha256:112758ae0d1679b21e4649a9f84de5615cf4459c3a883cf5a8f5426598910fcc.
+Downloaded actual PG4/browser2 pass0skip/failure/error; prior failed run retained.
+Live UIimage4bba091/container27253520/imported108/locked47/installed11 exact;
+authenticated Core and stack ready, HTTP200/unauth401. Application-only restart
+preserves DB/OPA/HA/searx uptime and all aligned task/profile/Memory/calendar/
+46ambiguous digests, private/Graft bytes; seven application processes0restarts.
+No active consequential work interrupted or ambiguous replay. Detailed commands,
+IDs, hashes and limitations in existing027A native review13:49Z. Same sole
+Stage6 Coder live, actualfinal pending. Android Binder owner-root, genuine
+vendor/owner/playback and prospective improvement gates remain. Full Goal active.
+
+## 2026-10-02T14:05Z — Prospective commissioning remains a real harness gap
+
+Current configured-household READ ONLY inventory:13ACTIVE suggestions,
+157historical suggestions,0frozen/active shadow evaluations. Existing2ACTIVE
+review tasks nextdueOct3 02:29:56Z; scheduling is not completed cognition.
+Source freeze_shadow only direct-owner; scheduled review catalogue onlypropose.
+Current automatic review cannot commission a prospective trial, so waiting
+alone cannot prove improvement. Accepted Stage4 manual freeze/scoring stands;
+remaining automatic commissioning/feedback gap retained within original owner
+harness intent. Full MO table corrected obsolete Stage5-pending labels without
+claiming owner/A–O PASS. Both existing Notion authority sections updated and
+complete normalized readbacks MATCH. No owner identity/config/model/physical
+mutation or new concurrent assignment. Same sole Stage6 Coder actualfinal pending.
+
+## 2026-10-02T14:27Z — Learning consent and coverage boundary independently verified
+
+Read-only configured-household query finds one ACTIVE EXPLICIT_INPUT config:
+daily/multi-day reviews enabled, proactive notifications disabled, both horizons
+3days. Existing source scopes saved review tasks accordingly. Production has no
+coverage_reader injection; qualified positive receipts can be scored, but quiet
+windows remain UNKNOWN. Do not equate automatic window creation with measured
+accuracy or silently enable proactive behavior. Prepared next harness acceptance
+boundary is recorded in027A native review14:27Z, NOT a parallel assignment.
+Same sole Stage6 Coder final remains pending after actual native waits; a timeout
+is not termination or acceptance. No product/runtime/owner mutation; local
+governance diff-check PASS. Synchronization of this added preparation is pending
+the next coherent checkpoint; previous Notion commissioning finding still stands.
+
+## 2026-10-02T14:42Z — Stage6 actual finals independently source accepted
+
+All15 frozen source hashes and prior prefixes preserved; six JUnit digests match.
+Parent independently ran32focused and4real Core/PG/currentOPA cases PASS0skip.
+Full XML has1385passed parent cases/121skips plus43successful subtest reports;
+installed pytest reporter-only mechanism independently reproduced, not lost
+testcases or a product failure. Other PG41/browser2/generic115+14skip/H5V2
+artifacts match. SOURCE accepted/local normal product19fff47; publication/
+hosted/deployment pending, live remainsf783562/image4bba091. Same sole Coder
+Stage7 automatic prospective harness issued; owner/physical/fullGoal not passed.
+
+## 2026-10-02T14:45Z — Explicit owner parallel-agent authorization used
+
+Existing implementation Coder remains Stage7. Added READ-ONLY native Planck
+01a0fd13-178c-7682-b438-3ee17b38ec47 for disjoint MO09/12/13/A–O product audit.
+Primary retains independent acceptance and publication. No competing source
+writes, owner/model/physical action, new runtime manager/schedule or packet.
+Actual sidecar result remains pending; spawning is not an accepted audit.

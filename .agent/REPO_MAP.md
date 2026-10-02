@@ -1,5 +1,83 @@
 # Repository Map
 
+## Stage6 named scene workflow — 2026-10-02T14:42Z
+
+Accepted source19fff47, NOT deployed; live remainsStage5. Detailed027A native
+review/result retains real fixture versus owner/physical limits.
+
+- `src/anima_ha/scene_application.py` — shared bounded saved-scene composition;
+  existing ActionStore/scene lock and Phase9 children, no resumable workflow.
+- `src/anima_ha/scenes.py` — typed apply_scene0.2.0 saved UUID/version contract;
+  `sentry_boundary.py` freezes tool/binding/lease checks; `ui_runtime.py` shares
+  the same actual identity/verification path with owner UI.
+- `src/anima_ha/action.py` — retained aggregate lookup and scene-child approval
+  guard; actual current identity passed from UI/Agent, no inferred authentication.
+- `ui/src/main.tsx` — stable scene attempt inspection after network/unknown result;
+  strict create omits unsupported enabled, updates retain version/enabled.
+- `tests/test_stage6_scene_application.py`, `tests/test_stage6_owner_postgres.py`,
+  `tests/serve_stage6_owner_workflows.py`, `ui/playwright.stage6.config.ts` —
+  dedicated real Core/PG/OPA plus synthetic HA, frozen MCP and desktop/phone path.
+
+
+## Stage5 source and installed runtime paths — 2026-10-02T13:49Z
+
+Accepted/published/deployed ANIMAf783562, SENTRY product862cc8ec/head4909e089.
+All108 installed ANIMA package source paths,47 locked runtime distributions and
+11 bounded client/unit files match. Detailed proof:027A native reviews13:49Z.
+This is not full owner/physical/future qualification or a generic-schema audit.
+
+- `src/anima_ha/owner_contracts.py` — finite shared affected owner-operation
+  contracts, preserving supported extensions/defaults and enforcing frozen
+  output shapes for tasks/calendar/preferences/settings/integrations/capabilities.
+- `src/anima_ha/model_usage.py` — bounded attempt/finish receipt validation;
+  unknown usage stays unknown, not zero cost or billing accuracy.
+- `integrations/sentry/anima-household/codex_model.py`, `household_worker.py`
+  — actual copied helper model-attempt receipts, current lease renewal and
+  Core lifecycle persistence; installed via existing `install_pc_runtime.py`.
+- `ui/playwright.stage5.config.ts`, `tests/serve_stage5_owner_workflows.py`,
+  `tests/test_stage5_owner_postgres.py` — dedicated real-store owner-workflow
+  qualification; default fixture config explicitly excludes these guarded cases.
+
+
+## Current recovery paths — 2026-10-02T11:52Z
+
+Focused accepted product boundary: ANIMA7fe3c705/SENTRY862cc8ec. This current
+addition supersedes only the paths described below; older map is history, not
+a complete current implementation/deployment audit. Code-derived Notion reference
+https://app.notion.com/p/3e9833cb27ff8161a0eaf4bdc03dd38e has eight source-checked
+updated sections and retained original validation history.
+
+- `src/anima_ha/alert_delivery.py` — durable required-alert obligation, delivery
+  generation/lease and playback-intent/result fencing, distinct from optional
+  model provider lifecycle. Only proven unstarted work is safe to retry.
+- `src/anima_ha/sentry_service.py` — authenticated Core/provider ownership,
+  required delivery endpoints, generic claim exclusion for autonomous Attention,
+  sole Core learning scheduler and current socket composition.
+- `src/anima_ha/household_situation.py` — source-linked commissioned inventory,
+  recent evidence, explicit mode and uncertainty; process diagnosis is not
+  event coverage or actor/authentication proof.
+- `src/anima_ha/household_learning.py`, `learning_review_runner.py`,
+  `household_shadow.py` — chronological keyset review reads, terminal result and
+  candidate-materialization checks, failed-note quarantine, owner corrections,
+  bounded projection retry and explicitly frozen future shadow evaluation.
+  No qualified production interval-coverage reader: silent windows UNKNOWN.
+- `src/anima_ha/resilience.py` — semantic replay status/trace/evidence/outcome
+  comparator; replay does not establish new physical outcomes.
+- SENTRY `tools/sentry_anima_events.py`, `perception/always_on_voice.py` — resident
+  authenticated event work and independent required-speech drain, available
+  without an already-active microphone listening session.
+- SENTRY `tools/sentry_model_calls.py`, `tools/sentry_execution_authority.py` —
+  private attempted/finished model usage receipts, missing usage UNKNOWN and
+  operator-only append-only synthetic-test classification; no runtime MCP grant.
+- Actual installed ANIMA `codex_model.py`/`household_worker.py` remains a distinct
+  CLI invocation path not covered by those SENTRY wrappers. Usage correction is
+  Stage5 draft, NOT accepted/live or billing proof.
+- `scripts/check_pc_readiness.py --core --timeout 5` requires configured service
+  socket/token-file environment; authenticated attachment differs from health200.
+- `scripts/waydroid_notification_supervisor.py --check-access` is passive access
+  diagnosis. BINDER_PERMISSION owner-root gate must not be bypassed with Docker
+  privilege, app-data resets, new credentials or a fake READY relay conclusion.
+
 Latest focused update: continuous household learning 027A R3, 2026-09-09.
 The remaining historical map below is not a full current-source audit.
 
