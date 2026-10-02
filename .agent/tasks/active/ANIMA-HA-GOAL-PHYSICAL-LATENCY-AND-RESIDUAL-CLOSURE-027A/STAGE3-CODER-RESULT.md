@@ -534,3 +534,204 @@ hashes remain exact; no main product diff. Parent-created untracked
 STAGE4-ASSIGNMENT.md appeared during final inventory: preserved untouched, not
 read/started as a new assignment. Earlier dirty inventory remains historical.
 Source frozen, actual native result returned for parent independent review.
+
+## Native Stage3 hosted-CI correction — 2026-10-02T08:20Z
+
+### CODEX RESULT — same027A/R5F priority correction
+
+Verdict: PARTIAL / READY_FOR_REVIEW. Retrieval confidence ADEQUATE. This bounded
+fixture correction is ready for independent review; hosted CI, deployment,
+Stage3 operational acceptance and the full MO/A–O goal are not completed.
+Stage4 drafts are preserved and PAUSED for this priority, pending direct parent
+disposition. No Coder self-acceptance, commit/push/CI or runtime installation.
+
+### Technical state and reproduction
+
+Parent reported ANIMA hosted run36979872665 FAILED step27 on published governed
+55253b11dd74f18c264781cca8e8849ad30714ac; SENTRY89bbf6c7 run36979873750 PASS.
+The original bridge fixture explicitly supplied DEFAULT_HOUSEHOLD_ID without
+commissioning its Graph household. Child import sentry_bridge -> ui_runtime ->
+ui_api -> module app=create_app() -> build_postgres_core(watch_journal_events=True)
+rejected that scope with `Canonical handoff requires an active commissioned
+household`. Coder independently reproduced the exact stack on the migrated
+disposable anima_stage3_bridge_review database; child exit1. The fail-closed
+guard remains unchanged. Parent's first unmigrated UndefinedTable attempt was
+a distinct setup failure, not evidence of the commissioned-household cause.
+
+Only product workspace used: /tmp/anima-stage3-ci-correction, detached at
+55253b11dd74f18c264781cca8e8849ad30714ac, common Git directory original ANIMA
+/home/sketch/Projects/ANIMA Home Automation/.git. Initial workspace clean.
+anima_ha.__file__ explicitly resolved correction-worktree/src before execution.
+Parent original execution state revalidated OWNED generation4/fence4/session
+01a052d8-2511-7382-a1ef-b0a080514788; delegate never acquired/released it.
+
+### Work performed / exact changed files
+
+1. scripts/verify_phase14_sentry_bridge_restart_r2.py: use a fresh UUID fixture
+   household, commission through existing Graph API after migrate and before
+   either actual bridge child, bind both existing household env aliases to it,
+   remove the unnecessary ui_api constant import, preserve actual subprocess
+   restart and request-count assertions. Add content-free measured per-child
+   durations/plugin lifecycle additions/Attention trigger counts.
+2. tests/test_stage3_bridge_restart_fixture.py: actual child missing/wrong-kind/
+   retired scope regressions (no request enqueued), and actual commissioned
+   restart/no-duplicate regression. Verify the explicitly supplied base database
+   is anima_stage3_bridge_review/current role stage2. Create fresh UUID-named
+   databases only on that disposable server, migrate, qualify exact generated
+   database/current role, and drop each owned fixture database in finally.
+   GNU timeout bounds the entire fixture process group:20s negative child,
+   120s complete positive two-child chain, kill-after2s; Python outer limits30s/
+   130s. No relaxed app guard, route, request assertion or provider fencing.
+
+### Measured longer-chain evidence and timeout disposition
+
+Final instrumented focused run:4 PASSED,60.13s total. Positive bridge process1
+19.291s, added76 plugin.registered/plugin.healthy Journal events, trigger count
+0->77. Process2 31.928s, added76 lifecycle events, triggers77->153. Combined
+bridge subprocess time51.219s; the fixture event request count remained1->1.
+These are process elapsed times, not model latency or physical/audible evidence.
+
+The original shared review database had460 retained CONTEXT_READY triggers after
+repeated/concurrent fixture attempts. A bounded25s faulthandler diagnostic
+(exit124) showed the main thread progressing through ContextBroker.load,
+IntelligenceStore.enqueue/delivery_initializer and ensure_review_packet's Journal
+lookups; its daemon watcher was in LISTEN/notifies. No blocking SQL lock was
+observed. The ordinary guaranteed Attention profile includes plugin lifecycle
+events, so import composition and the second explicit Core composition generate
+additional bounded work beyond the one fixture user event. No resident/model
+consumer executed these pending requests. No fixture history or shared cursor was erased
+to improve timing. Fresh per-test databases isolate those retained triggers;
+they alone did not fit the temporary45s bound. The final successful measured
+51.219s chain explains that negative, and the original60s bound had no adequate
+margin against retained-trigger enumeration/concurrent CPU/database load.
+120s is a bounded complete-chain test limit, not a relaxed correctness assertion.
+
+### Validation / exact commands
+
+All commands used explicit cwd /tmp/anima-stage3-ci-correction,
+PYTHONDONTWRITEBYTECODE=1, PYTHONPATH=/tmp/anima-stage3-ci-correction/src and the
+qualified /home/sketch/Projects/ANIMA Home Automation/.venv/bin/python.
+All credential-bearing URLs below were supplied only as local TEST-ONLY env
+values; no owner/private value or raw vendor/media content was inspected.
+
+- `python -m anima_ha.validate` with ANIMA_STAGE3_BRIDGE_TEST_DATABASE_URL pointing
+  to the named disposable review DB and PYTEST_ADDOPTS JUnit output: PASSED.
+  Ruff format/check src+tests, strict mypy165 source files;1346 tests collected,
+  1246 PASSED/100 SKIPPED,0 errors/failures,244.50s. JUnit exact totals independently
+  parsed from /tmp/anima-stage3-ci-correction-final-full.xml. This full collection
+  preceded the final extra diagnostic-result assertions; those exact final
+  assertions and instrumented child script are qualified by the next command.
+- `python -m pytest -o addopts='' tests/test_stage3_bridge_restart_fixture.py
+  --junitxml=/tmp/anima-stage3-ci-correction-final-focused.xml -q -s`: PASSED4,
+  no skips/errors/failures,60.13s, measurements above. Earlier120s focused version
+  also PASSED4 in58.43s. Parent's second earlier-version focused run independently
+  PASSED4; not claimed as final fresh-per-test-source qualification.
+- `MYPYPATH=/tmp/anima-stage3-ci-correction/src python -m mypy --strict
+  scripts/verify_phase14_sentry_bridge_restart_r2.py
+  tests/test_stage3_bridge_restart_fixture.py`: PASSED2 final files.
+- Qualified original venv `ruff check` and `ruff format --check` on both final
+  changed files, plus `git diff --check`: PASSED, introduced warnings0.
+- `python -m pytest tests/test_stage3_household_situation.py
+  tests/test_stage3_core_composition.py -q`, existing isolated
+  anima_vendor_ingress_test DB/role assertions and current OPA18181: PASSED13.
+- `python scripts/verify_phase14_sentry_provider_crash_r2.py`, same disposable
+  review DB: PASS actual process loss, durable provider-start before synthetic
+  model callback, UNKNOWN_RESULT, provider invocations after recovery0. The
+  callback is a test provider, NOT a cloud/model turn.
+- `python scripts/verify_phase14_sentry_process_matrix_r3.py`: PASS actual child
+  PENDING/CLAIMED/PROVIDER_RUNNING/RESULT_RECEIVED lifecycle and no blind replay.
+- Pinned existing OPA1.20.1 Docker `test /policies --fail-on-empty` with correction
+  worktree policy mounted read-only: PASS9/9. No owner policy or service restart.
+- Frontend/SENTRY full suite: NOT APPLICABLE to this two-file ANIMA fixture-only
+  correction; both repositories' runtime product source remained unchanged.
+
+The100 skips are explicit absent opt-ins: isolated routines/preferences/late-
+binding stores and policy fixtures, Stage2/vendor DB fixtures, user-systemd
+sandbox and sibling SENTRY integrated Graph qualification. The separately
+executed real Stage3 PG/current OPA13 pass, not silently promoted from skips.
+
+### Preserved negatives / diagnostics
+
+- Parent unmigrated UndefinedTable versus migrated household-guard failure are
+  separate; Coder independently reproduced only the latter import/child stack.
+  One early count diagnostic used a wrong default UUID; that count is not proof.
+- Coder and parent shared-DB positive runs timed out60s, with three negative
+  tests passing. Coder initial full run:1245 PASS/100 skips/1 positive TIMEOUT,
+  253.33s. No stdout/stderr was produced by the timed-out positive chain.
+- Fresh-per-test/45s trial:3 PASS/1 timeout exit124,53.31s total. A full validator
+  already holding that45s test bytecode later failed the same test:1245 PASS/
+  100 skips/1 failure,237.60s. Its rendered traceback showed edited120s source
+  text while the actual subprocess argv remained45s; not final-tree acceptance.
+- Narrow initial mypy command lacked MYPYPATH and resolved installed imports:
+ 7 import-untyped errors. Corrected source path passes. Temporary make_conninfo
+  kwargs typing introduced1 error; narrowed to make_conninfo(url,dbname=...)
+  without suppressions. A concurrent validator stopped at that known type error;
+  final strict165 and changed-file2 checks pass.
+- One diagnostic queried nonexistent anima_attention_triggers instead of actual
+  anima_reasoning_triggers: UndefinedTable, corrected; no product change.
+- Parent clarified orphan-cleanup result PARENT_OWNED_FIXTURE_ALREADY_GONE:
+  NO parent signal sent. Coder never signaled that parent PID. Final process
+  scan found no surviving correction bridge children; all temporary fixture
+  databases were gone. Only test timeout wrappers signaled their own groups.
+
+### Test-role prerequisite / evidence limit
+
+Actual disposable container role flags read back: stage2 SUPERUSER=true,
+CREATEDB=true, CREATEROLE=true. Parent and Coder made NO role mutation. These
+fixtures require CREATEDB and ownership for their fresh database setup/cleanup;
+this run is NOT unprivileged/NOSUPERUSER/NOCREATEROLE qualification. The existing
+migrations create ordinary ANIMA tables, not new roles/extensions/permissions.
+Current hosted Stage2 test role is NOCREATEDB and lacks this new opt-in setup:
+the four tests skip there unless parent explicitly prepares a suitable isolated
+test-role/server/database. The existing hosted step27 bridge script itself still
+runs against the supplied CI migrated database without needing CREATEDB.
+Do not expand owner-store or product-role authority to run fixture tests.
+
+### Frozen manifest / preservation
+
+Two files, relative paths lexically sorted, each line SHA256 + two spaces +
+relative path, final newline, SHA256 over that exact UTF-8 manifest:
+
+```text
+c9fec06433584a9759a587c5e4972876d3b11ec61a40bdccb2b676ebfdaaa19f  scripts/verify_phase14_sentry_bridge_restart_r2.py
+876a27e261aa42a6df7636e97b6eeb0224afb4cbfe17a826215bd521abf510eb  tests/test_stage3_bridge_restart_fixture.py
+```
+
+Aggregate af6f0c39ff04051778d76d055446dafd137d23f1c0472750f31f6bc09626b2d9.
+All staging indexes empty. Main product/private/services/profile/goals/Graft
+untouched. Main protected hashes still AGENTS98879614, gitignorecd3a8023,
+ignore5b345696; no tooling cache refresh. Old frozen Stage3 worktrees clean,
+untouched. Stage4 ANIMA eight tracked draft changes preserved exactly:
+path:SHA/LF dirty digest6b29ad9613e280e288cf4edbe4ea7fff1b8c1b88662b279a6d1340c8eec4c13c;
+Stage4 SENTRY still clean. Main STAGE4-CODER-RESULT sha256e197580c501db36e576b130627dbf922aa5ff12b569afaa734d0d4d20b15cb3a unchanged.
+
+### Instructions / adjacent fixture review / disposition
+
+Actual correction-worktree root AGENTS, Authority SKILL, INDEX, PROJECT_GOAL,
+PROJECT_PROFILE and relevant CURRENT snapshot read; mandatory Authority evidence,
+state-files and result-contract references read fully. No claim of rereading the
+entire historical CURRENT ledger or automatic client reload. Fingerprints:
+AGENTS1b294f89, Authoritye3f979d4, INDEXdb5dd33c, GOALcb4fd4fd,
+PROFILE58d16f0a, CURRENTcb7bc03d. Original main CURRENT/latest parent-review
+snapshot and read-only original Graft sentry_bridge/ui_runtime routing cards
+used. Direct assignment supersedes router cache-refresh and general record-update
+instructions: no Graft ask/refresh and only this authorized result append;
+parent retains governance/CURRENT/coverage/reviews/profile/Notion custody.
+
+Adjacent restart/process scripts inspected: provider crash, SENTRY process
+matrix, inflight/service/Compose process restart, approval crash/durable approval,
+clean replay and final closure bundle. Store-only subprocesses do not compose
+Core/explicit-household guard; final closure imports existing sample commissioning
+fixture. No second matching uncommissioned explicit-household Core child fixture
+was found. Actual provider-crash/process matrix passes above, other destructive
+Compose/backup/HA runners were NOT executed or weakened for this correction.
+
+External discovery NONE; no strategic replacement. Evidence E4 bounded fixture
+regression protection, not hosted pass, live-SENTRY reasoning, physical latency
+or operational acceptance. No source commit/push/new CI/deploy/model/root/owner
+store fixture/private credential write. Git base detached55253b11; push NONE.
+Records changed ONLY this append; Notion NOT UPDATED by Coder. Existing candidate
+image remains parent-held/not deployed; live081/380 and all root/custody gates
+unchanged by Coder. Recommendation: independently review these exact two files
+and qualify/publish the correction through the parent's existing cycle, then
+directly dispose/resume the preserved Stage4 assignment. Review PENDING.

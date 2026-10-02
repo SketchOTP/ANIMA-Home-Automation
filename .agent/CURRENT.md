@@ -1,5 +1,45 @@
 # Current Project State
 
+## Native correction accepted — 2026-10-02T08:26Z
+
+Actual sole-Coder correction final collected; parent independently accepts the
+frozen two-file bridge fixture correction af6f0c39ff04051778d76d055446dafd137d23f1c0472750f31f6bc09626b2d9
+for publication. Parent final-byte actual PostgreSQL process regressions4 PASS
+in55.37s, Ruff/format/diff PASS, manifest exact. Full Coder JUnit independently
+parsed1346 collected/1246 passed/100 explicit skips/zero errors/failures.
+Canonical household guard and all runtime product bytes unchanged. Longer
+fixture work is causally measured plugin-lifecycle/retained-trigger enumeration,
+not physical alert latency; privileged disposable role qualification explicit.
+Detailed negatives/measurements in STAGE3-CODER-RESULT and independent reviews.
+
+Corrected exact-head hosted CI/publication remain next; prior55253b11 failed run
+is retained. SENTRY89bbf6c7 exact CI PASS. Candidate image remains NOT deployed,
+running081/380 unchanged. Same sole Coder resumes preserved Stage4 upon direct
+native follow-up; full MO/A–O/Goal ACTIVE and root/custody/physical gates remain.
+
+## Published Stage3 CI correction — 2026-10-02T07:54Z — deployment held
+
+ANIMA governed55253b11dd74f18c264781cca8e8849ad30714ac is published; hosted
+run36979872665 FAILED at the existing SENTRY bridge restart fixture. Parent
+reproduced on a separate disposable PostgreSQL database: child composition
+rejects the fixture's uncommissioned DEFAULT_HOUSEHOLD_ID at the new canonical
+handoff guard. The guard is not to be weakened. SENTRY governed
+89bbf6c77d5e019956903fe1f57de341e718b0f4 exact run36979873750 PASSED.
+
+Same sole Coder Laplace received an interrupting bounded correction in
+/tmp/anima-stage3-ci-correction, based55253b11, submission
+01a0fb99-d689-7990-8ca3-2c7e2e7c2415. Stage4 drafts/assignment remain preserved;
+resume Stage4 after actual correction final and independent review. No second
+worker or directive. Parent retains ownership generation/fence4 and full Goal.
+
+Candidate ANIMA imageeeed9e097fe790a9d63b176ad065a9637d44b5c29acf1908ed2bed6f2e7dea98
+is built, NOT deployed. Independently matches105 imported Python/SQL files and
+47 installed packages (project plus46 dependencies), all lock versions match;
+source-tree digest02c6871e6e5eeaaa08350cfcbeae28f32b711768f2ea841b2b936139aa550d29.
+Running pair remains081f1198/380422df and UIimagef20a2897; no services/private
+credentials/owner records changed. Root Binder and ANIMA-only credential/binding
+custody, duplicate-consumer, vendor/physical/Away/full MO/A–O gates remain open.
+
 ## Stage3 actual native review — 2026-10-02T07:30Z — SOURCE ACCEPTED
 
 Primary collected sole-Coder Laplace's actual completed native return and

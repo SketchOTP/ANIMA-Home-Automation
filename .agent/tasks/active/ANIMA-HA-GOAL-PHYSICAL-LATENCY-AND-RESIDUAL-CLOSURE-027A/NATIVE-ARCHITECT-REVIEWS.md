@@ -683,3 +683,101 @@ only through native follow-up to the SAME sole Coder after accepted source
 checkpointing. Parent handles publication/runtime custody and independent review
 without enabling owner contextual policies or inventing future outcomes. Full
 MO-01–MO-15/A–O remains active; no new packet or development schedule.
+
+### 2026-10-02T07:54Z — exact Stage3 publication failure; same-Coder correction
+
+Published ANIMA productf44e99caa067f29ff798edc693ab8ce3c950f02f / governed
+55253b11dd74f18c264781cca8e8849ad30714ac. Exact hosted36979872665 FAILED
+at step27, existing Phase14 SENTRY bridge restart qualification. No prior
+Phase14 acceptance is reopened. Published SENTRY product3e521a10c64344a834d0a72786216fb8ad1337ef /
+governed89bbf6c77d5e019956903fe1f57de341e718b0f4 exact36979873750 PASS.
+
+Parent isolated reproduction uses new anima_stage3_bridge_review on the existing
+disposable test PostgreSQL, never the owner store. Initial empty-schema import
+failed UndefinedTable before migrations; after explicit migrations, exact child
+stderr reproduced ValueError: Canonical handoff requires an active commissioned
+household. The restart fixture supplies DEFAULT_HOUSEHOLD_ID but never commissions
+that Graph household. No weakening of the guard is authorized.
+
+Same sole Laplace was interrupted with bounded source correction assignment,
+native submission01a0fb99-d689-7990-8ca3-2c7e2e7c2415, only write workspace
+/tmp/anima-stage3-ci-correction based55253b11. Preserve Stage4 drafts, inspect
+related subprocess setup dependencies to avoid one-CI-per-fixture iteration,
+return actual correction final before resuming Stage4. Parent remains reviewer
+and publisher; no competing agent/new packet or owner test fixture.
+
+Candidate image built from clean governed55253b11, labeled that revision,
+inspect IDsha256:eeed9e097fe790a9d63b176ad065a9637d44b5c29acf1908ed2bed6f2e7dea98.
+Separate no-network/read-only/cap-drop/no-new-privileges container inspection
+matches all105 installed Python/SQL files;47 installed packages include project
+plus46 third-party dependencies and have zero uv.lock version mismatch. Source
+aggregate02c6871e6e5eeaaa08350cfcbeae28f32b711768f2ea841b2b936139aa550d29.
+This is candidate byte/dependency evidence, NOT deployed correspondence. No
+services, owner data, credentials, profiles or physical/model turns changed.
+Deployment held pending correction/CI/custody verification. Root Android and
+unaffected fullGoal work retain exact previous evidence boundaries.
+
+Independent draft correction check at08:02: three real-child negative scope
+cases PASS; positive subprocess qualification TIMEOUT after60 seconds with no
+stdout/stderr, therefore NOT accepted. Parent returned exact negative to SAME
+Coder without relaxing the guard/timeout or modifying source. An orphan was
+observed as exact isolated bridge child, but was already gone when parent
+identity-validated cleanup ran; parent sent no signal. No owner process targeted.
+At08:00:31Z read-only live queue counts still134 PENDING,33 RECOVERY_REQUIRED,
+13 UNKNOWN_RESULT, no active claimed/delivered/provider-running lifecycle.
+The initial diagnostic used nonexistent status column and failed read-only;
+correct schema inspection/lifecycle query succeeded with no owner mutation.
+ANIMA Notion publication-failure entry exact readback PASS, edited08:01:47.592Z;
+prior checkpoint preserved. SENTRY CI PASS is separate from ANIMA failure.
+
+At08:16 the parent's next isolated focused command completed4 PASS, after
+bounded timeout/process-group handling was added. It began before the subsequent
+fresh-per-test database fixture edit; therefore it is not final-byte acceptance.
+Same Coder added content-free measured child elapsed/plugin-lifecycle/trigger
+counts to explain startup work versus the earlier60-second timeout. Parent
+requires those actual measurements, not a timing-limit increase alone.
+
+Current disposable server role stage2 is observed SUPERUSER/CREATEDB/CREATEROLE;
+do not describe that server's tests as unprivileged PostgreSQL qualification.
+No owner-server role changed or parent role alteration occurred. Hosted CI's
+separate stage2 role is explicitly NOSUPERUSER/NOCREATEDB/NOCREATEROLE; the new
+isolated opt-in fixture's CREATE DATABASE prerequisite must remain explicit.
+SENTRY Notion negative-CI companion entry exact readback PASS, edited
+2026-10-02T08:15:52.101Z. Both SSOTs preserve accepted source versus failed
+qualification/deployment-held distinctions. Actual corrected native final and
+independent frozen-byte checks remain pending; Stage4 work is preserved.
+
+### 2026-10-02T08:26Z — actual native correction final independently accepted
+
+Primary collected Laplace's actual completed native correction return, inspected
+both changed files and parsed its full JUnit1346 tests/100 skips/zero failure/
+error,1246 passed. Final extra diagnostic assertions are separately qualified.
+Exact two-file aggregate af6f0c39ff04051778d76d055446dafd137d23f1c0472750f31f6bc09626b2d9
+recomputed equals reported manifest. Runtime src/integrations/policy/UI/deploy/
+dependency files are unchanged from55253b11. Guard remains fail-closed; fixture
+commissions a fresh Graph household and preserves real subprocess/restart1->1.
+
+Parent final-source direct independent command, env-i/no private bindings,
+explicit disposable test server/current role and qualified original interpreter:
+pytest -o addopts='' -q tests/test_stage3_bridge_restart_fixture.py
+--junitxml=/tmp/anima-stage3-parent-final-bridge.xml:4 PASS/55.37s. Negative
+missing/wrong-kind/retired scopes enqueue0; positive target request1->1. Ruff
+check/format on both final files and diff-check PASS. Exact manifest confirmed
+before run and frozen final maintained. No actual model/owner fixture/action.
+
+Coder causal diagnostic explains earlier timeout: retained shared profile had
+460 CONTEXT_READY triggers; stack was progressing through context/enqueue/
+review-packet Journal lookups, not deadlocked. Fresh positive cycles measured
+19.291s+31.928s, each76 plugin lifecycle records, triggers0->77->153. Fresh
+per-test databases plus bounded whole-group timeout preserve assertions without
+erasing prior shared evidence. Process timings are not audible/physical proof.
+Disposable role privileged and new hosted opt-in prerequisites remain explicit;
+existing hosted step27 requires no new CREATEDB privilege. No owner role changed.
+
+Disposition: ACCEPTED bounded fixture correction for publication, E4 protected
+within stated source/process scope. Exact corrected hosted CI and deployment
+still pending. Prior failed run36979872665, parent60s timeout, Coder45s timeout,
+non-final concurrent full-suite failure and typing/setup negatives retained.
+Same sole Coder may resume preserved Stage4 after direct native follow-up. No
+new worker/packet/phase, root repair, private provisioning, physical qualification
+or whole-goal acceptance. Full contract remains active.
