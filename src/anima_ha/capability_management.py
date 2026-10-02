@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from anima_ha.owner_contracts import IntegrationResult, plugin_output_schema
 from anima_ha.plugins import (
     CORE_VERSION,
     MANIFEST_VERSION,
@@ -176,16 +177,7 @@ CAPABILITY_MANAGEMENT_MANIFEST = PluginManifest(
                 "required": ["plugin_id", "enabled"],
                 "additionalProperties": False,
             },
-            "output_schema": {
-                "type": "object",
-                "required": ["status", "plugin_id", "integration"],
-                "properties": {
-                    "status": {"enum": ["SUCCEEDED", "FAILED", "UNAVAILABLE"]},
-                    "plugin_id": {"type": "string"},
-                    "integration": {"type": "object"},
-                },
-                "additionalProperties": False,
-            },
+            "output_schema": plugin_output_schema(IntegrationResult),
             "semantic_action": "capabilities.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,

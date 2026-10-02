@@ -2825,12 +2825,122 @@ class MutationRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
+def _owner_command_responses(plugin_id: str, name: str) -> dict[int | str, dict[str, Any]]:
+    from anima_ha.calendar import CALENDAR_MANIFEST
+    from anima_ha.capability_management import CAPABILITY_MANAGEMENT_MANIFEST
+    from anima_ha.owner_contracts import command_responses
+    from anima_ha.preferences import PREFERENCES_MANIFEST
+    from anima_ha.tasks import TASK_MANIFEST
+
+    manifests = (
+        CALENDAR_MANIFEST,
+        CAPABILITY_MANAGEMENT_MANIFEST,
+        PREFERENCES_MANIFEST,
+        TASK_MANIFEST,
+    )
+    tool = next(
+        tool
+        for manifest in manifests
+        if manifest.plugin_id == plugin_id
+        for tool in manifest.tools
+        if tool["name"] == name
+    )
+    return command_responses(dict(tool["output_schema"]))
+
+
+def _owner_request_schema(
+    plugin_id: str, names: tuple[str, ...], *, path_id: str | None = None
+) -> dict[str, Any]:
+    from anima_ha.calendar import CALENDAR_MANIFEST
+    from anima_ha.capability_management import CAPABILITY_MANAGEMENT_MANIFEST
+    from anima_ha.preferences import PREFERENCES_MANIFEST
+    from anima_ha.tasks import TASK_MANIFEST
+
+    schemas = []
+    for manifest in (
+        CALENDAR_MANIFEST,
+        CAPABILITY_MANAGEMENT_MANIFEST,
+        PREFERENCES_MANIFEST,
+        TASK_MANIFEST,
+    ):
+        if manifest.plugin_id != plugin_id:
+            continue
+        for tool in manifest.tools:
+            if tool["name"] not in names:
+                continue
+            schema = dict(tool["input_schema"])
+            if path_id:
+                schema["properties"] = {
+                    key: value for key, value in schema["properties"].items() if key != path_id
+                }
+                schema["required"] = [key for key in schema.get("required", []) if key != path_id]
+            schemas.append(schema)
+    if plugin_id == "anima.durable-tasks" and "schedule" in names:
+        schemas.append(
+            {
+                "type": "object",
+                "required": ["title", "when"],
+                "properties": {
+                    "title": {"type": "string", "minLength": 1},
+                    "when": {"type": "string"},
+                    "note": {"type": "string"},
+                },
+                "additionalProperties": False,
+            }
+        )
+    return {
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {"payload": {"anyOf": schemas}},
+                        "additionalProperties": True,
+                    }
+                }
+            },
+        }
+    }
+
+
+def _owner_integration_responses() -> dict[int | str, dict[str, Any]]:
+    responses = _owner_command_responses("anima.capability-management", "set_integration_enabled")
+    schema = responses[200]["content"]["application/json"]["schema"]
+    enabled_result = schema["properties"]["result"]
+    # This existing dynamic route also carries HA reconnect/ZHA results. Do
+    # not claim those provider payloads satisfy IntegrationResult or drop them.
+    schema["properties"]["result"] = {"type": ["object", "null"]}
+    schema["allOf"] = [
+        {
+            "if": {
+                "required": ["operation"],
+                "properties": {
+                    "operation": {"const": "anima.capability-management.set_integration_enabled"}
+                },
+            },
+            "then": {"properties": {"result": enabled_result}},
+        }
+    ]
+    return responses
+
+
 def create_app(
     service: UIService | None = None,
     *,
     codex: Any | None = None,
     external_transport: Any | None = None,
 ) -> FastAPI:
+    from anima_ha.owner_contracts import (
+        CalendarPage,
+        CapabilityList,
+        IntegrationList,
+        InterfaceSettings,
+        PreferencePage,
+        SettingsResponse,
+        TaskPage,
+    )
+
     if service is None:
         config = UIConfig.from_environment()
         database_url = os.environ.get("ANIMA_DATABASE_URL", "").strip()
@@ -3112,7 +3222,7 @@ def create_app(
     async def home(request: Request) -> dict[str, Any]:
         return svc.read_model.home(current_identity(request))
 
-    @app.get("/api/v1/tasks")
+    @app.get("/api/v1/tasks", response_model=TaskPage, response_model_exclude_unset=True)
     async def tasks(request: Request) -> dict[str, Any]:
         try:
             limit = int(request.query_params.get("limit", str(UI_PAGE_SIZE)))
@@ -3121,7 +3231,11 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_TASK_PAGE") from exc
 
-    @app.post("/api/v1/tasks")
+    @app.post(
+        "/api/v1/tasks",
+        responses=_owner_command_responses("anima.durable-tasks", "schedule"),
+        openapi_extra=_owner_request_schema("anima.durable-tasks", ("schedule",)),
+    )
     async def create_task(
         request: Request,
         body: MutationRequest,
@@ -3136,7 +3250,13 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.post("/api/v1/tasks/{task_id}/{operation}")
+    @app.post(
+        "/api/v1/tasks/{task_id}/{operation}",
+        responses=_owner_command_responses("anima.durable-tasks", "pause"),
+        openapi_extra=_owner_request_schema(
+            "anima.durable-tasks", ("pause", "resume", "cancel"), path_id="task_id"
+        ),
+    )
     async def mutate_task(
         task_id: str,
         operation: str,
@@ -3155,11 +3275,38 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.get("/api/v1/settings")
+    @app.get("/api/v1/settings", response_model=SettingsResponse, response_model_exclude_unset=True)
     async def settings(request: Request) -> dict[str, Any]:
         return {"settings": svc.read_model.settings(current_identity(request))}
 
-    @app.put("/api/v1/settings")
+    @app.put(
+        "/api/v1/settings",
+        response_model=SettingsResponse,
+        response_model_exclude_unset=True,
+        openapi_extra={
+            "requestBody": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "payload": {
+                                    **{
+                                        key: value
+                                        for key, value in (
+                                            InterfaceSettings.model_json_schema().items()
+                                        )
+                                        if key != "required"
+                                    },
+                                    "additionalProperties": False,
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        },
+    )
     async def update_settings(
         request: Request,
         body: MutationRequest,
@@ -3229,7 +3376,9 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_SENTRY_PERSONALITY") from exc
 
-    @app.get("/api/v1/preferences")
+    @app.get(
+        "/api/v1/preferences", response_model=PreferencePage, response_model_exclude_unset=True
+    )
     def preferences(
         request: Request,
         scope: str | None = None,
@@ -3279,7 +3428,14 @@ def create_app(
         except (PreferenceValidationError, ValueError, TypeError):
             raise HTTPException(400, "INVALID_PREFERENCE_FILTER") from None
 
-    @app.post("/api/v1/preferences/{operation}")
+    @app.post(
+        "/api/v1/preferences/{operation}",
+        responses=_owner_command_responses("anima.household-preferences", "create_preference"),
+        openapi_extra=_owner_request_schema(
+            "anima.household-preferences",
+            ("create_preference", "update_preference", "retract_preference"),
+        ),
+    )
     def mutate_preference(
         operation: str,
         request: Request,
@@ -3385,7 +3541,7 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.get("/api/v1/calendar")
+    @app.get("/api/v1/calendar", response_model=CalendarPage, response_model_exclude_unset=True)
     async def calendar(request: Request) -> dict[str, Any]:
         try:
             limit = int(request.query_params.get("limit", str(UI_PAGE_SIZE)))
@@ -3396,7 +3552,11 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="INVALID_CALENDAR_PAGE") from exc
 
-    @app.post("/api/v1/calendar")
+    @app.post(
+        "/api/v1/calendar",
+        responses=_owner_command_responses("anima.calendar", "create_event"),
+        openapi_extra=_owner_request_schema("anima.calendar", ("create_event",)),
+    )
     async def create_calendar(
         request: Request,
         body: MutationRequest,
@@ -3411,7 +3571,13 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.post("/api/v1/calendar/{event_id}/{operation}")
+    @app.post(
+        "/api/v1/calendar/{event_id}/{operation}",
+        responses=_owner_command_responses("anima.calendar", "update_event"),
+        openapi_extra=_owner_request_schema(
+            "anima.calendar", ("update_event", "cancel_event"), path_id="event_id"
+        ),
+    )
     async def mutate_calendar(
         event_id: str,
         operation: str,
@@ -3435,11 +3601,15 @@ def create_app(
     async def activity(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.activity(current_identity(request))}
 
-    @app.get("/api/v1/capabilities")
+    @app.get(
+        "/api/v1/capabilities", response_model=CapabilityList, response_model_exclude_unset=True
+    )
     async def capabilities(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.capabilities(current_identity(request))}
 
-    @app.get("/api/v1/integrations")
+    @app.get(
+        "/api/v1/integrations", response_model=IntegrationList, response_model_exclude_unset=True
+    )
     async def integrations(request: Request) -> dict[str, Any]:
         return {"items": svc.read_model.integrations(current_identity(request))}
 
@@ -3487,7 +3657,7 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.post("/api/v1/integrations/{operation}")
+    @app.post("/api/v1/integrations/{operation}", responses=_owner_integration_responses())
     async def mutate_integrations(
         operation: str,
         request: Request,

@@ -706,7 +706,10 @@ class SentryHouseholdTurn:
                 binding,
                 status="NO_ACTION",
                 response=None,
-                metadata={"decision_record": decision_record},
+                metadata={
+                    "decision_record": decision_record,
+                    "model_calls": list(getattr(self.model, "model_calls", [])),
+                },
                 provider_ambiguous=False,
             )
             return {
@@ -867,7 +870,10 @@ class SentryHouseholdTurn:
             binding,
             status=status,
             response=response,
-            metadata={"decision_record": decision_record},
+            metadata={
+                "decision_record": decision_record,
+                "model_calls": list(getattr(self.model, "model_calls", [])),
+            },
             provider_ambiguous=status == "UNKNOWN_RESULT",
         )
         return {

@@ -351,8 +351,17 @@ class AnimaHouseholdClient:
     def submit_result(self, request_id: str, binding: str, **payload: Any) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/result", {"binding": binding, **payload})
 
-    def renew(self, request_id: str, binding: str) -> dict[str, Any]:
-        return self.call("/v1/requests/renew", {"request_id": request_id, "binding": binding})
+    def renew(
+        self, request_id: str, binding: str, *, model_call: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        return self.call(
+            "/v1/requests/renew",
+            {
+                "request_id": request_id,
+                "binding": binding,
+                **({"model_call": model_call} if model_call is not None else {}),
+            },
+        )
 
     def provider_start(self, request_id: str, binding: str) -> dict[str, Any]:
         return self.call(f"/v1/requests/{request_id}/provider-start", {"binding": binding})

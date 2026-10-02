@@ -204,7 +204,13 @@ class IntelligenceStore(Protocol):
     ) -> IntelligenceRequest | None: ...
 
     def renew(
-        self, request_id: UUID, worker_id: str, generation: int, *, lease_seconds: int = 120
+        self,
+        request_id: UUID,
+        worker_id: str,
+        generation: int,
+        *,
+        lease_seconds: int = 120,
+        model_call: dict[str, Any] | None = None,
     ) -> bool: ...
 
     def transition(
@@ -455,10 +461,20 @@ class PostgresIntelligenceStore:
         return _request_from_row(row)
 
     def renew(
-        self, request_id: UUID, worker_id: str, generation: int, *, lease_seconds: int = 120
+        self,
+        request_id: UUID,
+        worker_id: str,
+        generation: int,
+        *,
+        lease_seconds: int = 120,
+        model_call: dict[str, Any] | None = None,
     ) -> bool:
         if not worker_id.strip() or generation < 1 or lease_seconds < 1 or lease_seconds > 900:
             raise ValueError("invalid intelligence renewal parameters")
+        if model_call is not None:
+            from anima_ha.model_usage import model_call_receipt
+
+            model_call = model_call_receipt(model_call)
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -467,10 +483,56 @@ class PostgresIntelligenceStore:
                 WHERE request_id=%s AND claim_owner=%s AND fencing_generation=%s
                   AND lifecycle IN ('CLAIMED','DELIVERED_TO_PROVIDER','PROVIDER_RUNNING')
                   AND lease_expires_at > now()
+                  AND (%s = false OR lifecycle='PROVIDER_RUNNING')
                 """,
-                (lease_seconds, request_id, worker_id, generation),
+                (lease_seconds, request_id, worker_id, generation, model_call is not None),
             )
             changed = cursor.rowcount == 1
+            if changed and model_call is not None:
+                # UPDATE holds the fenced request row lock. Retried metadata
+                # delivery must not count as another provider attempt/finish.
+                cursor.execute(
+                    """SELECT metadata->'model_call' AS receipt
+                    FROM anima_intelligence_transitions WHERE request_id=%s
+                    AND metadata->'model_call'->>'call_id'=%s
+                    AND metadata->'model_call'->>'phase'=%s""",
+                    (request_id, model_call["call_id"], model_call["phase"]),
+                )
+                previous = cursor.fetchone()
+                if previous is not None:
+                    if previous["receipt"] != model_call:
+                        connection.rollback()
+                        return False
+                    connection.commit()
+                    return True
+                if model_call["phase"] == "FINISHED":
+                    cursor.execute(
+                        """SELECT metadata->'model_call' AS receipt
+                        FROM anima_intelligence_transitions WHERE request_id=%s
+                        AND fencing_generation=%s
+                        AND metadata->'model_call'->>'call_id'=%s
+                        AND metadata->'model_call'->>'phase'='ATTEMPTED'""",
+                        (request_id, generation, model_call["call_id"]),
+                    )
+                    attempted = cursor.fetchone()
+                    if attempted is None or any(
+                        attempted["receipt"][key] != model_call[key] for key in ("purpose", "model")
+                    ):
+                        connection.rollback()
+                        return False
+                cursor.execute(
+                    """INSERT INTO anima_intelligence_transitions
+                    (request_id, from_lifecycle, to_lifecycle, fencing_generation, actor, metadata)
+                    SELECT request_id, lifecycle, lifecycle,
+                           fencing_generation, claim_owner, %s::jsonb
+                    FROM anima_intelligence_requests WHERE request_id=%s
+                    AND lifecycle='PROVIDER_RUNNING'""",
+                    (json.dumps({"model_call": model_call}, sort_keys=True), request_id),
+                )
+                changed = cursor.rowcount == 1
+                if not changed:
+                    connection.rollback()
+                    return False
             connection.commit()
         return changed
 

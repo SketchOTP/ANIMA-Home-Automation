@@ -1715,6 +1715,12 @@ def _task_input_schema(name: str) -> dict[str, Any]:
     }
 
 
+def _task_output_schema(name: str) -> dict[str, Any]:
+    from anima_ha.owner_contracts import TaskListResult, TaskResult, plugin_output_schema
+
+    return plugin_output_schema(TaskListResult if name == "list" else TaskResult)
+
+
 TASK_MANIFEST = PluginManifest(
     plugin_id="anima.durable-tasks",
     plugin_version="0.1.0",
@@ -1730,7 +1736,7 @@ TASK_MANIFEST = PluginManifest(
             "name": name,
             "description": description,
             "input_schema": _task_input_schema(name),
-            "output_schema": {"type": "object"},
+            "output_schema": _task_output_schema(name),
             "semantic_action": semantic_action,
             "risk_class": risk_class,
             "read_only": read_only,

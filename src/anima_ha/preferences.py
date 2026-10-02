@@ -318,12 +318,15 @@ class PreferencesNativePlugin:
         raise PluginValidationError("unknown household-preferences tool")
 
 
-_PREFERENCE_OUTPUT = {
-    "type": "object",
-    "required": ["status"],
-    "properties": {"status": {"type": "string"}},
-    "additionalProperties": True,
-}
+def _preference_output_schema(*, listing: bool = False) -> dict[str, Any]:
+    from anima_ha.owner_contracts import (
+        PreferenceListResult,
+        PreferenceResult,
+        plugin_output_schema,
+    )
+
+    return plugin_output_schema(PreferenceListResult if listing else PreferenceResult)
+
 
 PREFERENCES_MANIFEST = PluginManifest(
     plugin_id="anima.household-preferences",
@@ -350,7 +353,7 @@ PREFERENCES_MANIFEST = PluginManifest(
                 },
                 "additionalProperties": False,
             },
-            "output_schema": {**_PREFERENCE_OUTPUT, "required": ["status", "items"]},
+            "output_schema": _preference_output_schema(listing=True),
             "semantic_action": "capabilities.read",
             "risk_class": "READ_ONLY",
             "read_only": True,
@@ -374,7 +377,7 @@ PREFERENCES_MANIFEST = PluginManifest(
                 "required": ["content"],
                 "additionalProperties": False,
             },
-            "output_schema": _PREFERENCE_OUTPUT,
+            "output_schema": _preference_output_schema(),
             "semantic_action": "capabilities.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,
@@ -399,7 +402,7 @@ PREFERENCES_MANIFEST = PluginManifest(
                 "required": ["preference_id", "content"],
                 "additionalProperties": False,
             },
-            "output_schema": _PREFERENCE_OUTPUT,
+            "output_schema": _preference_output_schema(),
             "semantic_action": "capabilities.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,
@@ -415,7 +418,7 @@ PREFERENCES_MANIFEST = PluginManifest(
                 "required": ["preference_id"],
                 "additionalProperties": False,
             },
-            "output_schema": _PREFERENCE_OUTPUT,
+            "output_schema": _preference_output_schema(),
             "semantic_action": "capabilities.configure",
             "risk_class": "SECURITY_SECURE_ACTION",
             "read_only": False,

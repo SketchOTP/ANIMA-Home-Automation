@@ -17,6 +17,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from jsonschema import Draft202012Validator
 
@@ -219,6 +220,52 @@ class CodexHouseholdModel:
         self.diagnostic_stage = "MODEL_INIT"
         self.last_decision_record: dict[str, Any] | None = None
         self._auth_cache_expires_at: float | None = None
+        self.model_calls: list[dict[str, Any]] = []
+        self._model_call_sink: Callable[[dict[str, Any]], None] | None = None
+        self._captured_usage: dict[str, int] | None = None
+        self._call_purpose = "AUTH_SMOKE"
+
+    def set_model_call_sink(self, sink: Callable[[dict[str, Any]], None] | None) -> None:
+        self._model_call_sink = sink
+        if sink is not None:
+            self.model_calls = []
+
+    def _record_call(self, record: dict[str, Any]) -> None:
+        # Existing service stdout/journal is the content-free fallback when a
+        # lease/transport is lost. Never write an owner filesystem audit here.
+        print(json.dumps({"status": "MODEL_CALL", "model_call": record}), flush=True)
+        if self._model_call_sink is not None:
+            self._model_call_sink(record)
+
+    @staticmethod
+    def reported_usage(stdout: bytes) -> dict[str, int] | None:
+        allowed = {
+            "input_tokens",
+            "cached_input_tokens",
+            "output_tokens",
+            "total_tokens",
+            "reasoning_output_tokens",
+        }
+        reports = []
+        completed = 0
+        for line in stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except (ValueError, UnicodeError):
+                continue
+            if isinstance(event, dict) and event.get("type") == "turn.completed":
+                completed += 1
+                usage = event.get("usage")
+                if isinstance(usage, dict):
+                    reports.append(
+                        {
+                            key: value
+                            for key, value in usage.items()
+                            if key in allowed and type(value) is int and 0 <= value <= 10**12
+                        }
+                    )
+        # Multiple completions are invalid; don't invent a sum or pick one.
+        return reports[0] if completed == 1 and len(reports) == 1 and reports[0] else None
 
     def set_deadline(self, deadline: float | None) -> None:
         self.deadline = deadline
@@ -396,6 +443,7 @@ class CodexHouseholdModel:
             self.heartbeat()
             return process.returncode, bytes(output["stdout"]), bytes(output["stderr"])
         finally:
+            self._captured_usage = self.reported_usage(bytes(output["stdout"]))
             self.terminate(process)
             for pipe in (process.stdin, process.stdout, process.stderr):
                 pipe.close()
@@ -464,6 +512,24 @@ class CodexHouseholdModel:
         raw = prompt.encode()
         if len(raw) > MAX_PROMPT_BYTES:
             raise CodexUnavailable("CODEX_CONTEXT_LIMIT")
+        self.heartbeat()
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            raise CodexUnavailable("ANIMA_TURN_DEADLINE")
+        record: dict[str, Any] = {
+            "call_id": str(uuid4()),
+            "purpose": self._call_purpose,
+            "model": MODEL,
+            "phase": "ATTEMPTED",
+            "status": "UNKNOWN",
+            "usage": None,
+            "usage_status": "UNKNOWN",
+            "elapsed_ms": 0,
+        }
+        self._record_call(record)  # acknowledged/fenced before subprocess entry
+        self.model_calls.append(record)
+        started = time.monotonic()
+        status = "FAILED"
+        self._captured_usage = None
         # Anonymous /dev/shm files also work on Python builds without memfd.
         # Request-derived schema IDs stay in memory; the cwd is empty.
         try:
@@ -478,6 +544,7 @@ class CodexHouseholdModel:
                         raw,
                         fd,
                     )
+            self._captured_usage = self.reported_usage(stdout)
             if code:
                 lower = (stderr + stdout).lower()
                 auth = any(
@@ -488,9 +555,38 @@ class CodexHouseholdModel:
                     "CODEX_AUTH_UNAVAILABLE" if auth else "CODEX_PROVIDER_UNAVAILABLE"
                 )
             self.diagnostic_stage = "MODEL_OUTPUT"
-            return self.parse_events(stdout, schema)
+            result = self.parse_events(stdout, schema)
+            status = "SUCCEEDED"
+            return result
+        except CodexUnavailable as exc:
+            status = (
+                "TIMEOUT"
+                if str(exc) in {"CODEX_TIMEOUT", "ANIMA_TURN_DEADLINE"}
+                else "INVALID_RESULT"
+                if str(exc) in {"CODEX_INVALID_OUTPUT", "CODEX_FORBIDDEN_CAPABILITY"}
+                else "FAILED"
+            )
+            raise
         except (OSError, subprocess.SubprocessError) as exc:
+            status = (
+                "LAUNCH_FAILED"
+                if isinstance(exc, OSError)
+                else "TIMEOUT"
+                if isinstance(exc, subprocess.TimeoutExpired)
+                else "FAILED"
+            )
             raise diagnostic_error(exc, "MODEL_RUNTIME", "CODEX_RUNTIME_UNAVAILABLE") from None
+        finally:
+            finished = {
+                **record,
+                "phase": "FINISHED",
+                "status": status,
+                "elapsed_ms": min(900_000, max(0, int((time.monotonic() - started) * 1000))),
+                "usage": self._captured_usage,
+                "usage_status": "REPORTED" if self._captured_usage else "UNKNOWN",
+            }
+            self.model_calls[-1] = finished
+            self._record_call(finished)
 
     def plan(self, context: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
         return self.plan_round(context, tools, [], round_number=1, remaining_calls=3)
@@ -505,6 +601,7 @@ class CodexHouseholdModel:
         remaining_calls: int,
     ) -> dict[str, Any]:
         max_calls = min(3, remaining_calls)
+        self._call_purpose = "PLANNER"
         self.diagnostic_stage = "PLAN_SCHEMA"
         schema = plan_schema(tools, max_calls=max_calls)
         self.diagnostic_stage = "PLAN_PROMPT"
@@ -574,6 +671,7 @@ class CodexHouseholdModel:
         return plan
 
     def final(self, context: dict[str, Any], tool_results: list[dict[str, Any]]) -> str:
+        self._call_purpose = "FINAL"
         self.diagnostic_stage = "FINAL_PROMPT"
         result = self.run(
             "You are the bounded Codex CLI household helper used by SENTRY/ANIMA. "

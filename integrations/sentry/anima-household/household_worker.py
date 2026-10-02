@@ -76,6 +76,15 @@ class HouseholdWorker:
         ):
             raise CodexUnavailable("ANIMA_INVALID_CLAIM")
         self.model.heartbeat = ActiveLease(self.client, opened, self.stop)
+
+        def record_model_call(receipt: dict[str, Any]) -> None:
+            result = self.client.renew(opened["request_id"], opened["binding"], model_call=receipt)
+            if result.get("status") != "RENEWED":
+                raise CodexUnavailable("ANIMA_MODEL_ACCOUNTING_UNCONFIRMED")
+
+        accounting = getattr(self.model, "set_model_call_sink", None)
+        if callable(accounting):
+            accounting(record_model_call)
         turn = SentryHouseholdTurn(
             self.client,
             self.model,
@@ -125,6 +134,7 @@ class HouseholdWorker:
                             f"{key}={value}" for key, value in diagnostic.items() if key != "status"
                         ),
                         provider_ambiguous=not auth_only,
+                        metadata={"model_calls": list(getattr(self.model, "model_calls", []))},
                     )
             except Exception as delivery_exc:
                 delivery = diagnostic_error(delivery_exc, "FAILURE_SUBMIT", code)
@@ -147,6 +157,8 @@ class HouseholdWorker:
             raise error from None
         finally:
             self.model.heartbeat = lambda: None
+            if callable(accounting):
+                accounting(None)
             setter = getattr(self.model, "set_deadline", None)
             if callable(setter):
                 setter(None)

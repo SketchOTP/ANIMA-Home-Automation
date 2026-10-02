@@ -761,7 +761,45 @@ class InvocationResult:
     provenance: str = ""
     external_content_trust: ExternalContentTrust = ExternalContentTrust.PLUGIN_TRUSTED
     policy_decision: PolicyDecision | None = None
-    dispatch_state: DispatchState = DispatchState.ACKNOWLEDGED
+    dispatch_state: DispatchState = DispatchState.BEFORE_DISPATCH
+
+
+def public_invocation_status(result: InvocationResult) -> str:
+    """Transport acknowledgement is not an owner workflow or physical verdict."""
+    status = {
+        InvocationOutcome.SUCCESS: "SUCCEEDED",
+        InvocationOutcome.POLICY_DENIED: "DENIED",
+        InvocationOutcome.REQUIRE_CONFIRMATION: "REQUIRE_CONFIRMATION",
+        InvocationOutcome.REQUIRE_STRONGER_AUTH: "REQUIRE_STRONGER_AUTH",
+        InvocationOutcome.PLUGIN_UNAVAILABLE: "UNAVAILABLE",
+        InvocationOutcome.PLUGIN_TIMEOUT: "UNKNOWN_RESULT",
+        InvocationOutcome.UNKNOWN_RESULT: "UNKNOWN_RESULT",
+    }.get(result.outcome, "FAILED")
+    if (
+        result.outcome == InvocationOutcome.INVALID_RESULT
+        and result.dispatch_state == DispatchState.POSSIBLY_DISPATCHED
+    ):
+        status = "UNKNOWN_RESULT"
+    # Existing Core-owned CAS/lock rejection has a definite workflow failure,
+    # unlike a provider's malformed output. Preserve that explicit negative;
+    # do not rewrite the post-entry dispatch flag or grant execution authority.
+    if (
+        result.plugin_id == "anima.knowledge"
+        and result.provenance == "builtin:anima_ha.knowledge"
+        and result.error_class == "KnowledgeConflict"
+    ):
+        status = "FAILED"
+    # Only this exact Core-owned control-plane result has a workflow verdict.
+    # External/plugin text cannot upgrade authority or physical verification.
+    if (
+        result.outcome == InvocationOutcome.SUCCESS
+        and result.tool_id == "anima.capability-management.set_integration_enabled"
+        and result.provenance == "builtin:anima_ha.capability_management"
+        and isinstance(result.result, dict)
+        and result.result.get("status") in {"FAILED", "UNAVAILABLE"}
+    ):
+        status = str(result.result["status"])
+    return status
 
 
 class PostgresPluginStore:
@@ -1313,7 +1351,9 @@ class PluginManager:
                 provenance=tool.provenance,
                 external_content_trust=tool.external_content_trust,
                 policy_decision=decision,
-                dispatch_state=DispatchState.BEFORE_DISPATCH,
+                # Once entered, even the runtime's own ValidationError can
+                # follow an effect; malformed output proves no non-dispatch.
+                dispatch_state=DispatchState.POSSIBLY_DISPATCHED,
             )
         except Exception as exc:
             safe_code = getattr(exc, "safe_code", None)

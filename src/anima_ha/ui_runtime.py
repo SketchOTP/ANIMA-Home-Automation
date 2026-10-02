@@ -107,11 +107,11 @@ from anima_ha.notification_routes import (
 )
 from anima_ha.plugins import (
     InvocationContext,
-    InvocationOutcome,
     InvocationResult,
     NativeRuntime,
     PluginManager,
     SecretBroker,
+    public_invocation_status,
 )
 from anima_ha.policy import (
     Assurance,
@@ -439,20 +439,10 @@ def _identity(identity: UIIdentity) -> IdentityContext:
 def _safe_result(result: InvocationResult) -> dict[str, Any]:
     """Expose a stable UI outcome without leaking policy internals."""
     response: dict[str, Any] = {
-        "status": {
-            InvocationOutcome.SUCCESS: "SUCCEEDED",
-            InvocationOutcome.POLICY_DENIED: "DENIED",
-            InvocationOutcome.REQUIRE_CONFIRMATION: "REQUIRE_CONFIRMATION",
-            InvocationOutcome.REQUIRE_STRONGER_AUTH: "REQUIRE_STRONGER_AUTH",
-            InvocationOutcome.PLUGIN_UNAVAILABLE: "UNAVAILABLE",
-            InvocationOutcome.PLUGIN_ERROR: "FAILED",
-            InvocationOutcome.PLUGIN_TIMEOUT: "UNKNOWN_RESULT",
-            InvocationOutcome.UNKNOWN_RESULT: "UNKNOWN_RESULT",
-            InvocationOutcome.VERIFICATION_FAILED: "FAILED",
-            InvocationOutcome.INVALID_ARGUMENTS: "FAILED",
-            InvocationOutcome.INVALID_RESULT: "FAILED",
-        }.get(result.outcome, result.outcome.value),
+        "status": public_invocation_status(result),
         "operation": result.tool_id,
+        "connector_outcome": result.outcome.value,
+        "dispatch_state": result.dispatch_state.value,
     }
     if result.result is not None:
         response["result"] = result.result

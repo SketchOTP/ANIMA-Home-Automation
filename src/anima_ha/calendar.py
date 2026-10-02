@@ -616,10 +616,15 @@ class CalendarService:
 def _tool(
     name: str, description: str, schema: dict[str, Any], *, read_only: bool
 ) -> dict[str, Any]:
+    from anima_ha.owner_contracts import CalendarListResult, CalendarResult, plugin_output_schema
+
     return {
         "name": name,
         "description": description,
         "input_schema": schema,
+        "output_schema": plugin_output_schema(
+            CalendarListResult if name == "list_events" else CalendarResult
+        ),
         # Local calendar persistence is a trusted, policy-gated internal
         # mutation, not an external-provider write.  Core still controls the
         # execution boundary; this risk class only selects the existing Phase

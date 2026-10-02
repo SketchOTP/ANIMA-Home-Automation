@@ -1691,6 +1691,22 @@ class ActionExecutionCoordinator:
                     snapshot=snapshot,
                     invocation=invocation,
                 )
+            if (
+                ambiguous
+                and request.tool.read_only
+                and request.tool.verification_requirement == "NONE"
+            ):
+                return self._terminal(
+                    request,
+                    ActionStatus.UNKNOWN_RESULT,
+                    detail="connector entered but no valid read result or independent verification",
+                    snapshot=snapshot,
+                    invocation=invocation,
+                    result={
+                        "connector_outcome": invocation.outcome.value,
+                        "connector_dispatch_state": invocation.dispatch_state.value,
+                    },
+                )
             if not request.tool.read_only or request.tool.verification_requirement != "NONE":
                 verification_snapshot = snapshot
                 if not request.tool.read_only and (

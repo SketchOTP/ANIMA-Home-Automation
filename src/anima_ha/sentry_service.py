@@ -75,8 +75,18 @@ def _decision_result_metadata(value: Any, request_id: UUID) -> dict[str, Any]:
     """Validate provider-authored audit summaries without granting them authority."""
     if value is None:
         return {}
-    if not isinstance(value, dict) or set(value) != {"decision_record"}:
+    if not isinstance(value, dict) or not value or set(value) - {"decision_record", "model_calls"}:
         raise ValueError("INVALID_RESULT_METADATA")
+    calls: dict[str, Any] = {}
+    if "model_calls" in value:
+        from anima_ha.model_usage import model_call_receipt
+
+        receipts = value["model_calls"]
+        if not isinstance(receipts, list) or len(receipts) > 8:
+            raise ValueError("INVALID_MODEL_CALL_RECEIPTS")
+        calls = {"model_calls": [model_call_receipt(item) for item in receipts]}
+    if "decision_record" not in value:
+        return calls
     record = value["decision_record"]
     required = {
         "version",
@@ -162,7 +172,7 @@ def _decision_result_metadata(value: Any, request_id: UUID) -> dict[str, Any]:
         UUID(str(record["journal_note_id"]))
     # This record is provider-authored explanatory metadata only. Core status,
     # policy, Truth and tool/action records remain independently authoritative.
-    return {"decision_record": record}
+    return {"decision_record": record, **calls}
 
 
 class ServiceAuthError(RuntimeError):
@@ -1033,7 +1043,16 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 response = service.sensor_status(principal)
             elif self.path == "/v1/requests/renew":
                 request = service._request(str(body["request_id"]), body, principal)
-                ok = service.boundary.renew_request(request, str(request.claim_owner))
+                receipt = body.get("model_call")
+                if receipt is not None:
+                    from anima_ha.model_usage import model_call_receipt
+
+                    receipt = model_call_receipt(receipt)
+                ok = service.boundary.renew_request(
+                    request,
+                    str(request.claim_owner),
+                    **({"model_call": receipt} if receipt is not None else {}),
+                )
                 response = {"status": "RENEWED" if ok else "CLAIM_LOST"}
             else:
                 parts = self.path.strip("/").split("/")

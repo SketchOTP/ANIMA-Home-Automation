@@ -31,10 +31,10 @@ from anima_ha.intelligence import (
 from anima_ha.plugins import (
     ExecutionBoundary,
     InvocationContext,
-    InvocationOutcome,
     InvocationResult,
     PluginManager,
     ToolDescriptor,
+    public_invocation_status,
 )
 from anima_ha.policy import (
     Assurance,
@@ -236,7 +236,9 @@ class CoreSentryBoundary:
             {"provider_invocation_started": True, "provider": "sentry"},
         )
 
-    def renew_request(self, request: IntelligenceRequest, worker_id: str) -> bool:
+    def renew_request(
+        self, request: IntelligenceRequest, worker_id: str, model_call: dict[str, Any] | None = None
+    ) -> bool:
         if request.claim_owner != worker_id:
             return False
         if request.lifecycle not in {
@@ -245,8 +247,17 @@ class CoreSentryBoundary:
             IntelligenceLifecycle.PROVIDER_RUNNING,
         }:
             return False
+        if model_call is not None:
+            return self.intelligence_store.renew(
+                request.request_id,
+                worker_id,
+                request.fencing_generation,
+                model_call=model_call,
+            )
         return self.intelligence_store.renew(
-            request.request_id, worker_id, request.fencing_generation
+            request.request_id,
+            worker_id,
+            request.fencing_generation,
         )
 
     def request_context(self, request: IntelligenceRequest) -> dict[str, Any]:
@@ -403,6 +414,7 @@ class CoreSentryBoundary:
                 and tool.plugin_id == original.get("plugin_id")
                 and tool.version == original.get("version")
                 and self._schema_digest(tool.input_schema) == expected_schema
+                and tool.output_schema == original.get("output_schema")
             )
             if compatible:
                 assert tool is not None
@@ -459,6 +471,7 @@ class CoreSentryBoundary:
             tool.plugin_id != bound.get("plugin_id")
             or tool.version != bound.get("version")
             or self._schema_digest(tool.input_schema) != bound.get("schema_digest")
+            or tool.output_schema != bound.get("output_schema")
         ):
             raise SentryBoundaryError("TOOL_BINDING_INCOMPATIBLE")
         return tool
@@ -692,18 +705,11 @@ class CoreSentryBoundary:
 
     @staticmethod
     def _safe_invocation(result: InvocationResult) -> dict[str, Any]:
-        status = {
-            InvocationOutcome.SUCCESS: "SUCCEEDED",
-            InvocationOutcome.POLICY_DENIED: "DENIED",
-            InvocationOutcome.REQUIRE_CONFIRMATION: "REQUIRE_CONFIRMATION",
-            InvocationOutcome.REQUIRE_STRONGER_AUTH: "REQUIRE_STRONGER_AUTH",
-            InvocationOutcome.PLUGIN_UNAVAILABLE: "UNAVAILABLE",
-            InvocationOutcome.PLUGIN_TIMEOUT: "UNKNOWN_RESULT",
-            InvocationOutcome.UNKNOWN_RESULT: "UNKNOWN_RESULT",
-        }.get(result.outcome, "FAILED")
         return {
-            "status": status,
+            "status": public_invocation_status(result),
             "operation": result.tool_id,
+            "connector_outcome": result.outcome.value,
+            "dispatch_state": result.dispatch_state.value,
             "result": result.result,
             "reason": result.error_class,
             "trust": result.external_content_trust.value,

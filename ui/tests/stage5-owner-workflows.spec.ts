@@ -1,0 +1,82 @@
+import { expect, test } from "@playwright/test";
+
+test("owner workflow survives reload through actual isolated Core/PG/OPA", async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/auth/login");
+  await expect(page.getByRole("heading", { name: /Welcome,/ })).toBeVisible();
+  const open = (name: string) => page.getByRole("navigation").getByRole("button", { name, exact: true }).click();
+  const label = `Stage5 ${info.project.name} ${Date.now()}`;
+  await open("Tasks & Calendar");
+  await page.getByLabel("Reminder title").fill(label);
+  await page.getByLabel("When", { exact: true }).fill("2027-01-15T12:00");
+  await page.getByRole("button", { name: "Create task", exact: true }).click();
+  const task = page.getByRole("listitem").filter({ hasText: label }).filter({ has: page.getByRole("button", { name: "Pause", exact: true }) });
+  await expect(task).toContainText("ACTIVE");
+  await task.getByRole("button", { name: "Pause", exact: true }).click();
+  const taskRow = page.getByRole("listitem").filter({ hasText: label });
+  await expect(taskRow).toContainText("PAUSED");
+  await page.reload(); await open("Tasks & Calendar");
+  await expect(taskRow).toContainText("PAUSED");
+  await taskRow.getByRole("button", { name: "Resume", exact: true }).click();
+  await expect(taskRow).toContainText("ACTIVE");
+  await taskRow.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(taskRow).toContainText("CANCELLED");
+  const eventLabel = `${label} event`;
+  await page.getByLabel("Event title").fill(eventLabel);
+  await page.getByLabel("Starts", { exact: true }).fill("2027-01-15T13:00");
+  await page.getByLabel("Ends", { exact: true }).fill("2027-01-15T14:00");
+  await page.getByRole("button", { name: "Create event", exact: true }).click();
+  const eventRow = page.getByRole("listitem").filter({ hasText: eventLabel });
+  await expect(eventRow).toContainText("ACTIVE");
+  await eventRow.getByRole("button", { name: "Edit", exact: true }).click();
+  // Editing replaces the row's text with input values, so locate the form
+  // by its labels instead of retaining a hasText filter from display mode.
+  await page.getByLabel("Title", { exact: true }).fill(`${eventLabel} revised`);
+  await page.getByRole("button", { name: "Save edit", exact: true }).click();
+  await expect(eventRow).toContainText("revised");
+  await page.reload(); await open("Tasks & Calendar");
+  await expect(eventRow).toContainText("revised");
+  await eventRow.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(eventRow).toContainText("CANCELLED");
+  await open("Preferences");
+  await page.getByRole("textbox", { name: "Preference", exact: true }).fill(label);
+  await page.getByRole("button", { name: "Save preference", exact: true }).click();
+  const preference = page.getByRole("listitem").filter({ hasText: label });
+  await expect(preference).toBeVisible();
+  await preference.getByRole("button", { name: "Edit preference", exact: true }).click();
+  await page.getByRole("textbox", { name: "Preference", exact: true }).fill(`${label} corrected`);
+  await page.getByRole("button", { name: "Save correction", exact: true }).click();
+  await expect(preference).toContainText("corrected");
+  await page.reload(); await open("Preferences");
+  await expect(preference).toContainText("corrected");
+  await preference.getByRole("button", { name: "Remove preference", exact: true }).click();
+  await page.getByRole("group", { name: "Confirm preference removal" }).getByRole("button", { name: "Confirm removal", exact: true }).click();
+  await expect(preference).toHaveCount(0);
+  await open("Settings");
+  await page.getByRole("combobox", { name: "Accent", exact: true }).selectOption("sage");
+  await page.getByRole("checkbox", { name: "Reduce motion", exact: true }).check();
+  await page.getByRole("button", { name: "Save interface settings", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Interface settings saved" })).toBeVisible();
+  await page.reload(); await open("Settings");
+  await expect(page.getByRole("combobox", { name: "Accent", exact: true })).toHaveValue("sage");
+  await expect(page.getByRole("checkbox", { name: "Reduce motion", exact: true })).toBeChecked();
+  await open("Connections");
+  const integration = page.getByRole("listitem").filter({ hasText: "Weather" });
+  // The disposable PG plugin flag survives independent fixture processes;
+  // establish the starting state through the actual UI, not a database reset.
+  await expect(integration.getByRole("button")).toBeVisible();
+  if (await integration.getByRole("button", { name: "Enable", exact: true }).count()) {
+    await integration.getByRole("button", { name: "Enable", exact: true }).click();
+    await expect(integration.getByRole("button", { name: "Disable", exact: true })).toBeVisible();
+  }
+  await integration.getByRole("button", { name: "Disable", exact: true }).click();
+  await expect(integration.getByRole("button", { name: "Enable", exact: true })).toBeVisible();
+  await page.reload(); await open("Connections");
+  await expect(integration.getByRole("button", { name: "Enable", exact: true })).toBeVisible();
+  await integration.getByRole("button", { name: "Enable", exact: true }).click();
+  await expect(integration.getByRole("button", { name: "Disable", exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath("stage5-persisted.png"), fullPage: true });
+  expect(errors).toEqual([]);
+});
