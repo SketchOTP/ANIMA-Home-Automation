@@ -1,5 +1,24 @@
 # Authority Project-State Index
 
+Latest disposition — 2026-10-02T16:05Z: Stage7 actual native final independently
+SOURCE ACCEPTED,17-file freeze integrated; publication/exact-headCI/deployment
+pending. Native review/CURRENT/canonical result retain full counts and negatives.
+Same Coder follows into prepared Stage8 only after compatible baseline issuance.
+
+Latest checkpoint — 2026-10-02T15:57Z: Stage7 optional-feedback alert regression
+corrected in isolated worktree; primary23target cases PASS. Corrected full
+refrozen qualification/native final pending; no draft acceptance or deployment.
+CURRENT carries source/evidence boundaries; Stage8 PREPARED_NOT_ISSUED retains
+the next coherent owner-result bundle. Same two authorized native agents active.
+
+Latest pointer — 2026-10-02T15:27Z: Stage6 exactCI37022829253 PASS,
+actual artifact PG4/browser2 PASS, controlled source109/image7966cae9 and
+private/state-preserving application deployment independently matched. See
+CURRENT/PROFILE/027A native review for hashes, unaffected infrastructure and
+remaining gates. Same implementation Coder Stage7 still in progress. Read-only
+sidecar required-delivery cancellation finding independently E2 reproduced;
+corrective assignment follows Stage7, no replay of historical owner work.
+
 Parallel-role pointer — 2026-10-02T14:45Z: owner authorized additional native
 agents. Primary Architect now coordinates one implementation Coder (Stage7
 Leibniz) plus one READ-ONLY product audit sidecar (Planck), with no overlapping

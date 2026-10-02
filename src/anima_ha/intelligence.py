@@ -706,7 +706,8 @@ class PostgresIntelligenceStore:
         """Content-free terminal evidence scoped by Core, never provider assertions."""
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute(
-                "SELECT lifecycle,result_status,provider_invocation_started,completed_at "
+                "SELECT lifecycle,result_status,provider_invocation_started,completed_at,"
+                "origin,causation_id,provider_id,fencing_generation "
                 "FROM anima_intelligence_requests WHERE household_id=%s AND request_id=%s",
                 (household_id, request_id),
             )

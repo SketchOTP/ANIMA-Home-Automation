@@ -1,5 +1,72 @@
 # Permanent goal coverage — native takeover baseline
 
+Stage7 bounded SOURCE ACCEPTED — 2026-10-02T16:05Z: automatic meaningful future
+learning comparisons/feedback now qualified in existing saved review lifecycle,
+not manual-only. Exact17-file/current-consent/provider-start/unknown-coverage/
+mandatory-alert independence protected; actual future usefulness remains OPEN.
+Publication/hostedCI/deploy pending. Ordinary due owner work/originating approved
+result gaps are E2 real-store/scripted-policy reproduced, queued Stage8; required
+delivery classification E2 remains. No MO/A–O, owner/root/vendor/physical or
+prospective gate silently closes. See native review and canonical Stage7 final.
+
+## Stage6 hosted qualification and controlled deployment — 2026-10-02T15:27Z
+
+Exact governance4b214bd49b87b854c4959a64fbebbd5546a1d513 CI37022829253
+SUCCESS at15:13:31Z. Native artifact11234368097 digest
+sha256:fdc172c66486629f52dc0a8010d3103f75dc5e41df0e54da4e4f6989e54b5989;
+actual downloaded scene PG4/browserdesktop+phone2 and retained Stage5 PG4/
+browser2 PASS0skip/failure/error. Native artifact and source-map hashes differ
+by design, not evidence drift.
+
+Controlled application-only replacement at15:24:35Z: UI imageID
+7966cae910809d1eb05adf4fd29d35d9892bee7441758804358e101ad51b7593,
+container3662dcacfe3c3a3c31bb6f0f039bc4fa20859c7d11f18927bfea7f5cf26442f1.
+All109 loaded Python/SQL files equal clean accepted4b214bd product19fff47,
+source-map SHA2561c692876e5101b32f6817ba58d80d71da19b262dfabf5ce19ec6316726736914.
+47 installed distributions match unchanged lock;11 already-exact installed
+units/client files were not rewritten. Authenticated Core/stack READY; UIhealth
+200 and unauthenticatedbootstrap401. Core/helper/WiFi/relay/voice/supervisor/UI
+active with0restarts after controlled start.
+
+Quiescent pre/post snapshots15:24:31/15:25:51 match full-row counts/digests for
+17tasks,1personality profile,314Memory,5calendar,46ambiguous requests. Provider
+counts unchanged:89CANCELLED/677COMPLETED/143FAILED/283NO_ACTION/134PENDING/
+33RECOVERY_REQUIRED/13UNKNOWN_RESULT; active providers/actions0. Historical
+3SUCCEEDED/1POLICY_DENIED actions unchanged. PostgreSQL/OPA/HA/searx IDs/start
+times unchanged. Nine private file hashes and separate Graft tooling hashes
+unchanged. No model test, owner fixture/physical action, replay/reset, host
+reboot, root bypass, new dependency or owner-setting change.
+
+Two recent real presence requests remain honest FAILED/PARTIAL with retained
+required-delivery CANCELLED/CURRENT_POLICY_NOT_REQUIRED; neither was replayed.
+Planck actual read-only final and primary independent six-case synthetic
+reproducer establish E2: current unavailable context, source omitted from24
+nearby observations, or missing canonical name can wrongly terminally cancel a
+required obligation. Actual past-event cause remains unproven. Existing explicit
+revocation and large optional-context reduction controls retain separate results.
+This bounded delivery-accountability correction is queued after unchanged
+Stage7; saved obligation is never speech authority.
+
+Stage6 shared-scene SOURCE/hosted/bounded deployed correspondence ACCEPTED, not
+actual owner scene/physical/voice/fullA–O acceptance. Same Leibniz Stage7 remains
+IN_PROGRESS; no draft acceptance. Planck verification complete, primary retains
+orchestration/acceptance. Android Binder owner-root/vendor/audible/prospective
+improvement and ordinary due-task/originating approval-result gaps remain under
+the full active MO01–15/A–O Goal and same027A/R5F.
+
+
+## Independent ordinary-owner loop audit — 2026-10-02T15:04Z
+
+Actual native Planck final independently source-checked on19fff47. General
+scheduled owner work lacks production dispatch→SENTRY→result wiring; blanket
+scheduled-event silence is broader than actual learning review provenance.
+Accepted episode-less approval executes the action safely but does not return
+its verified result to the originating interaction. These MO12(H)/MO13 source
+integration gaps are distinct from Stage7 automatic prospective learning and
+from previously repaired physical-action/scene authorization. They are E1 source
+findings, not reproduced live failures. PARALLEL-PRODUCT-AUDIT.md retains callers
+and next coherent vertical. No cart exemption, new packet or permission granted.
+
 ## Stage6 source accepted / Stage7 same-Coder issued — 2026-10-02T14:42Z
 
 Actual Stage6 native final and evidence-only follow-up collected. All15 frozen
@@ -295,7 +362,7 @@ All rows retain existing evidence; none is promoted to final simultaneous PASS.
 | A departure; B arrival | Qualified presence/unknown/restart controls, graph context, real SENTRY reasoning and governed response; Wi-Fi is not authentication or physical departure proof. |
 | C nighttime/unexpected activity | First owner-directed Away-mode incident and controls, required factual speech independent of model, distinct contextual assessment. |
 | D shopping/cart; E local business; F recipes; G weather | Real bounded external-by-intent SENTRY turns, preferences/currentness and exact provider/confirmation outcomes. |
-| H durable future work | Actual scheduled execution/result with restart continuity; overdue learning dispatch is not review completion. |
+| H durable future work | SOURCE IMPLEMENTATION GAP: production runner is review-only; ordinary due tasks lack SENTRY request/result wiring and are broadly classified silent reviews. Reproduce/fix existing intent→due→fresh result/delivery vertical, then actual owner restart continuity. Learning dispatch is not completion. |
 | I changed reality; J partial failure | Preserve Phase 9 evidence; integrated confirmation/current-state/verification and honest partial delivery. |
 | K cloud/SENTRY outage; L plugin isolation | Fresh independent mandatory alerts and local platform continuity while model/provider unavailable. |
 | M injection; N enable/disable | Preserve accepted adversarial/provider boundaries; final integrated supported settings/tool availability. |

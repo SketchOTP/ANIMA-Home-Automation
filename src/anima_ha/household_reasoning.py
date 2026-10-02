@@ -72,6 +72,9 @@ def household_reasoning_context(
     }
     if initiative is not None:
         result["initiative"] = initiative(request)
+        feedback = getattr(initiative, "prospective_feedback_context", None)
+        if callable(feedback):
+            result["prospective_feedback"] = feedback(request)
     if situation is not None:
         # Rich context is an optional reasoning read, never notification policy
         # or the durable canonical speech initializer/claim dependency.

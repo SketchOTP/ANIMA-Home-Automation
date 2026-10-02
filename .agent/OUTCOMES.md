@@ -2347,3 +2347,59 @@ Existing implementation Coder remains Stage7. Added READ-ONLY native Planck
 Primary retains independent acceptance and publication. No competing source
 writes, owner/model/physical action, new runtime manager/schedule or packet.
 Actual sidecar result remains pending; spawning is not an accepted audit.
+
+## 2026-10-02T15:27Z — Stage6 hosted and controlled deployment independently accepted
+
+Exact governance4b214bd CI37022829253 PASS; native artifact11234368097
+sha256:fdc172c66486629f52dc0a8010d3103f75dc5e41df0e54da4e4f6989e54b5989
+actually downloaded and scene PG4/browser2 plus Stage5 PG4/browser2 verified.
+Loaded image7966cae9/container3662dcac source109/lock47/installed11 matched;
+authenticated Core/stack READY and UI200/bootstrap401. Read-only aligned pre/
+post full-row task/profile/Memory/calendar/ambiguity counts and digests unchanged;
+infrastructure containers/private files/Graft unchanged. No replay/reset/model/
+owner physical operation. Detailed independent record is native review15:27Z.
+SOURCE/hosted/bounded runtime accepted; real owner scene/voice/A–O remains open.
+
+Planck two actual READ-ONLY finals collected: ordinary due-task/originating
+approved-result source wiring gaps independently E1 accepted; required-delivery
+unavailable-versus-revocation distinction independently six-case E2 reproduced
+on exact accepted source. Missing context/canonical name/source outside24-item
+window can terminally cancel an existing obligation. No speech, real DB/provider
+or historical replay in reproduction; two prior presence failures' cause remains
+unproven. Smallest delivery correction queued after unchanged Stage7, not a new
+framework or acceptance of a fix. Primary owns source/deployment/review; same
+Leibniz Stage7 actualfinal still pending. Full Goal and027A active.
+
+## 2026-10-02T16:00Z — Corrected Stage7 target and ordinary workflow reproduction
+
+Primary23corrected prospective/coverage/compact-alert cases PASS0skip/failure/
+error; XML SHA2568c3a36952ec2be69c9fe057475e57f47db0324fa95fed4862ccc5e8133b916ae.
+Optional learning-feedback retrieval removed from canonical mandatory decision;
+rich reasoning retains explicit bounded missing/oversize diagnostic. Refrozen
+source hashes independently match. Interrupted full603PASS12SKIP remains
+nonqualification; new full-refrozen reports1451PASS82SKIP43successful subtests,
+actual native final/manifests still pending. This is E3 target evidence only,
+not source acceptance or deployment.
+
+Planck third actual read-only final collected; primary independently reran
+actual Core/PG ordinary task and approval result cases, exit0/checksPASSED/
+skips0/model_calls0. Ordinary task stays ACTIVE/due without run/request/result;
+current authorized Phase9 succeeds once or denies without dispatch, but original
+conversation remains WAITING_CONFIRMATION. Current approval foreign/duplicate
+guards pass. E2 integration findings accepted; synthetic policy/device drivers
+and privileged isolated role are not actualOPA/owner/audible acceptance. Fixture
+auto-removed; source/owner data untouched. Stage8 PREPARED_NOT_ISSUED. Parent
+retains publication/acceptance; liveStage6/Androidroot/future/fullGoal gates remain.
+
+## 2026-10-02T16:05Z — Stage7 actual final independently SOURCE ACCEPTED
+
+17-file manifest4d6a731a independently matches integrated bytes. Full XML1533
+parent cases1451PASS82SKIP plus43successful subreports; connectedPG24/browser2,
+separate parent restricted-rolePG4 and corrected compact/rich23 cases PASS.
+Actual source/consent/current-authority/feedback/unknown-coverage/CI guards and
+retained negatives reviewed. Bounded E4 source accepted for publication and
+controlled deployment after exact hostedCI; actual future improvement and
+household commissioning remain unproven. Detailed native review16:05Z and
+canonical final retain exact hashes/commands/counts/limits. SENTRY unchanged,
+Graft excluded, no owner fixture/model/physical/ambiguous replay. Stage8 next
+coherent owner-result scope remains prepared; full Goal/027A ACTIVE.

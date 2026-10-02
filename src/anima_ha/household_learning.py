@@ -35,8 +35,10 @@ from anima_ha.knowledge import KnowledgeValidationError
 from anima_ha.memory import (
     MemoryProvenance,
     MemoryRecord,
+    MemoryService,
     MemoryStatus,
     MemoryType,
+    MemoryValidationError,
     ProvenanceKind,
 )
 from anima_ha.plugins import (
@@ -487,6 +489,29 @@ class HouseholdLearningService:
 
     def reconcile_reviews(self, household_id: UUID) -> None:
         """Reconcile durable outcomes, not provider requests; never invoke/replay a model."""
+        if isinstance(self.memory, MemoryService):
+            with self.memory._connect() as connection:
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(%s)",
+                    (
+                        int.from_bytes(
+                            hashlib.sha256(f"learning-reconcile:{household_id}".encode()).digest()[
+                                :8
+                            ],
+                            "big",
+                            signed=True,
+                        ),
+                    ),
+                )
+                self._reconcile_reviews(household_id)
+            return
+        self._reconcile_reviews(household_id)
+
+    def _reconcile_reviews(self, household_id: UUID) -> None:
+        # Serialize this existing Core-only reconciliation (including native
+        # note receipts), not the model, scheduler or a physical action. A
+        # competing reconciler must not win Memory with a failed receipt while
+        # another has already materialized the same successful native note.
         suggestions = self._all_records(household_id, SUGGESTION_KIND)
         completions = self._all_records(household_id, REVIEW_COMPLETION_KIND)
         for row in self._all_records(household_id, REVIEW_PACKET_KIND):
@@ -1013,6 +1038,9 @@ class HouseholdLearningService:
                 "candidate_types": sorted({item.candidate_class for item in candidates}),
                 "candidates": [item.to_payload() for item in candidates],
                 "last_review": self._review_summary(successful[-1]) if successful else None,
+                "automatic_evaluation": completions[-1].metadata.get("automatic_evaluation")
+                if completions
+                else None,
                 "last_attempt": {**dict(packets[-1].metadata["packet"]), **states[-1]}
                 if packets
                 else None,
@@ -1134,6 +1162,13 @@ class HouseholdLearningService:
             "evidence_event_count": len(page["items"]),
             "candidate_digest": digest,
             "candidates": payload,
+            "frozen_at": self._now().isoformat(),
+            "evidence_truncated": page["truncated"],
+            "automatic_consent": self._review_consent(household_id, source_event_id, review_kind),
+            "prospective_feedback": [
+                {key: value for key, value in item.items() if key != "authority"}
+                for item in self.prospective_feedback(household_id)
+            ],
             "guidance": (
                 "Evaluate each candidate from its source-linked evidence. Submit one bounded "
                 "household-learning proposal per candidate, including explicit insufficient or "
@@ -1243,6 +1278,311 @@ class HouseholdLearningService:
             "scheduling": self._scheduling(household_id, config, row),
         }
 
+    def _review_consent(
+        self, household_id: UUID, event_id: str, kind: str
+    ) -> dict[str, Any] | None:
+        try:
+            return self._bound_review_consent(household_id, event_id, kind)
+        except (HouseholdLearningError, KeyError):
+            return None
+
+    def _bound_review_consent(
+        self, household_id: UUID, event_id: str, kind: str
+    ) -> dict[str, Any] | None:
+        """Snapshot only the actual saved config and Core durable task event.
+
+        No model argument, catch-up request or owner identity inference can
+        commission automatic evaluations. Old packets without this binding
+        intentionally stay manual-only; do not retrofit historical consent.
+        """
+        if self.journal is None or self.task_service is None or kind not in {"DAILY", "ROUTINE"}:
+            return None
+        config, saved = self._config(household_id)
+        if saved is None or not getattr(config, f"{kind.lower()}_review_enabled"):
+            return None
+        event = self.journal.get(event_id)
+        if (
+            event is None
+            or event.source != "anima:durable-task"
+            or event.event_type != "scheduled_reasoning_due"
+            or event.metadata.get("household_id") != str(household_id)
+            or event.occurred_at > self._now()
+        ):
+            return None
+        task = self.task_service.get(_uuid(event.payload["task_id"]))
+        run = self.task_service.store.get_run(_uuid(event.payload["run_id"]))
+        if (
+            task.household_id != household_id
+            or task.status != TaskStatus.ACTIVE
+            or task.task_type != TaskType.REASONING_DUE
+            or task.metadata.get("created_via") != "household_learning"
+            or task.payload.get("config_version") != str(saved.memory_id)
+            or task.payload.get("review_kind") != kind
+            or task.provenance.get("config_version") != str(saved.memory_id)
+            or task.provenance.get("kind") != "HOUSEHOLD_REVIEW"
+            or task.creation_idempotency_key
+            != f"household-learning:{household_id}:{saved.memory_id}:{kind}"
+            or event.subject_key != f"task/{task.task_id}"
+            or run.task_id != task.task_id
+            or run.source_event_id != event_id
+            or run.scheduled_for != event.occurred_at
+            or run.status.value not in {"CLAIMED", "DISPATCHING", "COMPLETED"}
+            or any(stamp and stamp > self._now() for stamp in (run.claimed_at, run.started_at))
+        ):
+            return None
+        self._owner(
+            household_id, _uuid(saved.provenance.source_ref.removeprefix("anima:principal:"))
+        )
+        return {
+            "config_version": str(saved.memory_id),
+            "config_source_ref": saved.provenance.source_ref,
+            "task_id": str(task.task_id),
+            "run_id": str(run.run_id),
+            "source_event_id": event_id,
+            "review_kind": kind,
+        }
+
+    def prospective_feedback(self, household_id: UUID) -> list[dict[str, Any]]:
+        """Bounded measured context; neither inferred Truth nor execution approval."""
+        rows = self._all_records(household_id, SHADOW_KIND)
+        return [
+            {
+                **self._shadow_public(row),
+                "windows": row.metadata["windows"][-3:],
+                "window_projection": "LATEST_THREE_USE_EVALUATIONS_FOR_FULL_RECORD",
+            }
+            for row in rows[-6:]
+        ]
+
+    def _commission_review(
+        self,
+        household_id: UUID,
+        packet: dict[str, Any],
+        outcomes: list[MemoryRecord],
+        state: dict[str, Any],
+    ) -> dict[str, Any]:
+        binding = packet.get("automatic_consent")
+        report: dict[str, Any] = {"status": "NOT_ELIGIBLE", "evaluations": [], "reasons": []}
+        if not binding:
+            report["reasons"] = ["NO_FROZEN_SAVED_REVIEW_CONSENT"]
+            return report
+        if not state["terminal_success"]:
+            report["status"] = "AWAITING_QUALIFIED_TERMINAL_REVIEW"
+            return report
+        terminal = (
+            self.request_state_reader(household_id, _uuid(packet["request_id"]))
+            if self.request_state_reader
+            else {}
+        )
+        if (
+            terminal.get("origin") != "DURABLE_TASK"
+            or terminal.get("causation_id") != binding["source_event_id"]
+            or terminal.get("provider_id") != "sentry"
+            or type(terminal.get("fencing_generation")) is not int
+            or terminal["fencing_generation"] < 1
+            or not terminal.get("completed_at")
+            or not _time(packet["frozen_at"]) <= _time(terminal["completed_at"]) <= self._now()
+        ):
+            report["reasons"] = ["TERMINAL_REQUEST_BINDING_OR_CLOCK_UNQUALIFIED"]
+            return report
+        if (
+            self._review_consent(household_id, binding["source_event_id"], packet["review_kind"])
+            != binding
+        ):
+            report["reasons"] = ["SAVED_REVIEW_CONSENT_NO_LONGER_CURRENT"]
+            return report
+        # Existing Memory database owns cross-process serialization. Nothing
+        # outside this short Core-only composition (no provider/physical call)
+        # runs under the lock. The in-memory test facade has no database lock.
+        if isinstance(self.memory, MemoryService):
+            with self.memory._connect() as connection:
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(%s)",
+                    (
+                        int.from_bytes(
+                            hashlib.sha256(f"learning-forecast:{household_id}".encode()).digest()[
+                                :8
+                            ],
+                            "big",
+                            signed=True,
+                        ),
+                    ),
+                )
+                # Configure/correct uses Memory's FOR UPDATE lock. Retain the
+                # exact consent row through freezing, so a concurrent revoke
+                # cannot commit between our check and the new receipt.
+                connection.execute(
+                    "SELECT memory_id FROM anima_memory_records WHERE memory_id=%s "
+                    "AND household_id=%s AND status='ACTIVE' FOR SHARE",
+                    (_uuid(binding["config_version"]), household_id),
+                ).fetchone()
+                return self._freeze_automatic(household_id, packet, outcomes, report)
+        return self._freeze_automatic(household_id, packet, outcomes, report)
+
+    def _freeze_automatic(
+        self,
+        household_id: UUID,
+        packet: dict[str, Any],
+        outcomes: list[MemoryRecord],
+        report: dict[str, Any],
+    ) -> dict[str, Any]:
+        from anima_ha.household_forecasts import recurrence_plan
+
+        binding = packet["automatic_consent"]
+        if (
+            self._review_consent(household_id, binding["source_event_id"], packet["review_kind"])
+            != binding
+        ):
+            return {**report, "reasons": ["SAVED_REVIEW_CONSENT_REVOKED_BEFORE_FREEZE"]}
+        now = self._now()
+        current_ids = {
+            str(node.canonical_id)
+            for node in [
+                *self.graph.resources_in_place(household_id),
+                *self.graph.members_of_household(household_id),
+            ]
+        }
+        existing = self._all_records(household_id, SHADOW_KIND)
+        evidence = self.evidence(household_id, MAX_EVIDENCE)
+        ids = {item["event_id"] for item in evidence["items"]}
+        current_candidates = {
+            item.candidate_key: item
+            for item in extract_pattern_candidates(
+                evidence["items"], household_id=household_id, timezone=self.zone
+            )
+        }
+        for candidate in packet["candidates"][:6]:
+            reason = None
+            source = next(
+                (
+                    row
+                    for row in outcomes
+                    if row.metadata.get("candidate_id") == candidate["candidate_id"]
+                ),
+                None,
+            )
+            identifier = uuid5(
+                NAMESPACE,
+                f"automatic-shadow:{household_id}:{packet['review_id']}:{candidate['candidate_id']}",
+            )
+            receipt = self.memory.get(identifier)
+            if receipt:
+                report["evaluations"].append(str(identifier))
+                continue
+            if any(
+                row.metadata.get("commissioning", {}).get("candidate_key")
+                == candidate["candidate_key"]
+                and row.metadata.get("disposition") == "EVIDENCE_PENDING"
+                for row in existing
+            ):
+                reason = "EXISTING_PENDING_COMPARISON"
+            elif (
+                evidence["status"] != "SUCCEEDED"
+                or evidence["truncated"]
+                or packet["evidence_truncated"]
+            ):
+                reason = "UNAVAILABLE_OR_TRUNCATED_SOURCE_WINDOW"
+            elif not set(candidate["source_event_ids"]) <= ids:
+                reason = "SOURCE_REFERENCES_NO_LONGER_QUALIFIED"
+            elif not set(candidate["canonical_ids"]) <= current_ids:
+                reason = "SOURCE_NO_LONGER_IN_HOUSEHOLD"
+            elif candidate["candidate_key"] not in current_candidates:
+                reason = "CURRENT_BOUNDED_CANDIDATE_NO_LONGER_SUPPORTED"
+            elif current_candidates[candidate["candidate_key"]].contradictory_evidence:
+                reason = "CONTRADICTORY_CURRENT_SOURCE_EVIDENCE"
+            elif current_candidates[candidate["candidate_key"]].temporal_consistency.get(
+                "dominant_local_window"
+            ) != candidate["temporal_consistency"].get("dominant_local_window"):
+                reason = "CURRENT_TEMPORAL_SOURCE_CHANGED"
+            elif (
+                not source
+                or source.status != MemoryStatus.ACTIVE
+                or source.metadata.get("review_status") in {"DISMISSED", "RETRACTED", "CORRECTED"}
+                or source.metadata.get("conclusion")
+                not in {
+                    "TENTATIVE_HYPOTHESIS",
+                    "LEARNED_ROUTINE_SUGGESTION",
+                    "SUPPORTED_OBSERVATION",
+                }
+            ):
+                reason = "NO_CURRENT_SUPPORTED_REVIEW_HYPOTHESIS"
+            plan, support = recurrence_plan(candidate, now=now, zone=self.zone)
+            reason = reason or (support if plan is None else None)
+            if reason:
+                report["reasons"].append(
+                    {"candidate_id": candidate["candidate_id"], "reason": reason}
+                )
+                continue
+            assert source is not None and plan is not None
+            assert self.request_state_reader is not None
+            signature = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest()
+            row = MemoryRecord.create(
+                memory_id=identifier,
+                household_id=household_id,
+                memory_type=MemoryType.TEMPORARY_EPISODIC,
+                created_at=now,
+                content="Saved-review prospective temporal forecast; no executable authority.",
+                provenance=MemoryProvenance(
+                    ProvenanceKind.EVENT_JOURNAL,
+                    f"anima:request:{packet['request_id']}",
+                    binding["source_event_id"],
+                ),
+                metadata={
+                    "record_kind": SHADOW_KIND,
+                    "input_digest": signature,
+                    "evaluation_id": str(identifier),
+                    "frozen_at": now.isoformat(),
+                    "hypothesis_version": str(source.memory_id),
+                    "hypothesis_signature": source.metadata["signature"],
+                    "hypothesis_content_digest": hashlib.sha256(
+                        source.content.encode()
+                    ).hexdigest(),
+                    "prediction": plan,
+                    "baseline": "PREDICT_NO_OCCURRENCE",
+                    "required_coverage": "QUALIFIED_SOURCE_INTERVAL",
+                    "late_grace_seconds": 60,
+                    "disposition": "EVIDENCE_PENDING",
+                    "windows": [],
+                    "commissioning": {
+                        **binding,
+                        "mode": "AUTOMATIC_SAVED_REVIEW",
+                        "request_id": packet["request_id"],
+                        "review_id": packet["review_id"],
+                        "terminal_at": packet.get("terminal_at")
+                        or self.request_state_reader(household_id, _uuid(packet["request_id"]))[
+                            "completed_at"
+                        ],
+                        "candidate_key": candidate["candidate_key"],
+                        "candidate_digest": packet["candidate_digest"],
+                        "source_refs": source.metadata["source_refs"],
+                        "source_features": candidate["temporal_consistency"],
+                        "terminal_evidence": {
+                            key: value
+                            for key, value in self.request_state_reader(
+                                household_id, _uuid(packet["request_id"])
+                            ).items()
+                            if key
+                            in {
+                                "lifecycle",
+                                "result_status",
+                                "provider_id",
+                                "provider_invocation_started",
+                                "fencing_generation",
+                            }
+                        },
+                    },
+                },
+            )
+            self.memory.create(row)
+            existing.append(row)
+            report["evaluations"].append(str(identifier))
+        report["status"] = (
+            "FROZEN" if report["evaluations"] else "INSUFFICIENT_SUPPORTED_PREDICTION"
+        )
+        if not packet["candidates"]:
+            report["reasons"] = ["NO_NEW_QUALIFIED_CANDIDATES"]
+        return report
+
     @staticmethod
     def _evidence_score_from_metadata(metadata: dict[str, Any]) -> float | None:
         value = metadata.get("evidence_score")
@@ -1344,6 +1684,7 @@ class HouseholdLearningService:
             "knowledge_note": row.metadata.get("knowledge_note"),
             "projection_status": row.metadata.get("projection_status", "NOT_CONFIGURED"),
             "learned_routine": learned_routine,
+            "prospective_feedback": row.metadata.get("prospective_feedback", []),
         }
 
     def suggestions(
@@ -1679,6 +2020,7 @@ class HouseholdLearningService:
                             "review_request_id": metadata.get("review_request_id"),
                             "content": row.content,
                             "quarantined": metadata.get("projection_quarantined", False),
+                            "prospective_feedback": metadata.get("prospective_feedback", []),
                         },
                         sort_keys=True,
                     ).encode()
@@ -1711,6 +2053,11 @@ class HouseholdLearningService:
         )
         try:
             return cast(MemoryRecord, self.memory.correct(row.memory_id, replacement))
+        except MemoryValidationError:
+            current = self.memory.get(row.memory_id)
+            if current is None or current.status == MemoryStatus.ACTIVE:
+                raise
+            return self._projection_receipt(current)
         except UniqueViolation:
             return cast(MemoryRecord, self.memory.get(replacement.memory_id) or row)
 
@@ -1798,6 +2145,13 @@ class HouseholdLearningService:
         )
         review_status = metadata.get("review_status", "PENDING")
         body += f"\n\nOwner review: {review_status}. ACK is review, never execution approval."
+        if metadata.get("prospective_feedback"):
+            body += (
+                "\n\nProspective source-window feedback (not physical accuracy): "
+                + _bounded_note_text(
+                    json.dumps(metadata["prospective_feedback"], sort_keys=True), 1800, 900
+                )
+            )
         arguments: dict[str, Any] = {
             "title": candidate["title"],
             "body": body,
@@ -1874,6 +2228,9 @@ class HouseholdLearningService:
                 None,
             )
         state = self.review_state(household_id, packet, outcomes=outcomes, previous=previous)
+        state["automatic_evaluation"] = self._commission_review(
+            household_id, packet, outcomes, state
+        )
         if previous is not None and all(
             previous.metadata.get(key) == value for key, value in state.items()
         ):
@@ -1918,6 +2275,14 @@ class HouseholdLearningService:
             self.memory.correct(previous.memory_id, completion) if previous else self.memory.create(
                 completion
             )
+        except MemoryValidationError:
+            # Another reconciler may already have versioned this disposition.
+            # Leave its receipt intact and re-read on the next existing tick.
+            if (
+                previous is None
+                or self.memory.get(previous.memory_id).status == MemoryStatus.ACTIVE
+            ):
+                raise
         except UniqueViolation:
             pass
 
@@ -2141,6 +2506,9 @@ class HouseholdLearningService:
                 "disposition",
             )
         } | {
+            "commissioning": value.get("commissioning"),
+            "invalidated_at": value.get("invalidated_at"),
+            "invalidation_reason": value.get("invalidation_reason"),
             "windows": windows,
             "planned_opportunities": value["prediction"]["window_count"],
             "closed_opportunities": len(windows),
@@ -2157,6 +2525,15 @@ class HouseholdLearningService:
             if value["disposition"] == "EVIDENCE_PENDING"
             else "SOURCE_WINDOW_ONLY_NOT_PHYSICAL",
             "authority": "NONE",
+            "next_comparison": next(
+                (
+                    item
+                    for item in value["prediction"].get("opportunities", [])
+                    if value["disposition"] == "EVIDENCE_PENDING"
+                    and item["start"] not in {closed["start"] for closed in windows}
+                ),
+                None,
+            ),
         }
 
     def evaluations(
@@ -2178,7 +2555,11 @@ class HouseholdLearningService:
 
         for row in self._all_records(household_id, SHADOW_KIND):
             metadata = row.metadata
-            if metadata["disposition"] == "SUPERSEDED_HYPOTHESIS":
+            if metadata["disposition"] in {
+                "SUPERSEDED_HYPOTHESIS",
+                "CANCELLED_SAVED_REVIEW",
+                "INVALIDATED_SOURCE",
+            }:
                 continue
             source = self.memory.get(_uuid(metadata["hypothesis_version"]))
             for _ in range(64):
@@ -2195,13 +2576,77 @@ class HouseholdLearningService:
                 and source.metadata.get("review_status") not in {"DISMISSED", "RETRACTED"}
             )
             updated = dict(metadata)
-            if not valid:
-                updated["disposition"] = "SUPERSEDED_HYPOTHESIS"
+            commissioning = metadata.get("commissioning")
+            reason = None
+            page = self.evidence(household_id, MAX_EVIDENCE)
+            if commissioning:
+                _, config_row = self._config(household_id)
+                if not config_row or str(config_row.memory_id) != commissioning["config_version"]:
+                    reason = "CANCELLED_SAVED_REVIEW"
+                current_consent = self._review_consent(
+                    household_id, commissioning["source_event_id"], commissioning["review_kind"]
+                )
+                if current_consent != {
+                    key: commissioning[key]
+                    for key in (
+                        "config_version",
+                        "config_source_ref",
+                        "task_id",
+                        "run_id",
+                        "source_event_id",
+                        "review_kind",
+                    )
+                }:
+                    reason = "CANCELLED_SAVED_REVIEW"
+                current_ids = {
+                    str(node.canonical_id)
+                    for node in [
+                        *self.graph.resources_in_place(household_id),
+                        *self.graph.members_of_household(household_id),
+                    ]
+                }
+                if metadata["prediction"]["canonical_id"] not in current_ids:
+                    reason = "INVALIDATED_SOURCE"
+                review_packet = self.review_packet(household_id, _uuid(commissioning["request_id"]))
+                if (
+                    review_packet is None
+                    or not self.review_state(household_id, review_packet)["terminal_success"]
+                ):
+                    reason = "INVALIDATED_SOURCE"
+                prediction = metadata["prediction"]
+                positive_times = {
+                    item["occurred_at"]
+                    for item in page["items"]
+                    if item["canonical_id"] == prediction["canonical_id"]
+                    and item["event_type"] == prediction["event_type"]
+                    and str(
+                        item.get("event_kind")
+                        or item.get("transition")
+                        or item["event_type"].rsplit(".", 1)[-1]
+                    ).upper()
+                    == prediction["event_qualifier"]
+                }
+                for item in page["items"]:
+                    if (
+                        item["canonical_id"] == prediction["canonical_id"]
+                        and item["event_type"] == prediction["event_type"]
+                        and _time(item["occurred_at"]) >= _time(metadata["frozen_at"])
+                        and item["occurred_at"] in positive_times
+                        and str(
+                            item.get("event_kind")
+                            or item.get("transition")
+                            or item["event_type"].rsplit(".", 1)[-1]
+                        ).upper()
+                        != prediction["event_qualifier"]
+                    ):
+                        reason = "INVALIDATED_SOURCE"
+            if not valid or reason:
+                updated["disposition"] = reason or "SUPERSEDED_HYPOTHESIS"
                 updated["invalidated_at"] = self._now().isoformat()
+                updated["invalidation_reason"] = reason or "OWNER_OR_HYPOTHESIS_VERSION_CHANGED"
             else:
                 prediction = metadata["prediction"]
                 windows = list(metadata["windows"])
-                page = self.evidence(household_id, MAX_EVIDENCE)
                 # Closed receipts stay immutable versions. Late Journal arrivals
                 # may only reduce confidence, not retroactively fill a coverage gap.
                 for index, window in enumerate(windows):
@@ -2214,17 +2659,20 @@ class HouseholdLearningService:
                         event_type=prediction["event_type"],
                         canonical_id=prediction["canonical_id"],
                         predicts_occurrence=prediction["predicts_occurrence"],
+                        event_qualifier=prediction.get("event_qualifier"),
                         events=page["items"],
                         coverage={"status": "UNKNOWN"},
                         truncated=False,
                     )
                     if (
                         check["late_records"] > window["late_records"]
-                        and window.get("outcome_basis") != "QUALIFIED_POSITIVE_SOURCE_RECEIPT"
-                    ):
+                        or check["clock_uncertain_records"]
+                        > window.get("clock_uncertain_records", 0)
+                    ) and window.get("outcome_basis") != "QUALIFIED_POSITIVE_SOURCE_RECEIPT":
                         windows[index] = {
                             **window,
                             "late_records": check["late_records"],
+                            "clock_uncertain_records": check["clock_uncertain_records"],
                             "coverage": "UNKNOWN",
                             "unknown": True,
                             "observed_occurrence": None,
@@ -2233,10 +2681,22 @@ class HouseholdLearningService:
                             "baseline_correct": None,
                         }
                 for index in range(len(windows), prediction["window_count"]):
-                    start = _time(prediction["starts_at"]) + timedelta(
-                        seconds=prediction["window_seconds"] * index
+                    opportunity = (
+                        prediction.get("opportunities", [])[index]
+                        if prediction.get("opportunities")
+                        else None
                     )
-                    end = start + timedelta(seconds=prediction["window_seconds"])
+                    start = (
+                        _time(opportunity["start"])
+                        if opportunity
+                        else _time(prediction["starts_at"])
+                        + timedelta(seconds=prediction["window_seconds"] * index)
+                    )
+                    end = (
+                        _time(opportunity["end"])
+                        if opportunity
+                        else start + timedelta(seconds=prediction["window_seconds"])
+                    )
                     closed = end + timedelta(seconds=metadata["late_grace_seconds"])
                     if closed > self._now():
                         break
@@ -2260,6 +2720,7 @@ class HouseholdLearningService:
                             event_type=prediction["event_type"],
                             canonical_id=prediction["canonical_id"],
                             predicts_occurrence=prediction["predicts_occurrence"],
+                            event_qualifier=prediction.get("event_qualifier"),
                             events=page["items"],
                             coverage=coverage,
                             truncated=bool(page["truncated"] or page["status"] != "SUCCEEDED"),
@@ -2284,6 +2745,71 @@ class HouseholdLearningService:
             )
             try:
                 self.memory.correct(row.memory_id, replacement)
+            except MemoryValidationError:
+                if self.memory.get(row.memory_id).status == MemoryStatus.ACTIVE:
+                    raise
+            except UniqueViolation:
+                pass
+        self._record_prospective_feedback(household_id)
+
+    def _record_prospective_feedback(self, household_id: UUID) -> None:
+        """Versioned measured feedback follows corrections into Memory/vault/context.
+
+        No content/signature mutation: the frozen hypothesis stays frozen and
+        owner correction provenance is retained, with dependent outcomes linked.
+        """
+        shadows = self._all_records(household_id, SHADOW_KIND)
+        for row in self._all_records(household_id, SUGGESTION_KIND):
+            feedback = []
+            for shadow in shadows:
+                value = shadow.metadata
+                if value.get("commissioning", {}).get("candidate_key") != row.metadata.get(
+                    "candidate_key"
+                ):
+                    continue
+                public = self._shadow_public(shadow)
+                feedback.append(
+                    {
+                        key: public[key]
+                        for key in (
+                            "evaluation_id",
+                            "frozen_at",
+                            "hypothesis_version",
+                            "disposition",
+                            "known_opportunities",
+                            "unknown_opportunities",
+                            "misses",
+                            "prediction_correct",
+                            "baseline_correct",
+                            "closed_opportunities",
+                            "planned_opportunities",
+                            "invalidation_reason",
+                        )
+                    }
+                )
+            feedback = feedback[-6:]
+            if feedback == row.metadata.get("prospective_feedback", []):
+                continue
+            digest = hashlib.sha256(json.dumps(feedback, sort_keys=True).encode()).hexdigest()
+            replacement = replace(
+                row,
+                memory_id=uuid5(NAMESPACE, f"forecast-feedback:{row.memory_id}:{digest}"),
+                created_at=self._now(),
+                supersedes_memory_id=None,
+                metadata={
+                    **row.metadata,
+                    "prospective_feedback": feedback,
+                    "projection_status": "PENDING"
+                    if row.metadata.get("projection_candidate")
+                    else "NOT_CONFIGURED",
+                    "projection_retry_at": None,
+                },
+            )
+            try:
+                self.memory.correct(row.memory_id, replacement)
+            except MemoryValidationError:
+                if self.memory.get(row.memory_id).status == MemoryStatus.ACTIVE:
+                    raise
             except UniqueViolation:
                 pass
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
@@ -294,6 +295,23 @@ class HouseholdInitiativeContext:
             return result
         except Exception:
             return {"status": "UNAVAILABLE", "notification": closed, "authority": "NONE"}
+
+    def prospective_feedback_context(self, request: IntelligenceRequest) -> dict[str, Any]:
+        """Optional rich reasoning history, never a compact notification dependency."""
+        unavailable: dict[str, Any] = {
+            "status": "UNAVAILABLE",
+            "items": [],
+            "authority": "NONE",
+        }
+        try:
+            items = self.learning.prospective_feedback(request.household_id)[-6:]
+            if len(json.dumps(items).encode()) > 12000:
+                return {**unavailable, "status": "CONTEXT_LIMIT_REQUIRES_SCOPED_READ"}
+            return {**unavailable, "status": "AVAILABLE", "items": items}
+        except Exception:
+            # No raw private exception/content, permission fallback or speech
+            # authority. Empty items mean unavailable, not measured absence.
+            return unavailable
 
     def _canonical_announcement(
         self, source: dict[str, Any], resource_id: str

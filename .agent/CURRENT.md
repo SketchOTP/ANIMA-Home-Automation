@@ -1,5 +1,152 @@
 # Current Project State
 
+Stage7 SOURCE ACCEPTED — 2026-10-02T16:05Z: actual native final independently
+reviewed;17frozen source hashes match parent integration. Full1451parentPASS/
+82SKIP+43successful subreports, connectedPG24/desktop+phone2 and independent
+restricted-rolePG4/compact-alert23 PASS. New saved successful learning reviews
+can automatically commission meaningful future comparisons and versioned
+feedback, while silence remains UNKNOWN and knowledge grants no authority.
+No real future improvement or household commissioning is claimed. Detailed
+manifest/negative/count/current-authority boundaries in native review16:05Z
+and canonical STAGE7-CODER-RESULT. Publication/hostedCI/deployment pending;
+liveStage6/image7966cae9 and SENTRY4909e089 unchanged. Stage8 prepared, not issued.
+Read-only sidecar finished; actual ordinary workflow gaps independently E2
+reproduced. Full Goal/027A remains ACTIVE.
+
+Stage7 correction independently target-verified — 2026-10-02T15:57Z:
+corrected compact canonical notification context makes zero optional prospective
+feedback lookups and retains the mandatory ALWAYS_NOTIFY disposition. Rich
+reasoning alone reports failed feedback as UNAVAILABLE/items[]/authority NONE.
+Primary23prospective/coverage/alert cases PASS0skip/error/failure, XML SHA256
+8c3a36952ec2be69c9fe057475e57f47db0324fa95fed4862ccc5e8133b916ae;
+initiative c94927f7/reasoning e1b82661/alert-test d11e6357 match the refrozen
+17-file draft manifest. Earlier separate restricted-role4PG proof retains its
+exact source boundary. Corrected full run interrupted603PASS12SKIP is NOT full
+qualification; Coder refrozen full regression remains underway. Actual native
+final/source acceptance/publication/deployment are still pending. Same Coder
+and read-only ordinary-workflow verifier remain active, Stage8 PREPARED_NOT_ISSUED.
+Live accepted Stage6 stays unchanged; no model/audio/owner-data/root operation.
+
+Stage7 independent correction — 2026-10-02T15:45Z: exact draft source adds
+optional prospective_feedback lookup to shared compact notification context.
+Primary synthetic unchanged-source/mock-driver E2 reproduction: qualified
+ALWAYS_NOTIFY remains true normally but only optional-feedback exception turns
+allowed/required false UNAVAILABLE. This would mask mandatory authority and add
+learning scans to the first-speech critical path. Native focused correction
+sent to SAME Coder: move bounded feedback to rich reasoning/review/retrieval,
+keep compact canonical decision independent, expose optional unavailability
+honestly, add regression and refreeze/requalify. No ledger redesign, replay,
+source acceptance or deployment of the draft. Required-delivery classifier
+correction remains later/separate. Existing4PG/18unit draft evidence and full
+negative history remain valid for their exact prior source only.
+
+Independent Stage7 target checks — 2026-10-02T15:42Z: primary read scoped
+consent/terminal/provider-fence/source-derived future plan/coverage/feedback code,
+ran18prospective+coverage in-memory tests PASS and4connected learning cases on
+separate disposable pinned PostgreSQL/currentOPA PASS0skip/error/failure. Test
+role stage2 independently verified NOSUPERUSER/NOCREATEDB/NOCREATEROLE; no owner
+DB/model/audio/configuration was used. Fixture container/anonymous data removed.
+These are E3 draft target checks, not Stage7 source acceptance; actual native
+frozen final and full manifest still pending. Full-qualified XML currently has
+1528parents=1446PASS+82SKIP, plus43successful subtest reports;1571 reported
+suite counter is not1571independent cases. Previous full-final failure retained.
+Same implementation Coder remains active; read-only sidecar's ordinary workflow
+verification pending. Live accepted Stage6/image7966cae9 unchanged.
+
+Synchronization/parallel follow-through — 2026-10-02T15:30Z: both existing
+authority pages and code-derived architecture reference updated; entire4829-
+character Stage6 deployed/finding section refetched and MATCH after only known
+Notion formatting normalization. No stale CI-pending/liveStage5 claim remains
+as the latest checkpoint. Planck reused for READ-ONLY isolated ordinary due-task
+and originating approval-result verification; no extra implementation Coder,
+shared fixture/owner/runtime mutation or overlapping source writes. Leibniz
+Stage7 actualfinal remains pending. Current local deployment/governance records
+await next coherent publication; main remains exact hosted-green4b214bd.
+
+## Stage6 hosted qualification and controlled deployment — 2026-10-02T15:27Z
+
+Exact governance4b214bd49b87b854c4959a64fbebbd5546a1d513 CI37022829253
+SUCCESS at15:13:31Z. Native artifact11234368097 digest
+sha256:fdc172c66486629f52dc0a8010d3103f75dc5e41df0e54da4e4f6989e54b5989;
+actual downloaded scene PG4/browserdesktop+phone2 and retained Stage5 PG4/
+browser2 PASS0skip/failure/error. Native artifact and source-map hashes differ
+by design, not evidence drift.
+
+Controlled application-only replacement at15:24:35Z: UI imageID
+7966cae910809d1eb05adf4fd29d35d9892bee7441758804358e101ad51b7593,
+container3662dcacfe3c3a3c31bb6f0f039bc4fa20859c7d11f18927bfea7f5cf26442f1.
+All109 loaded Python/SQL files equal clean accepted4b214bd product19fff47,
+source-map SHA2561c692876e5101b32f6817ba58d80d71da19b262dfabf5ce19ec6316726736914.
+47 installed distributions match unchanged lock;11 already-exact installed
+units/client files were not rewritten. Authenticated Core/stack READY; UIhealth
+200 and unauthenticatedbootstrap401. Core/helper/WiFi/relay/voice/supervisor/UI
+active with0restarts after controlled start.
+
+Quiescent pre/post snapshots15:24:31/15:25:51 match full-row counts/digests for
+17tasks,1personality profile,314Memory,5calendar,46ambiguous requests. Provider
+counts unchanged:89CANCELLED/677COMPLETED/143FAILED/283NO_ACTION/134PENDING/
+33RECOVERY_REQUIRED/13UNKNOWN_RESULT; active providers/actions0. Historical
+3SUCCEEDED/1POLICY_DENIED actions unchanged. PostgreSQL/OPA/HA/searx IDs/start
+times unchanged. Nine private file hashes and separate Graft tooling hashes
+unchanged. No model test, owner fixture/physical action, replay/reset, host
+reboot, root bypass, new dependency or owner-setting change.
+
+Two recent real presence requests remain honest FAILED/PARTIAL with retained
+required-delivery CANCELLED/CURRENT_POLICY_NOT_REQUIRED; neither was replayed.
+Planck actual read-only final and primary independent six-case synthetic
+reproducer establish E2: current unavailable context, source omitted from24
+nearby observations, or missing canonical name can wrongly terminally cancel a
+required obligation. Actual past-event cause remains unproven. Existing explicit
+revocation and large optional-context reduction controls retain separate results.
+This bounded delivery-accountability correction is queued after unchanged
+Stage7; saved obligation is never speech authority.
+
+Stage6 shared-scene SOURCE/hosted/bounded deployed correspondence ACCEPTED, not
+actual owner scene/physical/voice/fullA–O acceptance. Same Leibniz Stage7 remains
+IN_PROGRESS; no draft acceptance. Planck verification complete, primary retains
+orchestration/acceptance. Android Binder owner-root/vendor/audible/prospective
+improvement and ordinary due-task/originating approval-result gaps remain under
+the full active MO01–15/A–O Goal and same027A/R5F.
+
+
+## Independent parallel audit finding — 2026-10-02T15:04Z
+
+Planck actual native final collected; primary source-traced its two important
+ordinary-owner lifecycle gaps against exact published product19fff47. Production
+Core claims learning-only task IDs; no general due-task execution/delivery
+composition is wired. Generic scheduled events are blanket-classified silent
+reviews, while exact review eligibility is narrower. Accepted episode-less
+approval safely executes an action but does not return verified result to the
+originating SENTRY conversation; gate-result polling terminates. These are E1
+source integration findings, not live reproductions or reopening of correct
+approval/scene execution. See PARALLEL-PRODUCT-AUDIT.md for actual callers.
+
+Stage7 remains unchanged/in progress. Next coherent selection after its actual
+final/review is ordinary scheduled owner-intent→current result/delivery plus
+originating authenticated approval-result return, preserving existing tasks/
+Journal/Attention/frozen requests/no-replay/current authority and saved consent.
+No additional implementation worker/packet/engine or production model test.
+Stage6 exactCI37022829253 still running; candidate not deployed. Existing Notion
+architecture now explains actual shared scene path with immutable code links;
+entire7945-character section MATCH after only Notion formatting normalization.
+Full MO/A–O/027A remains active; audit narrows the next real product gap.
+
+## Stage6 published / hosted qualification pending — 2026-10-02T14:54Z
+
+Normal product19fff47 and governance4b214bd49b87b854c4959a64fbebbd5546a1d513
+pushed to main, no history rewrite. Exact-head CI37022829253 IN_PROGRESS.
+Public safety and cached diff checks PASS. Separate Graft files remain unstaged.
+Candidate built from clean exact governance worktree, imageID
+7966cae910809d1eb05adf4fd29d35d9892bee7441758804358e101ad51b7593;
+all109 imported Python/SQL files independently match accepted source, fingerprint
+1c692876e5101b32f6817ba58d80d71da19b262dfabf5ce19ec6316726736914,
+47 installed distributions match unchanged lock. Candidate NOT DEPLOYED.
+Both existing Notion authority pages updated and entire3360-character sections
+refetched/normalized MATCH: source acceptance/publication is not hosted/owner/
+physical/runtime acceptance. Live remains Stage5f783562/image4bba091. Leibniz
+Stage7 and owner-authorized READ-ONLY Planck run independently; actual finals
+still pending. Full Goal/027A and existing root/owner/vendor/future gates ACTIVE.
+
 ## Owner-authorized parallel audit — 2026-10-02T14:45Z
 
 Owner explicitly authorized additional native agents to multitask while primary

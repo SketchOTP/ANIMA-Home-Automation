@@ -165,6 +165,9 @@ def extract_pattern_candidates(
                 distinct_day_count=len(days),
                 elapsed_hours=round(elapsed, 3),
                 temporal_consistency={
+                    "dominant_local_day_count": len(
+                        {value.date() for value in times if (value.hour // 4) * 4 == dominant_start}
+                    ),
                     "dominant_local_window": (
                         f"{dominant_start:02d}:00-{(dominant_start + 4) % 24:02d}:00"
                     ),

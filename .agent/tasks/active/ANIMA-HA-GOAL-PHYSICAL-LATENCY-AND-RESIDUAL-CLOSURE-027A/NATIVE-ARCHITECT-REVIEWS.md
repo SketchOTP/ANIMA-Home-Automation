@@ -1,5 +1,51 @@
 # Native Architect reviews — existing 027A / R5F continuation
 
+## Stage6 hosted qualification and controlled deployment — 2026-10-02T15:27Z
+
+Exact governance4b214bd49b87b854c4959a64fbebbd5546a1d513 CI37022829253
+SUCCESS at15:13:31Z. Native artifact11234368097 digest
+sha256:fdc172c66486629f52dc0a8010d3103f75dc5e41df0e54da4e4f6989e54b5989;
+actual downloaded scene PG4/browserdesktop+phone2 and retained Stage5 PG4/
+browser2 PASS0skip/failure/error. Native artifact and source-map hashes differ
+by design, not evidence drift.
+
+Controlled application-only replacement at15:24:35Z: UI imageID
+7966cae910809d1eb05adf4fd29d35d9892bee7441758804358e101ad51b7593,
+container3662dcacfe3c3a3c31bb6f0f039bc4fa20859c7d11f18927bfea7f5cf26442f1.
+All109 loaded Python/SQL files equal clean accepted4b214bd product19fff47,
+source-map SHA2561c692876e5101b32f6817ba58d80d71da19b262dfabf5ce19ec6316726736914.
+47 installed distributions match unchanged lock;11 already-exact installed
+units/client files were not rewritten. Authenticated Core/stack READY; UIhealth
+200 and unauthenticatedbootstrap401. Core/helper/WiFi/relay/voice/supervisor/UI
+active with0restarts after controlled start.
+
+Quiescent pre/post snapshots15:24:31/15:25:51 match full-row counts/digests for
+17tasks,1personality profile,314Memory,5calendar,46ambiguous requests. Provider
+counts unchanged:89CANCELLED/677COMPLETED/143FAILED/283NO_ACTION/134PENDING/
+33RECOVERY_REQUIRED/13UNKNOWN_RESULT; active providers/actions0. Historical
+3SUCCEEDED/1POLICY_DENIED actions unchanged. PostgreSQL/OPA/HA/searx IDs/start
+times unchanged. Nine private file hashes and separate Graft tooling hashes
+unchanged. No model test, owner fixture/physical action, replay/reset, host
+reboot, root bypass, new dependency or owner-setting change.
+
+Two recent real presence requests remain honest FAILED/PARTIAL with retained
+required-delivery CANCELLED/CURRENT_POLICY_NOT_REQUIRED; neither was replayed.
+Planck actual read-only final and primary independent six-case synthetic
+reproducer establish E2: current unavailable context, source omitted from24
+nearby observations, or missing canonical name can wrongly terminally cancel a
+required obligation. Actual past-event cause remains unproven. Existing explicit
+revocation and large optional-context reduction controls retain separate results.
+This bounded delivery-accountability correction is queued after unchanged
+Stage7; saved obligation is never speech authority.
+
+Stage6 shared-scene SOURCE/hosted/bounded deployed correspondence ACCEPTED, not
+actual owner scene/physical/voice/fullA–O acceptance. Same Leibniz Stage7 remains
+IN_PROGRESS; no draft acceptance. Planck verification complete, primary retains
+orchestration/acceptance. Android Binder owner-root/vendor/audible/prospective
+improvement and ordinary due-task/originating approval-result gaps remain under
+the full active MO01–15/A–O Goal and same027A/R5F.
+
+
 ## Stage6 source accepted / Stage7 same-Coder issued — 2026-10-02T14:42Z
 
 Actual Stage6 native final and evidence-only follow-up collected. All15 frozen
@@ -1382,3 +1428,53 @@ pending obligations0; no vendor receipt asserted. Wrong preliminary row-state ke
 returned None, corrected to actual status; wrong container alias health template
 errored, corrected exact container health proves healthy. Those failed diagnostics
 did not mutate household data. No physical/LLM test, reboot or root workaround.
+
+## Stage7 automatic prospective learning — independent SOURCE ACCEPTANCE, 2026-10-02T16:05Z
+
+Actual native final collected from same Leibniz, not a draft. Retrieval ADEQUATE.
+All17 frozen files match manifest SHA256
+4d6a731af64c9d8b287d22f16da5f06057d67c3fcb8b0b447a63313ad80beb7c,
+and parent-integrated bytes independently rechecked; SENTRY4909e089 unchanged.
+
+Parent reviewed source-bound saved consent/terminal provider fence, meaningful
+future local/DST windows, current source/config/hypothesis invalidation, existing
+Memory locks/versioned feedback and honest positive-versus-negative coverage.
+Primary18initial/23corrected focused cases PASS and4independent real restricted-
+role PG/currentOPA cases PASS0skip; exact role NOSUPERUSER/NOCREATEDB/NOCREATEROLE.
+Optional feedback masking mandatory speech independently reproduced before
+correction; final compact required alert has0feedback lookups and rich missing
+feedback stays explicit. No required-delivery revocation repair is included.
+
+Final full XML independently counted1533parent cases=1451PASS+82explicitSKIP,
+plus43successful subtest reports (1576suite counter, not independent cases).
+XML SHA256411167cd9c8c22af35c3ef65125a46678b1bd227a9618e41e1cf92a80a563773.
+Coder connected Stage2/4/7 PG24PASS0skip, SHA256
+e73401bb520544ff4a8f6863d47a8784c13d71adebc44cbd6c301e8de78e8736;
+local Coder role privileged, separate parent4case restricted-role proof retained.
+Corrected real-store desktop/phone2PASS0skip, XML SHA256
+84f39a985358d843bf988c9dbf39997ea1e818bc3e4ca9f368e06891806d6be1;
+parent inspected phone evidence/connected guards/current source fixture.
+Ruff/strict185-file mypy/compile/frontend14/type/build/currentOPA9/support matrix
+qualified. New guarded PG/browser targets included in existing hosted CI.
+
+Preserved actual negatives: concurrent native-note duplicate race corrected by
+existing reconciliation serialization; owner-config revoke race corrected by
+rechecked row locking; optional feedback alert regression corrected by rich-only
+context; failed/interrupted qualification and overwritten failed PG XML custody
+limitation remain explicit in STAGE7-CODER-RESULT. No recreated negative artifact,
+silently loosened guard, owner fixture/model/audio/physical test or cleanup of
+historical ambiguous work. Separate Graft files remain out of product staging.
+
+Disposition: bounded17-file SOURCE ACCEPTED/E4_REGRESSION_PROTECTED for normal
+publication and controlled deployment after exact-head hosted CI. This is not
+actual household commissioning, interval negative coverage, prospective
+improvement, owner result, physical vendor/playback or full MO01–15/A–O acceptance.
+Actual currently saved reviews may commission only newly frozen qualified
+successful due reviews; no forced catch-up/model turn or proactive-setting change.
+Live accepted Stage6/image7966cae9 remains unchanged pending qualification.
+
+Same Coder's next coherent selection is prepared Stage8 ordinary scheduled owner
+result, originating verified approval result, and required-delivery unavailable-
+versus-revocation correction. Both ordinary source gaps are now independently
+real-store/scripted-policy E2 reproduced; Stage8 not yet issued at this review.
+Android owner-root/vendor/physical/future/full-goal gates remain; Goal ACTIVE.
