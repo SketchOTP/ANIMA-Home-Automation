@@ -7,7 +7,9 @@ const uiPort = process.env.ANIMA_E2E_UI_PORT ?? "18090";
 export default defineConfig({
   testDir: "./tests",
   // Dedicated Core/Memory/vault fixtures live in their own explicit configs.
-  testIgnore: ["**/h5v.spec.ts", "**/family-routines.spec.ts", "**/knowledge.spec.ts", "**/preferences.spec.ts", "**/household-presence.spec.ts", "**/initiative.spec.ts"],
+  // Stage5 requires the guarded real-store server from playwright.stage5.config.ts,
+  // not this generic fixture's deliberately unavailable preference writer.
+  testIgnore: ["**/h5v.spec.ts", "**/family-routines.spec.ts", "**/knowledge.spec.ts", "**/preferences.spec.ts", "**/household-presence.spec.ts", "**/initiative.spec.ts", "**/stage5-owner-workflows.spec.ts"],
   fullyParallel: false,
   workers: 1,
   reporter: [["list"]],
