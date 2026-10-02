@@ -110,6 +110,7 @@ from anima_ha.plugins import (
     InvocationResult,
     NativeRuntime,
     PluginManager,
+    PluginValidationError,
     SecretBroker,
     public_invocation_status,
 )
@@ -123,6 +124,7 @@ from anima_ha.policy import (
     RequestOrigin,
 )
 from anima_ha.preferences import PREFERENCES_MANIFEST, PreferencesNativePlugin
+from anima_ha.scene_application import SceneApplication
 from anima_ha.scenes import SCENES_MANIFEST, PostgresSceneStore, SceneError, SceneNativePlugin
 from anima_ha.senseguard_alerts import (
     SENSEGUARD_ALERT_MANIFEST,
@@ -513,6 +515,7 @@ class CoreUICommandGateway:
     automation_store: PostgresAutomationStore | None = None
     household_graph: PostgresHouseholdGraph | None = None
     sentry_identity_profiles: SentryIdentityProfileClient | None = None
+    scene_application: SceneApplication | None = None
 
     def _policy_context(self, identity: UIIdentity) -> PolicyContext:
         role = (
@@ -833,7 +836,9 @@ class CoreUICommandGateway:
             "result": result,
         }
 
-    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+    def apply_scene(
+        self, identity: UIIdentity, scene_id: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Apply a preset through the existing verified single-device action path.
 
         Scenes are deliberately not a raw HA batch service.  Each step is an
@@ -841,36 +846,21 @@ class CoreUICommandGateway:
         terminal result.  A later non-success therefore stops the sequence and
         is surfaced as PARTIAL/that governed outcome rather than hidden.
         """
-        if self.scene_store is None:
-            raise UICommandError("CORE_SCENE_STORE_UNAVAILABLE")
+        if self.scene_application is None:
+            raise UICommandError("CORE_SCENE_APPLICATION_UNAVAILABLE")
         try:
-            scene = self.scene_store.get(identity.household_id, UUID(scene_id))
-        except (ValueError, SceneError) as exc:
-            raise UICommandError("SCENE_NOT_FOUND") from exc
-        if not scene.enabled:
-            return {"status": "FAILED", "operation": "scene.apply", "detail": "scene is disabled"}
-        results: list[dict[str, Any]] = []
-        for index, step in enumerate(scene.steps, start=1):
-            result = self.control(
-                identity,
-                str(step.resource_id),
-                {"desired_on": step.desired_on},
+            body = payload or {}
+            if set(body) != {"expected_version", "attempt_id"}:
+                raise ValueError("SCENE_VERSION_AND_ATTEMPT_REQUIRED")
+            attempt_id = UUID(str(body["attempt_id"]))
+            return self.scene_application.apply(
+                {"scene_id": str(UUID(scene_id)), "expected_version": body["expected_version"]},
+                identity=_identity(identity),
+                origin=RequestOrigin.DIRECT_USER,
+                idempotency_key=f"ui:{attempt_id}",
             )
-            results.append({"step": index, "resource_id": str(step.resource_id), **result})
-            if result.get("status") != "SUCCEEDED":
-                status = result.get("status", "UNKNOWN_RESULT")
-                return {
-                    "status": "PARTIAL" if index > 1 else status,
-                    "operation": "scene.apply",
-                    "detail": f"scene stopped at step {index}",
-                    "result": {"scene_id": str(scene.scene_id), "steps": results},
-                }
-        return {
-            "status": "SUCCEEDED",
-            "operation": "scene.apply",
-            "detail": f"applied {len(results)} verified scene step(s)",
-            "result": {"scene_id": str(scene.scene_id), "steps": results},
-        }
+        except (ValueError, SceneError, PluginValidationError) as exc:
+            raise UICommandError(str(exc)) from exc
 
     def device_inventory(self, identity: UIIdentity) -> dict[str, Any]:
         """Return the bounded, already-discovered HA registry for this household."""
@@ -1149,6 +1139,7 @@ class CoreUICommandGateway:
                 refresher=self.action_refresher,
                 verifier=self.action_verifier,
                 origin=RequestOrigin.DIRECT_USER,
+                approval_identity=_identity(identity),
             )
             if execution is None:
                 raise UICommandError("APPROVAL_NOT_ACTIONABLE")
@@ -1377,6 +1368,7 @@ class CoreRuntime:
     initiative_context: Any | None = None
     event_dispatcher: Callable[[EventEnvelope, int], Any] | None = None
     journal_event_watcher: JournalEventWatcher | None = None
+    scene_application: SceneApplication | None = None
 
     def conversation(self, events: UIEventBroadcaster) -> CoreConversationPipeline:
         if self.intelligence_provider == IntelligenceProviderMode.SENTRY:
@@ -1424,6 +1416,7 @@ class CoreRuntime:
             automation_store=self.automation_store,
             household_graph=self.graph,
             sentry_identity_profiles=SentryIdentityProfileClient.from_environment(),
+            scene_application=self.scene_application,
         )
 
     def sentry_boundary(self) -> CoreSentryBoundary:
@@ -1462,6 +1455,7 @@ class CoreRuntime:
             access_level_resolver=self.identity_resolver.resolve_access_level,
             agent_memory_enabled=os.environ.get("ANIMA_SENTRY_AGENT_MEMORY", "").lower() == "true",
             learning_service=self.learning_service,
+            scene_application=self.scene_application,
         )
 
     def sentry_sensor_status(self, household_id: UUID) -> dict[str, Any]:
@@ -1889,7 +1883,9 @@ def build_postgres_core(
             )
             state = ha_adapter.read_state(resource_id, capability_id)
             values[str(state["truth_key"])] = {
-                "state": "KNOWN",
+                "state": "UNKNOWN"
+                if state.get("state") in {None, "unknown", "unavailable"}
+                else "KNOWN",
                 "value": state.get("state"),
                 "observed_at": state.get("observed_at"),
             }
@@ -1920,6 +1916,41 @@ def build_postgres_core(
         scene_store,
         automation_store,
         memory_service,
+    )
+
+    def scene_authority(identity: IdentityContext) -> bool:
+        if identity.principal_id is None:
+            return False
+        try:
+            household, principal, _ = identity_resolver.resolve_principal(identity.principal_id)
+        except (PrincipalMappingRequired, PrincipalMappingConflict):
+            return False
+        return household == identity.household_id and principal == identity.principal_id
+
+    def scene_capability(resource_id: UUID) -> UUID | None:
+        return next(
+            (
+                capability.canonical_id
+                for capability in graph.resource_capabilities(resource_id)
+                if str(capability.metadata.get("capability_type", "")).startswith("power.")
+            ),
+            None,
+        )
+
+    runtime.scene_application = SceneApplication(
+        scene_store,
+        plugins,
+        action_executor,
+        policy_service,
+        resource_validator=scene_resource_is_commissioned,
+        authority_validator=scene_authority,
+        policy_context=lambda identity: PolicyContext(
+            principal_role=identity_resolver.resolve_role(identity.principal_id)
+            if identity.principal_id
+            else None
+        ),
+        capability_resolver=scene_capability,
+        refresher=action_refresher,
     )
     household_value = (
         os.environ.get("ANIMA_HOUSEHOLD_ID", "").strip()

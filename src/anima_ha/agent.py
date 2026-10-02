@@ -2010,6 +2010,7 @@ class AgentRuntime:
                 verifier=action_verifier,
                 origin=RequestOrigin.DIRECT_USER,
                 allow_recovery=True,
+                approval_identity=identity,
             )
             if execution is None:
                 self.store.release_continuation(episode.episode_id, approval_id, owner)

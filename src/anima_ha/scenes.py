@@ -284,13 +284,18 @@ class InMemorySceneStore:
 
 
 def _tool(
-    name: str, description: str, schema: dict[str, Any], *, read_only: bool
+    name: str,
+    description: str,
+    schema: dict[str, Any],
+    *,
+    read_only: bool,
+    output_schema: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "name": name,
         "description": description,
         "input_schema": schema,
-        "output_schema": {"type": "object"},
+        "output_schema": output_schema or {"type": "object"},
         "risk_class": "READ_ONLY" if read_only else "LOW_RISK_HOME_CONTROL",
         "semantic_action": f"scenes.{name}",
         "read_only": read_only,
@@ -308,6 +313,25 @@ SCENE_STEP_SCHEMA = {
     "required": ["resource_id", "desired_on"],
     "additionalProperties": False,
 }
+SCENE_ACTION_STATUS_SCHEMA = {
+    "type": "string",
+    "enum": [
+        "PLANNED",
+        "EXECUTING",
+        "SUCCEEDED",
+        "FAILED",
+        "RESOURCE_BUSY",
+        "PRECONDITION_FAILED",
+        "POLICY_DENIED",
+        "REQUIRE_CONFIRMATION",
+        "REQUIRE_STRONGER_AUTH",
+        "VERIFICATION_FAILED",
+        "UNKNOWN_RESULT",
+        "PARTIAL",
+        "RECOVERY_REQUIRED",
+    ],
+}
+
 SCENE_PROPERTIES: dict[str, Any] = {
     "scene_id": {"type": "string", "format": "uuid"},
     "expected_version": {"type": "integer", "minimum": 1},
@@ -328,7 +352,7 @@ SCENE_SCHEMA = {
 
 SCENES_MANIFEST = PluginManifest(
     plugin_id="anima.scenes",
-    plugin_version="0.1.0",
+    plugin_version="0.2.0",
     manifest_version=MANIFEST_VERSION,
     requires_core=CORE_VERSION,
     name="ANIMA scenes",
@@ -362,6 +386,64 @@ SCENES_MANIFEST = PluginManifest(
             "Update a scene with optimistic version protection",
             SCENE_SCHEMA,
             read_only=False,
+        ),
+        _tool(
+            "apply_scene",
+            "Apply the exact saved version through Core verified controls; "
+            "never blindly replay an interrupted attempt",
+            {
+                "type": "object",
+                "properties": {
+                    "scene_id": SCENE_PROPERTIES["scene_id"],
+                    "expected_version": SCENE_PROPERTIES["expected_version"],
+                },
+                "required": ["scene_id", "expected_version"],
+                "additionalProperties": False,
+            },
+            read_only=False,
+            output_schema={
+                "type": "object",
+                "required": ["status", "operation"],
+                "properties": {
+                    "status": SCENE_ACTION_STATUS_SCHEMA,
+                    "recorded_status": SCENE_ACTION_STATUS_SCHEMA,
+                    "operation": {"const": "anima.scenes.apply_scene"},
+                    "action_id": {"type": "string", "format": "uuid"},
+                    "duplicate": {"type": "boolean"},
+                    "detail": {"type": ["string", "null"]},
+                    "reason": {"type": "string"},
+                    "result": {
+                        "type": ["object", "null"],
+                        "properties": {
+                            "scene_id": SCENE_PROPERTIES["scene_id"],
+                            "scene_version": SCENE_PROPERTIES["expected_version"],
+                            "saved_scene": {"type": "object"},
+                            "power_tool_version": {"type": "string"},
+                            "steps": {
+                                "type": "array",
+                                "maxItems": MAX_SCENE_STEPS,
+                                "items": {
+                                    "type": "object",
+                                    "required": ["step", "resource_id", "action_id", "status"],
+                                    "properties": {
+                                        "step": {"type": "integer", "minimum": 1},
+                                        "resource_id": SCENE_PROPERTIES["scene_id"],
+                                        "action_id": SCENE_PROPERTIES["scene_id"],
+                                        # Nested enum arrays exceed the bounded manifest depth.
+                                        # Values still come only from ActionStatus in Core.
+                                        "status": {"type": "string"},
+                                        "detail": {},
+                                        "result": {},
+                                    },
+                                    "additionalProperties": False,
+                                },
+                            },
+                        },
+                        "additionalProperties": False,
+                    },
+                },
+                "additionalProperties": False,
+            },
         ),
     ),
     source="builtin:anima_ha.scenes",

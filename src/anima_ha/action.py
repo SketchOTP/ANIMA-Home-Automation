@@ -511,6 +511,10 @@ class ActionStore(Protocol):
 
     def get(self, action_id: UUID) -> ActionRecord | None: ...
 
+    def latest_scene_application(
+        self, household_id: UUID, scene_id: UUID
+    ) -> ActionRecord | None: ...
+
     def recover_incomplete(self) -> list[ActionRecord]: ...
 
     def record_effects(self, action_id: UUID, result: dict[str, Any]) -> None: ...
@@ -600,6 +604,17 @@ class InMemoryActionStore:
         with self._lock:
             return self.records.get(action_id)
 
+    def latest_scene_application(self, household_id: UUID, scene_id: UUID) -> ActionRecord | None:
+        with self._lock:
+            records = [
+                r
+                for r in self.records.values()
+                if r.household_id == household_id
+                and r.tool_id == "anima.scenes.apply_scene"
+                and r.latest_truth.get("saved_scene", {}).get("scene_id") == str(scene_id)
+            ]
+            return max(records, key=lambda r: (r.created_at, str(r.action_id))) if records else None
+
     def recover_incomplete(self) -> list[ActionRecord]:
         with self._lock:
             recovered: list[ActionRecord] = []
@@ -610,6 +625,7 @@ class InMemoryActionStore:
                             record.action_id,
                             ActionStatus.UNKNOWN_RESULT,
                             detail="process restart occurred after external execution began",
+                            result=record.result,
                         )
                     )
                 elif record.status == ActionStatus.PLANNED:
@@ -618,6 +634,7 @@ class InMemoryActionStore:
                             record.action_id,
                             ActionStatus.RECOVERY_REQUIRED,
                             detail="planned action was not resumed after process restart",
+                            result=record.result,
                         )
                     )
             return recovered
@@ -729,6 +746,19 @@ class PostgresActionStore:
     def get(self, action_id: UUID) -> ActionRecord | None:
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute("SELECT * FROM anima_actions WHERE action_id=%s", (action_id,))
+            row = cursor.fetchone()
+        return self._record(row) if row else None
+
+    def latest_scene_application(self, household_id: UUID, scene_id: UUID) -> ActionRecord | None:
+        """Read an existing domain aggregate, not a workflow queue/resume store."""
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT * FROM anima_actions WHERE household_id=%s
+                   AND tool_id='anima.scenes.apply_scene'
+                   AND latest_truth->'saved_scene'->>'scene_id'=%s
+                   ORDER BY created_at DESC, action_id DESC LIMIT 1""",
+                (household_id, str(scene_id)),
+            )
             row = cursor.fetchone()
         return self._record(row) if row else None
 
@@ -1267,6 +1297,11 @@ class ActionExecutionCoordinator:
         self.locker = locker
         self.journal = journal
         self.pending_approvals = pending_approvals
+        # Reserved Core-owned scene child keys are resolved through their
+        # existing aggregate record, including after approval/process restart.
+        self.scene_approval_refresher: (
+            Callable[[PendingApproval, PolicyContext, IdentityContext], TruthRefresher] | None
+        ) = None
 
     def _audit(self, request: ActionRequest, event_type: str, payload: dict[str, Any]) -> None:
         if self.journal is None:
@@ -1798,6 +1833,7 @@ class ActionExecutionCoordinator:
         decision: str,
         tool: ToolDescriptor | None,
         policy_service: PolicyService,
+        approval_identity: IdentityContext | None = None,
         policy_context: PolicyContext | None = None,
         refresher: TruthRefresher | None = None,
         verifier: ActionVerifier | None = None,
@@ -1857,7 +1893,27 @@ class ActionExecutionCoordinator:
             return ActionExecutionResult(record)
         if pending.status != PendingApprovalStatus.APPROVED:
             return None
-        if tool is None or tool.tool_id != pending.tool_id or tool.version != pending.tool_version:
+        scene_child = pending.idempotency_key.startswith("scene-step:")
+        if (
+            tool is None
+            or tool.tool_id != pending.tool_id
+            or tool.version != pending.tool_version
+            or (
+                scene_child
+                and (
+                    self.scene_approval_refresher is None
+                    or approval_identity is None
+                    or approval_identity.household_id != household_id
+                    or approval_identity.principal_id != principal_id
+                    or approval_identity.conflicting_principals
+                    or approval_identity.assurance
+                    not in {
+                        Assurance.AUTHENTICATED,
+                        Assurance.STRONG_AUTHENTICATED,
+                    }
+                )
+            )
+        ):
             record = self.store.update(
                 pending.action_id,
                 ActionStatus.POLICY_DENIED,
@@ -1877,6 +1933,12 @@ class ActionExecutionCoordinator:
             issued_at=pending.issued_at,
             expires_at=pending.expires_at,
         )
+        if scene_child:
+            assert self.scene_approval_refresher is not None
+            assert approval_identity is not None
+            refresher = self.scene_approval_refresher(
+                pending, policy_context or PolicyContext(), approval_identity
+            )
         request = ActionRequest.create(
             action_id=pending.action_id,
             action_intent_id=pending.action_intent_id,
@@ -1884,7 +1946,8 @@ class ActionExecutionCoordinator:
             household_id=pending.household_id,
             tool=tool,
             arguments=dict(pending.arguments),
-            identity=IdentityContext(
+            identity=approval_identity
+            or IdentityContext(
                 household_id,
                 principal_id,
                 Assurance.AUTHENTICATED,

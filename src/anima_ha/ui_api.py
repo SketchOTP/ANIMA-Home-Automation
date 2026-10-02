@@ -761,7 +761,9 @@ class UICommandGateway(Protocol):
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
     ) -> dict[str, Any]: ...
 
-    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]: ...
+    def apply_scene(
+        self, identity: UIIdentity, scene_id: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]: ...
 
     def automation_mutation(
         self, identity: UIIdentity, operation: str, payload: dict[str, Any]
@@ -843,7 +845,9 @@ class UnavailableCommandGateway:
     ) -> dict[str, Any]:
         return self._unavailable(f"scene.{operation}")
 
-    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+    def apply_scene(
+        self, identity: UIIdentity, scene_id: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         return self._unavailable(f"scene.apply.{scene_id}")
 
     def automation_mutation(
@@ -2224,7 +2228,9 @@ class DemoCommandGateway:
         self.events.publish("capabilities.changed")
         return {"status": "SUCCEEDED", "operation": f"scene.{operation}", "result": payload}
 
-    def apply_scene(self, identity: UIIdentity, scene_id: str) -> dict[str, Any]:
+    def apply_scene(
+        self, identity: UIIdentity, scene_id: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         del identity
         self.events.publish("home.invalidated")
         return {"status": "UNAVAILABLE", "operation": "scene.apply", "scene_id": scene_id}
@@ -2823,6 +2829,27 @@ class ConversationRequest(BaseModel):
 
 class MutationRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class SceneApplyPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    expected_version: int = Field(strict=True, ge=1)
+    attempt_id: UUID
+
+
+class SceneApplyRequest(BaseModel):
+    payload: SceneApplyPayload
+
+
+def _scene_apply_responses() -> dict[int | str, dict[str, Any]]:
+    from anima_ha.scenes import SCENES_MANIFEST
+
+    schema = next(
+        dict(tool["output_schema"])
+        for tool in SCENES_MANIFEST.tools
+        if tool["name"] == "apply_scene"
+    )
+    return {200: {"content": {"application/json": {"schema": schema}}}}
 
 
 def _owner_command_responses(plugin_id: str, name: str) -> dict[int | str, dict[str, Any]]:
@@ -3528,16 +3555,22 @@ def create_app(
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    @app.post("/api/v1/scenes/{scene_id}/apply")
+    @app.post(
+        "/api/v1/scenes/{scene_id}/apply",
+        responses=_scene_apply_responses(),
+    )
     async def apply_scene(
         scene_id: str,
+        body: SceneApplyRequest,
         request: Request,
         x_anima_csrf: str | None = Header(default=None, alias="X-Anima-CSRF"),
     ) -> dict[str, Any]:
         session = current_session(request)
         require_mutation(request, x_anima_csrf, session)
         try:
-            return svc.commands.apply_scene(svc.identity_from_session(session), scene_id)
+            return svc.commands.apply_scene(
+                svc.identity_from_session(session), scene_id, body.payload.model_dump(mode="json")
+            )
         except UICommandError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 

@@ -73,7 +73,7 @@ jobs:
           docker compose exec -T db pg_isready -U anima -d anima
           curl --fail --silent http://127.0.0.1:18181/health >/dev/null
           uv run --locked --group dev anima-migrate
-      - name: Qualify Stage2–5 delivery, owner workflows and vendor ingress against isolated PostgreSQL
+      - name: Qualify Stage2–6 delivery, owner workflows and vendor ingress against isolated PostgreSQL
         env:
           PYTHONPATH: src
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -102,6 +102,8 @@ jobs:
             --junitxml=/tmp/anima-owner-evidence/stage4-learning-postgres.xml
           uv run --locked pytest -q tests/test_stage5_owner_postgres.py \
             --junitxml=/tmp/anima-owner-evidence/stage5-owner-postgres.xml
+          uv run --locked pytest -q tests/test_stage6_owner_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/stage6-owner-postgres.xml
       - name: Qualify late device entities against isolated PostgreSQL
         env:
           ANIMA_DB_PASSWORD: anima_dev_only
@@ -480,6 +482,49 @@ jobs:
           done
           (cd ui && ./node_modules/.bin/playwright test -c playwright.stage5.config.ts \
             --reporter=line,junit --output=/tmp/anima-owner-evidence/stage5-browser)
+      - name: Qualify Stage6 supported setup and scene workflow on desktop and phone
+        env:
+          PYTHONPATH: src
+          ANIMA_STAGE2_TEST_DATABASE_URL: postgresql://stage2:stage2-test-only@127.0.0.1:55432/anima_vendor_ingress_test
+          ANIMA_STAGE3_TEST_OPA_URL: http://127.0.0.1:18181
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: /tmp/anima-owner-evidence/stage6-browser.xml
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/anima-owner-evidence
+          task_isolation="$(mktemp -d /tmp/anima-stage6-ci-browser.XXXXXX)"
+          export SENTRY_AUTHORITY_ROOT="$task_isolation/authority"
+          export SENTRY_AGENT_WORKSPACE="$task_isolation/workspace"
+          export XDG_STATE_HOME="$task_isolation/state" CODEX_HOME="$task_isolation/codex"
+          export XDG_CONFIG_HOME="$task_isolation/config"
+          unset SENTRY_CODEX_HOME
+          .venv/bin/python -c 'import anima_ha; print(anima_ha.__file__); import socket; probe=socket.socket(); probe.bind(("127.0.0.1",18336)); probe.close()'
+          .venv/bin/python tests/serve_stage6_owner_workflows.py \
+            > /tmp/anima-owner-evidence/stage6-browser-fixture.log 2>&1 &
+          fixture_pid=$!
+          cleanup() {
+            fixture_status=$?
+            trap - EXIT
+            kill -TERM "$fixture_pid" 2>/dev/null || true
+            for attempt in {1..10}; do
+              if ! kill -0 "$fixture_pid" 2>/dev/null; then break; fi
+              sleep 1
+            done
+            kill -KILL "$fixture_pid" 2>/dev/null || true
+            wait "$fixture_pid" 2>/dev/null || true
+            exit "$fixture_status"
+          }
+          trap cleanup EXIT
+          for attempt in {1..30}; do
+            if ! kill -0 "$fixture_pid" 2>/dev/null; then
+              echo 'Stage6 guarded fixture exited before readiness.' >&2
+              exit 1
+            fi
+            if curl --fail --silent http://127.0.0.1:18336/healthz >/dev/null; then break; fi
+            if [[ "$attempt" == 30 ]]; then exit 1; fi
+            sleep 1
+          done
+          (cd ui && ./node_modules/.bin/playwright test -c playwright.stage6.config.ts \
+            --reporter=line,junit --output=/tmp/anima-owner-evidence/stage6-browser)
       - name: Publish Phase 12 H5 evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4

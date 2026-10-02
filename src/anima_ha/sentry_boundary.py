@@ -45,6 +45,7 @@ from anima_ha.policy import (
     PolicyContext,
     RequestOrigin,
 )
+from anima_ha.scene_application import SceneApplication
 
 SENTRY_BOUNDARY_VERSION = "1"
 _INVOCATION_NAMESPACE = UUID("8ed25308-c6a7-45ee-85ff-c6d4e572a58f")
@@ -168,6 +169,7 @@ class CoreSentryBoundary:
     learning_service: Any | None = None
     sensor_status_loader: Callable[[UUID], dict[str, Any]] | None = None
     journal_handoff_status_loader: Callable[[], str] | None = None
+    scene_application: SceneApplication | None = None
 
     def health(self) -> SentryBoundaryHealth:
         return SentryBoundaryHealth(
@@ -632,6 +634,22 @@ class CoreSentryBoundary:
             else None
         )
         policy_context = PolicyContext(principal_role=role)
+        if tool.tool_id == "anima.scenes.apply_scene":
+            if self.scene_application is None:
+                raise SentryBoundaryError("SCENE_APPLICATION_UNAVAILABLE")
+
+            def scene_guard() -> None:
+                self._assert_active(request)
+                self._request_tool(request, tool.tool_id)
+                self._request_tool(request, "anima.provider.home-assistant.set_power")
+
+            return self.scene_application.apply(
+                dict(arguments),
+                identity=identity,
+                origin=origin,
+                idempotency_key=invocation_context.system_idempotency_key,
+                guard=scene_guard,
+            )
         if tool.execution_boundary == ExecutionBoundary.COORDINATED_CONSEQUENTIAL:
             if self.action_executor is None:
                 raise SentryBoundaryError("ACTION_COORDINATOR_UNAVAILABLE")
