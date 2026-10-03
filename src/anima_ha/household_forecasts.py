@@ -8,6 +8,7 @@ we do not manufacture contrast trials from historical silence.
 
 from __future__ import annotations
 
+import math
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -22,14 +23,48 @@ def recurrence_plan(
         return None, "UNQUALIFIED_CANDIDATE"
     if candidate.get("contradictory_evidence"):
         return None, "CONTRADICTORY_SOURCE_EVIDENCE"
-    temporal = candidate["temporal_consistency"]
+    temporal = candidate.get("temporal_consistency")
+    if not isinstance(temporal, dict):
+        return None, "INVALID_OBSERVED_DAY_SUPPORT"
+    observations: Any = candidate.get("observation_count")
+    days: Any = candidate.get("distinct_day_count")
+    elapsed: Any = candidate.get("elapsed_hours")
     if (
-        candidate["observation_count"] < 5
-        or candidate["distinct_day_count"] < 3
-        or candidate["elapsed_hours"] < 48
-        or temporal["ratio"] < 0.75
-        or temporal.get("dominant_local_day_count", 0) < 3
+        type(observations) is not int
+        or type(days) is not int
+        or type(elapsed) not in (int, float)
+        or not math.isfinite(elapsed)
     ):
+        return None, "INVALID_OBSERVED_DAY_SUPPORT"
+    if observations < 5 or days < 3 or elapsed < 48:
+        return None, "INSUFFICIENT_MULTI_DAY_TEMPORAL_SUPPORT"
+    support = temporal.get("observed_day_support")
+    if not isinstance(support, dict):
+        # Historical event-share-only packets cannot acquire new day support.
+        return None, "INVALID_OBSERVED_DAY_SUPPORT"
+    numerator: Any = support.get("numerator")
+    denominator: Any = support.get("denominator")
+    ratio: Any = support.get("ratio")
+    bucket_days: Any = temporal.get("dominant_local_day_count")
+    bucket_receipts: Any = temporal.get("observations_in_window")
+    total_receipts: Any = temporal.get("total_observations")
+    if (
+        support.get("support_basis") != "OBSERVED_DAY_SUPPORT_NOT_PROBABILITY"
+        or any(
+            type(value) is not int
+            for value in (numerator, denominator, bucket_days, bucket_receipts, total_receipts)
+        )
+        or not 0 <= numerator <= denominator == days <= observations
+        or numerator != bucket_days
+        or not numerator <= bucket_receipts <= total_receipts == observations
+        or type(ratio) not in (int, float)
+        or not math.isfinite(ratio)
+        or not math.isclose(ratio, numerator / denominator, rel_tol=0, abs_tol=1e-12)
+    ):
+        return None, "INVALID_OBSERVED_DAY_SUPPORT"
+    # The forecast predicts >=1 receipt per daily window, not the fraction of
+    # all individual receipts concentrated there. Do not round at the gate.
+    if numerator < 3 or 4 * numerator < 3 * denominator:
         return None, "INSUFFICIENT_MULTI_DAY_TEMPORAL_SUPPORT"
     end = datetime.fromisoformat(candidate["evidence_window"]["end"])
     if end > now or now - end > timedelta(days=2):

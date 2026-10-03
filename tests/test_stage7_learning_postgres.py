@@ -43,7 +43,9 @@ from anima_ha.sentry_boundary import CoreSentryBoundary
 from anima_ha.tasks import PostgresTaskStore, TaskService
 
 
-def connect_review(value: dict[str, Any], root: Path) -> tuple[Any, Any, dict[str, Any]]:
+def connect_review(
+    value: dict[str, Any], root: Path, *, dense_daily_receipts: bool = False
+) -> tuple[Any, Any, dict[str, Any]]:
     service, home = value["service"], value["home"]
     service.journal = value["journal"]
     now = datetime.now(UTC)
@@ -55,19 +57,25 @@ def connect_review(value: dict[str, Any], root: Path) -> tuple[Any, Any, dict[st
     clock["now"] = now
     for day in range(1, 9):
         stamp = now - timedelta(days=day)
-        value["journal"].append(
-            EventEnvelope.create(
-                event_id=str(uuid4()),
-                delivery_class=DeliveryClass.GUARANTEED,
-                event_type="household.ring.motion",
-                source="anima.ring",
-                source_event_id=str(uuid4()),
-                subject_key=f"resource/{value['sensor']}",
-                occurred_at=stamp,
-                payload={"resource_id": str(value["sensor"]), "raw_text": "PRIVATE_SENTINEL"},
-                metadata={"household_id": str(home)},
-            )
+        stamps = (
+            [stamp.replace(hour=hour) for hour in (1, 5, 9, 12, 13, 14, 15, 17, 21)]
+            if dense_daily_receipts
+            else [stamp]
         )
+        for receipt_at in stamps:
+            value["journal"].append(
+                EventEnvelope.create(
+                    event_id=str(uuid4()),
+                    delivery_class=DeliveryClass.GUARANTEED,
+                    event_type="household.ring.motion",
+                    source="anima.ring",
+                    source_event_id=str(uuid4()),
+                    subject_key=f"resource/{value['sensor']}",
+                    occurred_at=receipt_at,
+                    payload={"resource_id": str(value["sensor"]), "raw_text": "PRIVATE_SENTINEL"},
+                    metadata={"household_id": str(home)},
+                )
+            )
     manager = PluginManager()
     manager.register(
         HOUSEHOLD_LEARNING_MANIFEST, NativeRuntime(HouseholdLearningNativePlugin(service))
@@ -140,11 +148,23 @@ def connect_review(value: dict[str, Any], root: Path) -> tuple[Any, Any, dict[st
     return boundary, request, packet
 
 
+@pytest.mark.parametrize("dense_daily_receipts", [False, True])
 def test_connected_automatic_review_future_outcomes_correction_retrieval(
-    situation: dict[str, Any], tmp_path: Path
+    situation: dict[str, Any], tmp_path: Path, dense_daily_receipts: bool
 ) -> None:
     value = situation
-    boundary, request, packet = connect_review(value, tmp_path / "vault")
+    boundary, request, packet = connect_review(
+        value, tmp_path / "vault", dense_daily_receipts=dense_daily_receipts
+    )
+    if dense_daily_receipts:
+        temporal = packet["candidates"][0]["temporal_consistency"]
+        assert temporal["ratio"] < 0.75
+        assert temporal["observed_day_support"] == {
+            "numerator": 8,
+            "denominator": 8,
+            "ratio": 1.0,
+            "support_basis": "OBSERVED_DAY_SUPPORT_NOT_PROBABILITY",
+        }
     service, home = value["service"], value["home"]
     assert service.evaluations(home)["items"] == []
     finish(boundary, request, IntelligenceResultStatus.NO_ACTION)

@@ -107,3 +107,155 @@ negatives. Owned temporary verification:
  /tmp/anima-stage9-hosted.tbxOY4 (actual downloaded hosted artifact).
 Private read-only snapshots retained in this native session, counts/digests only
 published above; no credentials, vendor text, raw speech/media or private prompts.
+
+## Owner-installed Binder repair / Android recovery — 2026-10-02T22:35Z
+
+Owner reports installing the reviewed anima-binder.conf, daemon-reloading and
+restarting Waydroid. Independently observed system service active since22:24:27Z
+and effective DeviceAllow=char-binder rw. Both user supervisor/session were still
+held inactive. Primary started only the existing notification supervisor22:26:57Z;
+its normal managed service can perform its existing limited diagnostics. A direct
+parent-context check returned SOURCE_ACCESS because agent NoNewPrivileges blocks
+sudo; this is not evidence the managed supervisor lacks root-helper permission.
+
+First session attempt failed at waydroid-net.sh with an nft filter-chain error;
+StartLimitBurst1/300s prevented rapid session restarts. Original failure retained.
+Existing supervisor retry22:32:00Z succeeded without changing root config, loading
+modules, altering firewall rules manually, or launching vendor apps manually.
+Session1430014/container1397625/Android system_server observed, waydroid0 UP.
+Network/DNS/clock, Binder forwarder/listener/relay and both vendor installed/
+process/permission/channel checks READY at22:33:00.073366Z; still READY22:34:28Z.
+FCM CONNECTED is CLOUD_MESSAGING_SERVICE_OBSERVED, not independently proven cloud
+push. Vendor account and app/device notification settings remain NOT_EXPOSED.
+
+Startup receipts: Tapo Journal69296/eventa857f348-5108-5fae-87b8-cab5dc38bc85
+at22:32:44.863981Z; Wansview69297/event299cd066-a5da-5d7f-8e88-ddf09e19f17f
+at22:32:46.201209Z. Both retain RELAY_RECEIPT_TIME, no physical/vendor or Android
+posted timestamp, UNKNOWN source/report freshness. Neither qualifies a fresh
+physical test, full-host reboot acceptance, no-stale-replay, or source-to-audible
+latency. Receipt counters are baselines, not owner-action evidence.
+
+Read-only qualification baseline22:34:38.257620Z: Journal60688/position69315;
+provider-started1184; requests CANCELLED89/COMPLETED678/FAILED168/NO_ACTION292/
+PENDING136/RECOVERY_REQUIRED33/UNKNOWN_RESULT13; no active claimed/running state.
+Relay received/accepted Tapo1/Wansview1, failures/rejections/pending obligations0.
+Core/household-worker/voice/stateAPI ACTIVE. Voice office LISTENING, sleepfalse,
+wakeenabledtrue, Kokoro warm; wake detections1/command dispatch1/model invocation1
+are existing baselines, not new owner wake qualification.
+
+No application source/image, credentials, owner settings, app data or household
+history changed. No manual vendor launch, privilege bypass, synthetic notification
+or model turn used. Published ANIMA32019c0/product2e98da3 and SENTRYb331c05 remain.
+Local operational governance only, no new commit/push/CI cycle. Next: fresh owner
+physical unlock after this baseline, genuine Wansview motion and voice checks;
+all remaining permanent gates stay explicit. Goal remains incomplete.
+
+## Fresh owner Tapo unlock qualification — 2026-10-02T22:53Z
+
+After READY and the recorded baseline, primary asked owner for a physical unlock;
+owner replied done. New Tapo received/accepted1->2, failed/rejected0; Wansview
+remains1. Both vendors/Android/relay still READY. One canonical unlocked event
+ef9b73dd-3521-5c47-9f51-40b6d570a5bb, Journal69409; one associated request
+a0753ee3-1407-574e-8428-901c3cf8d46c, trigger6005e2d6-597f-59e6-8a55-f52f5e729606.
+Frozen IMMEDIATE_ANNOUNCEMENT_ONLY; one claim, DELIVERED_TO_PROVIDER transition
+and PROVIDER_RUNNING transition, attempt/fencing_generation1. No second event-
+linked request or repeated required-delivery attempt observed.
+
+| Stage | Observed UTC timestamp |
+| --- | --- |
+| Physical/vendor occurrence | NOT EXPOSED; owner action confirmed, no precise source clock |
+| Android notification posted | NOT EXPOSED by current transport |
+| Relay receipt | 2026-10-02T22:50:53.047420Z |
+| Journal append | 2026-10-02T22:50:53.059880Z |
+| Request creation | 2026-10-02T22:50:53.667827Z |
+| Claim | 2026-10-02T22:50:54.050380Z |
+| Durable provider-start | 2026-10-02T22:50:54.302449Z |
+| Original terminal provider result | 2026-10-02T22:50:54.885990Z |
+| Local playback process start | 2026-10-02T22:50:55.372911Z |
+| Actual audible start | null; NOT OBSERVABLE in this receipt |
+| Playback completion | 2026-10-02T22:50:58.473170Z |
+| Core delivery receipt | 2026-10-02T22:50:58.480262Z |
+
+Read-only SQL decomposition: relay->Journal0.012460s; Journal->request0.607947s;
+request->claim0.382553s; claim->provider-start0.252069s; provider-start->playback
+PROCESS1.070462s; relay->playback PROCESS2.325491s. Timing source explicitly
+LOCAL_PLAYBACK_PROCESS, not hardware/audible-start measurement.
+
+Original provider lifecycle FAILED/resultPARTIAL/detail
+REQUIRED_NOTIFICATION_NOT_PRODUCED remains unchanged. The independent required-
+speech ledger has execution_kindSENTRY_REQUIRED_SPEECH/stateDELIVERED,
+generation1/attempts1/active_instanceoffice. This proves one recorded playback
+completion without provider replay; it does not retroactively turn the original
+partial result into COMPLETED or prove human heard it. Human-heard confirmation
+requested asynchronously, not received at recording. Follow-up window count4->5
+and resident voice LISTENING; content/hidden reasoning/audio not read or persisted.
+
+Disposition: fresh owner Tapo ingress and one required playback receipt observed;
+strict physical/vendor->actual audible <=3s NOT QUALIFIED due missing source and
+audible timestamps. Do not substitute the2.325491s process measurement. Wansview
+physical receipt, owner voice/authenticated journeys, useful prospective learning,
+full ownerGoal evidence and strict timing gate remain. No source/image/config
+change, simulated notification, manually recreated request or provider rerun.
+Only local operational governance and Notion updated; no new commit/push/CI.
+
+### Owner-heard follow-up — recorded2026-10-02T22:57Z
+
+Owner explicitly answered Yes to hearing this fresh unlock announcement.
+The specific Journal69409/requesta0753ee3-1407-574e-8428-901c3cf8d46c now has
+owner-observed audible delivery, not merely a process/receipt inference.
+This confirmation does not identify actual audible-start time. Physical/vendor
+occurrence remains unexposed; strict physical->audible<=3s remains unqualified.
+Original providerPARTIAL and all timing limitations are retained. No new event,
+database mutation, provider execution, app change or repeat test was performed.
+
+### Owner physical-to-audio timing verification — recorded2026-10-02T23:09Z
+
+Current closure update2026-10-02T23:32Z is appended below; retain this original
+owner timing evidence and its independent measurement limitations unchanged.
+
+Owner subsequently explicitly verifies physical unlock->audible announcement
+was less than3seconds for this same fresh test. Disposition OWNER_VERIFIED_LT3S,
+direct owner observation, not just owner-heard receipt. Accept this as additional
+owner operational evidence without inventing a timing method or exact timestamps.
+The separately recorded machine measurement remains relay->playback PROCESS
+2.325491s; vendor occurrence/actual_audible_start_at remain unexposed/null.
+No claim of independently instrumented physical->audible PASS is created.
+Instrumented evidence gap and final Architect acceptance remain separate from
+the owner's explicit positive timing verification. No additional Tapo test was
+requested solely to reconfirm the owner's observation. Original partial provider
+result, one separate delivered playback, other permanent gates and source pair
+unchanged. No replay, software/runtime/config change or new CI.
+
+## Owner closure boundary — 2026-10-02T23:32Z
+
+Owner confirms Wansview motion delivery and voice authentication work. Together
+with the prior OWNER_VERIFIED_LT3S Tapo observation, the owner's current closure
+list contains exactly two remaining items:
+1. Full Linux host reboot recovery without manual intervention.
+2. Demonstrated useful learning: prospective predictions, correction and
+   routine-informed outcomes, not merely stored notes.
+
+This supersedes earlier broader active work lists, not historical negative
+evidence or measurement limitations. No new physical test was collected for
+the owner's confirmations, and the permanent goal is not self-declared complete.
+
+Reboot preflight: Android READY for both vendors; container/user startup units
+enabled, user lingering enabled; zero active claimed/delivered/provider-running
+requests and zero executing/pending-verification actions. Baseline boot ID
+25220422-6849-44cf-8b9b-3100678bfb24. Full host reboot is NOT YET QUALIFIED.
+
+One host-only startup correction: added
+/home/sketch/.config/autostart/anima-sentry-ui.desktop to start the existing
+sentry-ui.service after ordinary desktop login. Desktop-file validation passed;
+idempotent service start preserved PID3766936/NRestarts0. No orb/source/voice
+change, automatic login, credential change or root action. Headless recovery
+uses existing lingering services; GUI before login is not claimed.
+
+Learning inventory: 13 active suggestions, including four learned-routine
+suggestions; 144 superseded suggestion versions are not proof of usefulness.
+Zero frozen forward evaluations/shadow records exist. Daily and multi-day
+reviews are enabled; next daily review2026-10-03T02:29:56.813867Z, next routine
+review2026-10-05T02:29:56.813867Z. Two future-dated completed task runs excluded
+from current outcome claims; no records reset. Scheduled reviews and stored
+notes do not establish a successful prediction/correction/outcome.
+Source, exact-head CI and deployed image remain unchanged; Graft excluded.

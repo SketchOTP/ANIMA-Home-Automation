@@ -1,5 +1,20 @@
 # Permanent goal coverage — native takeover baseline
 
+Current owner priority2026-10-03T00:04Z: full-host reboot qualification explicitly
+DEFERRED AT OWNER REQUEST, not accepted. Focus solely on useful learning outcomes
+under same027A. See LEARNING-OUTCOMES.md; historical negatives remain retained.
+
+## Current owner closure list — 2026-10-02T23:32Z
+
+Exactly two remaining active closure items: full host reboot/autonomous recovery,
+and useful prospective learning/prediction/correction/routine-informed outcomes.
+Owner confirms Wansview motion delivery and voice authentication work; prior
+Tapo OWNER_VERIFIED_LT3S observation is retained. CURRENT and STAGE9-DEPLOYMENT
+record current preflight, host-only desktop startup correction and actual
+learning inventory. No full reboot or forward prediction outcome is yet proven.
+Earlier broader dated work lists below are historical and superseded as active
+instructions, not fabricated machine PASS results. Permanent goal unchanged.
+
 ## Stage9 final hosted / controlled rollout — 2026-10-02T21:38Z
 
 Bounded engineering release complete: ANIMA2e98da3 exactCI37064702371 PASS;

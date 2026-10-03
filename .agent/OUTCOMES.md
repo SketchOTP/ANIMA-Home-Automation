@@ -1,5 +1,21 @@
 # Outcome Ledger
 
+## 027A useful-learning forecast correction — 2026-10-03T00:28Z
+
+Owner defers reboot qualification, not PASS; sole focus is useful learning.
+Actual-history read-only evidence1184/untruncated independently reproduces a
+target/metric defect: daily Ring receipt25/25observed days rejected by.292event
+concentration. Narrow four-file correction uses explicit observed-day support
+at unchanged.75threshold, preserving original maturity/ranking, source/trust,
+future-consent, provider and unknown-coverage boundaries. Kitchen21/27also
+qualifies; phone13/20and12/20do not. Old packets are not retrofitted.
+Primary1561PASS81SKIP full regression and fresh restrictedPG/currentOPA14PASS
+0skip; Ruff/format/mypy197/OPA9/compile/safety/diff PASS. Seven optional-fixture
+failures reproduce unchanged baseline and remain preserved. Coder closed,
+source accepted for publication/control rollout, not yet hosted/deployed or a
+real future usefulness PASS. Existing daily/multi-day schedule unchanged.
+Canonical evidence:027A/LEARNING-OUTCOMES.md and LEARNING-OUTCOMES-CODER.md.
+
 ## OUTCOME-027A-R5D — alert-route compatibility and exact deployment
 
 - Date: 2026-09-10 UTC
@@ -2788,3 +2804,57 @@ Sole Coder closed; no new feature/audit stage. Android owner-root action unanswe
 real owner/authenticated voice enrollment/vendor/playback/private agent/prospective
 usefulness/full MO01–15/A–O evidence remain. Earlier dated snapshots are history,
 not reopened software defects. Graft remains out of product staging.
+
+## 2026-10-02T22:35Z — Owner Binder repair / managed Android READY
+
+Owner installed reviewed char-binder drop-in; actual system DeviceAllow verified.
+Existing user supervisor resumed from hold and recovered Android automatically.
+Initial nft network-start/start-limit failure retained; retry22:32Z succeeded
+without further root actions or manual vendor launches. READY22:33:00Z and
+22:34:28Z: Android/network/DNS/clock/cloud-messaging marker/listener/relay/Tapo/
+Wansview. Accounts/device settings NOT_EXPOSED, no claim of proven vendor push.
+Startup Journal69296/69297 have receipt-time-only/UNKNOWN freshness and are not
+fresh physical/no-replay/latency acceptance. Baseline60688events/position69315,
+provider-started1184, relayTapo1/Wansview1, errors/pending0. Product/runtime pair
+unchanged; no source edits, reset, model test, manual vendor launch or new stage.
+Exact evidence in027A/STAGE9-DEPLOYMENT. Local records only, not new publication;
+genuine owner/vendor/voice/playback/prospective/fullGoal gates remain open.
+
+## 2026-10-02T22:53Z — Fresh owner Tapo receipt / playback completion
+
+Owner performed requested physical unlock. RelayTapo1->2 accepted, new canonical
+unlocked Journal69409, eventef9b73dd-3521-5c47-9f51-40b6d570a5bb. Exactly one
+requesta0753ee3-1407-574e-8428-901c3cf8d46c and provider-start, fence/attempt1.
+Original providerPARTIAL/REQUIRED_NOTIFICATION_NOT_PRODUCED retained; separate
+required-speech deliveryDELIVERED attempt1, process start22:50:55.372911Z,
+completed22:50:58.473170Z. Relay-to-process2.325491s, not physical/audiblePASS:
+vendor/source time unavailable, actual_audible_start_atnull. Human receipt asked,
+not assumed. Android bothvendorREADY, follow-up count4->5, voiceLISTENING.
+Full decomposition and limitations in existing027A/STAGE9-DEPLOYMENT. No source
+change/model replay/data reset/ceremonial commit; remaining true gates explicit.
+
+## 2026-10-02T22:57Z — Owner confirms hearing fresh Tapo announcement
+
+Owner answered Yes to the explicit heard-announcement question for Journal69409/
+requesta0753ee3-1407-574e-8428-901c3cf8d46c. Fresh physical unlock->canonical
+event->mandatory playback->owner-heard delivery now operationally observed.
+Confirmation time is not audible-start time; strict physical/vendor->audible
+<=3s remains unqualified. No database/provider replay/software changes.
+
+## 2026-10-02T23:09Z — Owner verifies physical-to-audio under3seconds
+
+Later owner closure steer2026-10-02T23:32Z: Wansview motion delivery and voice
+authentication are owner-confirmed working. Exactly two active remaining gates:
+full host reboot/autonomous recovery and demonstrated useful prospective
+learning/corrections/routine-informed outcomes. CURRENT/STAGE9-DEPLOYMENT carry
+preflight and zero-forward-evaluation inventory. Host-only validated desktop
+autostart entry starts unchanged existing UI service after normal login;
+no product edit or new CI. No full reboot or learning outcome is inferred.
+
+Owner explicitly confirms physical unlock->audible SENTRY speech<3seconds for
+the same Journal69409/requesta0753ee3-1407-574e-8428-901c3cf8d46c. Added evidence
+class OWNER_VERIFIED_LT3S/direct owner observation, not inferred machine timing.
+Measurement method/precise start/end timestamps were not supplied. Retain the
+separate relay->playback PROCESS2.325491s measurement and missing physical/
+actual-audible timestamps. Instrumented proof gap remains distinct; no repeat
+test, provider replay, code/runtime changes or self-declared wholeGoal acceptance.

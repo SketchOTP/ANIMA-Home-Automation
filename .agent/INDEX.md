@@ -1,5 +1,29 @@
 # Authority Project-State Index
 
+Current2026-10-03T00:28Z: narrow observed-source-day forecast correction source
+accepted/integrated after independent1561PASS81SKIP and restrictedPG/OPA14PASS.
+Single publication/deployment pending; future usefulness not fixture PASS.
+Same027A/LEARNING-OUTCOMES.md, Coder closed, reboot owner-deferred, Graft separate.
+
+Current2026-10-03T00:04Z: owner defers full-host reboot qualification, not PASS.
+Active focus is useful learning outcomes only, same027A; CURRENT and
+027A/LEARNING-OUTCOMES.md retain live inventory and independent source trace.
+
+Current23:09Z: owner explicitly verifies fresh Tapo physical->audible<3s.
+Record OWNER_VERIFIED_LT3S separately from relay->process2.325491s and missing
+instrumented source/audible timestamps. CURRENT/027A evidence retain both.
+
+Current22:53Z: fresh owner Tapo unlock reached Journal69409; one request/start
+and separate mandatory-speech DELIVERED attempt1. Process-start latency2.325491s
+is not physical-to-audible proof (source time unavailable, audible timestampnull).
+CURRENT/027A/STAGE9-DEPLOYMENT retain the original partial provider result.
+
+Current22:35Z: owner Binder drop-in independently verified; existing managed
+Android supervisor resumed and automatically recovered after initial network
+failure. Bridge READY for both vendors; new physical receipts still required.
+CURRENT and027A/STAGE9-DEPLOYMENT retain exact baseline and timestamp limits.
+No product change/new feature stage; prior dated blocker snapshots are history.
+
 ## Stage9 final hosted / controlled rollout — 2026-10-02T21:38Z
 
 Bounded engineering release complete: ANIMA2e98da3 exactCI37064702371 PASS;

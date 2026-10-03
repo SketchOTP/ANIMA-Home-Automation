@@ -1,5 +1,123 @@
 # Current Project State
 
+## Useful-learning correction independently accepted — 2026-10-03T00:28Z
+
+Same027A, owner-deferred reboot NOT PASSED. Sole Coder final independently
+reviewed, four-file custody matched/integrated and Coder closed. Future receipt
+forecast now uses observable source-day support, not individual-event share;
+same0.75/count/span/trust/consent/privacy guards and original maturity/ranking.
+Actual read-only history1184qualified/untruncated supports Ring25/25midday and
+kitchen21/27late-afternoon; phone13/20and12/20remain insufficient. Zero model or
+production learning writes. Old51 completion packets are not retrofitted.
+Independent complete regression1561PASS81explicitSKIP,547.63s; fresh restricted
+PG/currentOPA14PASS0skip. Ruff/format/mypy197/OPA9/compile/safety/diff PASS.
+Seven expanded optional-fixture failures reproduce unchanged baseline, retained
+in LEARNING-OUTCOMES-CODER. Exact manifest fe71b9b2; source accepted for one
+publication/deployment, NOT yet deployed/hosted/future usefulness. SENTRY stays
+b331c05 unchanged. No new stage/framework/LLM-per-event call or owner setting.
+Daily dueOct3 02:29:56Z and routine dueOct5 02:29:56Z unchanged. New legitimate
+terminal review then actual future observations/correction/use remain required.
+Full details and preserved negatives in027A/LEARNING-OUTCOMES.md.
+
+## Owner defers reboot; useful-learning focus — 2026-10-03T00:04Z
+
+Owner explicitly says bypass the reboot test for now and focus on useful learning
+outcomes. Reboot is DEFERRED AT OWNER REQUEST, not PASSED; observed boot ID stayed
+25220422-6849-44cf-8b9b-3100678bfb24. No reboot or vendor-app launch performed.
+Continue only the existing027A learning outcome work, not a new phase/packet.
+Existing sole Coder Leibniz resumed READ-ONLY to trace forecasting/evaluation;
+primary independently checked current production canonical evidence. Details:
+027A/LEARNING-OUTCOMES.md. Source/CI/deployment unchanged; Graft preserved.
+
+## Owner closure boundary — 2026-10-02T23:32Z
+
+Owner confirms Wansview motion delivery and voice authentication work. Together
+with the prior OWNER_VERIFIED_LT3S Tapo observation, the owner's current closure
+list contains exactly two remaining items:
+1. Full Linux host reboot recovery without manual intervention.
+2. Demonstrated useful learning: prospective predictions, correction and
+   routine-informed outcomes, not merely stored notes.
+
+This supersedes earlier broader active work lists, not historical negative
+evidence or measurement limitations. No new physical test was collected for
+the owner's confirmations, and the permanent goal is not self-declared complete.
+
+Reboot preflight: Android READY for both vendors; container/user startup units
+enabled, user lingering enabled; zero active claimed/delivered/provider-running
+requests and zero executing/pending-verification actions. Baseline boot ID
+25220422-6849-44cf-8b9b-3100678bfb24. Full host reboot is NOT YET QUALIFIED.
+
+One host-only startup correction: added
+/home/sketch/.config/autostart/anima-sentry-ui.desktop to start the existing
+sentry-ui.service after ordinary desktop login. Desktop-file validation passed;
+idempotent service start preserved PID3766936/NRestarts0. No orb/source/voice
+change, automatic login, credential change or root action. Headless recovery
+uses existing lingering services; GUI before login is not claimed.
+
+Learning inventory: 13 active suggestions, including four learned-routine
+suggestions; 144 superseded suggestion versions are not proof of usefulness.
+Zero frozen forward evaluations/shadow records exist. Daily and multi-day
+reviews are enabled; next daily review2026-10-03T02:29:56.813867Z, next routine
+review2026-10-05T02:29:56.813867Z. Two future-dated completed task runs excluded
+from current outcome claims; no records reset. Scheduled reviews and stored
+notes do not establish a successful prediction/correction/outcome.
+Source, exact-head CI and deployed image remain unchanged; Graft excluded.
+
+## Owner verifies physical-to-audio under3s — 2026-10-02T23:09Z
+
+Owner explicitly confirms the same fresh Tapo physical unlock reached audible
+SENTRY speech in less than3seconds. Record OWNER_VERIFIED_LT3S, direct owner
+observation, associated Journal69409/requesta0753ee3-1407-574e-8428-901c3cf8d46c.
+This is additional evidence beyond merely hearing playback. No new physical
+test requested and no timestamps/stopwatch method inferred. Machine observation
+remains relay->playback PROCESS2.325491s, physical/vendor occurrence unavailable,
+actual_audible_start_atnull. Instrumented source/audible proof gap is distinct
+from the now-confirmed owner timing observation; fullGoal is not self-accepted.
+Original providerPARTIAL and independent deliveryDELIVERED retained; no replay,
+source/runtime/config change, or new CI cycle. Other permanent gates unchanged.
+
+## Fresh owner Tapo unlock / separate playback receipt — 2026-10-02T22:53Z
+
+Owner performed the requested physical unlock and replied done. New Tapo relay
+received/accepted counter1->2; eventef9b73dd-3521-5c47-9f51-40b6d570a5bb,
+Journal69409 recorded22:50:53.059880Z, normalized unlocked. Exactly one event-
+linked requesta0753ee3-1407-574e-8428-901c3cf8d46c, claim/provider-start1,
+attempt/fence1. Frozen IMMEDIATE_ANNOUNCEMENT_ONLY. Original terminal provider
+FAILED/PARTIAL/REQUIRED_NOTIFICATION_NOT_PRODUCED remains; separate required-
+speech ledger DELIVERED/attempt1 to office, completed22:50:58.473170Z.
+Relay-to-local-playback-PROCESS start2.325491s, not physical-to-audible PASS:
+source/vendor/Android occurrence unavailable and actual_audible_start_at null.
+Timing source LOCAL_PLAYBACK_PROCESS; no false precision or suppression of the
+partial outcome. Owner subsequently explicitly confirmed hearing the unlock
+announcement (recorded22:57Z); audible delivery is owner-observed, not inferred.
+This supplies no precise audible timestamp or physical-latency PASS. Follow-up
+window counter4->5 and voice LISTENING. Android bridge remains READY for both
+vendors. Wansview fresh physical receipt, owner voice/authentication, strict
+audible/source timing, prospective usefulness and fullGoal gates stay open.
+No product edit/replay/reset/new CI; local governance and Notion evidence only.
+
+## Owner Binder repair / managed Android recovery — 2026-10-02T22:35Z
+
+Owner installed the reviewed char-binder drop-in and restarted the system
+Waydroid service; actual DeviceAllow includes char-binder rw. Primary resumed
+the existing user supervisor from its safety hold, not vendor apps manually.
+Initial network-start/filter error and session start-limit failure are retained;
+the existing automatic retry at22:32Z recovered without another root command.
+Android boot/network/DNS/clock/listener/relay and both vendor process/permission/
+channel checks converged READY at22:33:00Z and remained READY at22:34:28Z.
+FCM CONNECTED is the observed cloud-messaging-service marker, not a proven push.
+Account/device settings remain NOT_EXPOSED. Two startup receipts reached Journal
+69296/69297 with RELAY_RECEIPT_TIME and UNKNOWN source/report freshness; these
+are NOT fresh owner physical-event or no-stale-replay qualification evidence.
+Baseline22:34:38Z: Journal60688/position69315; provider-started1184;
+relay received/accepted Tapo1/Wansview1, failed/rejected/pending0. Core/worker/
+voice/stateAPI ACTIVE; office voice LISTENING, sleepfalse/waketrue/ttswarmtrue.
+Published/deployed product pair unchanged2e98da3/b331c05; governance32019c0.
+Next: one genuine physical unlock, then real Wansview and owner voice checks.
+Remaining actual owner/authentication/playback/private-agent/prospective/fullGoal
+gates are not waived. No product edit, model test, data reset or new feature stage.
+This service-only evidence is local, not a new GitHub publication. Graft preserved.
+
 ## Stage9 final hosted / controlled rollout — 2026-10-02T21:38Z
 
 Bounded engineering release complete: ANIMA2e98da3 exactCI37064702371 PASS;

@@ -127,6 +127,9 @@ def extract_pattern_candidates(
         buckets = Counter((value.hour // 4) * 4 for value in times)
         dominant_start, dominant_count = buckets.most_common(1)[0]
         consistency = dominant_count / len(times)
+        dominant_days = len(
+            {value.date() for value in times if (value.hour // 4) * 4 == dominant_start}
+        )
         elapsed = (max(times) - min(times)).total_seconds() / 3600
         key = f"recurrence:{event_type}:{canonical_id}:{qualifier}"
         candidate_id = str(uuid5(PATTERN_NAMESPACE, f"{household_id}:{key}"))
@@ -165,15 +168,22 @@ def extract_pattern_candidates(
                 distinct_day_count=len(days),
                 elapsed_hours=round(elapsed, 3),
                 temporal_consistency={
-                    "dominant_local_day_count": len(
-                        {value.date() for value in times if (value.hour // 4) * 4 == dominant_start}
-                    ),
+                    "dominant_local_day_count": dominant_days,
                     "dominant_local_window": (
                         f"{dominant_start:02d}:00-{(dominant_start + 4) % 24:02d}:00"
                     ),
                     "observations_in_window": dominant_count,
                     "total_observations": len(rows),
                     "ratio": round(consistency, 3),
+                    # Conditional support on days with qualified receipts for
+                    # this source/qualifier, not covered days or probability.
+                    # Preserve event concentration for maturity and ranking.
+                    "observed_day_support": {
+                        "numerator": dominant_days,
+                        "denominator": len(days),
+                        "ratio": dominant_days / len(days),
+                        "support_basis": "OBSERVED_DAY_SUPPORT_NOT_PROBABILITY",
+                    },
                 },
                 supporting_evidence=(
                     f"count={len(rows)}",
