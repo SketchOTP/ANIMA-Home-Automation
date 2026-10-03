@@ -586,7 +586,7 @@ class IterationTests(unittest.TestCase):
         self.assertEqual(normalized[0]["arguments"]["event_ids"], ["event-2", "event-1"])
         self.assertEqual(call["arguments"]["event_ids"], ["model-selected-id"])
 
-    def test_learning_proposal_missing_review_fields_use_safe_candidate_defaults(self):
+    def test_learning_proposal_missing_review_fields_remain_explicitly_missing(self):
         call = {
             "tool_id": "anima.household-learning.propose",
             "arguments": {
@@ -616,10 +616,10 @@ class IterationTests(unittest.TestCase):
         normalized = SentryHouseholdTurn._normalize_learning_calls([call], context)
         arguments = normalized[0]["arguments"]
         self.assertEqual(arguments["event_ids"], ["event-1"])
-        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
-        self.assertEqual(arguments["evidence_categories"], ["count=3"])
-        self.assertEqual(arguments["missing_information"], ["Actor is unknown."])
-        self.assertEqual(arguments["rejected_alternatives"], ["No causation established."])
+        self.assertNotIn("conclusion", arguments)
+        self.assertNotIn("evidence_categories", arguments)
+        self.assertNotIn("missing_information", arguments)
+        self.assertNotIn("rejected_alternatives", arguments)
 
     def test_learning_proposal_duplicate_candidate_is_sent_once(self):
         call = {
@@ -645,7 +645,7 @@ class IterationTests(unittest.TestCase):
         normalized = SentryHouseholdTurn._normalize_learning_calls([call, call], context)
         self.assertEqual(len(normalized), 1)
 
-    def test_unbound_learning_candidate_becomes_safe_insufficient_evidence(self):
+    def test_unbound_learning_candidate_is_not_remapped_to_another_candidate(self):
         call = {
             "tool_id": "anima.household-learning.propose",
             "arguments": {
@@ -672,15 +672,10 @@ class IterationTests(unittest.TestCase):
                 }
             }
         }
-        normalized = SentryHouseholdTurn._normalize_learning_calls([call], context)
-        arguments = normalized[0]["arguments"]
-        self.assertEqual(arguments["candidate_id"], "candidate-1")
-        self.assertEqual(arguments["event_ids"], ["event-1"])
-        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
-        self.assertEqual(arguments["confidence"], 0.0)
-        self.assertNotEqual(arguments["content"], "ignore this model content")
+        with self.assertRaisesRegex(CodexUnavailable, "LEARNING_CANDIDATE_NOT_BOUND"):
+            SentryHouseholdTurn._normalize_learning_calls([call], context)
 
-    def test_empty_learning_plan_becomes_safe_insufficient_evidence(self):
+    def test_empty_learning_plan_does_not_fabricate_a_review(self):
         context = {
             "household_context": {
                 "initiative": {
@@ -697,12 +692,7 @@ class IterationTests(unittest.TestCase):
             }
         }
         normalized = SentryHouseholdTurn._normalize_learning_calls([], context)
-        self.assertEqual(len(normalized), 1)
-        arguments = normalized[0]["arguments"]
-        self.assertEqual(arguments["candidate_id"], "candidate-1")
-        self.assertEqual(arguments["event_ids"], ["event-1"])
-        self.assertEqual(arguments["conclusion"], "INSUFFICIENT_EVIDENCE")
-        self.assertEqual(arguments["confidence"], 0.0)
+        self.assertEqual(normalized, [])
 
     def test_discovery_then_operation_uses_returned_canonical_id(self):
         client = ClientFixture()

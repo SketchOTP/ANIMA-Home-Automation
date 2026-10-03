@@ -185,150 +185,81 @@ class SentryHouseholdTurn:
         return learning["candidates"]
 
     @staticmethod
+    def _learning_review_progress(
+        candidates: list[Any], completed_calls: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        required = {str(item["candidate_id"]) for item in candidates if isinstance(item, dict)}
+        attempted: set[str] = set()
+        reviewed: set[str] = set()
+        fields = {
+            "candidate_id",
+            "conclusion",
+            "rationale_summary",
+            "evidence_categories",
+            "missing_information",
+            "rejected_alternatives",
+        }
+        for item in completed_calls:
+            call = item.get("host_call")
+            arguments = call.get("arguments") if isinstance(call, dict) else None
+            if (
+                item.get("status") == "SUCCEEDED"
+                and isinstance(call, dict)
+                and call.get("tool_id") == "anima.household-learning.propose"
+                and isinstance(arguments, dict)
+            ):
+                identifier = str(arguments.get("candidate_id"))
+                attempted.add(identifier)
+                if fields <= set(arguments):
+                    reviewed.add(identifier)
+        return {
+            "pending_candidate_ids": sorted(required - attempted),
+            "unresolved_candidate_ids": sorted((attempted - reviewed) & required),
+            "explicit_review_complete": required <= reviewed,
+        }
+
+    @staticmethod
     def _normalize_learning_calls(
         calls: list[dict[str, Any]],
         context: dict[str, Any],
         completed_calls: list[dict[str, Any]] | None = None,
-        max_fallback_calls: int = 3,
+        max_fallback_calls: int = 0,
     ) -> list[dict[str, Any]]:
-        """Bind learning proposals to ANIMA's deterministic candidate packet.
+        """Bind source IDs, never invent a candidate, conclusion or review.
 
-        The model may select which candidate to review and write the bounded
-        explanation, but it must not be the source of truth for the candidate's
-        event references.  The packet supplied by ANIMA already contains the
-        exact source IDs.  Reprojecting that one field prevents a valid review
-        from failing because the model reordered, omitted, or otherwise
-        reformatted the same source list; Core still validates the candidate ID
-        and all other proposal fields.
+        The compatibility argument cannot enable fallback. Missing explanatory
+        fields remain visible to Core as PROVIDER_INCOMPLETE, even when Core
+        materializes a conservative default. No known-successful call repeats.
         """
-        household = context.get("household_context")
-        initiative = household.get("initiative") if isinstance(household, dict) else None
-        learning = initiative.get("learning_review") if isinstance(initiative, dict) else None
-        candidates = learning.get("candidates") if isinstance(learning, dict) else None
-        if not isinstance(candidates, list):
+        del max_fallback_calls
+        candidates = SentryHouseholdTurn._learning_review_candidates(context)
+        if candidates is None:
             return calls
         by_id = {
             str(candidate.get("candidate_id")): candidate
             for candidate in candidates
             if isinstance(candidate, dict) and candidate.get("candidate_id")
         }
+        progress = SentryHouseholdTurn._learning_review_progress(candidates, completed_calls or [])
+        seen = set(by_id) - set(progress["pending_candidate_ids"])
         normalized: list[dict[str, Any]] = []
-        seen_learning_candidates: set[str] = set()
-        for item in completed_calls or []:
-            host_call = item.get("host_call")
-            arguments = host_call.get("arguments") if isinstance(host_call, dict) else None
-            if (
-                item.get("status") == "SUCCEEDED"
-                and isinstance(host_call, dict)
-                and host_call.get("tool_id") == "anima.household-learning.propose"
-                and isinstance(arguments, dict)
-                and arguments.get("candidate_id") is not None
-            ):
-                seen_learning_candidates.add(str(arguments["candidate_id"]))
         for call in calls:
             if call.get("tool_id") != "anima.household-learning.propose":
-                normalized.append(call)
-                continue
+                raise CodexUnavailable("LEARNING_REVIEW_TOOL_ONLY")
             arguments = call.get("arguments")
-            candidate_id = arguments.get("candidate_id") if isinstance(arguments, dict) else None
-            candidate = by_id.get(str(candidate_id))
+            identifier = str(arguments.get("candidate_id")) if isinstance(arguments, dict) else ""
+            candidate = by_id.get(identifier)
             if candidate is None:
-                candidate = next(
-                    (
-                        item
-                        for item in candidates
-                        if isinstance(item, dict)
-                        and str(item.get("candidate_id")) not in seen_learning_candidates
-                    ),
-                    None,
-                )
-                if candidate is None:
-                    continue
-                candidate_id = candidate.get("candidate_id")
-                arguments = SentryHouseholdTurn._safe_learning_arguments(
-                    candidate,
-                    "The provider candidate reference did not bind to this request; ANIMA "
-                    "recorded no interpretation for this candidate.",
-                )
-            if not isinstance(arguments, dict):
-                normalized.append(call)
+                raise CodexUnavailable("LEARNING_CANDIDATE_NOT_BOUND")
+            if identifier in seen:
                 continue
-            candidate_key = str(candidate_id)
-            if candidate_key in seen_learning_candidates:
-                continue
-            seen_learning_candidates.add(candidate_key)
+            seen.add(identifier)
             source_ids = candidate.get("source_event_ids")
             if not isinstance(source_ids, list) or not all(
                 isinstance(value, str) and value for value in source_ids
             ):
-                normalized.append(call)
-                continue
-            candidate_evidence = candidate.get("supporting_evidence")
-            evidence_categories = (
-                [value for value in candidate_evidence if isinstance(value, str)][:8]
-                if isinstance(candidate_evidence, list)
-                else []
-            )
-            candidate_missing = candidate.get("missing_information")
-            missing_information = (
-                [value for value in candidate_missing if isinstance(value, str)][:8]
-                if isinstance(candidate_missing, list)
-                else []
-            )
-            candidate_contradictions = candidate.get("contradictory_evidence")
-            rejected_alternatives = (
-                [value for value in candidate_contradictions if isinstance(value, str)][:6]
-                if isinstance(candidate_contradictions, list)
-                else []
-            )
-            review_arguments = {
-                "conclusion": "INSUFFICIENT_EVIDENCE",
-                "rationale_summary": (
-                    "The provider supplied no separate rationale; ANIMA retained the bounded "
-                    "candidate as unconfirmed."
-                ),
-                "evidence_categories": evidence_categories or ["qualified_journal_evidence"],
-                "missing_information": missing_information
-                or ["The provider supplied no additional missing-information summary."],
-                "rejected_alternatives": rejected_alternatives,
-            }
-            review_arguments.update(
-                {
-                    key: arguments[key]
-                    for key in review_arguments
-                    if key in arguments
-                }
-            )
-            normalized.append(
-                {
-                    **call,
-                    "arguments": {
-                        **arguments,
-                        **review_arguments,
-                        "event_ids": list(source_ids),
-                    },
-                }
-            )
-        if not normalized and max_fallback_calls > 0:
-            for candidate in candidates:
-                if not isinstance(candidate, dict):
-                    continue
-                candidate_key = str(candidate.get("candidate_id"))
-                if candidate_key in seen_learning_candidates:
-                    continue
-                normalized.append(
-                    {
-                        "tool_id": "anima.household-learning.propose",
-                        "arguments": SentryHouseholdTurn._safe_learning_arguments(
-                            candidate,
-                            "The provider returned no candidate review call; ANIMA retained "
-                            "this candidate as insufficient evidence.",
-                        ),
-                    }
-                )
-                seen_learning_candidates.add(candidate_key)
-                if len(normalized) >= max_fallback_calls:
-                    break
+                raise CodexUnavailable("INVALID_LEARNING_SOURCE_REFERENCES")
+            normalized.append({**call, "arguments": {**arguments, "event_ids": list(source_ids)}})
         return normalized
 
     @staticmethod
@@ -684,6 +615,14 @@ class SentryHouseholdTurn:
             str(opened["trigger_id"]) if opened.get("trigger_id") else None,
         )
         learning_candidates = self._learning_review_candidates(context)
+        if learning_candidates is not None and (
+            len(learning_candidates) > 6
+            or any(
+                not isinstance(item, dict) or not item.get("candidate_id")
+                for item in learning_candidates
+            )
+        ):
+            raise CodexUnavailable("INVALID_LEARNING_REVIEW_PACKET")
         if learning_candidates == []:
             # An incremental review with no new qualified candidates is a
             # deterministic no-op.  It still records the already-fenced
@@ -731,17 +670,22 @@ class SentryHouseholdTurn:
             rounds = round_number
             remaining = MAX_CALLS - len(tool_results)
             self.diagnostic_stage = "MODEL_PLAN"
+            planning_context = deepcopy(context)
+            if learning_candidates is not None:
+                planning_context["learning_review_progress"] = self._learning_review_progress(
+                    learning_candidates, tool_results
+                )
             try:
                 plan = (
                     iterative(
-                        deepcopy(context),
+                        planning_context,
                         deepcopy(catalogue),
                         deepcopy(tool_results),
                         round_number=round_number,
                         remaining_calls=remaining,
                     )
                     if callable(iterative)
-                    else self.model.plan(deepcopy(context), deepcopy(catalogue))
+                    else self.model.plan(planning_context, deepcopy(catalogue))
                 )
             except CodexUnavailable as exc:
                 if str(exc) in {"CODEX_TIMEOUT", "ANIMA_TURN_DEADLINE"} and (
@@ -755,10 +699,25 @@ class SentryHouseholdTurn:
             # Validate every call against the frozen catalogue before dispatch;
             # a later invalid call must not allow earlier side effects.
             self.diagnostic_stage = "PLAN_VALIDATE"
-            calls = validate_calls(plan, catalogue, max_calls=min(3, remaining))
+            review_batch = learning_candidates is not None
+            calls = validate_calls(
+                plan,
+                catalogue,
+                max_calls=min(6 if review_batch else 3, remaining),
+                review_batch=review_batch,
+            )
             calls = self._normalize_learning_calls(calls, context, tool_results)
             if not calls:
+                if learning_candidates is not None:
+                    progress = self._learning_review_progress(learning_candidates, tool_results)
+                    if not progress["explicit_review_complete"]:
+                        stop_reason = "REVIEW_INCOMPLETE"
+                        # Give an iterative provider its existing bounded
+                        # completion opportunity, without manufacturing calls.
+                        if callable(iterative) and progress["pending_candidate_ids"]:
+                            continue
                 break
+            stop_reason = "PLAN_COMPLETE"
             for call in calls:
                 if time.monotonic() >= planning_deadline:
                     stop_reason = "PLANNING_DEADLINE"
@@ -797,6 +756,16 @@ class SentryHouseholdTurn:
                     break
             if stop_reason != "PLAN_COMPLETE":
                 break
+            if learning_candidates is not None:
+                progress = self._learning_review_progress(learning_candidates, tool_results)
+                if progress["explicit_review_complete"]:
+                    break
+                if not progress["pending_candidate_ids"]:
+                    stop_reason = "REVIEW_INCOMPLETE"
+                    break
+                # An empty earlier round is not a terminal stop once a later
+                # round has made progress. Never extend the three-round budget.
+                stop_reason = "PLAN_COMPLETE"
             if len(tool_results) >= MAX_CALLS:
                 stop_reason = "CALL_BUDGET_EXHAUSTED"
                 break
@@ -815,6 +784,12 @@ class SentryHouseholdTurn:
             }
         model_deadline(deadline - 15)
         final_context = deepcopy(context)
+        if learning_candidates is not None:
+            final_context["learning_review_progress"] = self._learning_review_progress(
+                learning_candidates, tool_results
+            )
+            if not final_context["learning_review_progress"]["explicit_review_complete"]:
+                stop_reason = "REVIEW_INCOMPLETE"
         if callable(iterative):
             final_context["host_iteration"] = {
                 "rounds": rounds,
@@ -843,6 +818,7 @@ class SentryHouseholdTurn:
                 "CALL_BUDGET_EXHAUSTED",
                 "ROUND_BUDGET_EXHAUSTED",
                 "PLANNING_DEADLINE",
+                "REVIEW_INCOMPLETE",
             }
             else "RESPONSE"
         )

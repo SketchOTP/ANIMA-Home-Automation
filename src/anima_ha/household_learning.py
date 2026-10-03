@@ -456,15 +456,34 @@ class HouseholdLearningService:
                 None,
             )
         complete = required == materialized
+        reviewed = {
+            row.metadata.get("candidate_id")
+            for row in outcomes
+            if row.metadata.get("review_source") == "PROVIDER_EXPLICIT"
+        }
+        explicit_complete = required == reviewed
         # Old completion records retain their bounded materialization receipt
         # after a later candidate version supersedes the original suggestions.
         if previous and previous.metadata.get("candidate_digest") == packet["candidate_digest"]:
             complete |= previous.metadata.get("outcome_count") == len(required)
+            if (
+                previous.metadata.get("explicit_review_complete") is True
+                and previous.metadata.get("terminal_success") is True
+                and all(
+                    type(previous.metadata.get(key)) is int
+                    and previous.metadata[key] == len(required)
+                    for key in ("candidate_count", "outcome_count", "reviewed_candidate_count")
+                )
+            ):
+                explicit_complete = True
+                reviewed = required
+        strict_review = packet.get("review_contract_version") == 2
         successful = (
             lifecycle in {"COMPLETED", "NO_ACTION"}
             and state.get("result_status") in {"RESPONSE", "NO_ACTION", "TOOL_ACTIVITY_COMPLETED"}
             and state.get("provider_invocation_started") is True
             and complete
+            and (explicit_complete or not strict_review)
         )
         return {
             "schema_version": 2,
@@ -472,6 +491,15 @@ class HouseholdLearningService:
             "terminal_at": state.get("completed_at"),
             "provider_started": state.get("provider_invocation_started") is True,
             "candidate_materialized": complete,
+            **(
+                {
+                    "explicit_review_complete": explicit_complete,
+                    "reviewed_candidate_count": len(reviewed & required),
+                    "unreviewed_candidate_ids": sorted(required - reviewed),
+                }
+                if strict_review
+                else {}
+            ),
             "terminal_success": successful,
             "review_status": "COMPLETED"
             if successful
@@ -1161,6 +1189,7 @@ class HouseholdLearningService:
             "evidence_end": max(times).isoformat() if times else None,
             "evidence_event_count": len(page["items"]),
             "candidate_digest": digest,
+            "review_contract_version": 2,
             "candidates": payload,
             "frozen_at": self._now().isoformat(),
             "evidence_truncated": page["truncated"],
@@ -1172,7 +1201,12 @@ class HouseholdLearningService:
             "guidance": (
                 "Evaluate each candidate from its source-linked evidence. Submit one bounded "
                 "household-learning proposal per candidate, including explicit insufficient or "
-                "rejected outcomes. Correlation is not identity, causation, policy, or Truth."
+                "rejected outcomes. A factual sensor-only recurrence may be SUPPORTED_OBSERVATION "
+                "or TENTATIVE_HYPOTHESIS with identity, intent, preference and causation "
+                "explicitly "
+                "unknown; those unknowns alone do not disqualify qualified receipt recurrence. "
+                "Do not invent a pattern when source support is insufficient or contradictory. "
+                "Correlation is not identity, causation, policy, an owner routine, or Truth."
             ),
         }
         row = MemoryRecord.create(
@@ -1679,6 +1713,11 @@ class HouseholdLearningService:
             "maturity": row.metadata.get("maturity"),
             "maturity_evidence": row.metadata.get("maturity_evidence", {}),
             "rationale_summary": row.metadata.get("rationale_summary"),
+            **(
+                {"review_source": row.metadata["review_source"]}
+                if "review_source" in row.metadata
+                else {}
+            ),
             "missing_information": row.metadata.get("missing_information", []),
             "rejected_alternatives": row.metadata.get("rejected_alternatives", []),
             "knowledge_note": row.metadata.get("knowledge_note"),
@@ -1760,6 +1799,9 @@ class HouseholdLearningService:
         conclusion = "TENTATIVE_HYPOTHESIS"
         candidate_id: str | None = None
         if structured:
+            review_source = (
+                "PROVIDER_EXPLICIT" if review_fields <= set(payload) else "PROVIDER_INCOMPLETE"
+            )
             candidate_id = str(_uuid(payload["candidate_id"]))
             candidate = candidates.get(candidate_id) if scope is not None else None
             if candidate is None:
@@ -1832,6 +1874,8 @@ class HouseholdLearningService:
             )
         refs = [found[event_id] for event_id in sorted(ids)]
         normalized = {**payload, "event_ids": sorted(ids)}
+        if structured:
+            normalized["review_source"] = review_source
         signature = hashlib.sha256(json.dumps(normalized, sort_keys=True).encode()).hexdigest()
         current: MemoryRecord | None = None
         if candidate is not None:
@@ -1872,6 +1916,7 @@ class HouseholdLearningService:
         }
         if candidate is not None and review_packet is not None:
             metadata.update(
+                review_source=review_source,
                 candidate_id=candidate_id,
                 candidate_key=candidate["candidate_key"],
                 candidate_class=candidate["candidate_class"],
@@ -2262,7 +2307,9 @@ class HouseholdLearningService:
                 "request_id": packet["request_id"],
                 "review_kind": packet["review_kind"],
                 "candidate_count": len(candidate_ids),
-                "outcome_count": previous.metadata["outcome_count"]
+                "outcome_count": len(candidate_ids)
+                if state.get("explicit_review_complete") is True
+                else previous.metadata["outcome_count"]
                 if previous and not outcomes
                 else len(outcomes),
                 "outcomes": dict(counts),

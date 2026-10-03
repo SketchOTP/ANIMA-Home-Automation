@@ -121,6 +121,9 @@ jobs:
             --junitxml=/tmp/anima-owner-evidence/stage6-owner-postgres.xml
           uv run --locked pytest -q tests/test_stage7_learning_postgres.py \
             --junitxml=/tmp/anima-owner-evidence/stage7-learning-postgres.xml
+          uv run --locked pytest -q tests/test_learning_review_contract_postgres.py \
+            --junitxml=/tmp/anima-owner-evidence/learning-review-contract-postgres.xml
+          .venv/bin/python -c 'import xml.etree.ElementTree as E; r=E.parse("/tmp/anima-owner-evidence/learning-review-contract-postgres.xml").getroot(); assert sum(int(s.get("tests","0")) for s in r.iter("testsuite"))==5; assert all(int(s.get(k,"0"))==0 for s in r.iter("testsuite") for k in ("skipped","failures","errors")), "learning review contract target cannot skip"'
           uv run --locked pytest -q tests/test_stage9_audio_postgres.py \
             --junitxml=/tmp/anima-owner-evidence/stage9-audio-postgres.xml
           .venv/bin/python -c 'import xml.etree.ElementTree as E; r=E.parse("/tmp/anima-owner-evidence/stage9-audio-postgres.xml").getroot(); assert sum(int(s.get("tests","0")) for s in r.iter("testsuite"))==5; assert all(int(s.get(k,"0"))==0 for s in r.iter("testsuite") for k in ("skipped","failures","errors"))'

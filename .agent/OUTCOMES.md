@@ -1,5 +1,22 @@
 # Outcome Ledger
 
+## 027A useful-learning correction LIVE — 2026-10-03T00:57Z
+
+Product4b6c0cb exactCI37082278634 SUCCESS, native artifact11260090319/digest
+32d14edc...a4c1c independently inspected Stage7PG5/Stage4PG9/worker60/browser2,
+all0skip. Clean accepted archive image7ffa52cd...367b7 and112installed-source
+digests/map043f607b verified;47packages/3UIassets unchanged. Controlled Core/UI
+restart preserves selected durable full-row digests,46historical ambiguities,
+infrastructure and Graft; UIorbPID unchanged; required services ACTIVE, Android
+both vendors READY. Actual1189event/untruncated read-only probe qualifies Ring
+25/25 and kitchen21/27observed days, no source probability/identity inference.
+Zero new model/prospective evaluation from probe; genuine future outcomes still
+OPEN. Existing daily dueOct3 02:29:56Z and multi-day dueOct5 02:29:56Z unchanged.
+Reboot owner-deferred, not PASSED. No new features/framework/parallel packet.
+Postdeployment notes local pending next consolidated outcome publication; all
+product code committed/pushed/hosted-qualified. Detailed canonical custody and
+PARTIAL whole-outcome handoff:027A/LEARNING-OUTCOMES.md.
+
 ## 027A useful-learning forecast correction — 2026-10-03T00:28Z
 
 Owner defers reboot qualification, not PASS; sole focus is useful learning.
@@ -2858,3 +2875,49 @@ Measurement method/precise start/end timestamps were not supplied. Retain the
 separate relay->playback PROCESS2.325491s measurement and missing physical/
 actual-audible timestamps. Instrumented proof gap remains distinct; no repeat
 test, provider replay, code/runtime changes or self-declared wholeGoal acceptance.
+# Observed scheduled review / owner-authorized correction — 2026-10-03T16:04Z
+
+Existing027A only. Owner said Proceed after the actual daily review due
+2026-10-03T02:29:56Z. Independent production inspection: claim02:30:09Z,
+attempt1, dispatch completed02:30:15Z, request
+df5e70bf-e9c4-5f13-aff0-9d5c6ffadfa9 terminal02:31:38Z NO_ACTION/NO_ACTION,
+provider-starttrue, four successful bounded model receipts. Frozen packet has
+1202 qualified events, six candidates, untruncated and saved consent. Six
+outcomes/projections synchronized but all INSUFFICIENT_EVIDENCE; three have
+actual provider review and three are no-review fallbacks. No frozen future
+evaluations or prospective usefulness. Those distinctions supersede any
+interpretation of terminal_success/count6 as complete substantive review.
+
+Owner-authorized bounded correction: factual sensor recurrence does not
+require inferred human identity, causal explanation or declared preferences;
+missing candidate submissions must receive bounded completion opportunity
+and honest incomplete accounting, not invented support. Same sole native
+Coder in isolated current-compatible source; primary retains review/integration.
+ANIMA4b6c0cb/SENTRYb331c05 remain live while source is draft. All existing
+policy/Truth/privacy/provenance/fencing/consent/unknown-coverage and saved state
+preserved; no old model replay, cadence change, forced hypothesis or reboot.
+Notion ANIMA/SENTRY owner-authorized checkpoint16:01Z updated and refetched MATCH.
+Initial unconfigured manual Core health check returned CORE_NOT_READY; the
+correct socket/token-configured check returned AUTHENTICATED_CORE_READY.
+This diagnostic invocation error is not a production Core outage.
+
+# Explicit review completeness / independent acceptance — 2026-10-03T16:53Z
+
+Same027A, final7filebundlefa413536e57732a4755887ec3cdf4da09d0c469925054ed35f6cb8d0d894f170.
+Primary full final1596PASS81explicitSKIP569.19s, actual newPG5cases0skip;
+Ruff/format/mypy199/compile/OPA9/isolation/49CIbashblocks/diff/custody PASS.
+Initial full1580PASS81SKIP preserved as prior-source evidence. Primary missed
+partial-supersession receipt defect independently reproduced; Coder corrected
+exact digest/count/terminal receipt retention, sixteen added controls. All
+earlier negative fixtures/statics/optional baseline failures retained in native
+Coder report; no authority or assertions weakened just to obtain green.
+Version2 requires every explicit model assessment, no host omission reviews
+or candidate remapping. Qualified sensor facts may be supported with identity
+unknown; no forced positive or automatic owner routine. Six proposal batch only,
+generic cap3/round and total8/3round/deadline preserved. Existing evaluation
+count/day/trust/consent/contradiction/coverage/Truth/OPA/fencing unchanged.
+Primary ACCEPTED_FOR_PUBLICATION_AND_CONTROLLED_DEPLOYMENT; exact hostedCI,
+image deployment and future household usefulness remain separate gates.
+SENTRY unchangedb331c05; local Graft/private state unstaged, Coder closed.
+Next dailyOct4 02:30:09Z/routineOct5 02:29:56Z unchanged. Reboot OWNER-DEFERRED.
+Canonical detailed result027A/LEARNING-REVIEW-CORRECTION.md; no wholeGoal claim.

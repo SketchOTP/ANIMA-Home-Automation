@@ -1,5 +1,46 @@
 # Useful learning outcomes — existing027A
 
+## Explicit review correction accepted for release — 2026-10-03T16:53Z
+
+Final7filemanifestfa413536e57732a4755887ec3cdf4da09d0c469925054ed35f6cb8d0d894f170
+parent reviewed/integrated byte-identical. Independent full1596PASS81explicitSKIP,
+569.19s, five actual restricted-PG/currentOPA cases0skip; static199/OPA9 PASS.
+No manufactured omitted reviews or foreign-candidate remapping. Every new v2
+candidate requires an explicit provider assessment; missing output stays PARTIAL.
+Factual recurrence can be supported while human identity/intent/causation remain
+unknown, never authority. Exact completed review receipts survive partial/full
+concept supersession, with digest/count/completion guards and16new controls.
+Initial full1580PASS and independent missed-receipt failure retained, not counted
+as final evidence. Publication/deployment/hostedCI pending; source accepted only
+for one controlled release. Full canonical result LEARNING-REVIEW-CORRECTION.md.
+No live review queued/replayed, old output rewritten or forecast manufactured.
+Future useful learning remains OPEN; reboot still OWNER-DEFERRED.
+
+## Owner-authorized review semantics correction — 2026-10-03T15:52Z
+
+Owner says Proceed after inspection of last night's actual scheduled review.
+Parent independently read the production run/request/completion and six bounded
+conclusion summaries. Due2026-10-03T02:29:56.813867Z, actual claim02:30:09Z,
+attempt1, enqueue completion02:30:15Z; provider terminal02:31:38.551381Z
+NO_ACTION/NO_ACTION, starttrue, four successful model-call receipts. Review
+candidate/outcome count6/6 and projection SYNCHRONIZED. All six outcomes are
+INSUFFICIENT_EVIDENCE, of which three are explicit proposals and three are
+host no-candidate-call fallbacks. Model rationale recognizes actual recurring
+sensor receipt windows while emphasizing unknown actor/intent/causation or
+missing declared preferences. Those limits do not independently invalidate
+factual sensor recurrence. Future automatic evaluation has no supported
+hypothesis; zero frozen evaluation records, not a successful prediction.
+
+Scope: same sole Coder in fresh compatible detached roots; bounded review
+guidance and completion accountability, preserving genuine insufficiency,
+contradiction, uncertainty, authority/privacy/provenance, frozen catalogue,
+provider-start/no-replay and model budgets. No forced positive proposal or
+inferred identity/permission, no retrospective prediction or old model replay.
+Parent owns independent qualification/integration/deployment/publication.
+Current live source/runtime unchanged while Coder works; owner data/Graft
+preserved. Existing daily nextOct4 02:30:09Z and routineOct5 02:29:56Z unchanged.
+Future accuracy/correction/later use remain OPEN. Reboot remains DEFERRED.
+
 ## Owner scope / baseline — 2026-10-03T00:04Z
 
 Owner defers full Linux reboot test for now; do not mark it passed or perform it.
@@ -117,3 +158,79 @@ inputs, not new product scope. No ceremonial unchanged SENTRY commit.
 Primary disposition: ACCEPTED_FOR_PUBLICATION_AND_CONTROLLED_DEPLOYMENT for
 this narrow correction. Publication/hostedCI/deployment not yet claimed.
 Useful household prediction/correction/context outcome remains EVIDENCE_PENDING.
+
+## Published / deployed / independent artifact proof — 2026-10-03T00:57Z
+
+Single product publication4b6c0cb787b9d7ff501f13501736147f5840686d; main==origin.
+Exact hostedCI37082278634 SUCCESS. Native artifact11260090319:
+sha256:32d14edcd051229155f9a622565c93c877afbe4999e6f86fc3610d16da5a4c1c.
+Downloaded /tmp/anima-learning-hosted.zIunhs and independently parsed actual
+Stage7PG5, Stage4PG9, worker60, Stage7desktop/phone2 XML cases:0fail/error/skip.
+Artifact immutable SENTRYbindingb331c058aae4b33bfd5db0a3420855f09142acff matches
+unchanged live feature branch; prior exactCI37064633241 retained, not rerun.
+No Graft/private files staged; separate local tooling hashes unchanged.
+
+Clean accepted archive fingerprint:
+f922c351e622e6bdcc0e9f77f31f1412470a82e80694368f1b8b3f02970164b5.
+Built/deployed imageID and native repo digest:
+sha256:7ffa52cd561408213e5e36786bcb588f9a24fab716ee0ff272974f0d9da367b7.
+Containerf18c536e0c59ca8d2523dda029e6f56a79b383de4228871ec435cb612b524c59
+started2026-10-03T00:54:22.500851841Z, healthy. Actual112installed Python/SQL
+digests equal accepted clean archive and host Core; source-mapSHA256:
+043f607b15782c3a0d3b7e43ef4f8b8c63e070718267c2de112d73262ea147e4.
+All47 installed distributions and3UI asset digests match previous accepted
+image. Label/tag/health alone were not accepted as source proof.
+
+Controlled application-only restart: consumer supervisor held before voice and
+worker; held providers/actions/speech claims0. Core and UI replaced/restarted
+while consumers held; resumed worker/voice, then consumer supervisor last.
+No database, OPA, HA, vendor, relay or Android restart, manual vendor launch,
+host reboot, data reset, provider replay or owner config change. Full-row
+count/digest held/postdeploy/postresume comparisons identical for365Memory,
+17tasks50runs,1personality,1voice settings,5calendar,4actions,46historical
+UNKNOWN/RECOVERY records. DB/OPA/HA/searx IDs and start times unchanged; Graft
+AGENTS/.gitignore/.ignore fingerprints unchanged. Core/worker/voice/supervisor/
+Androidsupervisor/relay ACTIVE; authenticatedCore and stack READY; UIhealth200,
+unauthenticatedbootstrap401. Actual UIorbPID3766936/NRestarts0 unchanged.
+Android observed00:55:56Z READY, bothvendorREADY, existing FCM service marker
+CONNECTED; not a new vendor physical receipt or full-boot qualification.
+
+Actual deployed read-only probe00:56:34Z:1189qualified observations, untruncated;
+Ring25/25 and kitchen21/27 support future forecasts; phone13/20 and12/20 do not,
+and both sequences still lack a qualified future trigger. Zero model calls,
+no new Memory/request/evaluation from the probe. Zero live prospective
+evaluation records yet. Daily task dueOct3 02:29:56.813867Z and multi-day task
+dueOct5 02:29:56.813867Z unchanged. One failed read-only schedule query used
+next_due_at; corrected next_run_at query above passed. No clock manipulation.
+
+## CODEX RESULT — existing027A useful-learning focus
+
+Verdict: PARTIAL for useful outcomes; bounded software correction accepted,
+published, exact-hosted-qualified and deployed. Reboot OWNER-DEFERRED, not PASS.
+Retrieval confidence: ADEQUATE; actual canonical source/store/runtime inspected.
+Work/files: only household_patterns.py/household_forecasts.py plus two tests;
+existing027A governance/evidence reconciled. No new framework/dependency/store,
+UI/orb/voice/personality/authority change or parallel directive.
+Validation: full1561PASS81explicitSKIP; primary restrictedPG/currentOPA14PASS
+0skip; Ruff/format/mypy197/OPA9/compile/safety/diff PASS; actual hosted source/
+artifact/runtime proof PASS. Seven optional-fixture baseline FAILs preserved.
+Evidence: E4 software; E5 current-history eligibility/deployment correspondence,
+NOT E5 prospective usefulness. Forecasts remain inferred context, not Truth.
+Acceptance: new day-support gate PASS; legacy consent no-retrofit PASS;
+preservation PASS; real future prediction/correction/use EVIDENCE_PENDING.
+External discovery: NONE, not required; qualified existing stack reused.
+Assumption disproved: event concentration was a valid gate for daily receipt
+occurrence. Confirmed: qualified observed source days are not full coverage or
+probability; absence stays UNKNOWN. Do not infer identity or human departure.
+New durable learning: match admission feature to prediction target, retain its
+numerator/denominator and source basis, then judge on future observations.
+Risks: real review may reject/tentatively retain candidates; no manufactured
+success, force-promotion, retrospective scoring or old model replay permitted.
+Deviations: NONE. Reboot explicitly deferred; not silently removed from Goal.
+Records: CURRENT/OUTCOMES/INDEX/existing027A packet and two Notion authorities.
+GitHub: product4b6c0cb main pushed/exactCI37082278634 SUCCESS; SENTRY unchanged.
+Postdeployment local governance notes await next consolidated outcome evidence
+publication rather than a second ceremonial CI loop; product source is clean.
+Recommendation: observe existing legitimate scheduled review, then its frozen
+future opportunities and correction/context use. No new engineering unless
+that evidence exposes a concrete bounded defect. Whole Goal remains unaccepted.

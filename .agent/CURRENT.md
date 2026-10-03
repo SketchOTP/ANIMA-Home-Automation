@@ -1,5 +1,70 @@
 # Current Project State
 
+## Explicit review correction independently accepted for release — 2026-10-03T16:53Z
+
+Same027A only. Final7filebundlefa413536e57732a4755887ec3cdf4da09d0c469925054ed35f6cb8d0d894f170
+reviewed/integrated byte-identical, parent final full1596PASS81explicitSKIP569.19s,
+all5new restricted-PG/currentOPA connected cases executed0skip; source unchanged.
+Primary Ruff/format/strictmypy199/compile/OPA9/isolation/diff and49CIbashblocks PASS.
+Native sole Coder closed, negative tests/correction evidence preserved.
+Core version2 distinguishes explicit vs incomplete materialization, requires all
+candidate reviews, preserves exact completed history through concept correction.
+Planner may batch6proposals, generic cap3/round, total8calls/3rounds/deadline unchanged;
+no manufactured fallback, foreign-candidate remapping or forced positive learning.
+Source/consent/.75observed-day/count/trust/contradiction/Truth/OPA/fencing retained.
+ACCEPTED_FOR_PUBLICATION_AND_CONTROLLED_DEPLOYMENT, not yet hosted/deployed.
+Current live image7ffa52cd retained until exact-head CI succeeds. SENTRYb331c05
+unchanged; no orb redesign/restart. Graft/private state excluded from staging.
+Future genuine review/forecast/observed outcomes/correction/later use still OPEN;
+dailyOct4 02:30:09Z/routineOct5 02:29:56Z unchanged, no historical model replay.
+Reboot OWNER-DEFERRED, not passed. Full report:027A/LEARNING-REVIEW-CORRECTION.md.
+
+## Scheduled review observed / bounded correction authorized — 2026-10-03T15:52Z
+
+Owner asks Proceed after the actual Oct2 10:29PM review. Existing027A only;
+reboot remains owner-deferred, not PASSED. Exact live baseline4b6c0cb/SENTRY
+b331c05 retained; parent ownership generation4 independently verified.
+Daily due02:29:56Z was claimed02:30:09Z, attempt1, enqueued02:30:15Z.
+Requestdf5e70bf-e9c4-5f13-aff0-9d5c6ffadfa9 completed02:31:38Z,
+NO_ACTION/NO_ACTION, provider-starttrue, four successful model receipts.
+Six source-linked outcomes synchronized; all INSUFFICIENT_EVIDENCE. Three
+explicit proposals acknowledge factual recurrence but cite absent actor/
+causation/preferences; three are omission fallbacks, not actual model review.
+Automatic evaluation INSUFFICIENT_SUPPORTED_PREDICTION; zero live prospective
+records. Six stored outcomes/terminal success are not six reviewed predictions.
+Next dailyOct4 02:30:09Z; no due-time change, replay or live household write.
+Same sole native Coder resumed in isolated current-compatible roots to repair
+factual recurrence vs identity semantics and bounded candidate-completion
+accountability. Parent independently reviews, tests and governs integration.
+Preserve count/trust/consent/contradiction/unknown-coverage/Truth/OPA/fencing,
+all Graft tooling, current household data and preexisting negative evidence.
+No forced supported conclusion, new framework/model/store or unrelated work.
+
+## Useful-learning correction LIVE / future evidence pending — 2026-10-03T00:57Z
+
+ANIMA main/origin4b6c0cb787b9d7ff501f13501736147f5840686d, exactCI37082278634
+SUCCESS. Native artifact11260090319 digest32d14edcd051229155f9a622565c93c877afbe4999e6f86fc3610d16da5a4c1c;
+actual Stage7PG5/Stage4PG9/worker60/browser2 reports PASS0skip. SENTRYb331c05
+unchanged. Clean accepted archive rebuilt UI image7ffa52cd561408213e5e36786bcb588f9a24fab716ee0ff272974f0d9da367b7,
+containerf18c536e0c59ca8d2523dda029e6f56a79b383de4228871ec435cb612b524c59,
+started00:54:22Z healthy. Source112/map043f607b15782c3a0d3b7e43ef4f8b8c63e070718267c2de112d73262ea147e4,
+packages47 and UIassets3 verified. Core/worker/voice/supervisor ACTIVE, stack/
+authenticatedCore READY; UIhealth200 and unauthbootstrap401. UIorbPID3766936
+unchanged, no restart/design change; Android both vendors READY.
+Held/postdeploy/postresume count/full-row digest comparisons match365Memory,
+17tasks50runs,1profile,1voice,5calendar,4actions,46historical ambiguities;
+Graft and DB/OPA/HA/searx identities unchanged; active provider/action/speech0.
+Actual deployed read-only probe00:56Z sees1189qualified/untruncated events and
+supports Ring25/25 and kitchen21/27day forecasts; phone13/20and12/20insufficient.
+Zero frozen future evaluations still exist. Next genuine scheduled review is
+Oct2 10:29PM local (Oct3 02:29:56Z); no injected/rescheduled/backdated review.
+Reboot DEFERRED AT OWNER REQUEST, not passed. Useful outcome gate OPEN pending
+new terminal review, future receipts, honest correction and later context use.
+Postdeployment operational records are local for next consolidated evidence
+publication; all product code is committed/pushed/hosted-qualified. No extra
+ceremonial product commit or unchanged SENTRY CI cycle. Full custody/result in
+027A/LEARNING-OUTCOMES.md. Permanent Goal not self-declared complete.
+
 ## Useful-learning correction independently accepted — 2026-10-03T00:28Z
 
 Same027A, owner-deferred reboot NOT PASSED. Sole Coder final independently
