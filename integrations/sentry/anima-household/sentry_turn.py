@@ -753,30 +753,7 @@ class SentryHouseholdTurn:
                         continue
                     break
                 review_validation_feedback = None
-            try:
-                calls = self._normalize_learning_calls(calls, context, tool_results)
-            except CodexUnavailable as exc:
-                if (
-                    review_batch
-                    and callable(iterative)
-                    and round_number < round_limit
-                    and str(exc)
-                    in {
-                        "LEARNING_REVIEW_TOOL_ONLY",
-                        "LEARNING_CANDIDATE_NOT_BOUND",
-                        "INVALID_LEARNING_SOURCE_REFERENCES",
-                    }
-                ):
-                    review_validation_feedback = {
-                        "status": "RETRY_REQUIRED",
-                        "reason": str(exc),
-                        "candidate_ids": self._learning_review_progress(
-                            learning_candidates, tool_results
-                        )["pending_candidate_ids"],
-                    }
-                    stop_reason = "REVIEW_INCOMPLETE"
-                    continue
-                raise
+            calls = self._normalize_learning_calls(calls, context, tool_results)
             if not calls:
                 if learning_candidates is not None:
                     progress = self._learning_review_progress(learning_candidates, tool_results)
