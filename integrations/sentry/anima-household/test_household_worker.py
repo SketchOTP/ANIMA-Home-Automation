@@ -792,7 +792,9 @@ class IterationTests(unittest.TestCase):
         client.tools = lambda *args: {"tools": [tool]}
         model = IterativeModelFixture(
             client,
-            lambda *args: {"calls": [proposal(candidate, complete=False) for candidate in candidates]},
+            lambda *args: {
+                "calls": [proposal(candidate, complete=False) for candidate in candidates]
+            },
         )
 
         HouseholdWorker(client, model).run_once()
