@@ -792,7 +792,9 @@ class IterationTests(unittest.TestCase):
         client.tools = lambda *args: {"tools": [tool]}
         model = IterativeModelFixture(
             client,
-            lambda *args: {"calls": [proposal(candidate, complete=False) for candidate in candidates]},
+            lambda *args: {
+                "calls": [proposal(candidate, complete=False) for candidate in candidates]
+            },
         )
 
         HouseholdWorker(client, model).run_once()
@@ -1454,6 +1456,29 @@ class CodexTests(unittest.TestCase):
                 finally:
                     server.shutdown()
                     thread.join(timeout=2)
+
+
+class SemanticLearningPromptTests(unittest.TestCase):
+    def test_review_prompt_asks_for_situation_meaning_and_prospective_check(self):
+        model = CodexHouseholdModel()
+        model.run = MagicMock(return_value={"calls": []})
+        context = {
+            "household_context": {
+                "initiative": {"learning_review": {"candidates": [{"candidate_id": "candidate-1"}]}}
+            },
+            "learning_review_progress": {"pending_candidate_ids": ["candidate-1"]},
+        }
+
+        result = model.plan_round(context, [], [], round_number=1, remaining_calls=8)
+
+        prompt = model.run.call_args.args[0]
+        self.assertEqual(result, {"calls": []})
+        self.assertIn("most plausible household situation", prompt)
+        self.assertIn("Logan likely arrived home", prompt)
+        self.assertIn("future observation would confirm or correct", prompt)
+        self.assertIn("children or other household members", prompt)
+        self.assertIn("only capabilities actually present", prompt)
+        self.assertIn("cannot greet, notify, control a device", prompt)
 
 
 if __name__ == "__main__":

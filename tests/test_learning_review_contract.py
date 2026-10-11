@@ -154,6 +154,9 @@ def test_sensor_observation_with_unknown_actor_is_not_owner_routine(fixture: Any
     home = fixture[1].household.canonical_id
     candidate = packet["candidates"][0]
     assert "do not disqualify qualified receipt recurrence" in packet["guidance"]
+    assert "For a MULTI_SIGNAL_EPISODE" in packet["guidance"]
+    assert "most plausible everyday situation" in packet["guidance"]
+    assert "specific future observation" in packet["guidance"]
     request = UUID(packet["request_id"])
     with learning_request_scope(request, home, candidate["source_event_ids"], [candidate]):
         # A provider chooses this conclusion. Core does not manufacture it.
