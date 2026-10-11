@@ -26,6 +26,14 @@ DECISION_NOTE_UPDATE_ORDINAL = 10_002
 DECISION_NOTE_TYPE = "decision"
 DECISION_CLASSIFIER = "100.1"
 _SAFE_TOKEN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9:._-]{0,127}$")
+_REQUIRED_REVIEW_FIELDS = {
+    "candidate_id",
+    "conclusion",
+    "rationale_summary",
+    "evidence_categories",
+    "missing_information",
+    "rejected_alternatives",
+}
 
 
 class SentryTurnModel(Protocol):
@@ -191,14 +199,6 @@ class SentryHouseholdTurn:
         required = {str(item["candidate_id"]) for item in candidates if isinstance(item, dict)}
         attempted: set[str] = set()
         reviewed: set[str] = set()
-        fields = {
-            "candidate_id",
-            "conclusion",
-            "rationale_summary",
-            "evidence_categories",
-            "missing_information",
-            "rejected_alternatives",
-        }
         for item in completed_calls:
             call = item.get("host_call")
             arguments = call.get("arguments") if isinstance(call, dict) else None
@@ -210,7 +210,7 @@ class SentryHouseholdTurn:
             ):
                 identifier = str(arguments.get("candidate_id"))
                 attempted.add(identifier)
-                if fields <= set(arguments):
+                if _REQUIRED_REVIEW_FIELDS <= set(arguments):
                     reviewed.add(identifier)
         return {
             "pending_candidate_ids": sorted(required - attempted),
@@ -615,6 +615,7 @@ class SentryHouseholdTurn:
             str(opened["trigger_id"]) if opened.get("trigger_id") else None,
         )
         learning_candidates = self._learning_review_candidates(context)
+        review_validation_feedback: dict[str, Any] | None = None
         if learning_candidates is not None and (
             len(learning_candidates) > 6
             or any(
@@ -675,6 +676,10 @@ class SentryHouseholdTurn:
                 planning_context["learning_review_progress"] = self._learning_review_progress(
                     learning_candidates, tool_results
                 )
+                if review_validation_feedback is not None:
+                    planning_context["learning_review_validation"] = deepcopy(
+                        review_validation_feedback
+                    )
             try:
                 plan = (
                     iterative(
@@ -700,12 +705,54 @@ class SentryHouseholdTurn:
             # a later invalid call must not allow earlier side effects.
             self.diagnostic_stage = "PLAN_VALIDATE"
             review_batch = learning_candidates is not None
-            calls = validate_calls(
-                plan,
-                catalogue,
-                max_calls=min(6 if review_batch else 3, remaining),
-                review_batch=review_batch,
-            )
+            try:
+                calls = validate_calls(
+                    plan,
+                    catalogue,
+                    max_calls=min(6 if review_batch else 3, remaining),
+                    review_batch=review_batch,
+                )
+            except CodexUnavailable as exc:
+                if (
+                    review_batch
+                    and callable(iterative)
+                    and round_number < round_limit
+                    and str(exc) in {"INVALID_PLAN", "INVALID_TOOL_ARGUMENTS"}
+                ):
+                    review_validation_feedback = {
+                        "status": "RETRY_REQUIRED",
+                        "reason": str(exc),
+                        "candidate_ids": self._learning_review_progress(
+                            learning_candidates, tool_results
+                        )["pending_candidate_ids"],
+                    }
+                    stop_reason = "REVIEW_INCOMPLETE"
+                    continue
+                raise
+            if learning_candidates is not None:
+                incomplete = [
+                    {
+                        "candidate_id": str(
+                            call["arguments"].get("candidate_id") or "UNBOUND"
+                        ),
+                        "missing_fields": sorted(
+                            _REQUIRED_REVIEW_FIELDS - set(call["arguments"])
+                        ),
+                    }
+                    for call in calls
+                    if _REQUIRED_REVIEW_FIELDS - set(call["arguments"])
+                ]
+                if incomplete:
+                    review_validation_feedback = {
+                        "status": "RETRY_REQUIRED",
+                        "reason": "INCOMPLETE_ASSESSMENT_FIELDS",
+                        "candidates": incomplete,
+                    }
+                    stop_reason = "REVIEW_INCOMPLETE"
+                    if callable(iterative) and round_number < round_limit:
+                        continue
+                    break
+                review_validation_feedback = None
             calls = self._normalize_learning_calls(calls, context, tool_results)
             if not calls:
                 if learning_candidates is not None:
@@ -788,6 +835,10 @@ class SentryHouseholdTurn:
             final_context["learning_review_progress"] = self._learning_review_progress(
                 learning_candidates, tool_results
             )
+            if review_validation_feedback is not None:
+                final_context["learning_review_validation"] = deepcopy(
+                    review_validation_feedback
+                )
             if not final_context["learning_review_progress"]["explicit_review_complete"]:
                 stop_reason = "REVIEW_INCOMPLETE"
         if callable(iterative):

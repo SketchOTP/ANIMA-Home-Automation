@@ -557,6 +557,63 @@ class WorkerTests(unittest.TestCase):
 
 
 class IterationTests(unittest.TestCase):
+    @staticmethod
+    def learning_fixture(candidate_count=6):
+        candidates = [
+            {
+                "candidate_id": f"candidate-{index}",
+                "source_event_ids": [f"event-{index}"],
+            }
+            for index in range(candidate_count)
+        ]
+        properties = {
+            "kind": {"type": "string", "enum": ["PATTERN"]},
+            "content": {"type": "string"},
+            "confidence": {"type": "number"},
+            "event_ids": {"type": "array", "items": {"type": "string"}},
+            "candidate_id": {"type": "string"},
+            "conclusion": {"type": "string"},
+            "rationale_summary": {"type": "string"},
+            "evidence_categories": {"type": "array", "items": {"type": "string"}},
+            "missing_information": {"type": "array", "items": {"type": "string"}},
+            "rejected_alternatives": {"type": "array", "items": {"type": "string"}},
+        }
+        tool = {
+            "tool_id": "anima.household-learning.propose",
+            "availability": True,
+            "input_schema": {
+                "type": "object",
+                "properties": properties,
+                "required": ["kind", "content", "confidence", "event_ids"],
+                "additionalProperties": False,
+            },
+        }
+        context = {
+            "household_context": {
+                "initiative": {"learning_review": {"candidates": candidates}}
+            }
+        }
+
+        def proposal(candidate, *, complete):
+            arguments = {
+                "kind": "PATTERN",
+                "content": "Bounded source-linked pattern assessment.",
+                "confidence": 0.3,
+                "event_ids": list(candidate["source_event_ids"]),
+                "candidate_id": candidate["candidate_id"],
+            }
+            if complete:
+                arguments.update(
+                    conclusion="TENTATIVE_HYPOTHESIS",
+                    rationale_summary="The repeated sequence supports a tentative pattern.",
+                    evidence_categories=["repeated_sensor_sequence"],
+                    missing_information=[],
+                    rejected_alternatives=[],
+                )
+            return {"tool_id": tool["tool_id"], "arguments": arguments}
+
+        return candidates, tool, context, proposal
+
     def test_learning_proposal_event_ids_are_reprojected_from_candidate_packet(self):
         call = {
             "tool_id": "anima.household-learning.propose",
@@ -693,6 +750,59 @@ class IterationTests(unittest.TestCase):
         }
         normalized = SentryHouseholdTurn._normalize_learning_calls([], context)
         self.assertEqual(normalized, [])
+
+    def test_incomplete_review_batch_is_replanned_before_any_proposal_is_saved(self):
+        candidates, tool, context, proposal = self.learning_fixture()
+        client = ClientFixture()
+        client.context = lambda *args: context
+        client.tools = lambda *args: {"tools": [tool]}
+
+        def planner(planning_context, tools, results, round_number, remaining):
+            self.assertEqual(remaining, 8)
+            if round_number == 1:
+                return {"calls": [proposal(candidate, complete=False) for candidate in candidates]}
+            self.assertEqual(round_number, 2)
+            self.assertEqual(results, [])
+            self.assertEqual(
+                planning_context["learning_review_validation"]["reason"],
+                "INCOMPLETE_ASSESSMENT_FIELDS",
+            )
+            self.assertEqual(
+                planning_context["learning_review_progress"]["pending_candidate_ids"],
+                [candidate["candidate_id"] for candidate in candidates],
+            )
+            return {"calls": [proposal(candidate, complete=True) for candidate in candidates]}
+
+        model = IterativeModelFixture(client, planner)
+        HouseholdWorker(client, model).run_once()
+
+        self.assertEqual(model.rounds, [(1, 8), (2, 8)])
+        self.assertEqual(client.events.count("invoke"), len(candidates))
+        self.assertGreater(
+            client.events.index("invoke"),
+            max(index for index, event in enumerate(client.events) if event == "model-plan"),
+        )
+        self.assertTrue(model.final_context["learning_review_progress"]["explicit_review_complete"])
+        self.assertEqual(client.submissions[0]["status"], "RESPONSE")
+
+    def test_repeated_incomplete_review_plans_remain_partial_without_saving_proposals(self):
+        candidates, tool, context, proposal = self.learning_fixture()
+        client = ClientFixture()
+        client.context = lambda *args: context
+        client.tools = lambda *args: {"tools": [tool]}
+        model = IterativeModelFixture(
+            client,
+            lambda *args: {"calls": [proposal(candidate, complete=False) for candidate in candidates]},
+        )
+
+        HouseholdWorker(client, model).run_once()
+
+        self.assertEqual(model.rounds, [(1, 8), (2, 8), (3, 8)])
+        self.assertNotIn("invoke", client.events)
+        self.assertEqual(client.submissions[0]["status"], "PARTIAL")
+        self.assertEqual(
+            model.final_context["host_iteration"]["stop_reason"], "REVIEW_INCOMPLETE"
+        )
 
     def test_discovery_then_operation_uses_returned_canonical_id(self):
         client = ClientFixture()
@@ -1154,7 +1264,9 @@ class CodexTests(unittest.TestCase):
         prompt = captured[0][0]
         self.assertIn("Compare candidates with the supplied owner preferences", prompt)
         self.assertIn("without changing either one", prompt)
-        self.assertIn("Never infer an actor, identity, causation, authority", prompt)
+        self.assertIn("Do not turn correlation into fact", prompt)
+        self.assertIn("all six assessment fields", prompt)
+        self.assertIn("learning_review_validation says RETRY_REQUIRED", prompt)
 
     def test_environment_drops_core_and_provider_credentials(self):
         with patch.dict(
