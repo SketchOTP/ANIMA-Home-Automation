@@ -12,6 +12,7 @@ import json
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from statistics import median
 from typing import Any
 from uuid import UUID, uuid5
 from zoneinfo import ZoneInfo
@@ -49,9 +50,12 @@ class PatternCandidate:
     maturity: str
     evidence_score: float
     canonical_ids: tuple[str, ...]
+    semantic_evidence: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:
         value = asdict(self)
+        if value["semantic_evidence"] is None:
+            value.pop("semantic_evidence")
         for key in (
             "source_event_ids",
             "supporting_evidence",
@@ -69,6 +73,37 @@ def _event_qualifier(item: dict[str, Any]) -> str:
         if isinstance(value, str) and value:
             return value.upper()
     return str(item["event_type"]).rsplit(".", 1)[-1].upper()
+
+
+def _signal_family(item: dict[str, Any]) -> str:
+    """Group normalized events by the independent household signal that emitted them."""
+    known = {
+        "household.presence.connection_changed": "MEMBER_ASSOCIATED_PRESENCE",
+        "household.ring.motion": "RING_MOTION",
+        "household.ring.doorbell": "RING_DOORBELL",
+        "external.android.motion_reported": "ANDROID_CAMERA_MOTION",
+        "external.android.lock_reported": "ANDROID_LOCK_REPORT",
+        "senseguard.opened": "CONTACT_SENSOR",
+        "senseguard.event": "CONTACT_SENSOR",
+    }
+    event_type = str(item["event_type"])
+    return str(item.get("source_family") or known.get(event_type, event_type))
+
+
+def _episode_signature(rows: list[dict[str, Any]]) -> tuple[tuple[str, str, str], ...]:
+    return tuple(
+        (str(row["event_type"]), str(row["canonical_id"]), _event_qualifier(row)) for row in rows
+    )
+
+
+def _episode_label(row: dict[str, Any]) -> str:
+    role = (
+        "member-associated device presence"
+        if row["event_type"] == "household.presence.connection_changed"
+        else "household sensor"
+    )
+    transition = _event_qualifier(row).lower()
+    return f"{role} {transition} ({row['event_type']})"
 
 
 def evidence_score(count: int, days: int, elapsed_hours: float, consistency: float) -> float:
@@ -99,6 +134,7 @@ def extract_pattern_candidates(
     household_id: UUID,
     timezone: ZoneInfo,
     max_candidates: int = MAX_CANDIDATES,
+    evidence_truncated: bool = False,
 ) -> list[PatternCandidate]:
     """Extract bounded recurrence and sequence candidates from qualified rows."""
     if not 1 <= max_candidates <= MAX_CANDIDATES:
@@ -203,6 +239,140 @@ def extract_pattern_candidates(
             )
         )
 
+    # Build a recurring episode from the ordered combination of unlike signal
+    # families. The candidate records the observations and their timing; SENTRY
+    # supplies the human interpretation. One day is not a learned routine, and
+    # an associated phone event never authenticates the person at a sensor.
+    episode_groups: dict[tuple[tuple[str, str, str], ...], list[list[dict[str, Any]]]] = (
+        defaultdict(list)
+    )
+    index = 0
+    while index < len(ordered):
+        first_at = _stamp(ordered[index]["occurred_at"])
+        end = index + 1
+        while end < len(ordered):
+            gap = (_stamp(ordered[end]["occurred_at"]) - first_at).total_seconds()
+            if gap > 900:
+                break
+            end += 1
+        cluster = ordered[index:end]
+        families = {_signal_family(row) for row in cluster}
+        event_types = {str(row["event_type"]) for row in cluster}
+        if len(event_types) >= 2 and len(families) >= 2:
+            episode_groups[_episode_signature(cluster)].append(cluster)
+        index = end
+
+    for signature, episodes in episode_groups.items():
+        # Use one episode per local day so duplicate notification bursts do
+        # not create artificial multi-day support.
+        per_day: dict[str, list[dict[str, Any]]] = {}
+        for episode in episodes:
+            day = _stamp(episode[0]["occurred_at"]).astimezone(timezone).date().isoformat()
+            per_day.setdefault(day, episode)
+        if len(per_day) < 2:
+            continue
+        selected = sorted(
+            per_day.values(),
+            key=lambda episode: (_stamp(episode[0]["occurred_at"]), episode[0]["event_id"]),
+        )
+        sequence = selected[0]
+        starts = [_stamp(episode[0]["occurred_at"]).astimezone(timezone) for episode in selected]
+        ends = [_stamp(episode[-1]["occurred_at"]).astimezone(timezone) for episode in selected]
+        intervals = [
+            max(0.0, (_stamp(right["occurred_at"]) - _stamp(left["occurred_at"])).total_seconds())
+            for episode in selected
+            for left, right in zip(episode, episode[1:], strict=False)
+        ]
+        start_buckets = Counter((value.hour // 4) * 4 for value in starts)
+        dominant_start, dominant_count = start_buckets.most_common(1)[0]
+        consistency = dominant_count / len(starts)
+        elapsed = (max(ends) - min(starts)).total_seconds() / 3600
+        day_values = {value.date().isoformat() for value in starts}
+        signal_families = sorted({_signal_family(row) for row in sequence})
+        signal_ids = [row["event_id"] for episode in selected for row in episode]
+        source_ids = tuple(dict.fromkeys(signal_ids))[-MAX_SOURCE_REFS:]
+        signature_text = json.dumps(signature, separators=(",", ":"))
+        signature_hash = hashlib.sha256(signature_text.encode()).hexdigest()[:24]
+        key = f"multi_signal_episode:{signature_hash}"
+        labels = [_episode_label(row) for row in sequence]
+        presence = [
+            row for row in sequence if row["event_type"] == "household.presence.connection_changed"
+        ]
+        missing = [
+            "A member-associated phone event is device presence, not proof that the person acted.",
+            "Cross-source timing supports a possible situation; it does not prove "
+            "identity or causation.",
+            "No event outside this qualified candidate window is treated as absent.",
+        ]
+        if evidence_truncated:
+            missing.append(
+                "The qualified evidence window was truncated; this pattern may be incomplete."
+            )
+        candidates.append(
+            PatternCandidate(
+                candidate_id=str(uuid5(PATTERN_NAMESPACE, f"{household_id}:{key}")),
+                candidate_key=key,
+                candidate_class="MULTI_SIGNAL_EPISODE",
+                title="Recurring multi-signal household episode",
+                factual_summary=(
+                    f"An ordered {len(signal_families)}-family signal episode recurred on "
+                    f"{len(day_values)} distinct local day(s) within a 15-minute window: "
+                    + " then ".join(labels)
+                    + ". This is a repeated co-occurrence, not a verified person, "
+                    "arrival, departure, or cause."
+                ),
+                evidence_window={
+                    "start": min(starts).isoformat(),
+                    "end": max(ends).isoformat(),
+                    "timezone": timezone.key,
+                },
+                source_event_ids=source_ids,
+                observation_count=len(selected),
+                distinct_day_count=len(day_values),
+                elapsed_hours=round(elapsed, 3),
+                temporal_consistency={
+                    "dominant_local_window": (
+                        f"{dominant_start:02d}:00-{(dominant_start + 4) % 24:02d}:00"
+                    ),
+                    "episodes_in_window": dominant_count,
+                    "episode_count": len(selected),
+                    "ratio": round(consistency, 3),
+                    "maximum_episode_window_seconds": 900,
+                    "median_inter_event_seconds": round(median(intervals), 3) if intervals else 0.0,
+                },
+                supporting_evidence=(
+                    f"repeated_episode_days={len(day_values)}",
+                    f"independent_signal_families={len(signal_families)}",
+                    "ordered_signals=" + " -> ".join(labels),
+                ),
+                contradictory_evidence=(),
+                missing_information=tuple(missing),
+                source_trust="CORE_QUALIFIED_JOURNAL_PROJECTION",
+                maturity=_maturity(len(selected), len(day_values), elapsed, consistency),
+                evidence_score=evidence_score(len(selected), len(day_values), elapsed, consistency),
+                canonical_ids=tuple(sorted({row["canonical_id"] for row in sequence})),
+                semantic_evidence={
+                    "ordered_signals": [
+                        {
+                            "event_type": row["event_type"],
+                            "canonical_id": row["canonical_id"],
+                            "qualifier": _event_qualifier(row),
+                            "signal_family": _signal_family(row),
+                            "member_association": (
+                                "DEVICE_ASSOCIATED_WITH_MEMBER_NOT_AUTHENTICATED"
+                                if row in presence
+                                else "HOUSEHOLD_RESOURCE"
+                            ),
+                        }
+                        for row in sequence
+                    ],
+                    "distinct_local_days": sorted(day_values),
+                    "interpretation_required": True,
+                    "authority": "NONE",
+                },
+            )
+        )
+
     sequence_groups: dict[tuple[str, str], list[tuple[dict[str, Any], dict[str, Any]]]] = (
         defaultdict(list)
     )
@@ -266,6 +436,7 @@ def extract_pattern_candidates(
         )
     candidates.sort(
         key=lambda item: (
+            0 if item.candidate_class == "MULTI_SIGNAL_EPISODE" else 1,
             -item.distinct_day_count,
             -item.observation_count,
             item.candidate_class,

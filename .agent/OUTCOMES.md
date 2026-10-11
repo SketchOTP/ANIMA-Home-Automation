@@ -1,5 +1,25 @@
 # Outcome Ledger
 
+## OUTCOME-027A-SEMANTIC-MULTI-SIGNAL-REASONING — implementation in qualification
+
+- Date: 2026-10-11 UTC
+- Status: SOURCE IMPLEMENTED; exact-head hosted CI, controlled deployment and
+  live active-instance verification pending.
+- Added repeated cross-family episode candidates with ordered signal roles,
+  per-day support, bounded source references and explicit unknown identity,
+  causation and coverage. SENTRY instructions and live Core reasoning guidance
+  now interpret these combinations as possible household situations and
+  proportionate responses, including Logan arrival, departure/work-intent
+  distinction, nighttime motion/window anomaly, and expected children during
+  owner travel.
+- Synthetic source/prompt regression bundle:253 passed,3 skipped,43 subtests.
+  Ruff, Ruff format, strict mypy on touched ANIMA modules and diff check passed.
+- These tests establish candidate construction and reasoning-contract
+  coverage, not live model interpretation, owner utility or prospective
+  usefulness. The existing useful-learning gate stays OPEN.
+- Details and limits:027A/EVIDENCE.md and
+  027A/SEMANTIC-REASONING-INTERPRETATION.md.
+
 ## 027A useful-learning correction LIVE — 2026-10-03T00:57Z
 
 Product4b6c0cb exactCI37082278634 SUCCESS, native artifact11260090319/digest

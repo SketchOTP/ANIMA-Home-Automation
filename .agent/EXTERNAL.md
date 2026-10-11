@@ -509,3 +509,26 @@ non-editable production sync. Existing qualified CI uv0.12.7 retained, lock
 unchanged; Python dependency/source lock is distinct from unsnapshotted apt OS
 and non-byte-identical image builds. Authority/external-discovery skills guided
 reuse and evidence boundaries, not a new persistence/model/audio framework.
+
+## 2026-10-10 — contextual multi-signal household inference (027A)
+
+- Primary research checked: [Effective Anomaly Detection in Smart Home by
+  Integrating Event Time Intervals](https://arxiv.org/abs/2201.07954) (2022
+  preprint) models inter-event intervals alongside event sequence; [A Survey
+  of Human Activity Recognition in Smart Homes Based on IoT Sensors
+  Algorithms](https://arxiv.org/abs/2111.04418) describes sparse ambient-event
+  context and the need to use temporal distance/history. These support keeping
+  event order, source family and timing in semantic episode candidates.
+- Existing project overlap: ANIMA already has an allowlisted Journal projection,
+  event-sequence candidates, source-coverage context, household Graph, routine
+  and preference reads, bounded SENTRY reasoning, and deterministic policy.
+- Disposition: `COMPOSE` existing qualified components; `REFERENCE` temporal
+  interval/activity-recognition literature. No external model, framework,
+  database, event bus or dependency adopted. New algorithm is a bounded
+  multi-signal episode grouping step in the existing candidate extractor.
+- Limits: literature validates neither the family's signal mappings nor SENTRY
+  interpretation quality or household usefulness. Synthetic tests remain
+  software evidence; future owner outcomes/corrections stay required.
+- Recheck trigger: a measured failure in episode grouping or owner-reviewed
+  prospective comparisons that justifies evaluating a maintained activity-
+  recognition or temporal-logic library.

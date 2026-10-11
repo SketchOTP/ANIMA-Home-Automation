@@ -1,5 +1,19 @@
 # Current Project State
 
+## Semantic reasoning amendment — 2026-10-11T00:47Z
+
+Same027A only. Clean candidate branch codex/semantic-household-reasoning from
+d373364. Multi-signal recurring episode construction and semantic review/live
+reasoning guidance now cover owner examples: Logan likely arrival, departure
+versus schedule-supported work intent, source-covered night motion/window
+anomaly, and declared travel with children expected home. Synthetic
+construction/prompt tests and source statics pass; targeted regressions
+253PASS/3SKIP/43subtests. Exact candidate-head CI, publication and controlled
+active deployment are pending. Current live usefulness remains UNPROVEN until
+qualified prospective outcomes/corrections/later use. Do not replay household
+history or send real actions/notifications. Full evidence:
+027A/EVIDENCE.md and SEMANTIC-REASONING-INTERPRETATION.md.
+
 ## Explicit review correction independently accepted for release — 2026-10-03T16:53Z
 
 Same027A only. Final7filebundlefa413536e57732a4755887ec3cdf4da09d0c469925054ed35f6cb8d0d894f170

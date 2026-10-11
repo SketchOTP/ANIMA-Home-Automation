@@ -176,6 +176,16 @@ def test_reasoning_guidance_names_bounded_knowledge_classifier_roots() -> None:
     assert "reuse the exact note ID and full digest" in REASONING_GUIDANCE
 
 
+def test_reasoning_guidance_requires_semantic_multisignal_conclusions() -> None:
+    assert "Do not merely repeat sensor names or count triggers" in REASONING_GUIDANCE
+    assert "member-associated phone reconnect" in REASONING_GUIDANCE
+    assert "likely arrival" in REASONING_GUIDANCE
+    assert "basement-window opening" in REASONING_GUIDANCE
+    assert "children's ordinary movement is not itself suspicious" in REASONING_GUIDANCE
+    assert "approved route" in REASONING_GUIDANCE
+    assert "actual available tools and preferences first" in REASONING_GUIDANCE
+
+
 def test_failed_personal_lookup_keeps_shared_preferences(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

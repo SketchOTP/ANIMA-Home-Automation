@@ -1,5 +1,40 @@
 # 027A evidence
 
+## Semantic multi-signal reasoning amendment — 2026-10-11T00:47Z
+
+Owner directed expansion from sensor-pattern counting to combined signal
+interpretation, contextual reasoning and governed response. Work remains within
+027A; no usefulness claim or historical reassessment is authorized.
+
+On clean worktree branch codex/semantic-household-reasoning, starting at
+d373364fa1ba5eff2f4f0984060883c799e2854d, implemented deterministic
+MULTI_SIGNAL_EPISODE candidates from qualified events across independent signal
+families, ordered and bounded to 15 minutes, recurring across at least two
+local dates. Candidates preserve source event references, canonical resource
+IDs, member-device association as unauthenticated, timing, truncation and
+unknowns; they grant no action authority. SENTRY review and live reasoning
+guidance now require likely situation, evidence-to-meaning explanation,
+alternative, future observable check and an available/preferences-permitted
+response. Logan arrival, departure, nighttime window/motion, and owner-travel
+with children-home interpretations are covered. No real notifications/actions
+or historical model replay were produced.
+
+PASSED: targeted regression bundle 253 passed/3 skipped/43 subtests; Ruff
+changed-file lint; Ruff format check; strict mypy on three changed ANIMA
+modules; git diff --check. Synthetic tests exercise repeated arrival/departure
+episode construction, order, identity limitation, candidate prioritization,
+truncated evidence and single-day exclusion. Prompt/context contract tests
+cover night anomaly and travel-with-children reasoning. These are E4 synthetic
+regression evidence for source construction and instruction contracts only;
+they do not evaluate live SENTRY conclusions, owner-perceived outcomes or
+household-learning usefulness.
+
+At this checkpoint exact hosted CI for base merge d373364 (run38097991041) was
+still in_progress. No implementation commit, PR, deployment, or active-instance
+change has yet occurred. Exact-head hosted qualification, controlled rollout,
+and live correspondence/health evidence remain required. The active source
+checkout's unrelated dirty governance state is preserved.
+
 ## Stage4 deployed exact pair — 2026-10-02T11:30Z
 
 Both exact hosted runs PASS:7fe3c705/36998956233 and862cc8ec/36998958481.

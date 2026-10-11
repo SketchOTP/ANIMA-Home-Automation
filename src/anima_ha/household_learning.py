@@ -1006,7 +1006,10 @@ class HouseholdLearningService:
         evidence = self.evidence(household_id, MAX_EVIDENCE)
         readiness = self._readiness(config, evidence)
         candidates = extract_pattern_candidates(
-            evidence["items"], household_id=household_id, timezone=self.zone
+            evidence["items"],
+            household_id=household_id,
+            timezone=self.zone,
+            evidence_truncated=evidence["truncated"],
         )
         completions = (
             self._all_records(household_id, REVIEW_COMPLETION_KIND) if include_learning else []
@@ -1107,7 +1110,10 @@ class HouseholdLearningService:
         gaps: list[str] = []
         if page.get("truncated"):
             gaps.append("The bounded evidence window is truncated.")
-        if not any(item.candidate_class == "EVENT_SEQUENCE" for item in candidates):
+        if not any(
+            item.candidate_class in {"EVENT_SEQUENCE", "MULTI_SIGNAL_EPISODE"}
+            for item in candidates
+        ):
             gaps.append("No repeated multi-day event sequence met the bounded candidate threshold.")
         if not any(
             item["event_type"] == "household.presence.connection_changed" for item in page["items"]
@@ -1147,7 +1153,10 @@ class HouseholdLearningService:
         if page["status"] != "SUCCEEDED":
             raise HouseholdLearningError("qualified evidence unavailable")
         candidates = extract_pattern_candidates(
-            page["items"], household_id=household_id, timezone=self.zone
+            page["items"],
+            household_id=household_id,
+            timezone=self.zone,
+            evidence_truncated=page["truncated"],
         )
         if review_kind == "DAILY":
             completions = self._all_records(household_id, REVIEW_COMPLETION_KIND)
@@ -1205,8 +1214,23 @@ class HouseholdLearningService:
                 "or TENTATIVE_HYPOTHESIS with identity, intent, preference and causation "
                 "explicitly "
                 "unknown; those unknowns alone do not disqualify qualified receipt recurrence. "
-                "Do not invent a pattern when source support is insufficient or contradictory. "
-                "Correlation is not identity, causation, policy, an owner routine, or Truth."
+                "For a MULTI_SIGNAL_EPISODE, do not stop at repeating the sensor sequence: explain "
+                "the most plausible everyday situation it supports, the decision that situation "
+                "could improve, the strongest alternative explanation, and the specific future "
+                "observation that could confirm or correct it. A member-associated "
+                "phone transition "
+                "plus independent entrance/driveway signals can support a tentative arrival or "
+                "departure interpretation; it does not authenticate who physically moved. Consider "
+                "time order, resource roles, household relationships, declared mode, "
+                "source coverage, "
+                "and relevant preferences. A nighttime motion/contact combination may warrant "
+                "review through an already approved alert route, but never label an unknown "
+                "actor an "
+                "intruder. Owner-away context does not make ordinary child activity suspicious. "
+                "Do not infer that a doorbell was not pressed merely because no press event was "
+                "recorded. Do not invent a pattern when source support is insufficient or "
+                "contradictory. Correlation is not identity, causation, policy, an owner routine, "
+                "or Truth."
             ),
         }
         row = MemoryRecord.create(
@@ -1482,7 +1506,10 @@ class HouseholdLearningService:
         current_candidates = {
             item.candidate_key: item
             for item in extract_pattern_candidates(
-                evidence["items"], household_id=household_id, timezone=self.zone
+                evidence["items"],
+                household_id=household_id,
+                timezone=self.zone,
+                evidence_truncated=evidence["truncated"],
             )
         }
         for candidate in packet["candidates"][:6]:
@@ -1688,6 +1715,11 @@ class HouseholdLearningService:
             "classification": "INFERRED_LEARNED_ROUTINE",
             "executable": False,
             "authority": "NONE",
+            **(
+                {"semantic_evidence": metadata["semantic_evidence"]}
+                if isinstance(metadata.get("semantic_evidence"), dict)
+                else {}
+            ),
         }
 
     def _suggestion(self, row: MemoryRecord) -> dict[str, Any]:
@@ -1922,6 +1954,11 @@ class HouseholdLearningService:
                 candidate_class=candidate["candidate_class"],
                 candidate_title=candidate["title"],
                 candidate_factual_summary=candidate["factual_summary"],
+                **(
+                    {"semantic_evidence": candidate["semantic_evidence"]}
+                    if candidate.get("semantic_evidence") is not None
+                    else {}
+                ),
                 maturity=candidate["maturity"],
                 evidence_score=candidate["evidence_score"],
                 maturity_evidence={
